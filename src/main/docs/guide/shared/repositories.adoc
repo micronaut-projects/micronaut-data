@@ -4,6 +4,24 @@ The ann:data.annotation.Repository[] annotation accepts an optional string value
 
 It's possible to annotate the repository injection point with ann:data.annotation.Repository[] and set the data source name. Note that you cannot inject generic repositories, each repository needs to be bound to an entity.
 
+== Repository scope
+
+To support choosing the data source at the injection point, a repository without a scope annotation is a `@Prototype`: every injection point gets its own repository instance, with its own interceptor.
+
+WARNING: In a large application, with many repositories each injected into many beans, these instances add up to a visible share of startup time and memory. It shows most where every singleton is created eagerly at startup, as in an AWS Lambda function.
+
+If a repository's data source is fixed, either the default one or the one named on the repository itself, annotate the repository with `@Singleton` so that it is created once:
+
+[source,java]
+----
+@Singleton
+@JdbcRepository(dialect = Dialect.POSTGRES, dataSource = "other")
+public interface BookRepository extends CrudRepository<Book, Long> {
+}
+----
+
+A data source named on the repository takes precedence over one named at the injection point. A singleton repository is created once, from whichever injection point is resolved first, so keep the default `@Prototype` scope for a repository whose data source is chosen at the injection point.
+
 The entity to treat as the root entity for the purposes of querying is established either from the method signature or from the generic type parameter specified to the api:data.repository.GenericRepository[] interface.
 
 If no root entity can be established then a compilation error will occur.
