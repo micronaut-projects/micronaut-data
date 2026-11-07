@@ -517,6 +517,33 @@ public class CypherQueryBuilder implements QueryBuilder {
     }
 
     /**
+     * Builds the query that removes the relationships of a single-valued association to relationship entities, except
+     * the one to the node in {@code $to} with the identifier in {@code $id}. Without an identity the query binds only
+     * {@code $from} and removes them all.
+     *
+     * @param association          The association
+     * @param owner                The entity that declares the association
+     * @param target               The node entity at the far end
+     * @param relationshipIdentity The identity of the relationship to keep, or null to keep none
+     * @return The query
+     * @since 5.3.0
+     */
+    public String buildUnlinkOtherRelationshipsQuery(Association association,
+                                                     PersistentEntity owner,
+                                                     PersistentEntity target,
+                                                     @Nullable PersistentProperty relationshipIdentity) {
+        StringBuilder query = linkFrom(association, owner, target);
+        if (relationshipIdentity != null) {
+            query.append(" AND (")
+                .append(identityExpression(target.getIdentity(), LINK_TO)).append(" <> $").append(LINK_TO_PARAMETER)
+                .append(" OR ")
+                .append(identityExpression(relationshipIdentity, PATH_RELATIONSHIP)).append(" <> $").append(ID_PARAMETER)
+                .append(')');
+        }
+        return query.append(" DELETE ").append(PATH_RELATIONSHIP).append(RETURN_COUNT).toString();
+    }
+
+    /**
      * Renders the expression that sorts by the identifier of the root node, which a database-assigned identifier
      * does not hold as a property.
      *
@@ -537,12 +564,16 @@ public class CypherQueryBuilder implements QueryBuilder {
     }
 
     private StringBuilder linkPattern(Association association, PersistentEntity owner, PersistentEntity target, String targetComparison) {
+        return linkFrom(association, owner, target)
+            .append(AND)
+            .append(identityExpression(target.getIdentity(), LINK_TO)).append(targetComparison).append(LINK_TO_PARAMETER);
+    }
+
+    private StringBuilder linkFrom(Association association, PersistentEntity owner, PersistentEntity target) {
         String relationship = directed("(" + LINK_FROM + GraphEntities.labelExpression(owner) + ")", linkRelationship(association),
             "(" + LINK_TO + GraphEntities.labelExpression(target) + ")", GraphEntities.direction(association));
         return new StringBuilder("MATCH ").append(relationship).append(WHERE)
-            .append(identityExpression(owner.getIdentity(), LINK_FROM)).append(" = $").append(LINK_FROM_PARAMETER)
-            .append(AND)
-            .append(identityExpression(target.getIdentity(), LINK_TO)).append(targetComparison).append(LINK_TO_PARAMETER);
+            .append(identityExpression(owner.getIdentity(), LINK_FROM)).append(" = $").append(LINK_FROM_PARAMETER);
     }
 
     private static String linkRelationship(Association association) {
