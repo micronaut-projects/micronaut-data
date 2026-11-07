@@ -50,7 +50,7 @@ Schema generation creates a table for each entity. To add other database objects
 snippet::example.BookTitlesViewContributor[project-base="doc-examples/jdbc-example", source="main", tags="contributor"]
 
 <1> The bean implements `JdbcSchemaContributor`, the api:data.runtime.schema.SchemaContributor[] of JDBC schema generation.
-<2> Contributors are called for every data source with schema generation enabled. The api:data.runtime.schema.SchemaContext[] gives the data source name, dialect, target dialect version, schema generation mode and entities, so a contributor can decide whether it applies.
+<2> Contributors are called for every data source with schema generation enabled. The api:data.runtime.schema.SchemaContext[] gives the data source name, dialect, target dialect version, schema generation mode and entities, so a contributor can decide whether it applies. Check this for the drop statements too, otherwise they run on data sources the contributor doesn't apply to.
 <3> Create statements run after the tables are created.
 <4> With `create-drop`, drop statements run before the tables are dropped, so they drop objects over the tables, such as views. Use `IF EXISTS`, as the object may not exist yet: a failed statement is logged as a warning.
 
