@@ -34,7 +34,6 @@ import io.micronaut.serde.LimitingStream;
 import io.micronaut.serde.bson.BsonReaderDecoder;
 import io.micronaut.serde.bson.custom.CodecBsonDecoder;
 import io.micronaut.serde.config.DeserializationConfiguration;
-import io.micronaut.serde.config.SerdeConfiguration;
 import io.micronaut.serde.config.naming.PropertyNamingStrategy;
 import io.micronaut.serde.exceptions.SerdeException;
 import io.micronaut.serde.reference.PropertyReference;
@@ -262,11 +261,6 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
     @Override
     public void popManagedRef() {
         parent.popManagedRef();
-    }
-
-    @Override
-    public Optional<SerdeConfiguration> getSerdeConfiguration() {
-        return parent.getSerdeConfiguration();
     }
 
     @Override

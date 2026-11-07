@@ -17,7 +17,7 @@ Saving an entity writes its node, its labels and its relationships in sequence, 
 
 == Reactive transactions
 
-A method annotated with `@Transactional` that returns a `Mono` or `Flux` runs in a transaction of the reactive session, which commits when the publisher completes and rolls back when it fails or is cancelled. Reactive repository methods called from it join the transaction through the Reactor context:
+A method annotated with `@Transactional` that returns a `Mono` or `Flux` runs in a transaction of the reactive session, which commits when the publisher completes and rolls back when it fails. With Neo4j, it also rolls back when the subscription is cancelled. Reactive repository methods called from it join the transaction through the Reactor context:
 
 snippet::example.ReactiveMovieService[project-base="doc-examples/neo4j-example", source="main", tags="transactional", languages="java,kotlin,groovy,python"]
 
@@ -29,6 +29,8 @@ The transaction can also be managed programmatically with api:data.neo4j.transac
 snippet::example.ReactiveMovieRepositorySpec[project-base="doc-examples/neo4j-example", tags="transactionOperations", indent="0", languages="java,kotlin,groovy,python"]
 
 <1> The publisher returned by the callback runs in the transaction, which commits when it completes.
+
+The modules that run on R2DBC, Oracle property graphs and Apache AGE, use the reactive transactions of Micronaut Data R2DBC: a transaction that is cancelled commits what it wrote so far, as with any other R2DBC repository.
 
 Explicit queries can be streamed with api:data.neo4j.operations.Neo4jReactorRepositoryOperations[], which is also returned by `reactive()` of api:data.neo4j.operations.Neo4jRepositoryOperations[]:
 

@@ -11,7 +11,7 @@ class BookTitlesViewContributor implements JdbcSchemaContributor { // <1>
 
     @Override
     List<String> buildCreateStatements(SchemaContext context, List<PersistentEntity> entities) {
-        if (!context.entities().any { it.simpleName == "Book" }) { // <2>
+        if (!hasBookTable(context)) { // <2>
             return []
         }
         return ["CREATE VIEW book_titles AS SELECT id, title FROM book"] // <3>
@@ -19,7 +19,14 @@ class BookTitlesViewContributor implements JdbcSchemaContributor { // <1>
 
     @Override
     List<String> buildDropStatements(SchemaContext context, List<PersistentEntity> entities) {
+        if (!hasBookTable(context)) {
+            return []
+        }
         return ["DROP VIEW IF EXISTS book_titles"] // <4>
+    }
+
+    private boolean hasBookTable(SchemaContext context) {
+        return context.entities().any { it.simpleName == "Book" }
     }
 }
 // end::contributor[]

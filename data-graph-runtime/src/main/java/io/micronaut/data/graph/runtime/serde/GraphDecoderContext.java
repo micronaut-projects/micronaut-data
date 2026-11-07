@@ -35,6 +35,9 @@ import java.util.Date;
  * rather than read from text, and types serde cannot deserialize fall back to conversion. Everything else is resolved
  * by the context of the serde registry.
  *
+ * <p>The serde configuration is deliberately not exposed: its naming strategy, which an application sets for its JSON,
+ * would rename what a node holds and read those properties as null.</p>
+ *
  * @author graemerocher
  * @since 5.3.0
  */

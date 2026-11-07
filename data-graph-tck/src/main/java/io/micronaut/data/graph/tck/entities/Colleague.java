@@ -14,6 +14,8 @@ public class Colleague {
     private final String name;
     @Relationship(type = "WORKS_WITH", direction = Direction.UNDIRECTED)
     private List<Collaboration> colleagues = new ArrayList<>();
+    @Relationship(type = "MENTORS", direction = Direction.UNDIRECTED)
+    private Mentorship mentor;
 
     public Colleague(String name) {
         this.name = name;
@@ -29,5 +31,13 @@ public class Colleague {
 
     public void setColleagues(List<Collaboration> colleagues) {
         this.colleagues = colleagues;
+    }
+
+    public Mentorship getMentor() {
+        return mentor;
+    }
+
+    public void setMentor(Mentorship mentor) {
+        this.mentor = mentor;
     }
 }

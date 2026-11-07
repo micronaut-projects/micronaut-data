@@ -37,7 +37,6 @@ import io.micronaut.serde.Encoder;
 import io.micronaut.serde.SerdeRegistry;
 import io.micronaut.serde.Serializer;
 import io.micronaut.serde.config.DeserializationConfiguration;
-import io.micronaut.serde.config.SerdeConfiguration;
 import io.micronaut.serde.config.SerializationConfiguration;
 import io.micronaut.serde.config.naming.PropertyNamingStrategy;
 import io.micronaut.serde.exceptions.SerdeException;
@@ -67,7 +66,6 @@ final class DataSerdeRegistry implements SerdeRegistry {
     private final AttributeConverterRegistry attributeConverterRegistry;
 
     private final MongoDataConfiguration mongoDataConfiguration;
-    private final SerdeConfiguration serdeConfiguration;
     private final SerializationConfiguration serializationConfiguration;
     private final DeserializationConfiguration deserializationConfiguration;
 
@@ -78,7 +76,6 @@ final class DataSerdeRegistry implements SerdeRegistry {
      * @param runtimeEntityRegistry        The runtimeEntityRegistry
      * @param attributeConverterRegistry   The attributeConverterRegistry
      * @param mongoDataConfiguration       The Mongo configuration
-     * @param serdeConfiguration           The serde configuration
      * @param serializationConfiguration   The serialization configuration
      * @param deserializationConfiguration The deserialization configuration
      */
@@ -86,14 +83,12 @@ final class DataSerdeRegistry implements SerdeRegistry {
                              RuntimeEntityRegistry runtimeEntityRegistry,
                              AttributeConverterRegistry attributeConverterRegistry,
                              MongoDataConfiguration mongoDataConfiguration,
-                             SerdeConfiguration serdeConfiguration,
                              SerializationConfiguration serializationConfiguration,
                              DeserializationConfiguration deserializationConfiguration) {
         this.defaultSerdeRegistry = beanContext.createBean(DefaultSerdeRegistry.class);
         this.runtimeEntityRegistry = runtimeEntityRegistry;
         this.attributeConverterRegistry = attributeConverterRegistry;
         this.mongoDataConfiguration = mongoDataConfiguration;
-        this.serdeConfiguration = serdeConfiguration;
         this.serializationConfiguration = serializationConfiguration;
         this.deserializationConfiguration = deserializationConfiguration;
     }
@@ -129,7 +124,7 @@ final class DataSerdeRegistry implements SerdeRegistry {
     @Override
     public Deserializer.DecoderContext newDecoderContext(@Nullable Class<?> view) {
         if (view != null) {
-            return new DefaultDecoderContext(this, serdeConfiguration, deserializationConfiguration) {
+            return new DefaultDecoderContext(this, deserializationConfiguration) {
                 @Override
                 public boolean hasView(Class<?>... views) {
                     for (Class<?> candidate : views) {
@@ -141,7 +136,7 @@ final class DataSerdeRegistry implements SerdeRegistry {
                 }
             };
         }
-        return new DefaultDecoderContext(this, serdeConfiguration, deserializationConfiguration);
+        return new DefaultDecoderContext(this, deserializationConfiguration);
     }
 
     @Override
