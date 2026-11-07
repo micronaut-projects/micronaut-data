@@ -42,6 +42,11 @@ class OracleJsonTextSearchSpec extends AbstractTextSearchSpec implements Oracle2
     }
 
     @Override
+    String nativeProgrammingWithoutKotlinQuery() {
+        return "programming NOT kotlin"
+    }
+
+    @Override
     boolean allTermsAcrossFields() {
         // each property is searched with its own CONTAINS ... INPATH, so SearchAll needs every term in one property
         return false

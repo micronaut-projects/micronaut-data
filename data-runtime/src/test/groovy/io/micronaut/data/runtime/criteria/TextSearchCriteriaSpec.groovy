@@ -47,6 +47,21 @@ class TextSearchCriteriaSpec extends Specification {
         return ((PersistentEntityCriteriaQueryBuilder) query).build(annotationMetadata, new SqlQueryBuilder(dialect))
     }
 
+    void "a native match over several fields on Oracle takes its own labels when it is not the first match"() {
+        when:
+        def query = cb.createQuery(SearchResults)
+        def root = query.from(SearchArticle)
+        List<Expression<?>> fields = [root.get("title"), root.get("body")]
+        query.where(cb.and(cb.textMatch(root.get("title"), cb.parameter(String, null, "coffee"), MatchMode.ANY),
+                cb.textMatch(fields, cb.parameter(String, null, "tea NOT milk"), MatchMode.NATIVE)))
+        query.select(root)
+        def result = ((PersistentEntityCriteriaQueryBuilder) query).build(AnnotationMetadata.EMPTY_METADATA, new SqlQueryBuilder(Dialect.ORACLE))
+
+        then: "the labels stay apart, as Oracle rejects a label used twice"
+        result.query.contains('CONTAINS(search_article_."TITLE",?,1) > 0')
+        result.query.contains('(CONTAINS(search_article_."TITLE",?,2) > 0 OR CONTAINS(search_article_."BODY",?,3) > 0)')
+    }
+
     void "PostgreSQL highlights with ts_headline"() {
         when:
         def result = build(Dialect.POSTGRES)

@@ -18,6 +18,12 @@ class MongoSearchOperatorsSpec extends Specification {
         render('"ken burns" tea', MatchMode.ANY) == '{"compound": {"should": [{"phrase": {"query": "ken burns", "path": ["title", "body"]}}, {"text": {"query": "tea", "path": ["title", "body"]}}], "minimumShouldMatch": 1}}'
     }
 
+    void "a native query string searches every path"() {
+        expect:
+        render("coffee AND NOT cake", MatchMode.NATIVE, ["title"]) == '{"queryString": {"defaultPath": "title", "query": "coffee AND NOT cake"}}'
+        render("coffee", MatchMode.NATIVE) == '{"compound": {"should": [{"queryString": {"defaultPath": "title", "query": "coffee"}}, {"queryString": {"defaultPath": "body", "query": "coffee"}}], "minimumShouldMatch": 1}}'
+    }
+
     void "all-terms queries become must clauses"() {
         expect:
         render("coffee tea", MatchMode.ALL) == '{"compound": {"must": [{"text": {"query": "coffee", "path": ["title", "body"]}}, {"text": {"query": "tea", "path": ["title", "body"]}}]}}'

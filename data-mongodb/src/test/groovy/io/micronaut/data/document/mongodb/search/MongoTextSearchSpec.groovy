@@ -31,4 +31,9 @@ class MongoTextSearchSpec extends AbstractTextSearchSpec implements MongoTestPro
         // $text searches the whole text index and has no prefix matching
         return EnumSet.of(SearchCapability.PHRASE, SearchCapability.LANGUAGE_OVERRIDE)
     }
+
+    @Override
+    String nativeProgrammingWithoutKotlinQuery() {
+        return "programming -kotlin"
+    }
 }

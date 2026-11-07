@@ -58,6 +58,7 @@ public abstract class MongoTextSearchConverter implements TextSearchQueryConvert
             case ANY -> Any.class.getName();
             case ALL -> All.class.getName();
             case PHRASE -> Phrase.class.getName();
+            case NATIVE -> Native.class.getName();
             case PREFIX, FUZZY -> throw new IllegalArgumentException("MongoDB $text does not support " + mode + " matching");
         };
     }
@@ -72,6 +73,10 @@ public abstract class MongoTextSearchConverter implements TextSearchQueryConvert
     public static String render(@Nullable String query, MatchMode mode) {
         if (query == null) {
             return "";
+        }
+        if (mode == MatchMode.NATIVE) {
+            // the caller wrote $text search syntax
+            return query;
         }
         if (mode == MatchMode.PHRASE) {
             String phrase = query.replace("\"", "").trim();
@@ -139,6 +144,16 @@ public abstract class MongoTextSearchConverter implements TextSearchQueryConvert
     public static final class Phrase extends MongoTextSearchConverter {
         public Phrase() {
             super(MatchMode.PHRASE);
+        }
+    }
+
+    /**
+     * {@link MatchMode#NATIVE} converter: the string is {@code $text} search syntax already.
+     */
+    @Singleton
+    public static final class Native extends MongoTextSearchConverter {
+        public Native() {
+            super(MatchMode.NATIVE);
         }
     }
 }
