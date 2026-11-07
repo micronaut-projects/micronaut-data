@@ -50,10 +50,10 @@ import java.util.Objects;
 @Internal
 public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersStoredQuery<E, R> {
 
-    private final Map<String, Object> body;
     private static final String LIKE_WITH_ESCAPE = "like:";
     private static final String IGNORE_CASE = "_ignore_case";
 
+    private final Map<String, Object> body;
     private final boolean countProjection;
 
     /**
