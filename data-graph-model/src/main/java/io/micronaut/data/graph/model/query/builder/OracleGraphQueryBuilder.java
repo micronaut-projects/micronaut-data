@@ -1279,7 +1279,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     /**
      * Renders the selected columns.
      */
-    private final class SelectionRenderer implements SelectionVisitor {
+    private final class SelectionRenderer implements SelectionVisitor, GraphExpressionVisitor {
         final Query query;
         boolean entity;
         boolean literal;
@@ -1372,6 +1372,11 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         @Override
         public void visit(FunctionExpression<?> functionExpression) {
             item(functionExpression, RESULT, null);
+        }
+
+        @Override
+        public void visit(DynamicPropertyExpression<?, ?> expression) {
+            item(expression, expression.getName(), null);
         }
 
         @Override

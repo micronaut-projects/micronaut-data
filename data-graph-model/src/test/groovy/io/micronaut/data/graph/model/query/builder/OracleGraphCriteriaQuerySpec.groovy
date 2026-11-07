@@ -118,6 +118,21 @@ class OracleGraphCriteriaQuerySpec extends Specification {
         PropertyGraph.QueryLanguage.SQL_PGQ | "WHERE (JSON_VALUE(n.attributes, '\$.\"legs\"' RETURNING NUMBER) > ?)"
     }
 
+    void "test #language selecting a dynamic property reads the JSON column"() {
+        given:
+        def query = cb.createQuery(Integer)
+        PersistentEntityRoot root = query.from(Pet)
+        query.select(GraphCriteria.dynamic(root, "legs", Integer))
+
+        expect:
+        ((PersistentEntityCriteriaQueryBuilder) query).build(AnnotationMetadata.EMPTY_METADATA, builder(language)).query == expected
+
+        where:
+        language                            | expected
+        PropertyGraph.QueryLanguage.PGQL    | '''SELECT JSON_VALUE(n.attributes, '$."legs"' RETURNING NUMBER) AS "legs" FROM MATCH (n:Pet) ON g'''
+        PropertyGraph.QueryLanguage.SQL_PGQ | '''SELECT "c0" AS "legs" FROM GRAPH_TABLE (g MATCH (n IS Pet) COLUMNS (JSON_VALUE(n.attributes, '$."legs"' RETURNING NUMBER) AS "c0"))'''
+    }
+
     void "test dynamic property of type #type.simpleName reads the JSON value as #returning"() {
         given:
         def query = cb.createQuery(Pet)
