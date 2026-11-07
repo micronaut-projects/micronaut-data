@@ -71,6 +71,7 @@ interface MovieRepository extends CrudRepository<Movie, String> {
     @Query("MATCH (m:Movie {title: \$title}) CALL { WITH m RETURN 1 AS one } SET m.votes = 1")
     int voteSubquery(String title);
     List<Movie> findByRoles(Role role);
+    List<Movie> findByRolesPerson(Person person);
 }
 """)
         personRepository = buildRepository('test.PersonRepository', """
@@ -116,7 +117,8 @@ interface PersonRepository extends CrudRepository<Person, String> {
         'findByDirectorsNameOrderByDirectorsBorn'  | 1     | 'MATCH (n:Movie), (n)<-[:DIRECTED]-(a0:Person:Actor) WHERE a0.name = $p0 WITH n, min(a0.born) AS o0 RETURN n ORDER BY o0 ASC'
         'findByReleasedOrderByDirectorsNameDesc'   | 1     | 'MATCH (n:Movie) WHERE n.released = $p0 OPTIONAL MATCH (n)<-[:DIRECTED]-(a0:Person:Actor) WITH n, max(a0.name) AS o0 OPTIONAL MATCH (n)<-[:DIRECTED]-(j0:Person:Actor) WITH n, o0, collect(j0) AS j_directors RETURN n, j_directors ORDER BY o0 DESC'
         'findByRolesPersonName'                    | 1     | 'MATCH (n:Movie), (n)<-[ar0:ACTED_IN]-(a0:Person:Actor) WHERE a0.name = $p0 WITH DISTINCT n RETURN n'
-        'findByRoles'                              | 1     | 'MATCH (n:Movie), (n)<-[ar0:ACTED_IN]-(a0:Person:Actor) WHERE elementId(a0) = $p0 WITH DISTINCT n RETURN n'
+        'findByRoles'                              | 1     | 'MATCH (n:Movie), (n)<-[ar0:ACTED_IN]-(a0:Person:Actor) WHERE elementId(ar0) = $p0 WITH DISTINCT n RETURN n'
+        'findByRolesPerson'                        | 1     | 'MATCH (n:Movie), (n)<-[ar0:ACTED_IN]-(a0:Person:Actor) WHERE elementId(a0) = $p0 WITH DISTINCT n RETURN n'
         'findByRolesRolesArrayContains'            | 1     | 'MATCH (n:Movie), (n)<-[ar0:ACTED_IN]-(a0:Person:Actor) WHERE $p0 IN ar0.roles WITH DISTINCT n RETURN n'
         'findByReleased'                           | 1     | 'MATCH (n:Movie) WHERE n.released = $p0 OPTIONAL MATCH (n)<-[:DIRECTED]-(j0:Person:Actor) WITH n, collect(j0) AS j_directors RETURN n, j_directors'
         'findByTitle'                              | 1     | 'MATCH (n:Movie) WHERE n.title = $p0 OPTIONAL MATCH (n)<-[r0:ACTED_IN]-(j0:Person:Actor) WITH n, collect(CASE WHEN r0 IS NULL THEN NULL ELSE {rel: r0, node: j0} END) AS j_roles OPTIONAL MATCH (n)<-[:DIRECTED]-(j1:Person:Actor) WITH n, j_roles, collect(j1) AS j_directors RETURN n, j_roles, j_directors'
@@ -141,6 +143,47 @@ interface PersonRepository extends CrudRepository<Person, String> {
         expect:
         getQuery(method) == 'MATCH (n:Movie) WHERE n.released > $p0 RETURN n'
         method.annotationMetadata.stringValue(Query, 'countQuery').get() == 'MATCH (n:Movie) WHERE n.released > $p0 RETURN count(n) AS result'
+    }
+
+    void "test a relationship entity criterion binds the identifier of what it compares"() {
+        expect:
+        getParameterProperties(findMethod(movieRepository, 'findByRoles', 1)) == ['roles']
+        getParameterProperties(findMethod(movieRepository, 'findByRolesPerson', 1)) == ['roles.person']
+    }
+
+    void "test a criterion on a relationship entity without an id compares the target node"() {
+        given:
+        def repository = buildRepository('test.CastRepository', """
+$MOVIES
+
+@RelationshipProperties
+class Cameo {
+    @TargetNode
+    private Person person;
+    public Person getPerson() { return person; }
+    public void setPerson(Person person) { this.person = person; }
+}
+
+@Node
+class Show {
+    @Id
+    private String title;
+    @Relationship(type = "APPEARED_IN", direction = Direction.INCOMING)
+    private List<Cameo> cameos = new ArrayList<>();
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    public List<Cameo> getCameos() { return cameos; }
+    public void setCameos(List<Cameo> cameos) { this.cameos = cameos; }
+}
+
+@TestGraphRepository
+interface CastRepository extends CrudRepository<Show, String> {
+    List<Show> findByCameos(Cameo cameo);
+}
+""")
+
+        expect:
+        getQuery(findMethod(repository, 'findByCameos', 1)) == 'MATCH (n:Show), (n)<-[ar0:APPEARED_IN]-(a0:Person:Actor) WHERE elementId(a0) = $p0 WITH DISTINCT n RETURN n'
     }
 
     void "test parameters are bound by name"() {

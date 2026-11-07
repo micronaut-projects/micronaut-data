@@ -611,16 +611,19 @@ public class CypherQueryBuilder implements QueryBuilder {
                 return identityExpression(property, variable);
             }
             if (property instanceof Association association && !association.isEmbedded()) {
-                // A criterion on an association itself compares its identifier
-                PersistentEntity target = GraphEntities.targetNodeEntity(association);
+                // A criterion on an association itself compares the identifier of the associated entity, as that is
+                // what the argument binds to. For a relationship entity that is the relationship, its target node is
+                // compared through the @TargetNode association.
+                PersistentEntity associated = association.getAssociatedEntity();
                 List<Association> associations = concat(propertyPath.getAssociations(), association);
-                Association targetNode = GraphEntities.isRelationshipEntity(association.getAssociatedEntity())
-                    ? GraphEntities.findTargetNode(association.getAssociatedEntity())
-                    : null;
+                if (associated.hasIdentity()) {
+                    return resolve(io.micronaut.data.model.PersistentPropertyPath.of(associations, associated.getIdentity()));
+                }
+                Association targetNode = GraphEntities.findTargetNode(associated);
                 if (targetNode != null) {
                     associations = concat(associations, targetNode);
                 }
-                return resolve(io.micronaut.data.model.PersistentPropertyPath.of(associations, target.getIdentity()));
+                return resolve(io.micronaut.data.model.PersistentPropertyPath.of(associations, GraphEntities.targetNodeEntity(association).getIdentity()));
             }
             return variable + "." + GraphEntities.escapeName(GraphEntities.propertyName(property));
         }
