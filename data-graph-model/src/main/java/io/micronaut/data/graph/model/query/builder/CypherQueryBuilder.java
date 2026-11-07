@@ -1705,7 +1705,9 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             String hops = "[" + type + (predicate.getMaxDepth() > 1 ? "*1.." + predicate.getMaxDepth() : "") + "]";
             Expression<?> targetId = predicate.getTarget();
             if (targetId == null) {
-                out.append(existsPattern(relatedPattern(direction, hops, "()"), null));
+                // The far node is of the entity the relationship leads to, as in a join on the same property
+                String node = target != null ? "(" + labelExpression(target) + ")" : "()";
+                out.append(existsPattern(relatedPattern(direction, hops, node), null));
                 return;
             }
             if (target == null) {
