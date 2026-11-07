@@ -12,6 +12,7 @@ import io.micronaut.data.graph.processor.visitors.GraphIdentityVisitor
 import io.micronaut.data.processor.visitors.MappedEntityVisitor
 import io.micronaut.data.processor.visitors.RepositoryTypeElementVisitor
 import io.micronaut.inject.BeanDefinition
+import io.micronaut.data.processor.graph.visitors.GraphConverterSerdeVisitor
 import io.micronaut.data.processor.graph.visitors.GraphDtoVisitor
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
 import io.micronaut.inject.visitor.TypeElementVisitor
@@ -149,7 +150,7 @@ $source
     static class GraphTypeElementVisitorProcessor extends TypeElementVisitorProcessor {
         @Override
         protected Collection<TypeElementVisitor> findTypeElementVisitors() {
-            return [new IntrospectedTypeElementVisitor(), new RepositoryTypeElementVisitor(), new MappedEntityVisitor(), new GraphDtoVisitor(), new GraphIdentityVisitor()]
+            return [new IntrospectedTypeElementVisitor(), new RepositoryTypeElementVisitor(), new MappedEntityVisitor(), new GraphDtoVisitor(), new GraphIdentityVisitor(), new GraphConverterSerdeVisitor()]
         }
     }
 }
