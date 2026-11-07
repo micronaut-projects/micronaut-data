@@ -63,22 +63,27 @@ public final class SearchIndexCreator {
             }
             RuntimePersistentEntity<Object> entity = runtimeEntityRegistry.getEntity(type);
             for (DocumentSearchRepositoryOperations ops : operations) {
-                String index = ops.getIndexName(type);
-                boolean exists = ops.getTransport().indexExists(index);
-                if (exists && schemaGenerate == SchemaGenerate.CREATE_DROP) {
-                    if (LOG.isInfoEnabled()) {
-                        LOG.info("Dropping search index: {} for entity: {}", index, type.getName());
-                    }
-                    ops.getTransport().deleteIndex(index);
-                    exists = false;
-                }
-                if (!exists) {
-                    if (LOG.isInfoEnabled()) {
-                        LOG.info("Creating search index: {} for entity: {}", index, type.getName());
-                    }
-                    ops.getTransport().createIndex(index, SearchIndexDefinitions.mappingFor(entity, ops.getTransport()));
-                }
+                createIndex(ops, entity, schemaGenerate);
             }
+        }
+    }
+
+    private static void createIndex(DocumentSearchRepositoryOperations ops, RuntimePersistentEntity<?> entity, SchemaGenerate schemaGenerate) {
+        Class<?> type = entity.getIntrospection().getBeanType();
+        String index = ops.getIndexName(type);
+        boolean exists = ops.getTransport().indexExists(index);
+        if (exists && schemaGenerate == SchemaGenerate.CREATE_DROP) {
+            if (LOG.isInfoEnabled()) {
+                LOG.info("Dropping search index: {} for entity: {}", index, type.getName());
+            }
+            ops.getTransport().deleteIndex(index);
+            exists = false;
+        }
+        if (!exists) {
+            if (LOG.isInfoEnabled()) {
+                LOG.info("Creating search index: {} for entity: {}", index, type.getName());
+            }
+            ops.getTransport().createIndex(index, SearchIndexDefinitions.mappingFor(entity, ops.getTransport()));
         }
     }
 }

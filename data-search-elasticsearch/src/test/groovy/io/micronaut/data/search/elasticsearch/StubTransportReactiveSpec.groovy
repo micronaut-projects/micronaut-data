@@ -422,6 +422,7 @@ class StubTransportReactiveSpec extends Specification {
 
         @Override
         void refresh(String index) {
+            // the stub reads its own map, so there is nothing to refresh
         }
 
         @Override
