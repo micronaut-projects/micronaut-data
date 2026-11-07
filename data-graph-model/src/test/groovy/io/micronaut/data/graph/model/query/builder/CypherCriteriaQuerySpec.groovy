@@ -201,8 +201,10 @@ class CypherCriteriaQuerySpec extends Specification {
             'CREATE INDEX Note_text_index IF NOT EXISTS FOR (n:Note) ON (n.text)'
         ]
         new AgeCypherQueryBuilder().buildCreateIndexStatements(note).drop(1) == [
-            'CREATE UNIQUE INDEX IF NOT EXISTS "Note_code_unique" ON "$__graph"."Note" (ag_catalog.agtype_access_operator(properties, \'"code"\'::agtype))',
-            'CREATE INDEX IF NOT EXISTS "Note_text_index" ON "$__graph"."Note" (ag_catalog.agtype_access_operator(properties, \'"text"\'::agtype))'
+            'DO $do$ BEGIN BEGIN CREATE UNIQUE INDEX IF NOT EXISTS "Note_code_unique" ON "$__graph"."Note" (ag_catalog.agtype_access_operator(properties, \'"code"\'::agtype));'
+                + ' EXCEPTION WHEN OTHERS THEN IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_indexes WHERE schemaname = \'$__graph\' AND indexname = \'Note_code_unique\') THEN RAISE; END IF; END; END $do$',
+            'DO $do$ BEGIN BEGIN CREATE INDEX IF NOT EXISTS "Note_text_index" ON "$__graph"."Note" (ag_catalog.agtype_access_operator(properties, \'"text"\'::agtype));'
+                + ' EXCEPTION WHEN OTHERS THEN IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_indexes WHERE schemaname = \'$__graph\' AND indexname = \'Note_text_index\') THEN RAISE; END IF; END; END $do$'
         ]
         new AgeCypherQueryBuilder().buildCreateIndexStatements(note)[0].contains('create_vlabel(\'$__graph\', \'Note\')')
 

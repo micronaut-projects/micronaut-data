@@ -22,11 +22,13 @@ import io.micronaut.data.annotation.Indexes;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.CRC32;
 
 /**
  * An index on the properties of the nodes with a label, declared with {@link Index} on a node entity or one of its
@@ -40,6 +42,11 @@ import java.util.Map;
  * @since 5.3.0
  */
 public record GraphIndex(String name, String label, List<String> properties, boolean unique) {
+
+    /**
+     * The bytes of a PostgreSQL identifier. A longer one is silently cut, which can make two indexes one.
+     */
+    private static final int MAX_NAME_BYTES = 63;
 
     /**
      * The indexes of a node entity: a unique index on an assigned identifier, then the declared indexes.
@@ -69,7 +76,11 @@ public record GraphIndex(String name, String label, List<String> properties, boo
             }
             add(indexes, label, index.stringValue("name").orElse(""), properties, index.booleanValue("unique").orElse(false));
         }
-        for (PersistentProperty property : entity.getPersistentProperties()) {
+        List<PersistentProperty> indexable = new ArrayList<>(entity.getPersistentProperties());
+        if (entity.hasVersion()) {
+            indexable.add(entity.getVersion());
+        }
+        for (PersistentProperty property : indexable) {
             AnnotationValue<Index> index = property.getAnnotationMetadata().getAnnotation(Index.class);
             if (index != null) {
                 add(indexes, label, index.stringValue("name").orElse(""), List.of(GraphEntities.propertyName(property)),
@@ -87,8 +98,32 @@ public record GraphIndex(String name, String label, List<String> properties, boo
         if (existing != null && (existing.unique() || !unique)) {
             return;
         }
-        String indexName = name.isEmpty() ? label + "_" + String.join("_", properties) + (unique ? "_unique" : "_index") : name;
+        String indexName = name.isEmpty() ? generatedName(label, properties, unique) : name;
         indexes.put(properties, new GraphIndex(indexName, label, List.copyOf(properties), unique));
+    }
+
+    /**
+     * The name of an index that declares none: the label and properties, cut short and told apart with a hash of
+     * them when that is too long for an identifier.
+     */
+    static String generatedName(String label, List<String> properties, boolean unique) {
+        String kind = unique ? "_unique" : "_index";
+        String readable = label + "_" + String.join("_", properties);
+        if (utf8Length(readable + kind) <= MAX_NAME_BYTES) {
+            return readable + kind;
+        }
+        CRC32 hash = new CRC32();
+        hash.update((label + '\0' + String.join("\0", properties) + kind).getBytes(StandardCharsets.UTF_8));
+        String suffix = "_%08x%s".formatted(hash.getValue(), kind);
+        int end = readable.length();
+        while (utf8Length(readable.substring(0, end)) + suffix.length() > MAX_NAME_BYTES) {
+            end = readable.offsetByCodePoints(end, -1);
+        }
+        return readable.substring(0, end) + suffix;
+    }
+
+    private static int utf8Length(String value) {
+        return value.getBytes(StandardCharsets.UTF_8).length;
     }
 
     private static String storedName(PersistentEntity entity, String column) {

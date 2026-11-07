@@ -14,9 +14,12 @@ import io.micronaut.data.neo4j.features.ReactiveMovieRepository
 import io.micronaut.data.neo4j.features.ReactiveMovieService
 import io.micronaut.data.neo4j.features.Player
 import io.micronaut.data.neo4j.features.ReactivePetRepository
+import io.micronaut.data.neo4j.features.ReactiveShelfRepository
 import io.micronaut.data.neo4j.features.ReactiveTeamRepository
+import io.micronaut.data.neo4j.features.Shelf
 import io.micronaut.data.neo4j.features.Tag
 import io.micronaut.data.neo4j.features.Team
+import io.micronaut.data.neo4j.features.Volume
 import io.micronaut.data.neo4j.operations.Neo4jReactorRepositoryOperations
 import io.micronaut.data.neo4j.operations.Neo4jRepositoryOperations
 import io.micronaut.data.neo4j.transaction.Neo4jReactorTransactionOperations
@@ -41,6 +44,9 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
 
     @Inject
     ReactiveTeamRepository teamRepository
+
+    @Inject
+    ReactiveShelfRepository shelfRepository
 
     @Inject
     ReactiveMovieService movieService
@@ -301,6 +307,18 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
 
         then:
         !articleRepository.existsById("graphs").block()
+    }
+
+    void "a new versioned related node with an assigned identifier is inserted reactively"() {
+        given:
+        def volume = new Volume("v1", "978-1")
+
+        when:
+        shelfRepository.save(new Shelf(null, "Graphs", [volume])).block()
+
+        then:
+        volume.version == 0L
+        operations.executeQuery("MATCH (v:Volume) RETURN v.version AS version", [:])*.asMap()*.get('version') == [0L]
     }
 
     void "a reactive insert of a versioned node with a taken identifier fails"() {

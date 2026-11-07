@@ -3,6 +3,9 @@ package io.micronaut.data.age
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.age.features.Account
 import io.micronaut.data.age.features.AccountRepository
+import io.micronaut.data.age.features.Shelf
+import io.micronaut.data.age.features.ShelfRepository
+import io.micronaut.data.age.features.Volume
 import io.micronaut.data.age.operations.AgeRepositoryOperations
 import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
@@ -21,6 +24,9 @@ class AgeIndexSpec extends Specification {
     AccountRepository accountRepository
 
     @Inject
+    ShelfRepository shelfRepository
+
+    @Inject
     AgeRepositoryOperations operations
 
     @Inject
@@ -28,6 +34,8 @@ class AgeIndexSpec extends Specification {
 
     void setup() {
         operations.executeQuery("MATCH (n:Account) DETACH DELETE n", [:])
+        operations.executeQuery("MATCH (n:Shelf) DETACH DELETE n", [:])
+        operations.executeQuery("MATCH (n:Volume) DETACH DELETE n", [:])
     }
 
     void "indexes are created on the vertex label tables at startup"() {
@@ -48,6 +56,43 @@ class AgeIndexSpec extends Specification {
         !indexes['account_location'].contains('UNIQUE')
         indexes['Account_handle_index'].contains('"handle"')
         indexes['Movie_title_unique'].startsWith('CREATE UNIQUE INDEX')
+
+        and: "a node reached through a relationship is indexed without a repository of its own"
+        indexes['Volume_code_unique'].startsWith('CREATE UNIQUE INDEX')
+        indexes['Volume_isbn_unique'].startsWith('CREATE UNIQUE INDEX')
+
+        and: "the version can be indexed"
+        indexes['Volume_version_index'].contains('"version"')
+
+        and: "generated names that only differ past the length of an identifier are told apart by a hash"
+        def composite = indexes.findAll { it.key.startsWith('Volume_firstAuthorFamilyName') }
+        composite.size() == 2
+        composite.values().count { it.contains('"publisherCountryCode"') } == 1
+        composite.values().count { it.contains('"publisherRegionCode"') } == 1
+    }
+
+    void "a new versioned node with an assigned identifier is inserted through a relationship"() {
+        given:
+        def volume = new Volume("v1", "978-1")
+
+        when:
+        shelfRepository.save(new Shelf(null, "Graphs", [volume]))
+
+        then:
+        volume.version == 0L
+        operations.executeQuery("MATCH (v:Volume) RETURN v.version AS version", [:])*.asMap()*.get('version') == [0L]
+    }
+
+    void "a unique index of a node without a repository rejects a duplicate"() {
+        given:
+        shelfRepository.save(new Shelf(null, "Graphs", [new Volume("v1", "978-1")]))
+
+        when:
+        shelfRepository.save(new Shelf(null, "Other", [new Volume("v2", "978-1")]))
+
+        then:
+        def e = thrown(DataAccessException)
+        e.message.contains("Volume_isbn_unique")
     }
 
     void "a unique index rejects a duplicate"() {

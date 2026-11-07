@@ -177,7 +177,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     private static final String SET = " SET ";
     private static final String DETACH_DELETE = " DETACH DELETE ";
     private static final String EXISTING = "existing";
-    private static final String LOCK_PROPERTY = "__lock";
+    private static final String LOCK_PROPERTY = GraphEntities.LOCK_PROPERTY;
     private static final String LINK_FROM = "a";
     private static final String LINK_TO = "b";
 

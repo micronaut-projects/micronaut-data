@@ -393,6 +393,9 @@ public final class GraphEntityMapper {
                 if (schemaless.declared().contains(key) || values.containsKey(key)) {
                     throw new DataAccessException("Dynamic attribute [" + key + "] of [" + entity.getSimpleName() + "] has the name of a declared property");
                 }
+                if (GraphEntities.LOCK_PROPERTY.equals(key)) {
+                    throw new DataAccessException("Dynamic attribute [" + key + "] of [" + entity.getSimpleName() + "] has a name reserved for locking a node during versioned writes");
+                }
                 // The key becomes a property name in the query text, so it must be one that can be quoted
                 values.put(requireName(key, "Dynamic attribute", entity), encode(value));
             });

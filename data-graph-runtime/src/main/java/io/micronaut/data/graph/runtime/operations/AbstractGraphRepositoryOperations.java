@@ -45,9 +45,12 @@ import io.micronaut.data.graph.runtime.GraphSession;
 import io.micronaut.data.graph.runtime.GraphValueEncoderRegistrar;
 import io.micronaut.data.graph.runtime.GraphValueEncoders;
 import io.micronaut.data.graph.runtime.serde.GraphSerde;
+import io.micronaut.data.model.Association;
 import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
@@ -838,18 +841,34 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     }
 
     /**
-     * Builds the statements that create the indexes and unique constraints of entities when they do not exist yet.
+     * Builds the statements that create the indexes and unique constraints of entities, and of the node entities their
+     * relationships reach, when they do not exist yet.
      *
      * @param entityTypes The entity types
      * @return The statements
      * @since 5.3.0
      */
     protected final List<String> buildCreateIndexStatements(Collection<Class<?>> entityTypes) {
-        List<String> statements = new ArrayList<>();
+        Map<String, PersistentEntity> entities = new LinkedHashMap<>();
         for (Class<?> entityType : entityTypes) {
-            statements.addAll(queryBuilder.buildCreateIndexStatements(getEntity(entityType)));
+            collectReachableNodes(getEntity(entityType), entities);
+        }
+        List<String> statements = new ArrayList<>();
+        for (PersistentEntity entity : entities.values()) {
+            statements.addAll(queryBuilder.buildCreateIndexStatements(entity));
         }
         return statements;
+    }
+
+    private void collectReachableNodes(PersistentEntity entity, Map<String, PersistentEntity> entities) {
+        if (entities.putIfAbsent(entity.getName(), entity) != null) {
+            return;
+        }
+        for (PersistentProperty property : entity.getPersistentProperties()) {
+            if (property instanceof Association association && GraphEntities.isRelationship(association)) {
+                collectReachableNodes(GraphEntities.targetNodeEntity(association), entities);
+            }
+        }
     }
 
     /**

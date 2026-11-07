@@ -269,6 +269,72 @@ interface RejectedRepository extends CrudRepository<Movie, String> {
         'right join'       | '@Join(value = "directors", type = Join.Type.RIGHT) List<Movie> findByReleased(Integer r);' | 'only support LEFT and INNER joins'
     }
 
+    @Unroll
+    void "test a #description stored as the lock property is rejected"() {
+        when:
+        buildRepository('test.LockedRepository', """
+@Node
+class Locked {
+    @Id
+    private String code;
+    $property
+    public String getCode() { return code; }
+    public void setCode(String code) { this.code = code; }
+    public Long getValue() { return value; }
+    public void setValue(Long value) { this.value = value; }
+}
+
+@TestGraphRepository
+interface LockedRepository extends CrudRepository<Locked, String> {
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('Property name [__lock] is reserved')
+
+        where:
+        description        | property
+        'property'         | '@MappedProperty("__lock") private Long value;'
+        'version property' | '@Version @MappedProperty("__lock") private Long value;'
+    }
+
+    void "test a relationship property is free to use the name of the lock property"() {
+        when:
+        buildRepository('test.LockedRepository', """
+@Node
+class Locked {
+    @Id
+    private String code;
+    @Relationship(type = "KNOWS")
+    private List<Knows> friends;
+    public String getCode() { return code; }
+    public void setCode(String code) { this.code = code; }
+    public List<Knows> getFriends() { return friends; }
+    public void setFriends(List<Knows> friends) { this.friends = friends; }
+}
+
+@RelationshipProperties
+class Knows {
+    @TargetNode
+    private Locked friend;
+    @MappedProperty("__lock")
+    private Long value;
+    public Locked getFriend() { return friend; }
+    public void setFriend(Locked friend) { this.friend = friend; }
+    public Long getValue() { return value; }
+    public void setValue(Long value) { this.value = value; }
+}
+
+@TestGraphRepository
+interface LockedRepository extends CrudRepository<Locked, String> {
+}
+""")
+
+        then:
+        noExceptionThrown()
+    }
+
     void "test array relationships are rejected"() {
         when:
         buildRepository('test.ArrayRepository', """

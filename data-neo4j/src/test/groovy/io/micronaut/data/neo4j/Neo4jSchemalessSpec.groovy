@@ -64,6 +64,21 @@ class Neo4jSchemalessSpec extends Specification implements TestPropertyProvider 
         name << ['name', 'species']
     }
 
+    void "a schemaless property cannot take the name that locks a versioned node"() {
+        given:
+        def pet = new Pet("Dino")
+        pet.set("__lock", "x")
+
+        when:
+        petRepository.save(pet)
+
+        then:
+        def e = thrown(io.micronaut.data.exceptions.DataAccessException)
+        e.message.contains("Dynamic attribute [__lock]")
+        e.message.contains("reserved")
+        petRepository.count() == 0
+    }
+
     void "a schemaless property or label that cannot be quoted is rejected"() {
         given:
         def pet = new Pet("Dino")
