@@ -30,6 +30,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -128,7 +129,7 @@ record RelationshipTarget(RuntimePersistentEntity<Object> associated,
 
     /**
      * The items after their target nodes were saved: a node is its saved instance, a relationship entity keeps its
-     * instance with the saved target node set.
+     * instance with the saved target node set. An instance held twice is one written instance.
      *
      * @param items        The related instances
      * @param savedTargets The saved target nodes, in the order of the items
@@ -140,10 +141,10 @@ record RelationshipTarget(RuntimePersistentEntity<Object> associated,
         }
         BeanProperty<Object, Object> property = targetAssociation.getProperty();
         List<Object> written = new ArrayList<>(items.size());
+        Map<Object, Object> byItem = new IdentityHashMap<>();
         for (int i = 0; i < items.size(); i++) {
-            Object item = items.get(i);
             Object savedTarget = savedTargets.get(i);
-            written.add(savedTarget == property.get(item) ? item : AbstractGraphRepositoryOperations.withProperty(property, item, savedTarget));
+            written.add(byItem.computeIfAbsent(items.get(i), item -> savedTarget == property.get(item) ? item : AbstractGraphRepositoryOperations.withProperty(property, item, savedTarget)));
         }
         return written;
     }

@@ -1362,7 +1362,8 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     }
 
     /**
-     * Populates the identifiers of written relationship entities that are not assigned by the database.
+     * Populates the identifiers of written relationship entities that are not assigned by the database. An instance
+     * held twice is given one identifier.
      *
      * @param target  The target of the association
      * @param written The written relationship entities, replaced in place
@@ -1373,7 +1374,8 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         if (identity == null || GraphEntities.isNativeId(identity)) {
             return written;
         }
-        written.replaceAll(item -> mapper.writeIdentity(target.associated(), item) == null ? populateRelationshipId(target.associated(), identity, item) : item);
+        Map<Object, Object> populated = new IdentityHashMap<>();
+        written.replaceAll(item -> populated.computeIfAbsent(item, i -> mapper.writeIdentity(target.associated(), i) == null ? populateRelationshipId(target.associated(), identity, i) : i));
         return written;
     }
 
@@ -2065,19 +2067,26 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         /**
          * Writes relationship entities with an identifier one at a time, as several of them may connect the same
          * nodes. One that was not saved, or that no longer connects these nodes, is a new one. Saving one that was
-         * saved finds it by its identifier from either end, even if it is undirected.
+         * saved finds it by its identifier from either end, even if it is undirected. An instance held twice is one
+         * relationship.
          *
          * @param written The written relationship entities, replaced in place with those holding their identifiers
          */
         private void runIdentifiedLinks(RuntimeAssociation<T> association, RelationshipTarget target, List<RelationshipTarget.LinkRow> rows, List<Object> written) {
+            Map<Object, Object> linked = new IdentityHashMap<>();
             for (RelationshipTarget.LinkRow row : rows) {
                 Object item = written.get(row.position());
-                Object savedId = mapper.writeIdentity(target.associated(), item);
-                Object id = savedId == null ? null : runLink(association, target.entity(), row.toId(), row.fromId(), row.properties(), target.identity(), RelationshipTarget.LinkMode.UPDATE, savedId);
-                if (id == null) {
-                    id = runLink(association, target.entity(), row.toId(), row.fromId(), row.properties(), target.identity(), RelationshipTarget.LinkMode.CREATE, null);
+                Object done = linked.get(item);
+                if (done == null) {
+                    Object savedId = mapper.writeIdentity(target.associated(), item);
+                    Object id = savedId == null ? null : runLink(association, target.entity(), row.toId(), row.fromId(), row.properties(), target.identity(), RelationshipTarget.LinkMode.UPDATE, savedId);
+                    if (id == null) {
+                        id = runLink(association, target.entity(), row.toId(), row.fromId(), row.properties(), target.identity(), RelationshipTarget.LinkMode.CREATE, null);
+                    }
+                    done = target.withRelationshipId(mapper, item, id);
+                    linked.put(item, done);
                 }
-                written.set(row.position(), target.withRelationshipId(mapper, item, id));
+                written.set(row.position(), done);
             }
         }
 

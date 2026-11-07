@@ -817,7 +817,8 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
         /**
          * Writes relationship entities with an identifier one at a time, as several of them may connect the same
          * nodes. One that was not saved, or that no longer connects these nodes, is a new one. Saving one that was
-         * saved finds it by its identifier from either end, even if it is undirected.
+         * saved finds it by its identifier from either end, even if it is undirected. An instance held twice is one
+         * relationship.
          *
          * @param written The written relationship entities, replaced in place with those holding their identifiers
          */
@@ -825,15 +826,25 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
                                               RelationshipTarget target,
                                               List<RelationshipTarget.LinkRow> rows,
                                               List<Object> written) {
+            Map<Object, Object> linked = new IdentityHashMap<>();
             return Flux.fromIterable(rows).concatMap(row -> {
                 Object item = written.get(row.position());
+                Object done = linked.get(item);
+                if (done != null) {
+                    written.set(row.position(), done);
+                    return Mono.empty();
+                }
                 Object savedId = mapper.writeIdentity(target.associated(), item);
                 Mono<Object> updated = savedId == null
                     ? Mono.empty()
                     : runLink(association, target.entity(), row.fromId(), row.toId(), row.properties(), target.identity(), RelationshipTarget.LinkMode.UPDATE, savedId);
                 return updated
                     .switchIfEmpty(Mono.defer(() -> runLink(association, target.entity(), row.fromId(), row.toId(), row.properties(), target.identity(), RelationshipTarget.LinkMode.CREATE, null)))
-                    .doOnNext(id -> written.set(row.position(), target.withRelationshipId(mapper, item, id)));
+                    .doOnNext(id -> {
+                        Object withId = target.withRelationshipId(mapper, item, id);
+                        linked.put(item, withId);
+                        written.set(row.position(), withId);
+                    });
             }).then();
         }
 
