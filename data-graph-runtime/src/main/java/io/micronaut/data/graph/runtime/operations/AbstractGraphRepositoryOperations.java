@@ -1339,7 +1339,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             if (savedTarget != target) {
                 item = withProperty(targetProperty, item, savedTarget);
             }
-            RuntimePersistentProperty<Object> relationshipIdentity = associated.getIdentity();
+            RuntimePersistentProperty<Object> relationshipIdentity = associated.hasIdentity() ? associated.getIdentity() : null;
             boolean nativeId = relationshipIdentity != null && GraphEntities.isNativeId(relationshipIdentity);
             if (relationshipIdentity != null && !nativeId && mapper.writeIdentity(associated, item) == null) {
                 item = populateRelationshipId(associated, relationshipIdentity, item);
@@ -1358,7 +1358,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
                 // that was saved finds it by its identifier from either end, even if it is undirected
                 relationshipId = runLink(association, targetEntity, toId, fromId, properties, relationshipIdentity, relationshipIdentity != null ? LinkMode.CREATE : LinkMode.MERGE, null);
             }
-            if (nativeId && relationshipId != null) {
+            if (relationshipIdentity != null && nativeId && relationshipId != null) {
                 BeanProperty<Object, Object> idProperty = relationshipIdentity.getProperty();
                 Object id = mapper.readValue(relationshipIdentity, relationshipId);
                 item = withProperty(idProperty, item, id);
