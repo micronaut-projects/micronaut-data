@@ -78,8 +78,9 @@ final class DefaultNeo4jReactorTransactionOperations extends AbstractReactorTran
         if (LOG.isDebugEnabled()) {
             LOG.debug("Committing reactive Neo4j transaction for definition: {}", transactionDefinition);
         }
-        return Mono.from(transaction.<Void>commit())
-            .doFinally(signal -> connection.setTransaction(null));
+        // Whatever continues after the commit on this connection no longer runs in the transaction
+        connection.setTransaction(null);
+        return transaction.commit();
     }
 
     @Override
@@ -93,7 +94,14 @@ final class DefaultNeo4jReactorTransactionOperations extends AbstractReactorTran
         if (LOG.isDebugEnabled()) {
             LOG.debug("Rolling back reactive Neo4j transaction for definition: {}", transactionDefinition);
         }
-        return Mono.from(transaction.<Void>rollback())
-            .doFinally(signal -> connection.setTransaction(null));
+        connection.setTransaction(null);
+        return transaction.rollback();
+    }
+
+    @Override
+    protected Publisher<Void> doCancel(DefaultReactiveTransactionStatus<Neo4jReactiveConnection> status) {
+        // A subscriber that cancelled did not see the work through, so it must not become durable
+        return Mono.from(rollbackTransaction(status.getConnectionStatus(), status.getTransactionDefinition()))
+            .doFinally(signal -> markCompleted(status));
     }
 }

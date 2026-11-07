@@ -423,6 +423,71 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
         movieRepository.count().block() == 0
     }
 
+    void "cancelling a reactive transaction rolls it back"() {
+        given:
+        def transaction = new AtomicReference<ReactiveTransactionStatus>()
+
+        when: "the subscriber cancels after a write"
+        def first = transactionOperations.withTransaction(TransactionDefinition.DEFAULT, status -> {
+            transaction.set(status)
+            return movieRepository.save(new Movie("Speed", "Get ready for rush hour", 1994))
+                .flux()
+                .concatWith(Flux.never())
+        }).take(1).blockLast()
+
+        then:
+        first.title == "Speed"
+        new PollingConditions(timeout: 10).eventually {
+            assert transaction.get().isCompleted()
+        }
+        movieRepository.count().block() == 0
+    }
+
+    void "cancelling a reactive transaction while a query streams rolls it back"() {
+        given:
+        def transaction = new AtomicReference<ReactiveTransactionStatus>()
+
+        when:
+        def first = transactionOperations.withTransaction(TransactionDefinition.DEFAULT, status -> {
+            transaction.set(status)
+            return movieRepository.save(new Movie("Speed", "Get ready for rush hour", 1994))
+                .thenMany(reactiveOperations.executeQuery("UNWIND range(1, 100000) AS i RETURN i", [:], Long))
+        }).take(1).blockLast()
+
+        then:
+        first == 1L
+        new PollingConditions(timeout: 10).eventually {
+            assert transaction.get().isCompleted()
+        }
+        movieRepository.count().block() == 0
+    }
+
+    void "a query after a commit on the same connection runs outside the transaction"() {
+        when:
+        def count = connectionOperations.withConnectionMono(ConnectionDefinition.DEFAULT, connection ->
+            transactionOperations.withTransaction(TransactionDefinition.DEFAULT, status ->
+                movieRepository.save(new Movie("Speed", "Get ready for rush hour", 1994))
+            ).then(movieRepository.count())
+        ).block()
+
+        then:
+        count == 1
+    }
+
+    void "a query after a rollback on the same connection runs outside the transaction"() {
+        when:
+        def count = connectionOperations.withConnectionMono(ConnectionDefinition.DEFAULT, connection ->
+            transactionOperations.withTransaction(TransactionDefinition.DEFAULT, status ->
+                movieRepository.save(new Movie("Speed", "Get ready for rush hour", 1994))
+                    .then(Mono.error(new IllegalStateException("Rolled back")))
+            ).then(movieRepository.count())
+                .onErrorResume(IllegalStateException, e -> movieRepository.count())
+        ).block()
+
+        then:
+        count == 0
+    }
+
     void "transactional reactive methods"() {
         when:
         def count = movieService.saveAndCount(new Movie("Speed", "Get ready for rush hour", 1994)).block()
