@@ -130,6 +130,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     private static final String INSERT_INTO = "INSERT INTO ";
     private static final String JDBC_REPO_ANNOTATION = "io.micronaut.data.jdbc.annotation.JdbcRepository";
     private static final String DIALECT_ATTR = "dialect";
+    private static final String SEARCH_INDEX_SUFFIX = "_search";
     private static final String REFERENCED_COLUMN_NAME = "referencedColumnName";
     // PostgreSQL's NAMEDATALEN limit is measured in server-encoding bytes, not Java characters.
     // The server encoding is not available to the builder, so non-ASCII code points use the
@@ -1073,7 +1074,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
         String indexName = entity.getAnnotationMetadata().stringValue(Searchable.class, "name")
             .filter(StringUtils::isNotEmpty)
-            .orElseGet(() -> "idx_" + prepareNames(getUnescapedTableName(entity)) + "_search");
+            .orElseGet(() -> "idx_" + prepareNames(getUnescapedTableName(entity)) + SEARCH_INDEX_SUFFIX);
         for (String ddl : textSearchDialect.buildJsonSearchIndex(escape ? quote(indexName) : indexName, tableName, escapedJsonColumn)) {
             addToCollectionIfNotContains(searchIndexStatements, ddl);
         }
@@ -1125,7 +1126,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     private String searchIndexName(PersistentEntity entity) {
         return entity.getAnnotationMetadata().stringValue(Searchable.class, "name")
             .filter(StringUtils::isNotEmpty)
-            .orElseGet(() -> "idx_" + prepareNames(getUnescapedTableName(entity)) + "_search");
+            .orElseGet(() -> "idx_" + prepareNames(getUnescapedTableName(entity)) + SEARCH_INDEX_SUFFIX);
     }
 
     private List<TextSearchDialect.SearchColumn> searchColumns(PersistentEntity entity, boolean escape) {
@@ -1162,7 +1163,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         String language = TextSearchSupport.resolveLanguage(entity);
         String indexName = entity.getAnnotationMetadata().stringValue(Searchable.class, "name")
             .filter(StringUtils::isNotEmpty)
-            .orElseGet(() -> "idx_" + prepareNames(table.name()) + "_search");
+            .orElseGet(() -> "idx_" + prepareNames(table.name()) + SEARCH_INDEX_SUFFIX);
         String languageColumn = languageColumn(entity, namingStrategy, escape);
         for (String ddl : textSearchDialect.buildSearchIndex(escape ? quote(indexName) : indexName, escapedTableName, columns, language, languageColumn)) {
             addToCollectionIfNotContains(createStatements, ddl);
