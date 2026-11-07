@@ -238,6 +238,11 @@ final class DefaultOracleGraphRepositoryOperations extends AbstractGraphReposito
     }
 
     @Override
+    protected String limitClause(StringBuilder query, Limit limit) {
+        return OracleGraphSql.limitClause(query, limit);
+    }
+
+    @Override
     public <T> @Nullable T findOne(Class<T> type, Object id) {
         throw new UnsupportedOperationException(DECLARE_METHOD);
     }

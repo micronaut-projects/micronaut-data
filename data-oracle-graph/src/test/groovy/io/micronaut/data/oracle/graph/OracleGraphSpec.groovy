@@ -2,7 +2,9 @@ package io.micronaut.data.oracle.graph
 
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
 import io.micronaut.data.exceptions.DataAccessException
+import io.micronaut.data.model.Limit
 import io.micronaut.data.model.Pageable
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.model.runtime.PagedQuery
 import io.micronaut.data.model.Sort
 import io.micronaut.data.oracle.graph.bank.Account
@@ -459,5 +461,15 @@ class OracleGraphSpec extends Specification {
         def e = thrown(DataAccessException)
         e.message.contains("needs a data source that uses the PGQL JDBC driver")
         e.message.contains("language = SQL_PGQ")
+    }
+
+    void "a PGQL criteria query takes the limit it renders for its own"() {
+        when: "the query reaches the driver check, not a rejection of its limit"
+        pgqlBankGraph.findAll({ root, cb -> cb.greaterThan(root.get("id"), 0L) } as PredicateSpecification<Account>, Limit.of(2, 1))
+
+        then:
+        def e = thrown(DataAccessException)
+        e.message.contains("needs a data source that uses the PGQL JDBC driver")
+        e.message.contains(" OFFSET 1 LIMIT 2")
     }
 }

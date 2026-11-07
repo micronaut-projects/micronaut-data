@@ -24,6 +24,7 @@ import io.micronaut.data.graph.tck.repositories.MovieSpecificationRepository
 import io.micronaut.data.graph.tck.repositories.PersonQueryRepository
 import io.micronaut.data.graph.tck.repositories.PersonRepository
 import io.micronaut.data.graph.tck.repositories.StepRepository
+import io.micronaut.data.model.Limit
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.repository.jpa.criteria.DeleteSpecification
@@ -944,6 +945,17 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         then:
         page.content*.title == ["Speed", "The Matrix"]
         page.totalSize == 3
+    }
+
+    @Requires({ instance.movieSpecificationRepository != null })
+    void "the Limit argument of a criteria specification is applied once"() {
+        given:
+        saveMovies()
+        def specs = movieSpecificationRepository
+
+        expect:
+        specs.findAll(releasedAfter(1990), Limit.of(2, 0)).size() == 2
+        specs.findAll(releasedAfter(1990), Limit.of(5, 2)).size() == 1
     }
 
     @Requires({ instance.movieSpecificationRepository != null && instance.supportsRelationshipFinders() })

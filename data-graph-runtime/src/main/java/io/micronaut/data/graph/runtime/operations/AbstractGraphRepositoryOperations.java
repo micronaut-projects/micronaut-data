@@ -25,7 +25,6 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.exceptions.DataAccessException;
-import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.exceptions.EntityExistsException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.exceptions.OptimisticLockException;
@@ -511,10 +510,21 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     private Limit unrenderedLimit(PreparedQuery<?, ?> preparedQuery, StringBuilder query) {
         Limit limit = preparedQuery.getQueryLimit();
         if (limit.isLimited() && !preparedQuery.isRawQuery()
-            && LiteralMasker.mask(query.toString()).contains(queryBuilder.buildLimitAndOffset(limit.maxResults(), limit.offset()))) {
+            && LiteralMasker.mask(query.toString()).contains(limitClause(query, limit))) {
             return Limit.UNLIMITED;
         }
         return limit;
+    }
+
+    /**
+     * The text of a limit in a query.
+     *
+     * @param query The query
+     * @param limit The limit
+     * @return The text the criteria runtime renders for the limit
+     */
+    protected String limitClause(StringBuilder query, Limit limit) {
+        return queryBuilder.buildLimitAndOffset(limit.maxResults(), limit.offset());
     }
 
     /**

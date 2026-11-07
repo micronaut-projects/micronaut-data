@@ -136,6 +136,21 @@ public final class OracleGraphSql {
         }
     }
 
+    /**
+     * The text of a limit in a query, in the syntax of its query language: the operations hold one query builder, while
+     * each repository has a query language.
+     *
+     * @param query The query
+     * @param limit The limit
+     * @return The text of the limit
+     */
+    public static String limitClause(StringBuilder query, Limit limit) {
+        boolean sqlPgq = GRAPH_TABLE.matcher(LiteralMasker.mask(query.toString(), true).toUpperCase(Locale.ENGLISH)).find();
+        StringBuilder clause = new StringBuilder();
+        appendLimit(clause, limit, sqlPgq);
+        return clause.toString();
+    }
+
     private static void appendOrderBy(StringBuilder query, RuntimePersistentEntity<?> entity, Sort sort, boolean sqlPgq) {
         StringBuilder orderBy = new StringBuilder(" ORDER BY ");
         Iterator<Sort.Order> iterator = sort.getOrderBy().iterator();
