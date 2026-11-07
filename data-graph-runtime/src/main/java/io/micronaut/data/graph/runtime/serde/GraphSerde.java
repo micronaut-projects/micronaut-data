@@ -65,7 +65,9 @@ public final class GraphSerde {
      * @param conversionService The conversion service for native values
      */
     public GraphSerde(SerdeRegistry serdeRegistry, DataConversionService conversionService) {
-        this.serdeRegistry = serdeRegistry;
+        // Serde caches the deserializer it builds at runtime for a type, with the property deserializers of the first
+        // context to ask for it. A registry of its own keeps those of graph reads apart from those of the application
+        this.serdeRegistry = serdeRegistry.cloneWithConfiguration(null, null, null);
         this.conversionService = conversionService;
     }
 
