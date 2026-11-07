@@ -161,6 +161,38 @@ class Neo4jSchemalessSpec extends Specification implements TestPropertyProvider 
         petRepository.findById("Dino").get().related.PLAYS_WITH.size() == 2
     }
 
+    void "a dynamic relationship to a node of an unmapped label survives load, modify and save"() {
+        given:
+        operations.executeQuery("CREATE (:Pet {name: 'Dino'})-[:OWNS]->(:Unmapped {name: 'bone'})", [:])
+
+        when:
+        def dino = petRepository.findById("Dino").get()
+
+        then:
+        dino.related.OWNS == [[name: "bone"]]
+
+        when:
+        dino.set('legs', 4)
+        def saved = petRepository.update(dino)
+
+        then:
+        saved.related.OWNS == [[name: "bone"]]
+        petRepository.findById("Dino").get().get('legs') == 4L
+        operations.executeQuery("MATCH (:Pet {name: 'Dino'})-[:OWNS]->(u:Unmapped) RETURN u.name", [:], String) == ["bone"]
+    }
+
+    void "a dynamic relationship to something that is not a node is rejected"() {
+        given:
+        def dino = new Pet("Dino")
+        dino.related = [OWNS: ["bone"]]
+
+        when:
+        petRepository.save(dino)
+
+        then:
+        thrown(RuntimeException)
+    }
+
     void "a dynamic relationship type that cannot be quoted is rejected"() {
         given:
         def dino = new Pet("Dino")

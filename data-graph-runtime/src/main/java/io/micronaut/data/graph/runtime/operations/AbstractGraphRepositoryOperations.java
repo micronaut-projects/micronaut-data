@@ -1307,6 +1307,11 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
                     if (target == null) {
                         continue;
                     }
+                    if (target instanceof Map<?, ?>) {
+                        // A node of a label no entity maps reads as its properties, and it is already linked
+                        savedTargets.add(target);
+                        continue;
+                    }
                     RuntimePersistentEntity<Object> targetEntity = (RuntimePersistentEntity<Object>) AbstractGraphRepositoryOperations.this.getEntity(target.getClass());
                     Object savedTarget = persister.save(targetEntity, target, persister.isNew(targetEntity, target));
                     changed |= savedTarget != target;

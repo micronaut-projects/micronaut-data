@@ -188,6 +188,26 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
         found.related.TAGGED[0] instanceof Tag
     }
 
+    void "a dynamic relationship to a node of an unmapped label survives load, modify and save reactively"() {
+        given:
+        operations.executeQuery("CREATE (:Pet {name: 'Dino'})-[:OWNS]->(:Unmapped {name: 'bone'})", [:])
+
+        when:
+        def dino = petRepository.findById("Dino").block()
+
+        then:
+        dino.related.OWNS == [[name: "bone"]]
+
+        when:
+        dino.set('legs', 4)
+        def saved = petRepository.update(dino).block()
+
+        then:
+        saved.related.OWNS == [[name: "bone"]]
+        petRepository.findById("Dino").block().get('legs') == 4L
+        operations.executeQuery("MATCH (:Pet {name: 'Dino'})-[:OWNS]->(u:Unmapped) RETURN u.name", [:], String) == ["bone"]
+    }
+
     void "finding one reactively fails when there are several rows"() {
         given:
         movieRepository.saveAll([

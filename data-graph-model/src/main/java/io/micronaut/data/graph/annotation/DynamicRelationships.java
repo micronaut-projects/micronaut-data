@@ -27,7 +27,8 @@ import java.lang.annotation.Target;
  *
  * <p>Saving creates an outgoing relationship of each key's type to each node in its list, saving the nodes first.
  * Reading collects every outgoing relationship whose type no {@link Relationship} property declares, mapping each node
- * to the entity of its label. Saving does not remove relationships missing from the map.</p>
+ * to the entity of its label, or to a map of its properties if no entity maps its label. Saving does not remove
+ * relationships missing from the map, and leaves those to the nodes read as maps as they are.</p>
  *
  * <p>Supported by Neo4j.</p>
  *

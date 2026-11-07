@@ -588,6 +588,10 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
         }
 
         private Mono<Object> linkDynamic(String type, @Nullable Object fromId, Object target) {
+            if (target instanceof Map<?, ?>) {
+                // A node of a label no entity maps reads as its properties, and it is already linked
+                return Mono.just(target);
+            }
             RuntimePersistentEntity<Object> targetEntity = (RuntimePersistentEntity<Object>) operations.getEntity(target.getClass());
             return persister.saveRelated(targetEntity, target).flatMap(savedTarget -> {
                 AbstractGraphRepositoryOperations.GraphQuery query = operations.planDynamicLink(persistentEntity, targetEntity, type, fromId,
