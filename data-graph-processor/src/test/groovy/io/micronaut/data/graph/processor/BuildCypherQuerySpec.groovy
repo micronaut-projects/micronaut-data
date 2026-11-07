@@ -72,6 +72,8 @@ interface MovieRepository extends CrudRepository<Movie, String> {
     int voteSubquery(String title);
     List<Movie> findByRoles(Role role);
     List<Movie> findByRolesPerson(Person person);
+    @Join(value = "directors", type = Join.Type.INNER)
+    Page<Movie> findByDescriptionContains(String description, Pageable pageable);
 }
 """)
         personRepository = buildRepository('test.PersonRepository', """
@@ -90,6 +92,16 @@ interface PersonRepository extends CrudRepository<Person, String> {
     List<Person> findByBornLessThan(Integer born);
     @Join(value = "mentor", type = Join.Type.INNER_FETCH)
     List<Person> findByBorn(Integer born);
+    @Join(value = "mentor", type = Join.Type.INNER)
+    Page<Person> findByBornGreaterThanEquals(Integer born, Pageable pageable);
+    @Join(value = "mentor", type = Join.Type.INNER_FETCH)
+    Page<Person> findByBornLessThanEquals(Integer born, Pageable pageable);
+    @Join(value = "mentor", type = Join.Type.LEFT)
+    Page<Person> findByNameStartsWith(String name, Pageable pageable);
+    @Join(value = "mentor", type = Join.Type.INNER)
+    List<String> findNameByBornIn(List<Integer> born);
+    @Join(value = "mentor", type = Join.Type.INNER)
+    long countByBornGreaterThan(Integer born);
 }
 """)
     }
@@ -143,6 +155,37 @@ interface PersonRepository extends CrudRepository<Person, String> {
         expect:
         getQuery(method) == 'MATCH (n:Movie) WHERE n.released > $p0 RETURN n'
         method.annotationMetadata.stringValue(Query, 'countQuery').get() == 'MATCH (n:Movie) WHERE n.released > $p0 RETURN count(n) AS result'
+    }
+
+    @Unroll
+    void "test the page and its total of #method agree on the join"() {
+        given:
+        ExecutableMethod<?, ?> m = findMethod(personRepository, method, 2)
+
+        expect:
+        getQuery(m) == query
+        m.annotationMetadata.stringValue(Query, 'countQuery').get() == countQuery
+
+        where:
+        method                        | query                                                                                                                                  | countQuery
+        'findByBornGreaterThanEquals' | 'MATCH (n:Person:Actor), (n)-[:FOLLOWS]->(a0:Person:Actor) WHERE n.born >= $p0 WITH DISTINCT n RETURN n'                               | 'MATCH (n:Person:Actor), (n)-[:FOLLOWS]->(a0:Person:Actor) WHERE n.born >= $p0 WITH DISTINCT n RETURN count(DISTINCT n) AS result'
+        'findByBornLessThanEquals'    | 'MATCH (n:Person:Actor) WHERE n.born <= $p0 MATCH (n)-[:FOLLOWS]->(j0:Person:Actor) WITH n, collect(j0) AS j_mentor RETURN n, j_mentor' | 'MATCH (n:Person:Actor), (n)-[:FOLLOWS]->(a0:Person:Actor) WHERE n.born <= $p0 WITH DISTINCT n RETURN count(DISTINCT n) AS result'
+        'findByNameStartsWith'        | 'MATCH (n:Person:Actor) WHERE n.name STARTS WITH $p0 RETURN n'                                                                         | 'MATCH (n:Person:Actor) WHERE n.name STARTS WITH $p0 RETURN count(DISTINCT n) AS result'
+    }
+
+    void "test the page of a to-many inner join and its total agree on the join"() {
+        given:
+        ExecutableMethod<?, ?> m = findMethod(movieRepository, 'findByDescriptionContains', 2)
+
+        expect:
+        getQuery(m) == 'MATCH (n:Movie), (n)<-[:DIRECTED]-(a0:Person:Actor) WHERE n.tagline CONTAINS $p0 WITH DISTINCT n RETURN n'
+        m.annotationMetadata.stringValue(Query, 'countQuery').get() == 'MATCH (n:Movie), (n)<-[:DIRECTED]-(a0:Person:Actor) WHERE n.tagline CONTAINS $p0 WITH DISTINCT n RETURN count(DISTINCT n) AS result'
+    }
+
+    void "test a scalar result keeps an inner join"() {
+        expect:
+        getQuery(findMethod(personRepository, 'findNameByBornIn', 1)) == 'MATCH (n:Person:Actor), (n)-[:FOLLOWS]->(a0:Person:Actor) WHERE n.born IN $p0 WITH DISTINCT n RETURN n.name AS name'
+        getQuery(findMethod(personRepository, 'countByBornGreaterThan', 1)) == 'MATCH (n:Person:Actor), (n)-[:FOLLOWS]->(a0:Person:Actor) WHERE n.born > $p0 WITH DISTINCT n RETURN count(DISTINCT n) AS result'
     }
 
     void "test a relationship entity criterion binds the identifier of what it compares"() {
