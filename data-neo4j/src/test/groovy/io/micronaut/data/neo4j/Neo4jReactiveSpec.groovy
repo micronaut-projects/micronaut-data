@@ -15,16 +15,19 @@ import io.micronaut.data.model.runtime.PagedQuery
 import io.micronaut.data.neo4j.features.Assignment
 import io.micronaut.data.neo4j.features.Audit
 import io.micronaut.data.neo4j.features.Engineer
+import io.micronaut.data.neo4j.features.Ensemble
 import io.micronaut.data.neo4j.features.Pet
 import io.micronaut.data.neo4j.features.Project
 import io.micronaut.data.neo4j.features.ReactiveColleagueRepository
 import io.micronaut.data.neo4j.features.ReactiveEngineerRepository
+import io.micronaut.data.neo4j.features.ReactiveEnsembleRepository
 import io.micronaut.data.neo4j.features.ReactiveMovieRepository
 import io.micronaut.data.neo4j.features.ReactiveMovieService
 import io.micronaut.data.neo4j.features.Player
 import io.micronaut.data.neo4j.features.ReactivePetRepository
 import io.micronaut.data.neo4j.features.ReactiveTeamRepository
 import io.micronaut.data.neo4j.features.Review
+import io.micronaut.data.neo4j.features.Seat
 import io.micronaut.data.neo4j.features.Tag
 import io.micronaut.data.neo4j.features.Team
 import io.micronaut.data.neo4j.operations.Neo4jReactorRepositoryOperations
@@ -57,6 +60,9 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
 
     @Inject
     ReactiveEngineerRepository engineerRepository
+
+    @Inject
+    ReactiveEnsembleRepository ensembleRepository
 
     @Inject
     ReactiveColleagueRepository colleagueRepository
@@ -263,6 +269,30 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
         movieRepository.findFirstByReleased(1994).block().released == 1994
         movieRepository.findByTitle("Speed").block().released == 1994
         movieRepository.findByReleased(1950).blockOptional().empty
+    }
+
+    void "a relationship entity without an identifier is written, read and written again reactively"() {
+        given:
+        def ensemble = new Ensemble("Quartet", [new Seat(1, new Project("first violin"))])
+
+        when:
+        def saved = ensembleRepository.save(ensemble).block()
+
+        then:
+        saved.seats() == [new Seat(1, new Project("first violin"))]
+        operations.executeQuery('MATCH (:Ensemble {name: "Quartet"})-[s:SEATS]->(:Project {name: "first violin"}) RETURN s.chair', [:], Long) == [1L]
+
+        when:
+        def found = ensembleRepository.findByName("Quartet").block()
+
+        then:
+        found.seats() == [new Seat(1, new Project("first violin"))]
+
+        when: "the same two nodes are the same relationship, as there is no identifier to tell them apart"
+        ensembleRepository.update(new Ensemble("Quartet", [new Seat(2, new Project("first violin"))])).block()
+
+        then:
+        operations.executeQuery('MATCH (:Ensemble {name: "Quartet"})-[s:SEATS]->(:Project) RETURN s.chair', [:], Long) == [2L]
     }
 
     void "replacing a single valued relationship entity reactively leaves one relationship"() {
