@@ -108,6 +108,62 @@ class OracleGraphR2dbcSpec extends Specification {
         walletGraph.findById(4L).block() == null
     }
 
+    void "insert returning runs as SQL through R2DBC"() {
+        when:
+        def inserted = walletGraph.insertReturning(new Wallet(7L, "Grace", [])).block()
+
+        then:
+        inserted.owner() == "Grace"
+        walletGraph.findById(7L).block().owner() == "Grace"
+    }
+
+    void "update returning runs as SQL through R2DBC"() {
+        when:
+        def updated = walletGraph.updateReturning(new Wallet(2L, "Bob Smith", [])).block()
+
+        then:
+        updated.owner() == "Bob Smith"
+        walletGraph.findById(2L).block().owner() == "Bob Smith"
+    }
+
+    void "update returning a property runs as SQL through R2DBC"() {
+        expect:
+        walletGraph.updateReturningOwner(new Wallet(2L, "Bob Jones", [])).block() == "Bob Jones"
+        walletGraph.updateReturningOwner(2L, "Bob Brown").block() == "Bob Brown"
+        walletGraph.findById(2L).block().owner() == "Bob Brown"
+    }
+
+    void "delete returning runs as SQL through R2DBC"() {
+        given:
+        walletGraph.save(new Wallet(7L, "Grace", [])).block()
+        walletGraph.save(new Wallet(8L, "Heidi", [])).block()
+
+        when:
+        def deleted = walletGraph.deleteReturning(new Wallet(7L, "Grace", [])).block()
+
+        then:
+        deleted.owner() == "Grace"
+        walletGraph.findById(7L).block() == null
+
+        expect:
+        walletGraph.deleteReturningOwner(new Wallet(8L, "Heidi", [])).block() == "Heidi"
+        walletGraph.findById(8L).block() == null
+    }
+
+    void "delete returning a batch runs as SQL through R2DBC"() {
+        given:
+        walletGraph.save(new Wallet(8L, "Heidi", [])).block()
+        walletGraph.save(new Wallet(9L, "Ivan", [])).block()
+
+        when:
+        def batch = walletGraph.deleteReturning([new Wallet(8L, "Heidi", []), new Wallet(9L, "Ivan", [])]).collectList().block()
+
+        then:
+        batch*.owner() == ["Heidi", "Ivan"]
+        walletGraph.findById(8L).block() == null
+        walletGraph.findById(9L).block() == null
+    }
+
     void "the stereotype fails the build on blocking methods"() {
         expect:
         OracleGraphR2dbcRepository.getAnnotation(GraphRepository).nonBlocking()
