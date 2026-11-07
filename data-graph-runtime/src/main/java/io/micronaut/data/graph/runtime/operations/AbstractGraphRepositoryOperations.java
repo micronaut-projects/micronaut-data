@@ -1304,6 +1304,26 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     }
 
     /**
+     * Whether two instances are the same node. Their conflict is not seen by batched queries, as an insert only
+     * looks for nodes that already exist and a version check passes for both, so they are saved one at a time.
+     *
+     * @param entity    The entity
+     * @param instances The distinct instances
+     * @param <T>       The entity type
+     * @return Whether an identifier is repeated
+     */
+    final <T> boolean repeatsIdentifier(RuntimePersistentEntity<T> entity, List<T> instances) {
+        Set<Object> identifiers = new HashSet<>();
+        for (T instance : instances) {
+            Object id = mapper.writeIdentity(entity, instance);
+            if (id != null && !identifiers.add(id)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * A query that writes a node.
      *
      * @param query           The query
@@ -1397,26 +1417,6 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             String name = binding.getName();
             return name == null ? CypherQueryBuilder.PARAMETER_PREFIX + index : name;
         }
-    }
-
-    /**
-     * Whether two instances are the same node. Their conflict is not seen by batched queries, as an insert only
-     * looks for nodes that already exist and a version check passes for both, so they are saved one at a time.
-     *
-     * @param entity    The entity
-     * @param instances The distinct instances
-     * @param <T>       The entity type
-     * @return Whether an identifier is repeated
-     */
-    final <T> boolean repeatsIdentifier(RuntimePersistentEntity<T> entity, List<T> instances) {
-        Set<Object> identifiers = new HashSet<>();
-        for (T instance : instances) {
-            Object id = mapper.writeIdentity(entity, instance);
-            if (id != null && !identifiers.add(id)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**

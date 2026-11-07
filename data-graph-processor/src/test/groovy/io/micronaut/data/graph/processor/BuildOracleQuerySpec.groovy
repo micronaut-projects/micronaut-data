@@ -423,7 +423,7 @@ class Cast {
 }
 
 @TestOracleRepository
-@PropertyGraph("movies")
+@PropertyGraph(value = "movies", language = PropertyGraph.QueryLanguage.PGQL)
 interface CastRepository extends GenericRepository<Cast, String> {
     List<Cast> findByCameosIsNotNull();
 }
