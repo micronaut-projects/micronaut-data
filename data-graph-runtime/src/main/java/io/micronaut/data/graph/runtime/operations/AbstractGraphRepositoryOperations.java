@@ -66,6 +66,7 @@ import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
+import io.micronaut.data.runtime.event.DefaultEntityEventContext;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
 import io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations;
@@ -896,8 +897,8 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     }
 
     /**
-     * How a relationship is written. Relationship entities with a database-assigned identifier can be told apart, so
-     * two of them may connect the same nodes. Any other relationship is identified by its nodes and type.
+     * How a relationship is written. Relationship entities with an identifier can be told apart, so two of them may
+     * connect the same nodes. Any other relationship is identified by its nodes and type.
      */
     private enum LinkMode {
         MERGE, CREATE, UPDATE
@@ -1017,23 +1018,44 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             if (savedTarget != target) {
                 item = withProperty(targetProperty, item, savedTarget);
             }
-            Map<String, Object> properties = mapper.writeProperties(associated, item);
             RuntimePersistentProperty<Object> relationshipIdentity = associated.getIdentity();
-            Object toId = mapper.writeIdentity(targetEntity, savedTarget);
-            unlinkOthers(association, targetEntity, fromId, toId);
             boolean nativeId = relationshipIdentity != null && GraphEntities.isNativeId(relationshipIdentity);
-            Object savedId = nativeId ? mapper.writeIdentity(associated, item) : null;
+            if (relationshipIdentity != null && !nativeId && mapper.writeIdentity(associated, item) == null) {
+                item = populateRelationshipId(associated, relationshipIdentity, item);
+            }
+            Map<String, Object> properties = mapper.writeProperties(associated, item);
+            Object toId = mapper.writeIdentity(targetEntity, savedTarget);
+            Object savedId = mapper.writeIdentity(associated, item);
+            if (relationshipIdentity == null) {
+                unlinkOthers(association, targetEntity, fromId, toId);
+            } else {
+                unlinkOtherRelationships(association, targetEntity, relationshipIdentity, fromId, toId, savedId);
+            }
             Object relationshipId = savedId == null ? null : runLink(association, targetEntity, toId, fromId, properties, relationshipIdentity, LinkMode.UPDATE, savedId);
             if (relationshipId == null) {
                 // A relationship that was not saved, or that no longer connects these nodes, is a new one. An
                 // undirected one is matched in either direction, so saving it from its other end finds it
-                boolean create = nativeId && GraphEntities.direction(association) != Direction.UNDIRECTED;
+                boolean create = relationshipIdentity != null && GraphEntities.direction(association) != Direction.UNDIRECTED;
                 relationshipId = runLink(association, targetEntity, toId, fromId, properties, relationshipIdentity, create ? LinkMode.CREATE : LinkMode.MERGE, null);
             }
             if (nativeId && relationshipId != null) {
                 BeanProperty<Object, Object> idProperty = relationshipIdentity.getProperty();
                 Object id = mapper.readValue(relationshipIdentity, relationshipId);
                 item = withProperty(idProperty, item, id);
+            }
+            return item;
+        }
+
+        /**
+         * Relationship entities are not persisted on their own, so nothing else populates an identifier that is not
+         * assigned by the database.
+         */
+        private Object populateRelationshipId(RuntimePersistentEntity<Object> associated, RuntimePersistentProperty<Object> identity, Object relationship) {
+            DefaultEntityEventContext<Object> event = new DefaultEntityEventContext<>(associated, relationship);
+            entityEventRegistry.prePersist(event);
+            Object item = event.getEntity();
+            if (mapper.writeIdentity(associated, item) == null) {
+                throw new DataAccessException("Relationship [" + associated.getSimpleName() + "] needs its identifier [" + identity.getName() + "] assigned before it is saved");
             }
             return item;
         }
@@ -1050,6 +1072,28 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             String key = "unlink:" + persistentEntity.getName() + ":" + association.getName();
             String query = queryCache.computeIfAbsent(key, k -> queryBuilder.buildUnlinkOthersQuery(association, persistentEntity, target));
             persister.run(query, Map.of(CypherQueryBuilder.LINK_FROM_PARAMETER, fromId, CypherQueryBuilder.LINK_TO_PARAMETER, toId)).records();
+        }
+
+        /**
+         * A relationship entity with an identifier can be replaced by another one to the same node, so all that may
+         * stay is the relationship to the given node with the given identifier. Nothing stays of a relationship that
+         * has no identifier yet.
+         */
+        private void unlinkOtherRelationships(RuntimeAssociation<T> association,
+                                              RuntimePersistentEntity<?> target,
+                                              RuntimePersistentProperty<?> relationshipIdentity,
+                                              @Nullable Object fromId,
+                                              @Nullable Object toId,
+                                              @Nullable Object relationshipId) {
+            if (created || !association.getKind().isSingleEnded() || fromId == null || toId == null) {
+                return;
+            }
+            String key = "unlinkRelationships:" + persistentEntity.getName() + ":" + association.getName() + ":" + (relationshipId != null);
+            String query = queryCache.computeIfAbsent(key, k -> queryBuilder.buildUnlinkOtherRelationshipsQuery(association, persistentEntity, target, relationshipId != null ? relationshipIdentity : null));
+            Map<String, Object> parameters = relationshipId == null
+                ? Map.of(CypherQueryBuilder.LINK_FROM_PARAMETER, fromId)
+                : Map.of(CypherQueryBuilder.LINK_FROM_PARAMETER, fromId, CypherQueryBuilder.LINK_TO_PARAMETER, toId, CypherQueryBuilder.ID_PARAMETER, relationshipId);
+            persister.run(query, parameters).records();
         }
 
         private @Nullable Object runLink(RuntimeAssociation<T> association,

@@ -118,6 +118,27 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         movieRepository.findByRolesPersonName("Carrie-Anne Moss")*.title == ["The Matrix"]
     }
 
+    void "find by a relationship entity compares the relationship, and by its target node compares the node"() {
+        given:
+        def keanu = new Person("Keanu Reeves", 1964)
+        def carrie = new Person("Carrie-Anne Moss", 1967)
+        def matrix = new Movie("The Matrix", "Welcome to the Real World", 1999)
+        matrix.roles = [new Role(["Neo"], keanu), new Role(["Trinity"], carrie)]
+        def speed = new Movie("Speed", "Get ready for rush hour", 1994)
+        speed.roles = [new Role(["Jack Traven"], keanu)]
+        matrix = movieRepository.save(matrix)
+        speed = movieRepository.save(speed)
+
+        expect: "only the movie that holds the role, not every movie of the same person"
+        speed.roles[0].id != null
+        movieRepository.findByRoles(speed.roles[0])*.title == ["Speed"]
+        movieRepository.findByRoles(matrix.roles[0])*.title == ["The Matrix"]
+
+        and:
+        movieRepository.findByRolesPerson(keanu)*.title.sort() == ["Speed", "The Matrix"]
+        movieRepository.findByRolesPerson(carrie)*.title == ["The Matrix"]
+    }
+
     void "fetch relationships and relationship properties with joins"() {
         given:
         saveMovies()
