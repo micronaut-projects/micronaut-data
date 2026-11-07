@@ -82,14 +82,14 @@ class CypherCriteriaQuerySpec extends Specification {
         'null precedence'      | { q, r -> q.orderBy(new DefaultOrder(r.get("name"), true, false, Nulls.FIRST), new DefaultOrder(r.get("age"), false, false, Nulls.LAST)) } | 'MATCH (n:Person) RETURN n ORDER BY CASE WHEN n.name IS NULL THEN 0 ELSE 1 END, n.name ASC, CASE WHEN n.age IS NULL THEN 1 ELSE 0 END, n.age DESC'
         'offset and limit'     | { q, r -> q.offset(5).limit(10) }                                                                                                          | 'MATCH (n:Person) RETURN n SKIP 5 LIMIT 10'
         'empty conjunction'    | { q, r -> q.where(cb.and()) }                                                                                                              | 'MATCH (n:Person) RETURN n'
-        'related'              | { q, r -> q.where(GraphCriteria.related(r, "movies")) }                                                                                    | 'MATCH (n:Person) WHERE (n)-[:ACTED_IN]->() RETURN n'
-        'not related'          | { q, r -> q.where(cb.not(GraphCriteria.related(r, "movies"))) }                                                                            | 'MATCH (n:Person) WHERE NOT ((n)-[:ACTED_IN]->()) RETURN n'
+        'related'              | { q, r -> q.where(GraphCriteria.related(r, "movies")) }                                                                                    | 'MATCH (n:Person) WHERE (n)-[:ACTED_IN]->(:Movie) RETURN n'
+        'not related'          | { q, r -> q.where(cb.not(GraphCriteria.related(r, "movies"))) }                                                                            | 'MATCH (n:Person) WHERE NOT ((n)-[:ACTED_IN]->(:Movie)) RETURN n'
         'related to'           | { q, r -> q.where(GraphCriteria.relatedTo(r, "movies", cb.literal("Matrix"))) }                                                            | 'MATCH (n:Person) WHERE (n)-[:ACTED_IN]->(:Movie {title: $p0}) RETURN n'
-        'connected'            | { q, r -> q.where(GraphCriteria.connected(r, "movies", cb.literal("Matrix"), 3)) }                                                         | 'MATCH (n:Person) WHERE (n)-[:ACTED_IN*1..3]->(:Movie {title: $p0}) RETURN n'
-        'connected by any'     | { q, r -> q.where(GraphCriteria.connected(r, Person, cb.literal(42L), 2)) }                                                               | 'MATCH (n:Person) WHERE EXISTS { MATCH (n)-[*1..2]-(m0:Person) WHERE id(m0) = $p0 } RETURN n'
-        'connected to entity'  | { q, r -> q.where(GraphCriteria.connected(r, Movie, cb.literal("Matrix"), 2)) }                                                          | 'MATCH (n:Person) WHERE (n)-[*1..2]-(:Movie {title: $p0}) RETURN n'
+        'connected'            | { q, r -> q.where(GraphCriteria.connected(r, "movies", cb.literal("Matrix"), 3)) }                                                         | 'MATCH (n:Person) WHERE (n)-[:ACTED_IN*1..$__pathDepth3]->(:Movie {title: $p0}) RETURN n'
+        'connected by any'     | { q, r -> q.where(GraphCriteria.connected(r, Person, cb.literal(42L), 2)) }                                                               | 'MATCH (n:Person) WHERE EXISTS { MATCH (n)-[*1..$__pathDepth2]-(m0:Person) WHERE id(m0) = $p0 } RETURN n'
+        'connected to entity'  | { q, r -> q.where(GraphCriteria.connected(r, Movie, cb.literal("Matrix"), 2)) }                                                          | 'MATCH (n:Person) WHERE (n)-[*1..$__pathDepth2]-(:Movie {title: $p0}) RETURN n'
         'connected by any once'| { q, r -> q.where(GraphCriteria.connected(r, Movie, cb.literal("Matrix"), 1)) }                                                          | 'MATCH (n:Person) WHERE (n)-[]-(:Movie {title: $p0}) RETURN n'
-        'related and property' | { q, r -> q.where(cb.and(GraphCriteria.related(r, "movies"), cb.equal(r.get("name"), "Keanu"))) }                                        | 'MATCH (n:Person) WHERE ((n)-[:ACTED_IN]->() AND n.name = $p0) RETURN n'
+        'related and property' | { q, r -> q.where(cb.and(GraphCriteria.related(r, "movies"), cb.equal(r.get("name"), "Keanu"))) }                                        | 'MATCH (n:Person) WHERE ((n)-[:ACTED_IN]->(:Movie) AND n.name = $p0) RETURN n'
         'dynamic property'     | { q, r -> q.where(cb.isTrue(GraphCriteria.dynamic(r, "goesInPatch", Boolean))) }                                                           | 'MATCH (n:Person) WHERE n.goesInPatch = true RETURN n'
         'dynamic comparison'   | { q, r -> q.where(cb.greaterThan(GraphCriteria.dynamic(r, "legs", Integer), 2)) }                                                          | 'MATCH (n:Person) WHERE n.legs > $p0 RETURN n'
         'dynamic selection'    | { q, r -> q.select(GraphCriteria.dynamic(r, "nick name", String)) }                                                                        | 'MATCH (n:Person) RETURN n.`nick name` AS `nick name`'
@@ -105,6 +105,10 @@ class CypherCriteriaQuerySpec extends Specification {
         'boolean property'     | { q, r -> q.where(cb.and(r.get("active"), cb.equal(r.get("name"), "a"))) }                                                                 | 'MATCH (n:Person) WHERE (n.active = true AND n.name = $p0) RETURN n'
         'id equals'            | { q, r -> q.where(cb.equal(r.id(), 1L)) }                                                                                                  | 'MATCH (n:Person) WHERE id(n) = $p0 RETURN n'
         'association equals'   | { q, r -> q.where(cb.equal(r.get("movies"), "Matrix")) }                                                                                   | 'MATCH (n:Person), (n)-[:ACTED_IN]->(a0:Movie) WHERE a0.title = $p0 WITH DISTINCT n RETURN n'
+        'inner join projection' | { q, r -> r.join("movies", Join.Type.INNER); q.select(r.get("name")) }                                                                      | 'MATCH (n:Person), (n)-[:ACTED_IN]->(a0:Movie) WITH DISTINCT n RETURN n.name AS name'
+        'inner join count'     | { q, r -> r.join("movies", Join.Type.INNER); q.select(cb.count(r)) }                                                                        | 'MATCH (n:Person), (n)-[:ACTED_IN]->(a0:Movie) WITH DISTINCT n RETURN count(n) AS result'
+        'inner join sum'       | { q, r -> r.join("movies", Join.Type.INNER); q.select(cb.sum(r.get("age"))) }                                                               | 'MATCH (n:Person), (n)-[:ACTED_IN]->(a0:Movie) WITH DISTINCT n RETURN sum(n.age) AS result'
+        'left join count'      | { q, r -> r.join("movies", Join.Type.LEFT); q.select(cb.count(r)) }                                                                         | 'MATCH (n:Person) RETURN count(n) AS result'
         'fetch join'           | { q, r -> r.join("movies", Join.Type.FETCH); q.select(r) }                                                                                 | 'MATCH (n:Person) OPTIONAL MATCH (n)-[:ACTED_IN]->(j0:Movie) WITH n, collect(j0) AS j_movies RETURN n, j_movies'
     }
 
@@ -353,8 +357,10 @@ class CypherCriteriaQuerySpec extends Specification {
             'CREATE INDEX Note_text_index IF NOT EXISTS FOR (n:Note) ON (n.text)'
         ]
         new AgeCypherQueryBuilder().buildCreateIndexStatements(note).drop(1) == [
-            'CREATE UNIQUE INDEX IF NOT EXISTS "Note_code_unique" ON "$__graph"."Note" (ag_catalog.agtype_access_operator(properties, \'"code"\'::agtype))',
-            'CREATE INDEX IF NOT EXISTS "Note_text_index" ON "$__graph"."Note" (ag_catalog.agtype_access_operator(properties, \'"text"\'::agtype))'
+            'DO $do$ BEGIN BEGIN CREATE UNIQUE INDEX IF NOT EXISTS "Note_code_unique" ON "$__graph"."Note" (ag_catalog.agtype_access_operator(properties, \'"code"\'::agtype));'
+                + ' EXCEPTION WHEN OTHERS THEN IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_indexes WHERE schemaname = \'$__graph\' AND indexname = \'Note_code_unique\') THEN RAISE; END IF; END; END $do$',
+            'DO $do$ BEGIN BEGIN CREATE INDEX IF NOT EXISTS "Note_text_index" ON "$__graph"."Note" (ag_catalog.agtype_access_operator(properties, \'"text"\'::agtype));'
+                + ' EXCEPTION WHEN OTHERS THEN IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_indexes WHERE schemaname = \'$__graph\' AND indexname = \'Note_text_index\') THEN RAISE; END IF; END; END $do$'
         ]
         new AgeCypherQueryBuilder().buildCreateIndexStatements(note)[0].contains('create_vlabel(\'$__graph\', \'Note\')')
 
@@ -424,7 +430,7 @@ class CypherCriteriaQuerySpec extends Specification {
 
         where:
         description  | definition                                                                         | fragment
-        'related'    | { q, r -> q.where(GraphCriteria.related(r, "movies")) }                           | 'WHERE EXISTS((n)-[:ACTED_IN]->())'
+        'related'    | { q, r -> q.where(GraphCriteria.related(r, "movies")) }                           | 'WHERE EXISTS((n)-[:ACTED_IN]->(:Movie))'
         'related to' | { q, r -> q.where(GraphCriteria.relatedTo(r, "movies", cb.literal("Matrix"))) }  | 'WHERE EXISTS((n)-[:ACTED_IN]->(:Movie {title: $p0}))'
         'any type'   | { q, r -> q.where(GraphCriteria.connected(r, Movie, cb.literal("Matrix"), 1)) }  | 'WHERE EXISTS((n)-[]-(:Movie {title: $p0}))'
     }
@@ -492,7 +498,7 @@ class CypherCriteriaQuerySpec extends Specification {
 
         then:
         def noType = thrown(IllegalArgumentException)
-        noType.message.contains("need the entity of the node at the far end")
+        noType.message.contains("needs the entity of the node at the far end")
 
         when:
         GraphCriteria.related(Mock(Root), "movies")

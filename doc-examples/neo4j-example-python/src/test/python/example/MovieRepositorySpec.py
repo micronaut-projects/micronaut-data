@@ -24,16 +24,18 @@ class MovieRepositorySpec:
     @BeforeEach
     def beforeEach(self):
         # tag::save[]
-        keanu = self.personRepository.save(Person("Keanu Reeves", 1964))  # <1>
-        carrie = self.personRepository.save(Person("Carrie-Anne Moss", 1967))
-        lana = self.personRepository.save(Person("Lana Wachowski", 1965))
+        keanu = Person("Keanu Reeves", 1964)
+        carrie = Person("Carrie-Anne Moss", 1967)
+        lana = Person("Lana Wachowski", 1965)
 
         matrix = Movie("The Matrix", "Welcome to the Real World", 1999)
         matrix.roles = [Role(["Neo"], keanu), Role(["Trinity"], carrie)]
         matrix.directors = [lana]
 
-        self.movieRepository.save(matrix)  # <2>
+        self.movieRepository.save(matrix)  # <1>
         # end::save[]
+        keanu = self.personRepository.findByName("Keanu Reeves")
+        lana = self.personRepository.findByName("Lana Wachowski")
         self.movieRepository.save(Movie("The Matrix Reloaded", "Free your mind", 2003, [Role(["Neo"], keanu)], [lana]))
         self.movieRepository.save(Movie("Speed", "Get ready for rush hour", 1994, [Role(["Jack Traven"], keanu)]))
 

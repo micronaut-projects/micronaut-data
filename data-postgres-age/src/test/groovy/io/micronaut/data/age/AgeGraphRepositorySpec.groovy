@@ -1,8 +1,14 @@
 package io.micronaut.data.age
 
+import io.micronaut.data.age.features.Ensemble
+import io.micronaut.data.age.features.EnsembleRepository
+import io.micronaut.data.age.features.Seat
+import io.micronaut.data.age.features.Section
 import io.micronaut.data.age.operations.AgeRepositoryOperations
 import io.micronaut.data.age.tck.AgeMovieSpecificationRepository
 import io.micronaut.data.age.tck.AgeArticleRepository
+import io.micronaut.data.age.tck.AgeMilestoneRepository
+import io.micronaut.data.age.tck.AgeStepRepository
 import io.micronaut.data.age.tck.AgeColleagueRepository
 import io.micronaut.data.age.tck.AgeFriendRepository
 import io.micronaut.data.age.tck.AgeMovieRepository
@@ -30,6 +36,12 @@ class AgeGraphRepositorySpec extends AbstractGraphRepositorySpec {
     AgeArticleRepository articleRepository
 
     @Inject
+    AgeStepRepository stepRepository
+
+    @Inject
+    AgeMilestoneRepository milestoneRepository
+
+    @Inject
     AgeMovieRepository movieRepository
 
     @Inject
@@ -40,6 +52,9 @@ class AgeGraphRepositorySpec extends AbstractGraphRepositorySpec {
 
     @Inject
     AgeColleagueRepository colleagueRepository
+
+    @Inject
+    EnsembleRepository ensembleRepository
 
     @Inject
     TransactionOperations<Connection> transactionOperations
@@ -64,6 +79,33 @@ class AgeGraphRepositorySpec extends AbstractGraphRepositorySpec {
 
         expect:
         personRepository.findByNameIlike("e%")*.name == ["Eric"]
+    }
+
+    void "a relationship entity without an identifier is written, read and written again"() {
+        given:
+        def ensemble = new Ensemble("Quartet", [new Seat(1, new Section("first violin"))])
+
+        when:
+        ensembleRepository.save(ensemble)
+
+        then:
+        chairs() == [1]
+
+        when:
+        def found = ensembleRepository.findByName("Quartet").get()
+
+        then:
+        found.seats() == [new Seat(1, new Section("first violin"))]
+
+        when: "the same two nodes are the same relationship, as there is no identifier to tell them apart"
+        ensembleRepository.update(new Ensemble("Quartet", [new Seat(2, new Section("first violin"))]))
+
+        then:
+        chairs() == [2]
+    }
+
+    private List<Object> chairs() {
+        return operations.executeQuery("MATCH (:Ensemble)-[s:SEATS]->(:Section) RETURN s.chair AS chair", [:])*.get("chair").collect { it as int }
     }
 
     void "a page of a shortest path counts the shortest path, not every path up to the depth"() {

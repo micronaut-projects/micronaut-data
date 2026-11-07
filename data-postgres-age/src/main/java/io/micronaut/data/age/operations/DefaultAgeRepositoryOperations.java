@@ -85,6 +85,12 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
      */
     static final String PREPARED_SETTING = "micronaut.age.prepared";
 
+    /**
+     * The prefix of the setting, local to the transaction, that says the transaction created a graph. The catalog
+     * row cannot tell: it carries the identifier of the savepoint's subtransaction, not of the transaction.
+     */
+    static final String CREATED_SETTING_PREFIX = "micronaut.age_created_";
+
     private static final Logger LOG = LoggerFactory.getLogger(DefaultAgeRepositoryOperations.class);
     private static final int ABSENT = 0;
     private static final int CURRENT_TRANSACTION = 1;
@@ -112,6 +118,7 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
      */
     private volatile boolean graphReady;
 
+    @SuppressWarnings("ParameterNumber")
     DefaultAgeRepositoryOperations(@Parameter ConnectionOperations<Connection> connectionOperations,
                                    @Parameter String dataSourceName,
                                    AgeConfiguration configuration,
@@ -420,6 +427,9 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
             LOG.debug("Creating Apache AGE graph [{}]", graph);
             create.setString(1, graph);
             create.execute();
+            try (Statement created = connection.createStatement()) {
+                created.execute("SELECT set_config('" + CREATED_SETTING_PREFIX + graph + "', 'true', true)");
+            }
             connection.releaseSavepoint(savepoint);
         } catch (SQLException e) {
             connection.rollback(savepoint);
@@ -435,8 +445,7 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
      * when the current transaction created it, or {@link #COMMITTED} when it exists for good
      */
     private static int graphState(Connection connection, String graph) throws SQLException {
-        // The catalog row of a graph the current transaction created carries its transaction id
-        try (PreparedStatement statement = connection.prepareStatement("SELECT CASE WHEN xmin::text = (txid_current_if_assigned() % 4294967296)::text THEN "
+        try (PreparedStatement statement = connection.prepareStatement("SELECT CASE WHEN current_setting('" + CREATED_SETTING_PREFIX + graph + "', true) = 'true' THEN "
             + CURRENT_TRANSACTION + " ELSE " + COMMITTED + " END FROM ag_catalog.ag_graph WHERE name = ?")) {
             statement.setString(1, graph);
             try (ResultSet resultSet = statement.executeQuery()) {
