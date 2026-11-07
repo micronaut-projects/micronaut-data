@@ -12,6 +12,8 @@ import io.micronaut.data.neo4j.features.Audit
 import io.micronaut.data.neo4j.features.Employee
 import io.micronaut.data.neo4j.features.EmployeeRepository
 import io.micronaut.data.neo4j.features.Engineer
+import io.micronaut.data.neo4j.features.Ensemble
+import io.micronaut.data.neo4j.features.EnsembleRepository
 import io.micronaut.data.neo4j.features.EngineerRepository
 import io.micronaut.data.neo4j.features.Project
 import io.micronaut.data.neo4j.features.Reading
@@ -19,6 +21,7 @@ import io.micronaut.data.neo4j.features.ReadingRepository
 import io.micronaut.data.neo4j.features.ReactiveMovieRepository
 import io.micronaut.data.neo4j.features.Player
 import io.micronaut.data.neo4j.features.Review
+import io.micronaut.data.neo4j.features.Seat
 import io.micronaut.data.neo4j.features.Tag
 import io.micronaut.data.neo4j.features.TagRepository
 import io.micronaut.data.neo4j.features.Team
@@ -49,6 +52,9 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
 
     @Inject
     EngineerRepository engineerRepository
+
+    @Inject
+    EnsembleRepository ensembleRepository
 
     @Inject
     Neo4jMovieRepository movieRepository
@@ -194,6 +200,29 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
 
     private List<Object> roleNames() {
         return operations.executeQuery("MATCH (:Person)-[r:ACTED_IN]->(:Movie) RETURN r.roles ORDER BY r.roles", [:], List)
+    }
+
+    void "a relationship entity without an identifier is written, read and written again"() {
+        given:
+        def ensemble = new Ensemble("Quartet", [new Seat(1, new Project("first violin"))])
+
+        when:
+        ensembleRepository.save(ensemble)
+
+        then:
+        operations.executeQuery('MATCH (:Ensemble {name: "Quartet"})-[s:SEATS]->(:Project {name: "first violin"}) RETURN s.chair', [:], Long) == [1L]
+
+        when:
+        def found = ensembleRepository.findByName("Quartet").get()
+
+        then:
+        found.seats() == [new Seat(1, new Project("first violin"))]
+
+        when: "the same two nodes are the same relationship, as there is no identifier to tell them apart"
+        ensembleRepository.update(new Ensemble("Quartet", [new Seat(2, new Project("first violin"))]))
+
+        then:
+        operations.executeQuery('MATCH (:Ensemble {name: "Quartet"})-[s:SEATS]->(:Project) RETURN s.chair', [:], Long) == [2L]
     }
 
     void "changing a single valued relationship replaces the old one"() {
