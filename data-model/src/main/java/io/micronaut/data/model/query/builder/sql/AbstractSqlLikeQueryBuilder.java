@@ -2971,7 +2971,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         /**
          * SQL has no {@code IS EMPTY}: an array column is empty when it is null or has no elements, which PostgreSQL
-         * checks with {@code cardinality}.
+         * checks with {@code cardinality}. It accepts nothing but arrays, so a collection stored another way, such as
+         * JSON, is rejected.
          */
         private boolean appendSqlArrayEmptiness(Expression<?> expression, boolean empty) {
             if (!computePropertyPaths() || !CriteriaUtils.isCollectionExpression(expression)) {
@@ -2979,6 +2980,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             }
             if (getDialect() != Dialect.POSTGRES) {
                 throw new IllegalArgumentException("IsEmpty and IsNotEmpty on a collection are only supported for PostgreSQL arrays, not for the dialect " + getDialect());
+            }
+            PersistentProperty property = requireProperty(expression).getPropertyPath().getProperty();
+            if (!property.getDataType().isArray()) {
+                throw new IllegalArgumentException("IsEmpty and IsNotEmpty on a collection are only supported for PostgreSQL arrays, the property [" + property.getName() + "] has the data type " + property.getDataType());
             }
             query.append('(');
             appendExpression(expression);
