@@ -357,7 +357,7 @@ class CypherCriteriaQuerySpec extends Specification {
 
         then:
         def noType = thrown(IllegalArgumentException)
-        noType.message.contains("need the entity of the node at the far end")
+        noType.message.contains("needs the entity of the node at the far end")
 
         when:
         GraphCriteria.related(Mock(Root), "movies")

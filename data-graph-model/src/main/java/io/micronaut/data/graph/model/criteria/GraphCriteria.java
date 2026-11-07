@@ -96,9 +96,6 @@ public final class GraphCriteria {
      * @return The predicate
      */
     public static @NonNull Predicate connected(@NonNull Root<?> root, @NonNull Class<?> targetType, @NonNull Expression<?> target, int maxDepth) {
-        if (targetType == null) {
-            throw new IllegalArgumentException("Relationships of any type need the entity of the node at the far end");
-        }
         return new RelatedPredicate<>(entityRoot(root), null, targetType, target, maxDepth);
     }
 
