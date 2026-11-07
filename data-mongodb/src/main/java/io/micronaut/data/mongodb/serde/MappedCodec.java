@@ -15,18 +15,24 @@
  */
 package io.micronaut.data.mongodb.serde;
 
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.serde.Deserializer;
+import io.micronaut.serde.Encoder;
 import io.micronaut.serde.LimitingStream;
 import io.micronaut.serde.Serializer;
 import io.micronaut.serde.bson.BsonReaderDecoder;
 import io.micronaut.serde.bson.BsonWriterEncoder;
 import io.micronaut.serde.config.annotation.SerdeConfig;
+import io.micronaut.serde.config.naming.PropertyNamingStrategy;
+import io.micronaut.serde.exceptions.SerdeException;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
 import org.bson.BsonReader;
@@ -62,6 +68,9 @@ class MappedCodec<T> implements Codec<T> {
     private final Deserializer.DecoderContext decoderContext;
     private final Serializer.EncoderContext encoderContext;
     private final List<String> manyAssociationProperties;
+    @Nullable
+    private final String identitySerializedName;
+    private final boolean stringIdAsObjectId;
 
     /**
      * Default constructor.
@@ -86,6 +95,15 @@ class MappedCodec<T> implements Codec<T> {
         try {
             this.serializer = dataSerdeRegistry.findSerializer(argument).createSpecific(encoderContext, argument);
             this.deserializer = dataSerdeRegistry.findDeserializer(argument).createSpecific(decoderContext, argument);
+            if (persistentEntity.hasIdentity()) {
+                RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
+                this.identitySerializedName = identitySerializedName(identity);
+                this.stringIdAsObjectId = identity.isAnnotationPresent(GeneratedValue.class)
+                    && identity.getType().isAssignableFrom(String.class);
+            } else {
+                this.identitySerializedName = null;
+                this.stringIdAsObjectId = false;
+            }
         } catch (IOException e) {
             throw new DataAccessException("Cannot find serialize/deserializer for type: " + type + ". " + e.getMessage(), e);
         }
@@ -122,13 +140,43 @@ class MappedCodec<T> implements Codec<T> {
     }
 
     /**
-     * The writer the serializer writes the document to.
+     * The serializer of this type as a value inside another document. The writer of that document only renames
+     * its own identity, so the identity of this value is renamed here.
      *
-     * @param writer The writer of the codec
-     * @return The writer to serialize to
+     * @return The serializer
      */
-    protected BsonWriter documentWriter(BsonWriter writer) {
-        return writer;
+    Serializer<? super T> nestedSerializer() {
+        if (identitySerializedName == null) {
+            return serializer;
+        }
+        return new NestedIdentitySerializer<>(serializer, identitySerializedName, stringIdAsObjectId);
+    }
+
+    private BsonWriter documentWriter(BsonWriter writer) {
+        if (identitySerializedName == null) {
+            return writer;
+        }
+        return new IdRenamingBsonWriter(writer, identitySerializedName, stringIdAsObjectId);
+    }
+
+    /**
+     * The name the serde writes the identity under: an explicit name, which includes a naming strategy resolved
+     * during annotation processing, or else the result of a naming strategy looked up at runtime.
+     */
+    private String identitySerializedName(RuntimePersistentProperty<T> identity) throws SerdeException {
+        AnnotationMetadata annotationMetadata = identity.getAnnotationMetadata();
+        String explicitName = annotationMetadata.stringValue(SerdeConfig.class, SerdeConfig.PROPERTY).orElse(null);
+        if (explicitName != null) {
+            return explicitName;
+        }
+        Class<? extends PropertyNamingStrategy> namingStrategy = annotationMetadata.classValue(SerdeConfig.class, SerdeConfig.RUNTIME_NAMING)
+            .or(() -> persistentEntity.getAnnotationMetadata().classValue(SerdeConfig.class, SerdeConfig.RUNTIME_NAMING))
+            .map(type -> type.asSubclass(PropertyNamingStrategy.class))
+            .orElse(null);
+        if (namingStrategy == null) {
+            return identity.getName();
+        }
+        return encoderContext.findNamingStrategy(namingStrategy).translate(identity.getProperty());
     }
 
     @Override
@@ -156,6 +204,60 @@ class MappedCodec<T> implements Codec<T> {
             if (document.containsKey(propertyName) && document.get(propertyName).isNull()) {
                 document.remove(propertyName);
             }
+        }
+    }
+
+    /**
+     * Writes a value through a writer that renames its identity.
+     *
+     * @param <T> The value type
+     */
+    private static final class NestedIdentitySerializer<T> implements Serializer<T> {
+
+        private final Serializer<T> delegate;
+        private final String identityName;
+        private final boolean stringIdAsObjectId;
+
+        @SuppressWarnings("unchecked")
+        NestedIdentitySerializer(Serializer<? super T> delegate, String identityName, boolean stringIdAsObjectId) {
+            this.delegate = (Serializer<T>) delegate;
+            this.identityName = identityName;
+            this.stringIdAsObjectId = stringIdAsObjectId;
+        }
+
+        @Override
+        public Serializer<T> createSpecific(EncoderContext context, Argument<? extends T> type) throws SerdeException {
+            Serializer<T> specific = delegate.createSpecific(context, type);
+            if (type.getAnnotationMetadata().hasAnnotation(SerdeConfig.SerUnwrapped.class)) {
+                // Written into the fields of the enclosing document, which needs the serializer to do that
+                return specific;
+            }
+            return specific == delegate ? this : new NestedIdentitySerializer<>(specific, identityName, stringIdAsObjectId);
+        }
+
+        @Override
+        public void serialize(Encoder encoder, EncoderContext context, Argument<? extends T> type, T value) throws IOException {
+            if (encoder instanceof BsonWriterEncoder bsonEncoder) {
+                BsonWriter writer = new IdRenamingBsonWriter(bsonEncoder.getBsonWriter(), identityName, stringIdAsObjectId);
+                delegate.serialize(new BsonWriterEncoder(writer, LimitingStream.DEFAULT_LIMITS), context, type, value);
+            } else {
+                delegate.serialize(encoder, context, type, value);
+            }
+        }
+
+        @Override
+        public boolean isEmpty(EncoderContext context, @Nullable T value) {
+            return delegate.isEmpty(context, value);
+        }
+
+        @Override
+        public boolean isAbsent(EncoderContext context, @Nullable T value) {
+            return delegate.isAbsent(context, value);
+        }
+
+        @Override
+        public boolean isDefault(EncoderContext context, T value) {
+            return delegate.isDefault(context, value);
         }
     }
 }

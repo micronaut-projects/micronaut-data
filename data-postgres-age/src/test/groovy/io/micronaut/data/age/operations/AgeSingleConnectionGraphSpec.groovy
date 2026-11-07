@@ -53,6 +53,19 @@ class AgeSingleConnectionGraphSpec extends Specification {
         !withConnection { Connection connection -> graphExists(connection) }
     }
 
+    void "a later operation of the transaction does not take the graph it created for a committed one"() {
+        when:
+        transactionOperations.executeWrite { status ->
+            operations.executeQuery(QUERY, [:])
+            operations.executeQuery(QUERY, [:])
+            status.setRollbackOnly()
+            null
+        }
+
+        then: "the rollback undid the graph"
+        !withConnection { Connection connection -> graphExists(connection) }
+    }
+
     void "the next operation creates the graph again"() {
         when:
         operations.executeQuery(QUERY, [:])

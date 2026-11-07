@@ -46,6 +46,12 @@ import java.util.Locale;
 @Internal
 public final class GraphEntities {
 
+    /**
+     * The property a versioned write sets and removes to take the write lock of a node, so a node cannot store one
+     * of its own under this name.
+     */
+    public static final String LOCK_PROPERTY = "__lock";
+
     private static final java.util.Set<String> NATIVE_ID_TYPES = java.util.Set.of(
         String.class.getName(),
         Long.class.getName(),
@@ -111,6 +117,17 @@ public final class GraphEntities {
      */
     public static boolean isRelationship(Association association) {
         return association.getAnnotationMetadata().hasStereotype(Relationship.class);
+    }
+
+    /**
+     * Whether the property is a relationship to a single node. The SQL query builder takes such an association for a
+     * foreign key column, while a property graph over tables stores it in an edge table.
+     *
+     * @param property The property
+     * @return True if it is a single relationship
+     */
+    public static boolean isSingleRelationship(PersistentProperty property) {
+        return property instanceof Association association && isRelationship(association) && association.getKind().isSingleEnded();
     }
 
     /**

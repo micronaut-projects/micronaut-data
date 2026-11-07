@@ -85,6 +85,10 @@ class CypherCriteriaQuerySpec extends Specification {
         'boolean property'     | { q, r -> q.where(cb.and(r.get("active"), cb.equal(r.get("name"), "a"))) }                                                                 | 'MATCH (n:Person) WHERE (n.active = true AND n.name = $p0) RETURN n'
         'id equals'            | { q, r -> q.where(cb.equal(r.id(), 1L)) }                                                                                                  | 'MATCH (n:Person) WHERE id(n) = $p0 RETURN n'
         'association equals'   | { q, r -> q.where(cb.equal(r.get("movies"), "Matrix")) }                                                                                   | 'MATCH (n:Person), (n)-[:ACTED_IN]->(a0:Movie) WHERE a0.title = $p0 WITH DISTINCT n RETURN n'
+        'inner join projection' | { q, r -> r.join("movies", Join.Type.INNER); q.select(r.get("name")) }                                                                      | 'MATCH (n:Person), (n)-[:ACTED_IN]->(a0:Movie) WITH DISTINCT n RETURN n.name AS name'
+        'inner join count'     | { q, r -> r.join("movies", Join.Type.INNER); q.select(cb.count(r)) }                                                                        | 'MATCH (n:Person), (n)-[:ACTED_IN]->(a0:Movie) WITH DISTINCT n RETURN count(n) AS result'
+        'inner join sum'       | { q, r -> r.join("movies", Join.Type.INNER); q.select(cb.sum(r.get("age"))) }                                                               | 'MATCH (n:Person), (n)-[:ACTED_IN]->(a0:Movie) WITH DISTINCT n RETURN sum(n.age) AS result'
+        'left join count'      | { q, r -> r.join("movies", Join.Type.LEFT); q.select(cb.count(r)) }                                                                         | 'MATCH (n:Person) RETURN count(n) AS result'
         'fetch join'           | { q, r -> r.join("movies", Join.Type.FETCH); q.select(r) }                                                                                 | 'MATCH (n:Person) OPTIONAL MATCH (n)-[:ACTED_IN]->(j0:Movie) WITH n, collect(j0) AS j_movies RETURN n, j_movies'
     }
 
@@ -201,8 +205,10 @@ class CypherCriteriaQuerySpec extends Specification {
             'CREATE INDEX Note_text_index IF NOT EXISTS FOR (n:Note) ON (n.text)'
         ]
         new AgeCypherQueryBuilder().buildCreateIndexStatements(note).drop(1) == [
-            'CREATE UNIQUE INDEX IF NOT EXISTS "Note_code_unique" ON "$__graph"."Note" (ag_catalog.agtype_access_operator(properties, \'"code"\'::agtype))',
-            'CREATE INDEX IF NOT EXISTS "Note_text_index" ON "$__graph"."Note" (ag_catalog.agtype_access_operator(properties, \'"text"\'::agtype))'
+            'DO $do$ BEGIN BEGIN CREATE UNIQUE INDEX IF NOT EXISTS "Note_code_unique" ON "$__graph"."Note" (ag_catalog.agtype_access_operator(properties, \'"code"\'::agtype));'
+                + ' EXCEPTION WHEN OTHERS THEN IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_indexes WHERE schemaname = \'$__graph\' AND indexname = \'Note_code_unique\') THEN RAISE; END IF; END; END $do$',
+            'DO $do$ BEGIN BEGIN CREATE INDEX IF NOT EXISTS "Note_text_index" ON "$__graph"."Note" (ag_catalog.agtype_access_operator(properties, \'"text"\'::agtype));'
+                + ' EXCEPTION WHEN OTHERS THEN IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_indexes WHERE schemaname = \'$__graph\' AND indexname = \'Note_text_index\') THEN RAISE; END IF; END; END $do$'
         ]
         new AgeCypherQueryBuilder().buildCreateIndexStatements(note)[0].contains('create_vlabel(\'$__graph\', \'Note\')')
 

@@ -4,6 +4,8 @@ import io.micronaut.data.graph.tck.AbstractGraphRepositorySpec
 import io.micronaut.data.neo4j.operations.Neo4jRepositoryOperations
 import io.micronaut.data.neo4j.tck.Neo4jMovieSpecificationRepository
 import io.micronaut.data.neo4j.tck.Neo4jArticleRepository
+import io.micronaut.data.neo4j.tck.Neo4jMilestoneRepository
+import io.micronaut.data.neo4j.tck.Neo4jStepRepository
 import io.micronaut.data.neo4j.tck.Neo4jColleagueRepository
 import io.micronaut.data.neo4j.tck.Neo4jFriendRepository
 import io.micronaut.data.neo4j.tck.Neo4jMovieRepository
@@ -21,6 +23,12 @@ class Neo4jGraphRepositorySpec extends AbstractGraphRepositorySpec implements Te
 
     @Inject
     Neo4jArticleRepository articleRepository
+
+    @Inject
+    Neo4jStepRepository stepRepository
+
+    @Inject
+    Neo4jMilestoneRepository milestoneRepository
 
     @Inject
     Neo4jMovieRepository movieRepository

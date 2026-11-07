@@ -34,7 +34,7 @@ import java.lang.annotation.Target;
  * factory with the Oracle R2DBC driver. Queries are compiled at build time to SQL/PGQ {@code GRAPH_TABLE} queries:
  * PGQL needs the PGQL JDBC driver, so it is not available over R2DBC.
  *
- * <p>Repository methods return Reactor or Reactive Streams types. Saving, updating and deleting nodes writes their
+ * <p>Repository methods return Reactor, Reactive Streams or asynchronous types, and the build fails on any other. Saving, updating and deleting nodes writes their
  * vertex tables with SQL through Micronaut Data R2DBC, in the same connection and transaction as the graph
  * queries.</p>
  *
@@ -51,7 +51,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Documented
 @Repository
-@GraphRepository
+@GraphRepository(nonBlocking = true)
 @PropertyGraph(language = PropertyGraph.QueryLanguage.SQL_PGQ)
 public @interface OracleGraphR2dbcRepository {
 
