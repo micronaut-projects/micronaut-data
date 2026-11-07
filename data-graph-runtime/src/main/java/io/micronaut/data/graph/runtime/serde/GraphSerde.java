@@ -32,6 +32,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.serde.Deserializer;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.serde.SerdeRegistry;
+import io.micronaut.serde.config.annotation.SerdeConfig;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
 
@@ -41,13 +42,12 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Reads graph entities with Micronaut Serialization. A node is presented to the entity's deserializer as an object
- * keyed the way serde names its properties: the persisted names of its properties and identifier, and the property
- * names of the relationships fetched with it.
+ * keyed the way serde names its properties: serde does not know the persisted names, which a naming strategy can
+ * derive, so the values of the properties and the identifier are moved from those to the names serde expects.
  *
  * @author graemerocher
  * @since 5.3.0
@@ -59,6 +59,7 @@ public final class GraphSerde {
     private final SerdeRegistry serdeRegistry;
     private final ConversionService conversionService;
     private final Map<Class<?>, Deserializer<Object>> deserializers = new ConcurrentHashMap<>();
+    private final Map<Class<?>, Names> names = new ConcurrentHashMap<>();
 
     /**
      * @param serdeRegistry     The serde registry
@@ -87,28 +88,20 @@ public final class GraphSerde {
     /**
      * Reads an entity from a node, with values read elsewhere, such as schemaless data.
      *
-     * @param entity   The entity
-     * @param node     The node
-     * @param row      The row holding relationships fetched with the node, or null
-     * @param extras   Values to add to the object view, by property name
-     * @param declared The persisted names of the node properties the entity declares, to leave out the others, or null
-     * @param <T>      The entity type
+     * @param entity The entity
+     * @param node   The node
+     * @param row    The row holding relationships fetched with the node, or null
+     * @param extras Values to add to the object view, by property name
+     * @param <T>    The entity type
      * @return The entity
      */
     public <T> T readNode(RuntimePersistentEntity<T> entity,
                           GraphNode node,
                           @Nullable GraphRecord row,
-                          Map<String, @Nullable Object> extras,
-                          @Nullable Set<String> declared) {
+                          Map<String, @Nullable Object> extras) {
         Map<String, @Nullable Object> view = nodeView(entity, node, row);
-        if (declared != null) {
-            for (String name : node.properties().keySet()) {
-                if (!declared.contains(name)) {
-                    view.remove(name);
-                }
-            }
-        }
-        view.putAll(extras);
+        Names entityNames = names(entity);
+        extras.forEach((name, value) -> view.put(entityNames.serdeName(name), value));
         return read(entity.getIntrospection().getBeanType(), view);
     }
 
@@ -166,22 +159,44 @@ public final class GraphSerde {
      * @return The view
      */
     Map<String, @Nullable Object> nodeView(RuntimePersistentEntity<?> entity, GraphNode node, @Nullable GraphRecord row) {
-        Map<String, @Nullable Object> view = new HashMap<>(node.properties());
-        RuntimePersistentProperty<?> identity = entity.getIdentity();
-        if (identity != null && GraphEntities.isNativeId(identity)) {
-            view.put(identity.getPersistedName(), GraphEntityMapper.nativeId(identity, node.id(), node.numericId()));
-        }
+        Names entityNames = names(entity);
+        Map<String, @Nullable Object> view = storedView(entity, entityNames, node.properties(), node.id(), node.numericId());
         if (row != null) {
             for (RuntimePersistentProperty<?> property : entity.getPersistentProperties()) {
                 if (property instanceof RuntimeAssociation<?> association) {
                     String column = CypherQueryBuilder.JOIN_COLUMN_PREFIX + association.getName();
                     if (row.has(column)) {
-                        view.put(association.getName(), fetched(association, row.get(column)));
+                        view.put(entityNames.serdeName(association.getName()), fetched(association, row.get(column)));
                     }
                 }
             }
         }
         return view;
+    }
+
+    /**
+     * The values stored on a node or an edge that the entity declares, by the names serde expects them under.
+     */
+    private Map<String, @Nullable Object> storedView(RuntimePersistentEntity<?> entity,
+                                                     Names entityNames,
+                                                     Map<String, @Nullable Object> stored,
+                                                     @Nullable Object id,
+                                                     @Nullable Long numericId) {
+        Map<String, @Nullable Object> view = new HashMap<>();
+        for (Names.Stored name : entityNames.stored()) {
+            if (stored.containsKey(name.persisted())) {
+                view.put(name.serde(), stored.get(name.persisted()));
+            }
+        }
+        RuntimePersistentProperty<?> identity = entity.getIdentity();
+        if (identity != null && GraphEntities.isNativeId(identity)) {
+            view.put(entityNames.serdeName(identity.getName()), GraphEntityMapper.nativeId(identity, id, numericId));
+        }
+        return view;
+    }
+
+    private Names names(RuntimePersistentEntity<?> entity) {
+        return names.computeIfAbsent(entity.getIntrospection().getBeanType(), type -> Names.of(entity));
     }
 
     private @Nullable Object fetched(RuntimeAssociation<?> association, @Nullable Object value) {
@@ -216,18 +231,60 @@ public final class GraphSerde {
      * the {@link TargetNode} property.
      */
     private Map<String, @Nullable Object> edgeView(RuntimePersistentEntity<?> entity, GraphEdge edge, @Nullable GraphNode target) {
-        Map<String, @Nullable Object> view = new HashMap<>(edge.properties());
-        RuntimePersistentProperty<?> identity = entity.getIdentity();
-        if (identity != null && GraphEntities.isNativeId(identity)) {
-            view.put(identity.getPersistedName(), GraphEntityMapper.nativeId(identity, edge.id(), edge.numericId()));
-        }
+        Names entityNames = names(entity);
+        Map<String, @Nullable Object> view = storedView(entity, entityNames, edge.properties(), edge.id(), edge.numericId());
         if (target != null) {
             for (RuntimePersistentProperty<?> property : entity.getPersistentProperties()) {
                 if (property instanceof RuntimeAssociation<?> association && property.getAnnotationMetadata().hasStereotype(TargetNode.class)) {
-                    view.put(association.getName(), nodeView(association.getAssociatedEntity(), target, null));
+                    view.put(entityNames.serdeName(association.getName()), nodeView(association.getAssociatedEntity(), target, null));
                 }
             }
         }
         return view;
+    }
+
+    /**
+     * The names of the properties of an entity.
+     *
+     * @param stored The properties held on a node or an edge, with their names there and for serde
+     * @param serde  The names serde expects, by property name
+     */
+    private record Names(List<Stored> stored, Map<String, String> serde) {
+
+        static Names of(RuntimePersistentEntity<?> entity) {
+            List<Stored> stored = new ArrayList<>();
+            Map<String, String> serde = new HashMap<>();
+            RuntimePersistentProperty<?> identity = entity.getIdentity();
+            if (identity != null) {
+                add(identity, !GraphEntities.isNativeId(identity), stored, serde);
+            }
+            if (entity.hasVersion()) {
+                add(entity.getVersion(), true, stored, serde);
+            }
+            for (RuntimePersistentProperty<?> property : entity.getPersistentProperties()) {
+                add(property, !(property instanceof RuntimeAssociation<?>) && !GraphEntities.isSchemalessHolder(property), stored, serde);
+            }
+            return new Names(stored, serde);
+        }
+
+        private static void add(RuntimePersistentProperty<?> property, boolean isStored, List<Stored> stored, Map<String, String> serde) {
+            // Serde writes the name it resolves at compile time, such as that of @Serdeable(naming), to this member
+            String name = property.getAnnotationMetadata().stringValue(SerdeConfig.class, SerdeConfig.PROPERTY).orElse(property.getName());
+            serde.put(property.getName(), name);
+            if (isStored) {
+                stored.add(new Stored(property.getPersistedName(), name));
+            }
+        }
+
+        String serdeName(String property) {
+            return serde.getOrDefault(property, property);
+        }
+
+        /**
+         * @param persisted The name on the node or edge
+         * @param serde     The name serde expects
+         */
+        record Stored(String persisted, String serde) {
+        }
     }
 }

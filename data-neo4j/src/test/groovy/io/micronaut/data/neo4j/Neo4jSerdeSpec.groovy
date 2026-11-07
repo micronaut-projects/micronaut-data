@@ -9,6 +9,10 @@ import io.micronaut.data.graph.tck.entities.Movie
 import io.micronaut.data.graph.tck.entities.Person
 import io.micronaut.core.type.Argument
 import io.micronaut.data.graph.tck.entities.Role
+import io.micronaut.data.neo4j.features.Composer
+import io.micronaut.data.neo4j.features.ComposerRepository
+import io.micronaut.data.neo4j.features.Critic
+import io.micronaut.data.neo4j.features.CriticRepository
 import io.micronaut.data.neo4j.features.Event
 import io.micronaut.data.neo4j.features.EventRepository
 import io.micronaut.data.neo4j.features.Tag
@@ -55,6 +59,12 @@ class Neo4jSerdeSpec extends Specification implements TestPropertyProvider {
 
     @Inject
     EventRepository eventRepository
+
+    @Inject
+    ComposerRepository composerRepository
+
+    @Inject
+    CriticRepository criticRepository
 
     @Inject
     GraphSerde serde
@@ -183,5 +193,30 @@ class Neo4jSerdeSpec extends Specification implements TestPropertyProvider {
         movie.roles != null
         movie.roles.isEmpty()
         movie.directors.isEmpty()
+    }
+
+    void "a class-level naming strategy round-trips, including a natural identifier"() {
+        given:
+        def composer = new Composer("Arvo Part", 1935, 200)
+
+        when:
+        composerRepository.save(composer)
+
+        then:
+        operations.executeQuery('MATCH (c {full_name: "Arvo Part"}) RETURN c.birth_year AS born, c.opus_count AS works', [:])[0].get("born") == 1935L
+        composerRepository.findById("Arvo Part").get() == composer
+        composerRepository.findAll().toList() == [composer]
+    }
+
+    void "a serde naming strategy on a node does not change what the node holds"() {
+        given:
+        def critic = new Critic("Pauline Kael", 12)
+
+        when:
+        criticRepository.save(critic)
+
+        then:
+        operations.executeQuery('MATCH (c:Critic) RETURN c.reviewCount AS reviews', [:])[0].get("reviews") == 12L
+        criticRepository.findById("Pauline Kael").get() == critic
     }
 }

@@ -125,7 +125,7 @@ public final class GraphEntityMapper {
             // The targets are read here, by their labels, and reach the deserializer as entities
             extras.put(relationshipsProperty.getName(), dynamicRelationships(row));
         }
-        return serde.readNode(entity, node, row, extras, schemaless.attributes() != null ? schemaless.declared() : null);
+        return serde.readNode(entity, node, row, extras);
     }
 
     private static Map<String, Object> undeclaredProperties(Schemaless schemaless, GraphNode node) {
