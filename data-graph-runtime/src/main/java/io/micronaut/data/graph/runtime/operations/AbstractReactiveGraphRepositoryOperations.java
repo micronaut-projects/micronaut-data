@@ -490,7 +490,7 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
             RuntimePersistentEntity<Object> targetEntity = (RuntimePersistentEntity<Object>) targetAssociation.getAssociatedEntity();
             return persister.saveRelated(targetEntity, target).flatMap(savedTarget -> {
                 Object withTarget = savedTarget != target ? AbstractGraphRepositoryOperations.withProperty(targetProperty, item, savedTarget) : item;
-                RuntimePersistentProperty<Object> relationshipIdentity = associated.getIdentity();
+                RuntimePersistentProperty<Object> relationshipIdentity = associated.hasIdentity() ? associated.getIdentity() : null;
                 boolean nativeId = relationshipIdentity != null && GraphEntities.isNativeId(relationshipIdentity);
                 Object relationship = relationshipIdentity != null && !nativeId && mapper.writeIdentity(associated, withTarget) == null
                     ? operations.populateRelationshipId(associated, relationshipIdentity, withTarget)
@@ -510,7 +510,7 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
                 return unlinked
                     .then(updated.switchIfEmpty(Mono.defer(() -> runLink(association, targetEntity, fromId, toId, properties, relationshipIdentity, mode, null))))
                     .map(relationshipId -> {
-                        if (nativeId) {
+                        if (relationshipIdentity != null && nativeId) {
                             BeanProperty<Object, Object> idProperty = relationshipIdentity.getProperty();
                             return AbstractGraphRepositoryOperations.withProperty(idProperty, relationship, mapper.readValue(relationshipIdentity, relationshipId));
                         }
