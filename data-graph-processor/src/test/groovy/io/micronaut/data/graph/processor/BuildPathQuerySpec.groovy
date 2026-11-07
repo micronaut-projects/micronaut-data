@@ -455,6 +455,28 @@ interface OrderedRepository extends CrudRepository<Friend, String> {
         !e.message.contains('has no @Relationship property')
     }
 
+    void "test ordering a path finder with bound endpoints is rejected with a clear message"() {
+        when:
+        buildRepository('test.OrderedRepository', """
+import io.micronaut.data.graph.model.*;
+
+$FRIENDS
+
+@TestGraphRepository
+interface OrderedRepository extends CrudRepository<Friend, String> {
+    GraphPath<Friend> $method(String from, String to);
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("Path and relationship finders cannot be ordered, found [$method]")
+        !e.message.contains('no property named')
+
+        where:
+        method << ['findPathBetweenNameOrderByName', 'findPathByFriendsBetweenNameOrderByName']
+    }
+
     void "test path finders must return paths"() {
         when:
         buildRepository('test.WrongReturnRepository', """
