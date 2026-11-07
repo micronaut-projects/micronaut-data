@@ -105,6 +105,7 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
     private final Set<Connection> preparedCheckouts = Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()));
     private volatile boolean graphReady;
 
+    @SuppressWarnings("ParameterNumber")
     DefaultAgeRepositoryOperations(@Parameter ConnectionOperations<Connection> connectionOperations,
                                    @Parameter DataSource dataSource,
                                    JsonMapper jsonMapper,

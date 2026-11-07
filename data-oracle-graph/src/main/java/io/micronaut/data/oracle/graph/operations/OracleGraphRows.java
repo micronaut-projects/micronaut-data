@@ -30,6 +30,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 /**
@@ -146,14 +147,7 @@ final class OracleGraphRows {
         Map<String, Map<String, @Nullable Object>> groups = group(columns, row);
         List<String> keys = new ArrayList<>();
         List<Object> values = new ArrayList<>();
-        Map<String, GraphNode> nodes = new LinkedHashMap<>();
-        for (Map.Entry<String, Map<String, @Nullable Object>> group : groups.entrySet()) {
-            Map<String, @Nullable Object> fields = group.getValue();
-            if (!fields.containsKey(OracleGraphQueryBuilder.TYPE_COLUMN)
-                && (fields.containsKey(OracleGraphQueryBuilder.ID_COLUMN) || fields.containsKey(OracleGraphQueryBuilder.LABEL_COLUMN))) {
-                nodes.put(group.getKey(), node(fields, rowIndex));
-            }
-        }
+        Map<String, GraphNode> nodes = nodes(groups, rowIndex);
         for (Map.Entry<String, Map<String, @Nullable Object>> group : groups.entrySet()) {
             String prefix = group.getKey();
             Map<String, @Nullable Object> fields = group.getValue();
@@ -169,18 +163,45 @@ final class OracleGraphRows {
                 });
                 values.add(nodes.get(prefix));
             } else if (fields.containsKey(OracleGraphQueryBuilder.TYPE_COLUMN)) {
-                GraphNode from = nodes.get("s");
-                GraphNode to = nodes.get("t");
                 keys.add(prefix);
-                Object id = fields.get(OracleGraphQueryBuilder.ID_COLUMN);
-                Map<String, Object> properties = new LinkedHashMap<>(fields);
-                properties.remove(OracleGraphQueryBuilder.ID_COLUMN);
-                properties.remove(OracleGraphQueryBuilder.TYPE_COLUMN);
-                values.add(new GraphEdge(id == null ? rowIndex : id, String.valueOf(fields.get(OracleGraphQueryBuilder.TYPE_COLUMN)),
-                    from == null ? rowIndex : from.id(), to == null ? rowIndex : to.id(), properties));
+                values.add(edge(fields, nodes, rowIndex));
             }
         }
         return new GraphRecord(keys, values);
+    }
+
+    private static Map<String, GraphNode> nodes(Map<String, Map<String, @Nullable Object>> groups, int rowIndex) {
+        Map<String, GraphNode> nodes = new LinkedHashMap<>();
+        for (Map.Entry<String, Map<String, @Nullable Object>> group : groups.entrySet()) {
+            Map<String, @Nullable Object> fields = group.getValue();
+            if (!fields.containsKey(OracleGraphQueryBuilder.TYPE_COLUMN)
+                && (fields.containsKey(OracleGraphQueryBuilder.ID_COLUMN) || fields.containsKey(OracleGraphQueryBuilder.LABEL_COLUMN))) {
+                nodes.put(group.getKey(), node(fields, rowIndex));
+            }
+        }
+        for (Map<String, @Nullable Object> fields : groups.values()) {
+            if (fields.get(OracleGraphQueryBuilder.FORWARD_COLUMN) instanceof Number forward && forward.intValue() == 0) {
+                // An undirected edge matched from its destination: s and t stand for the source and destination below
+                GraphNode start = nodes.get("s");
+                nodes.put("s", nodes.get("t"));
+                nodes.put("t", start);
+            }
+        }
+        return nodes;
+    }
+
+    private static GraphEdge edge(Map<String, @Nullable Object> fields, Map<String, GraphNode> nodes, int rowIndex) {
+        GraphNode from = nodes.get("s");
+        GraphNode to = nodes.get("t");
+        Object id = fields.get(OracleGraphQueryBuilder.ID_COLUMN);
+        Map<String, Object> properties = new LinkedHashMap<>(fields);
+        properties.remove(OracleGraphQueryBuilder.ID_COLUMN);
+        properties.remove(OracleGraphQueryBuilder.TYPE_COLUMN);
+        properties.remove(OracleGraphQueryBuilder.FORWARD_COLUMN);
+        // A relationship has no null properties in Cypher, and GraphRelationship does not accept them
+        properties.values().removeIf(Objects::isNull);
+        return new GraphEdge(id == null ? rowIndex : id, String.valueOf(fields.get(OracleGraphQueryBuilder.TYPE_COLUMN)),
+            from == null ? rowIndex : from.id(), to == null ? rowIndex : to.id(), properties);
     }
 
     private static List<GraphRecord> decodePaths(List<String> columns, List<List<@Nullable Object>> rows) {
