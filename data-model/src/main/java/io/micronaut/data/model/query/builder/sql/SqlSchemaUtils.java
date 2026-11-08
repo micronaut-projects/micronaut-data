@@ -307,25 +307,13 @@ public final class SqlSchemaUtils {
             throw new MappingException("Sharded entity [" + entity.getName() + "] must name a tablespace set, since Oracle has no default for sharded tables");
         }
         if (parent != null) {
-            if (!parent.getAnnotationMetadata().hasAnnotation(Sharded.class)) {
-                throw new MappingException("The parent [" + parent.getName() + "] of sharded entity [" + entity.getName() + "] must be @Sharded");
-            }
-            if (hasShardingParent(parent)) {
-                throw new MappingException("The parent [" + parent.getName() + "] of sharded entity [" + entity.getName()
-                    + "] must be the root table of the table family, without a parent");
-            }
+            validateShardingParent(entity, parent);
         }
         List<String> keyColumns = getShardingKeyColumns(entity, parent);
         if (keyColumns.isEmpty()) {
             throw new MappingException("Sharded entity [" + entity.getName() + "] must have a primary key or a sharding key");
         }
-        Set<String> primaryKeyColumns = getIdentityColumnNames(entity).stream().map(column -> column.toUpperCase(Locale.ROOT)).collect(Collectors.toSet());
-        for (String keyColumn : keyColumns) {
-            if (!primaryKeyColumns.contains(keyColumn.toUpperCase(Locale.ROOT))) {
-                throw new MappingException("The sharding key column [" + keyColumn + "] of entity [" + entity.getName()
-                    + "] must be part of its primary key");
-            }
-        }
+        validateShardingKeyInPrimaryKey(entity, keyColumns);
         validateGeneratedShardingKey(entity, keyColumns);
     }
 
@@ -340,6 +328,26 @@ public final class SqlSchemaUtils {
         return Arrays.stream(entities)
             .sorted(Comparator.comparing(entity -> !hasShardingParent(entity)))
             .toArray(PersistentEntity[]::new);
+    }
+
+    private static void validateShardingParent(PersistentEntity entity, PersistentEntity parent) {
+        if (!parent.getAnnotationMetadata().hasAnnotation(Sharded.class)) {
+            throw new MappingException("The parent [" + parent.getName() + "] of sharded entity [" + entity.getName() + "] must be @Sharded");
+        }
+        if (hasShardingParent(parent)) {
+            throw new MappingException("The parent [" + parent.getName() + "] of sharded entity [" + entity.getName()
+                + "] must be the root table of the table family, without a parent");
+        }
+    }
+
+    private static void validateShardingKeyInPrimaryKey(PersistentEntity entity, List<String> keyColumns) {
+        Set<String> primaryKeyColumns = getIdentityColumnNames(entity).stream().map(column -> column.toUpperCase(Locale.ROOT)).collect(Collectors.toSet());
+        for (String keyColumn : keyColumns) {
+            if (!primaryKeyColumns.contains(keyColumn.toUpperCase(Locale.ROOT))) {
+                throw new MappingException("The sharding key column [" + keyColumn + "] of entity [" + entity.getName()
+                    + "] must be part of its primary key");
+            }
+        }
     }
 
     private static void validateGeneratedShardingKey(PersistentEntity entity, List<String> keyColumns) {
