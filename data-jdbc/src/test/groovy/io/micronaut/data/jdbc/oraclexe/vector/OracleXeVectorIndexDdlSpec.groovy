@@ -1,6 +1,7 @@
 package io.micronaut.data.jdbc.oraclexe.vector
 
 import io.micronaut.core.annotation.Nullable
+import io.micronaut.core.type.Argument
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.VectorIndex
@@ -13,11 +14,13 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.model.runtime.convert.DefinitionProvider
 import io.micronaut.data.model.runtime.convert.SqlColumnDefinitionProvider
 import io.micronaut.data.model.runtime.convert.SqlIndexDefinitionProvider
+import io.micronaut.data.model.schema.sql.SqlIndexMapping
 import io.micronaut.data.model.vector.ByteVector
 import io.micronaut.data.model.vector.Vector
 import spock.lang.Specification
 
 import java.util.Locale
+import java.util.function.Function
 
 /**
  * Spock spec verifying Oracle XE VECTOR index DDL for @VectorIndex.
@@ -144,4 +147,43 @@ class OracleXeVectorIndexDdlSpec extends Specification {
         }
     }
 
+    def "the vector index gets IF NOT EXISTS on Oracle 23ai, like the other schema statements"() {
+        when:
+        String plain = statementsFor(DocumentEmbeddingTestEntity, null).find { it.startsWith('CREATE VECTOR INDEX ') }
+        String[] versioned = statementsFor(DocumentEmbeddingTestEntity, '23.26')
+
+        then:
+        !plain.contains('IF NOT EXISTS')
+        versioned.findAll { it.startsWith('CREATE VECTOR INDEX ') } == [plain.replaceFirst('^CREATE VECTOR INDEX ', 'CREATE VECTOR INDEX IF NOT EXISTS ')]
+    }
+
+    def "a provider that does not take the IF NOT EXISTS flag keeps its statement as written"() {
+        given:
+        SqlIndexDefinitionProvider provider = new SqlIndexDefinitionProvider() {
+            @Override
+            boolean supports(Argument<?> argument, Dialect dialect) {
+                return true
+            }
+
+            @Override
+            String getIndexDefinition(String indexName, String escapedTableName, String[] columns, boolean escape,
+                                      Function<String, String> quoter, SqlIndexMapping mapping, Dialect dialect) {
+                return 'CREATE VECTOR INDEX IDX ON T (C)'
+            }
+        }
+
+        expect:
+        statementsFor(DocumentEmbeddingTestEntity, '23.26', provider).findAll { it.contains(' INDEX ') } == ['CREATE VECTOR INDEX IDX ON T (C)']
+    }
+
+    private static String[] statementsFor(Class<?> type, String version, SqlIndexDefinitionProvider indexProvider = null) {
+        ApplicationContext ctx = ApplicationContext.run()
+        try {
+            List<DefinitionProvider> providers = new ArrayList<>(ctx.getBeansOfType(SqlColumnDefinitionProvider))
+            providers.addAll(indexProvider != null ? [indexProvider] : ctx.getBeansOfType(SqlIndexDefinitionProvider))
+            return new SqlQueryBuilder(Dialect.ORACLE, version).buildCreateTableStatements(new RuntimePersistentEntity<>(type), providers)
+        } finally {
+            ctx.close()
+        }
+    }
 }
