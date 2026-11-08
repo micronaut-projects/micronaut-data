@@ -50,8 +50,9 @@ import java.util.concurrent.CompletionStage;
 public final class DataIntroductionAdvice implements MethodInterceptor<Object, Object> {
 
     private final DataInterceptorResolver dataInterceptorResolver;
+    // The data source set with @Repository on the injection point of this repository instance, if any
     @Nullable
-    private final InjectionPoint<?> injectionPoint;
+    private final String injectionPointDataSourceName;
 
     private final DataConversionService conversionService;
 
@@ -67,7 +68,8 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
                                   @Nullable InjectionPoint<?> injectionPoint,
                                   DataConversionService conversionService) {
         this.dataInterceptorResolver = dataInterceptorResolver;
-        this.injectionPoint = injectionPoint;
+        this.injectionPointDataSourceName = injectionPoint == null ? null
+            : injectionPoint.getAnnotationMetadata().stringValue(Repository.class).orElse(null);
         this.conversionService = conversionService;
     }
 
@@ -75,7 +77,7 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
     @Override
     public Object intercept(MethodInvocationContext<Object, Object> context) {
         RepositoryMethodKey key = new RepositoryMethodKey(context.getTarget(), context.getExecutableMethod());
-        DataInterceptor<Object, Object> dataInterceptor = dataInterceptorResolver.resolve(key, context, injectionPoint);
+        DataInterceptor<Object, Object> dataInterceptor = dataInterceptorResolver.resolve(key, context, injectionPointDataSourceName);
         InterceptedMethod interceptedMethod = InterceptedMethod.of(context, conversionService);
         try {
             return switch (interceptedMethod.resultType()) {
