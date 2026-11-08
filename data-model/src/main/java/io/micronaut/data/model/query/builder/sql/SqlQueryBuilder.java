@@ -43,6 +43,8 @@ import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.JsonSubView;
+import io.micronaut.data.annotation.JsonViewField;
+import io.micronaut.data.annotation.JsonViewGenerated;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Repository;
@@ -727,6 +729,22 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     .append(SPACE);
             }
         }
+        Class<? extends Annotation> viewAnnotation = viewEntity.getAnnotationMetadata().hasAnnotation(JsonView.class) ? JsonView.class : JsonSubView.class;
+        for (String hiddenPropertyName : viewEntity.getAnnotationMetadata().stringValues(viewAnnotation, "hidden")) {
+            PersistentProperty hiddenProperty = entity.getPropertyByName(hiddenPropertyName);
+            if (hiddenProperty == null) {
+                throw new IllegalStateException("Hidden field [" + hiddenPropertyName + "] of JSON view " + viewEntity.getName() + " is not a property of entity " + entity.getName());
+            }
+            sb.append(COMMA)
+                .append(SPACE)
+                .append("'")
+                .append(hiddenPropertyName)
+                .append("': ")
+                .append(alias)
+                .append(DOT)
+                .append(hiddenProperty.getPersistedName())
+                .append(" HIDDEN");
+        }
         sb.append(CLOSE_CURLY_BRACKET)
             .append(FROM_CLAUSE)
             .append(entity.getPersistedName())
@@ -737,6 +755,16 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         for (JsonView.Operation operation: supportedOperations) {
             sb.append(operation).append(SPACE);
         }
+        if (!viewEntity.getAnnotationMetadata().booleanValue(viewAnnotation, "etagCheck").orElse(true)) {
+            sb.append("NOCHECK ");
+        }
+        if (isTopLevel) {
+            viewEntity.getAnnotationMetadata().stringValue(JsonView.class, "where").ifPresent(where ->
+                sb.append(WHERE_CLAUSE)
+                    .append(where.replaceAll(ALIAS_REPLACE_QUOTED, alias + DOT))
+                    .append(" WITH CHECK OPTION")
+            );
+        }
     }
 
     private void createJsonViewColumnQuery(StringBuilder sb, PersistentProperty column, PersistentEntity entity, String alias) {
@@ -746,6 +774,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 .orElse(column.getName()));
         if (column instanceof Association association) {
             processAssociation(sb, association, entity, columnPropertyName);
+        } else if (annotationMetadata.hasAnnotation(JsonViewGenerated.class)) {
+            createJsonViewGeneratedColumnQuery(sb, column, columnPropertyName, alias);
         } else if (column.getDataType() != DataType.OBJECT) {
             String entityPersistedPropertyName;
             if (annotationMetadata.hasAnnotation(MappedProperty.class)) {
@@ -763,6 +793,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 .append(alias)
                 .append(DOT)
                 .append(entityPersistedPropertyName);
+            appendJsonViewFieldAnnotations(sb, annotationMetadata);
         } else {
             if (isFlexColumn(column)) {
                 sb.append(alias)
@@ -771,6 +802,45 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     .append(AS_CLAUSE)
                     .append(FLEX_COLUMN);
             }
+        }
+    }
+
+    /**
+     * Appends the {@code WITH NOUPDATE} and {@code NOCHECK} annotations of a {@link JsonViewField}.
+     */
+    private static void appendJsonViewFieldAnnotations(StringBuilder sb, AnnotationMetadata annotationMetadata) {
+        boolean updatable = annotationMetadata.booleanValue(JsonViewField.class, "updatable").orElse(true);
+        boolean etagCheck = annotationMetadata.booleanValue(JsonViewField.class, "etagCheck").orElse(true);
+        if (updatable && etagCheck) {
+            return;
+        }
+        sb.append(WITH_CLAUSE.stripTrailing());
+        if (!updatable) {
+            sb.append(" NOUPDATE");
+        }
+        if (!etagCheck) {
+            sb.append(" NOCHECK");
+        }
+    }
+
+    private void createJsonViewGeneratedColumnQuery(StringBuilder sb, PersistentProperty column, String columnPropertyName, String alias) {
+        AnnotationMetadata annotationMetadata = column.getAnnotationMetadata();
+        String path = annotationMetadata.stringValue(JsonViewGenerated.class, "path").orElse(null);
+        String sql = annotationMetadata.stringValue(JsonViewGenerated.class, "sql").orElse(null);
+        if ((path == null) == (sql == null)) {
+            throw new IllegalStateException("Generated field [" + column.getName() + "] of JSON view " + column.getOwner().getName() + " must specify exactly one of path or sql");
+        }
+        sb.append("'")
+            .append(columnPropertyName)
+            .append("': GENERATED USING ");
+        if (path != null) {
+            sb.append("PATH '")
+                .append(path.replace("'", "''"))
+                .append("'");
+        } else {
+            sb.append(OPEN_BRACKET)
+                .append(sql.replaceAll(ALIAS_REPLACE_QUOTED, alias + DOT))
+                .append(CLOSE_BRACKET);
         }
     }
 
@@ -1297,7 +1367,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 escape,
                 this::quote,
                 indexMapping,
-                dialect
+                dialect,
+                supportsIfExists()
             );
         }
 
