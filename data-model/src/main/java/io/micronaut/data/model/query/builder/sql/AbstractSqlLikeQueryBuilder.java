@@ -3179,7 +3179,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 if (dialect == null) {
                     throw new IllegalStateException("Vector similarity queries are not supported for dialect: " + getDialect());
                 }
-                dialect.appendVectorScore(query, expressions.get(0), expressions.get(1), this::appendExpression);
+                Expression<?> left = expressions.get(0);
+                Expression<?> right = expressions.get(1);
+                // the query vector is bound to the left property, so that it's written with the converter of the column
+                dialect.appendVectorScore(query, left, right, expression -> appendExpression(expression, expression == right ? left : null));
                 return;
             }
             if (TextSearchSupport.SCORE_FUNCTION.equals(functionName)) {
@@ -3429,6 +3432,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         protected String columnAlias;
         private boolean isCompound;
         private boolean isNestedExpression;
+        @Nullable
+        private PersistentPropertyPath parameterBoundProperty;
 
         public SqlSelectionVisitor(QueryState queryState, AnnotationMetadata annotationMetadata, boolean distinct) {
             this.queryState = queryState;
@@ -3632,7 +3637,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         @Override
         public void visit(IParameterExpression<?> parameterExpression) {
-            queryState.pushParameter(parameterExpression, newBindingContext(null));
+            queryState.pushParameter(parameterExpression, newBindingContext(null, parameterBoundProperty));
             appendColumnAliasIfNecessary();
         }
 
@@ -4052,7 +4057,17 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             if (dialect == null) {
                 throw new IllegalStateException("Vector similarity queries are not supported for dialect: " + getDialect());
             }
-            dialect.appendVectorScore(query, left, right, this::appendExpression);
+            // the query vector is bound to the left property, so that it's written with the converter of the column
+            PersistentPropertyPath leftProperty = left instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath
+                ? propertyPath.getPropertyPath() : null;
+            dialect.appendVectorScore(query, left, right, expression -> {
+                parameterBoundProperty = expression == right ? leftProperty : null;
+                try {
+                    appendExpression(expression);
+                } finally {
+                    parameterBoundProperty = null;
+                }
+            });
         }
 
         private void appendSearchScore(List<Expression<?>> expressions) {
