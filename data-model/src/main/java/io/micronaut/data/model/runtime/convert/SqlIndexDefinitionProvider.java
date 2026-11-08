@@ -63,4 +63,30 @@ public non-sealed interface SqlIndexDefinitionProvider extends DefinitionProvide
                               Function<String, String> quoter,
                               SqlIndexMapping mapping,
                               Dialect dialect);
+
+    /**
+     * Produce the index DDL string for the provided mapping and context.
+     *
+     * @param indexName The index name (already escaped if needed)
+     * @param escapedTableName The table name (already escaped if needed)
+     * @param columns The index column names (unescaped)
+     * @param escape Whether columns should be quoted/escaped
+     * @param quoter A function to quote an identifier when {@code escape} is true
+     * @param mapping The index mapping
+     * @param dialect The SQL dialect
+     * @param ifNotExists Whether the dialect accepts {@code IF NOT EXISTS} after {@code INDEX}, like in the other
+     * statements of the schema. The default implementation ignores it.
+     * @return The CREATE INDEX... DDL string
+     * @since 5.3
+     */
+    default String getIndexDefinition(String indexName,
+                                      String escapedTableName,
+                                      String[] columns,
+                                      boolean escape,
+                                      Function<String, String> quoter,
+                                      SqlIndexMapping mapping,
+                                      Dialect dialect,
+                                      boolean ifNotExists) {
+        return getIndexDefinition(indexName, escapedTableName, columns, escape, quoter, mapping, dialect);
+    }
 }
