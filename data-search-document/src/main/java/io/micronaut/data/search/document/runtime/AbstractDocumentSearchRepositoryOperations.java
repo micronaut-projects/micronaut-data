@@ -27,6 +27,7 @@ import io.micronaut.data.annotation.search.Searchable;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.model.CursoredPage;
 import io.micronaut.data.model.CursoredPageable;
 import io.micronaut.data.model.Page;
@@ -507,6 +508,40 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
             return;
         }
         applyPageable(body, pageable, entity);
+    }
+
+    /**
+     * Windows a single result query. Its pageable and sort decide which hit comes first, a query that declares
+     * its own size, as findFirst does, keeps it, and otherwise a second hit is fetched when unique results are checked.
+     *
+     * @param body The search body
+     * @param query The query
+     * @param entity The entity
+     * @param <T> The entity type
+     * @return Whether the results must be checked for a second hit
+     */
+    protected final <T> boolean applySingleResult(Map<String, Object> body, PreparedQuery<?, ?> query, RuntimePersistentEntity<T> entity) {
+        Object declaredSize = body.get("size");
+        applyPageable(body, query, entity);
+        boolean checkUnique = configuration.isUniqueResultOnFindOne() && declaredSize == null;
+        body.put("size", checkUnique ? 2 : declaredSize == null ? 1 : declaredSize);
+        return checkUnique;
+    }
+
+    /**
+     * The first result of a single result query.
+     *
+     * @param results The results
+     * @param checkUnique Whether a second result is an error
+     * @param query The query
+     * @param <R> The result type
+     * @return The first result or null
+     */
+    protected static <R> @Nullable R singleResult(List<R> results, boolean checkUnique, PreparedQuery<?, ?> query) {
+        if (checkUnique && results.size() > 1) {
+            throw new NonUniqueResultException("Multiple results found for query: " + query.getQuery());
+        }
+        return results.isEmpty() ? null : results.get(0);
     }
 
     /**

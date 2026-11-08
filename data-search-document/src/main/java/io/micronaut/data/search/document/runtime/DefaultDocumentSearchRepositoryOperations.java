@@ -22,7 +22,6 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
-import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
@@ -205,17 +204,8 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
             body.put("track_total_hits", true);
             return (R) toSearchResults(transport.search(indexName(entity), searchJson(body, entity)), entity, preparedQuery);
         }
-        // a single result still honours a Sort parameter, which decides which hit comes first; a query that
-        // declares its own size, as findFirst does, keeps it, otherwise a unique result is checked with a second hit
-        Object declaredSize = body.get("size");
-        applyPageable(body, preparedQuery, entity);
-        boolean checkUnique = configuration.isUniqueResultOnFindOne() && declaredSize == null;
-        body.put("size", checkUnique ? 2 : declaredSize == null ? 1 : declaredSize);
-        List<R> results = search(body, entity, preparedQuery);
-        if (checkUnique && results.size() > 1) {
-            throw new NonUniqueResultException("Multiple results found for query: " + preparedQuery.getQuery());
-        }
-        return results.isEmpty() ? null : results.get(0);
+        boolean checkUnique = applySingleResult(body, preparedQuery, entity);
+        return singleResult(search(body, entity, preparedQuery), checkUnique, preparedQuery);
     }
 
     @Override
