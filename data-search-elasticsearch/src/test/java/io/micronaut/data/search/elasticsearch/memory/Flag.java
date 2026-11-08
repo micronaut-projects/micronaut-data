@@ -18,6 +18,8 @@ package io.micronaut.data.search.elasticsearch.memory;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.model.vector.DoubleVector;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -36,6 +38,30 @@ public class Flag {
     String label;
 
     boolean isActive;
+
+    @Relation(Relation.Kind.EMBEDDED)
+    @Nullable
+    Detail detail;
+
+    @jakarta.persistence.Column(length = 2)
+    @Nullable
+    DoubleVector weights;
+
+    public @Nullable Detail getDetail() {
+        return detail;
+    }
+
+    public void setDetail(@Nullable Detail detail) {
+        this.detail = detail;
+    }
+
+    public @Nullable DoubleVector getWeights() {
+        return weights;
+    }
+
+    public void setWeights(@Nullable DoubleVector weights) {
+        this.weights = weights;
+    }
 
     public @Nullable String getId() {
         return id;

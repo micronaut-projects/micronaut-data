@@ -205,17 +205,14 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
             body.put("track_total_hits", true);
             return (R) toSearchResults(transport.search(indexName(entity), searchJson(body, entity)), entity, preparedQuery);
         }
-        // a single result still honours a Sort parameter, which decides which hit comes first
+        // a single result still honours a Sort parameter, which decides which hit comes first; a query that
+        // declares its own size, as findFirst does, keeps it, otherwise a unique result is checked with a second hit
+        Object declaredSize = body.get("size");
         applyPageable(body, preparedQuery, entity);
-        if (!configuration.isUniqueResultOnFindOne()) {
-            body.put("size", 1);
-            List<R> results = search(body, entity, preparedQuery);
-            return results.isEmpty() ? null : results.get(0);
-        }
-        // a second hit means the query is not unique, unless the query itself asks for one hit, as findFirst does
-        body.putIfAbsent("size", 2);
+        boolean checkUnique = configuration.isUniqueResultOnFindOne() && declaredSize == null;
+        body.put("size", checkUnique ? 2 : declaredSize == null ? 1 : declaredSize);
         List<R> results = search(body, entity, preparedQuery);
-        if (results.size() > 1) {
+        if (checkUnique && results.size() > 1) {
             throw new NonUniqueResultException("Multiple results found for query: " + preparedQuery.getQuery());
         }
         return results.isEmpty() ? null : results.get(0);

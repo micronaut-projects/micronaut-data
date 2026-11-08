@@ -126,18 +126,15 @@ public final class DefaultDocumentSearchReactiveRepositoryOperations extends Abs
                 body.put("track_total_hits", true);
                 return search(body, entity).map(hits -> (R) toSearchResults(hits, entity, preparedQuery));
             }
-            // a single result still honours a Sort parameter, which decides which hit comes first
+            // a single result still honours a Sort parameter, which decides which hit comes first; a query that
+            // declares its own size, as findFirst does, keeps it, otherwise a unique result is checked with a second hit
+            Object declaredSize = body.get("size");
             applyPageable(body, preparedQuery, entity);
-            boolean unique = configuration.isUniqueResultOnFindOne();
-            if (unique) {
-                // a second hit means the query is not unique, unless the query itself asks for one hit, as findFirst does
-                body.putIfAbsent("size", 2);
-            } else {
-                body.put("size", 1);
-            }
+            boolean checkUnique = configuration.isUniqueResultOnFindOne() && declaredSize == null;
+            body.put("size", checkUnique ? 2 : declaredSize == null ? 1 : declaredSize);
             return search(body, entity).flatMap(hits -> {
                 List<R> results = toEntities(hits, entity, preparedQuery);
-                if (unique && results.size() > 1) {
+                if (checkUnique && results.size() > 1) {
                     return Mono.error(new NonUniqueResultException("Multiple results found for query: " + preparedQuery.getQuery()));
                 }
                 return results.isEmpty() ? Mono.empty() : Mono.just(results.get(0));

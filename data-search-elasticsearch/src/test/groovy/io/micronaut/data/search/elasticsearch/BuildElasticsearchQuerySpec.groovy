@@ -3,6 +3,7 @@ package io.micronaut.data.search.elasticsearch
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.annotation.DataMethod
+import io.micronaut.data.intercept.annotation.DataMethodQuery
 import io.micronaut.data.intercept.annotation.DataMethodQueryParameter
 import io.micronaut.data.search.document.convert.SimpleQueryStringConverter
 import io.micronaut.inject.BeanDefinition
@@ -44,6 +45,7 @@ class Article {
     private String category;
     private String author;
     private int pages;
+    private int views;
     private boolean published;
     @jakarta.persistence.Column(length = 3)
     private io.micronaut.data.model.vector.FloatVector embedding;
@@ -60,6 +62,8 @@ class Article {
     public void setAuthor(String author) { this.author = author; }
     public int getPages() { return pages; }
     public void setPages(int pages) { this.pages = pages; }
+    public int getViews() { return views; }
+    public void setViews(int views) { this.views = views; }
     public boolean isPublished() { return published; }
     public void setPublished(boolean published) { this.published = published; }
     public io.micronaut.data.model.vector.FloatVector getEmbedding() { return embedding; }
@@ -73,8 +77,45 @@ ${methods}
 """)
     }
 
+    void "comparisons between properties, case-folded ranges and literal LIKE patterns render scripts and wildcards"() {
+        given:
+        def repository = articleRepository("""
+    @jakarta.data.repository.Query("WHERE title = author")
+    List<Article> sameTitleAndAuthor();
+    @jakarta.data.repository.Query("WHERE title < author")
+    List<Article> titleBeforeAuthor();
+    @jakarta.data.repository.Query("WHERE pages > views")
+    List<Article> readMoreThanViewed();
+    @jakarta.data.repository.Query("WHERE LOWER(author) BETWEEN :low AND :high")
+    List<Article> authorsBetweenIgnoringCase(String low, String high);
+    @jakarta.data.repository.Query("WHERE author LIKE 'J!_%' ESCAPE '!'")
+    List<Article> authorsStartingWithJUnderscore();
+    List<Article> findByAuthorIlike(String pattern);
+    List<Article> findByAuthorNotLike(String pattern);
+""")
+
+        expect:
+        query(repository.getRequiredMethod("sameTitleAndAuthor")).contains(
+                "doc['title.keyword'].size() != 0 && doc['author'].size() != 0 && doc['title.keyword'].value == doc['author'].value")
+        query(repository.getRequiredMethod("titleBeforeAuthor")).contains(
+                "doc['title.keyword'].value.compareTo(doc['author'].value) < 0")
+        query(repository.getRequiredMethod("readMoreThanViewed")).contains("doc['pages'].value > doc['views'].value")
+        query(repository.getRequiredMethod("readMoreThanViewed")).contains('"lang":"painless"')
+        query(repository.getRequiredMethod("authorsBetweenIgnoringCase", String, String)).contains(".toLowerCase()")
+        query(repository.getRequiredMethod("authorsBetweenIgnoringCase", String, String)).contains('"params":{"from":{"$mn_qp":0},"to":{"$mn_qp":1}}')
+        query(repository.getRequiredMethod("authorsStartingWithJUnderscore")) ==
+                '{"query":{"wildcard":{"author":{"value":{"$mn_qp":-1,"$mn_wildcard":"like:!","value":"J!_%"}}}}}'
+        query(repository.getRequiredMethod("findByAuthorIlike", String)) ==
+                '{"query":{"wildcard":{"author":{"value":{"$mn_qp":0,"$mn_wildcard":"like_ignore_case"},"case_insensitive":true}}}}'
+        query(repository.getRequiredMethod("findByAuthorNotLike", String)) ==
+                '{"query":{"bool":{"must_not":{"wildcard":{"author":{"value":{"$mn_qp":0,"$mn_wildcard":"like"}}}}}}}'
+    }
+
     private static String query(ExecutableMethod<?, ?> method) {
-        method.getAnnotation(Query).stringValue().orElse(null)
+        // a Jakarta Data query keeps its text as the @Query value and its rendering in the queries of @DataMethod,
+        // a finder renders into the @Query value
+        def rendered = method.getAnnotation(DataMethod).getAnnotations(DataMethod.META_MEMBER_QUERIES, DataMethodQuery)
+        rendered.isEmpty() ? method.getAnnotation(Query).stringValue().orElse(null) : rendered.first().stringValue().orElse(null)
     }
 
     private static List<String> converters(ExecutableMethod<?, ?> method) {

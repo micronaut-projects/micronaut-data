@@ -17,6 +17,8 @@ dependencies {
     testImplementation mn.micronaut.inject.groovy
     testImplementation mn.micronaut.inject.java.test
     testImplementation mnSerde.micronaut.serde.jackson
+    // Jakarta Data queries render through the query builder in the build specs
+    testImplementation libs.managed.jakarta.data.api
     testImplementation(platform(mnTestResources.boms.testcontainers))
     testImplementation libs.testcontainers.elasticsearch
     testRuntimeOnly mnLogging.logback.classic

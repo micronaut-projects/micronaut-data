@@ -4,7 +4,10 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.model.CursoredPageable
+import io.micronaut.data.model.Limit
 import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.vector.DoubleVector
+import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.model.Sort
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.runtime.query.internal.DefaultPagedQuery
@@ -77,6 +80,39 @@ class DocumentSearchOperationsSpec extends Specification {
         then:
         transport.lastBody().contains('"isActive"')
         !transport.lastBody().contains('"active"')
+    }
+
+    void "embedded objects and vectors are stored under their property names and read back"() {
+        when:
+        Flag saved = flags.save(new Flag(label: "weighted", active: false, detail: new Detail("first", 1), weights: Vector.of(0.5d, 1.5d) as DoubleVector))
+        Map<String, Object> document = transport.indexes["test_flags"][saved.id]
+
+        then:
+        document.detail == [note: "first", rank: 1]
+        document.weights == [0.5d, 1.5d]
+        transport.createdIndexes["test_flags"].contains('"detail":{"properties":{')
+
+        when:
+        Flag found = flags.findById(saved.id).get()
+
+        then:
+        found.detail == new Detail("first", 1)
+        found.weights.toDoubleArray() == [0.5d, 1.5d] as double[]
+    }
+
+    void "a Limit parameter sets the offset and size, and a null ordering renders as missing"() {
+        when:
+        notes.findByPagesGreaterThan(1, Limit.of(3, 5))
+
+        then:
+        transport.lastBody().contains('"from":5')
+        transport.lastBody().contains('"size":3')
+
+        when:
+        notes.findByPagesLessThan(5, Pageable.from(0, 10, Sort.of(new Sort.Order("title", Sort.Order.Direction.ASC, false, Sort.Order.NullOrdering.FIRST))))
+
+        then:
+        transport.lastBody().contains('"sort":[{"title.keyword":{"order":"asc","missing":"_first"}}]')
     }
 
     void "the escape character of a LIKE bound at runtime is applied to the wildcard pattern"() {

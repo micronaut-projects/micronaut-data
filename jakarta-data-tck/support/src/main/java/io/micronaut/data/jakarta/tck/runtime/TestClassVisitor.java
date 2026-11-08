@@ -96,38 +96,48 @@ public final class TestClassVisitor implements TypeElementVisitor<Object, Object
            INTROSPECTED.forEach(bean -> context.getClassElement(bean).orElseThrow().annotate(Introspected.class));
            introspected = true;
         }
-        if (element.hasStereotype(Repository.class) && isJdbcImplementation) {
-            element.annotate(JdbcRepository.class, annotationValueBuilder -> {
-                annotationValueBuilder.member("dialect", Dialect.H2);
-            });
-        }
-        if (element.hasStereotype(Repository.class) && isMongoDBImplementation) {
-            element.annotate(MongoRepository.class);
-        }
-        if (element.hasStereotype(Repository.class) && isElasticsearchImplementation) {
-            element.annotate(ElasticsearchRepository.class);
-        }
-        if (element.hasStereotype(Repository.class) && isOpenSearchImplementation) {
-            element.annotate(OpenSearchRepository.class);
+        if (element.hasStereotype(Repository.class)) {
+            annotateRepository(element);
         }
         if (element.getName().startsWith("ee.jakarta.tck.data") && !element.isEnum()) {
-            if (element.hasStereotype(Introspected.class)) {
-                element.annotate(Introspected.class, builder -> {
-                    builder.member("accessKind", new Introspected.AccessKind[]{Introspected.AccessKind.FIELD, Introspected.AccessKind.METHOD});
-                    builder.member("visibility", Introspected.Visibility.ANY);
-                });
-            }
-            element.annotate(Executable.class);
-            element.annotate(Prototype.class);
+            annotateTckClass(element);
+        }
+    }
 
-            element.getMethods().forEach(ce -> {
-                if (ce.isStatic() || !ce.isAccessible()) {
-                    ce.annotate(Vetoed.class);
-                } else {
-                    ce.annotate(Executable.class);
-                }
+    /** Marks a TCK repository with the repository annotation of the implementation under test. */
+    private void annotateRepository(ClassElement element) {
+        if (isJdbcImplementation) {
+            element.annotate(JdbcRepository.class, annotationValueBuilder -> annotationValueBuilder.member("dialect", Dialect.H2));
+        }
+        if (isMongoDBImplementation) {
+            element.annotate(MongoRepository.class);
+        }
+        if (isElasticsearchImplementation) {
+            element.annotate(ElasticsearchRepository.class);
+        }
+        if (isOpenSearchImplementation) {
+            element.annotate(OpenSearchRepository.class);
+        }
+    }
+
+    /** Makes a TCK class a prototype bean whose accessible methods are executable, with field access for its introspection. */
+    private static void annotateTckClass(ClassElement element) {
+        if (element.hasStereotype(Introspected.class)) {
+            element.annotate(Introspected.class, builder -> {
+                builder.member("accessKind", new Introspected.AccessKind[]{Introspected.AccessKind.FIELD, Introspected.AccessKind.METHOD});
+                builder.member("visibility", Introspected.Visibility.ANY);
             });
         }
+        element.annotate(Executable.class);
+        element.annotate(Prototype.class);
+
+        element.getMethods().forEach(ce -> {
+            if (ce.isStatic() || !ce.isAccessible()) {
+                ce.annotate(Vetoed.class);
+            } else {
+                ce.annotate(Executable.class);
+            }
+        });
     }
 
     @Override

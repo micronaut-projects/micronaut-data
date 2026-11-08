@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.search.elasticsearch.memory;
 
+import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.vector.search.SearchResults;
@@ -44,6 +45,7 @@ public interface NoteRepository extends PageableRepository<Note, String>, Search
     long deleteByTitle(String title);
 
     Page<Note> findByPagesGreaterThan(int pages, Pageable pageable);
+    List<Note> findByPagesGreaterThan(int pages, Limit limit);
 
     List<Note> findByPagesLessThan(int pages, Pageable pageable);
 
