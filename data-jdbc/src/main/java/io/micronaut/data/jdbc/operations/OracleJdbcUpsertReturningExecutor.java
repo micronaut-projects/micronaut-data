@@ -58,7 +58,7 @@ final class OracleJdbcUpsertReturningExecutor implements JdbcUpsertReturningExec
         List<Object> returnedIds = new ArrayList<>(entities.size());
         for (Entity<T> entity : entities) {
             SqlStoredQuery<T, ?> storedQuery = entity.storedQuery();
-            try (PreparedStatement statement = connection.prepareStatement(storedQuery.getQuery())) {
+            try (PreparedStatement statement = DefaultJdbcRepositoryOperations.logSqlId(connection.prepareStatement(storedQuery.getQuery()))) {
                 OraclePreparedStatement oracleStatement = statement.unwrap(OraclePreparedStatement.class);
                 int inputCount = binder.bind(statement, entity);
                 registerReturnParameters(oracleStatement, storedQuery, inputCount);
