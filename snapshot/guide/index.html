@@ -17419,7 +17419,7 @@ Mixed Oracle schemas where some boolean columns use native <code>BOOLEAN</code> 
 <p><code>ByteVector</code>: <code>byte[]</code> backed values.</p>
 </li>
 <li>
-<p><code>BinaryVector</code>: one bit per dimension, packed eight per byte (Oracle only, see <a href="#binaryVectors">Binary vectors</a>).</p>
+<p><code>BinaryVector</code>: one bit per dimension, packed eight per byte (Oracle, and PostgreSQL with JDBC; see <a href="#binaryVectors">Binary vectors</a>).</p>
 </li>
 </ul>
 </div>
@@ -18001,7 +18001,7 @@ interface DocumentEmbeddingRepository extends CrudRepository&lt;DocumentEmbeddin
 <div class="ulist">
 <ul>
 <li>
-<p>PostgreSQL: <code>COSINE</code>, <code>L2_EUCLIDEAN</code>, <code>DOT</code></p>
+<p>PostgreSQL: <code>COSINE</code>, <code>L2_EUCLIDEAN</code>, <code>DOT</code>, and <code>HAMMING</code> and <code>JACCARD</code> for binary vectors</p>
 </li>
 <li>
 <p>Oracle: <code>COSINE</code>, <code>L2_EUCLIDEAN</code>, <code>L2_EUCLIDEAN_SQUARED</code>, <code>DOT</code>, <code>L1_MANHATTAN</code>, and <code>HAMMING</code> and <code>JACCARD</code> for binary vectors</p>
@@ -18017,7 +18017,7 @@ interface DocumentEmbeddingRepository extends CrudRepository&lt;DocumentEmbeddin
 </div>
 </div>
 <div class="sect1">
-<h2 id="binaryVectors">Binary vectors (Oracle)</h2>
+<h2 id="binaryVectors">Binary vectors</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>Oracle stores binary vectors in <code>VECTOR(n, BINARY)</code> columns, where each dimension is a single bit. Map them with <code>BinaryVector</code>. Set the number of dimensions, in bits, with <code>@VectorStorage(length = N)</code>. Oracle requires it to be a multiple of 8.</p>
@@ -18277,7 +18277,13 @@ interface ImageFingerprintRepository extends CrudRepository&lt;ImageFingerprint,
 <p>The Hamming score is the number of bits that differ, and its <code>Similarity</code> is the same value. The Jaccard score runs from <code>0</code> (the same set bits) to <code>1</code> (no set bits in common), and its <code>Similarity</code> is one minus the score.</p>
 </div>
 <div class="paragraph">
-<p>The array conversions of the <code>Vector</code> API return one element per dimension, <code>0</code> or <code>1</code>. <code>BinaryVector.data()</code> returns the packed bytes. Oracle JDBC and Oracle R2DBC both support binary vectors. Other databases get the same <code>VARCHAR(255)</code> fallback column as vectors on databases without vector support.</p>
+<p>The array conversions of the <code>Vector</code> API return one element per dimension, <code>0</code> or <code>1</code>. <code>BinaryVector.data()</code> returns the packed bytes. Oracle JDBC and Oracle R2DBC both support binary vectors.</p>
+</div>
+<div class="paragraph">
+<p>On PostgreSQL, pgvector stores binary vectors in <code>bit(n)</code> columns, where <code>n</code> is the <code>@VectorStorage</code> length in bits, or <code>bit varying</code> when no length is set. Derived search methods use pgvector&#8217;s Hamming distance operator (<code>&lt;~&gt;</code>) by default, and its Jaccard distance operator (<code>&lt;%&gt;</code>) when <code>JACCARD</code> is selected. The scores and similarities are the same as on Oracle. <code>@VectorIndex</code> uses the <code>bit_hamming_ops</code> or <code>bit_jaccard_ops</code> operator class. Jaccard distance needs an <code>HNSW</code> index. Set a length on indexed columns. Binary vectors on PostgreSQL need JDBC with the pgvector Java library; the PostgreSQL R2DBC driver has no codec for them.</p>
+</div>
+<div class="paragraph">
+<p>Other databases get the same <code>VARCHAR(255)</code> fallback column as vectors on databases without vector support.</p>
 </div>
 </div>
 </div>
@@ -18457,7 +18463,7 @@ class SparseDocumentEmbedding {
 <div class="ulist">
 <ul>
 <li>
-<p>PostgreSQL (pgvector): <code>vector(N)</code> / <code>vector</code> by default, or <code>sparsevec(N)</code> / <code>sparsevec</code> when <code>@VectorStorage(shape = VectorShape.SPARSE)</code> is set</p>
+<p>PostgreSQL (pgvector): <code>vector(N)</code> / <code>vector</code> by default, <code>sparsevec(N)</code> / <code>sparsevec</code> when <code>@VectorStorage(shape = VectorShape.SPARSE)</code> is set, or <code>bit(N)</code> / <code>bit varying</code> for <code>BinaryVector</code></p>
 </li>
 <li>
 <p>Oracle: <code>VECTOR(N, &lt;TYPE&gt;)</code> or <code>VECTOR(*, &lt;TYPE&gt;)</code> when no length is present</p>
@@ -18498,6 +18504,12 @@ class SparseDocumentEmbedding {
 </li>
 <li>
 <p>Sparse index DDL uses <code>HNSW</code> with <code>sparsevec_*_ops</code> operator classes; sparse + <code>IVF</code> is rejected.</p>
+</li>
+<li>
+<p><code>BinaryVector</code> columns use <code>bit(N)</code> and the <code>bit_hamming_ops</code> or <code>bit_jaccard_ops</code> operator classes (JDBC only).</p>
+</li>
+<li>
+<p><code>HAMMING</code> and <code>JACCARD</code> apply to <code>BinaryVector</code> columns only, and the other functions to numeric columns only. Any other combination in a <code>ScoringFunction</code> parameter or a <code>@VectorIndex</code> fails with an <code>IllegalArgumentException</code>.</p>
 </li>
 <li>
 <p>PostgreSQL JDBC supports dense and sparse conversion paths.</p>

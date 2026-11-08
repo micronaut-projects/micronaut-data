@@ -1813,6 +1813,10 @@ entity has a generated identity.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/Client_.html#billingAddress" class="member-name-link">billingAddress</a> - Static variable in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Client_.html" title="class in io.micronaut.data.tck.entities">Client_</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/metadata/VectorIndexMetadata.html#binary()" class="member-name-link">binary()</a> - Method in record class io.micronaut.data.model.schema.sql.metadata.<a href="io/micronaut/data/model/schema/sql/metadata/VectorIndexMetadata.html" title="class in io.micronaut.data.model.schema.sql.metadata">VectorIndexMetadata</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/data/model/schema/sql/metadata/VectorIndexMetadata.html#param-binary"><code>binary</code></a> record component.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/runtime/convert/vector/impl/AbstractOracleTypeConvertersFactory.OracleVectorKind.html#BINARY" class="member-name-link">BINARY</a> - Enum constant in enum class io.micronaut.data.model.runtime.convert.vector.impl.<a href="io/micronaut/data/model/runtime/convert/vector/impl/AbstractOracleTypeConvertersFactory.OracleVectorKind.html" title="enum class in io.micronaut.data.model.runtime.convert.vector.impl">AbstractOracleTypeConvertersFactory.OracleVectorKind</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/schema/sql/SqlDbType.html#BINARY" class="member-name-link">BINARY</a> - Enum constant in enum class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlDbType.html" title="enum class in io.micronaut.data.model.schema.sql">SqlDbType</a></dt>
@@ -6262,7 +6266,7 @@ implementing <a href="io/micronaut/data/intercept/FindPageInterceptor.html" titl
 <dt><a href="io/micronaut/data/model/query/builder/sql/VectorScoringDialectSupport.html#defaultScoringFunction(java.lang.String)" class="member-name-link">defaultScoringFunction(String)</a> - Method in interface io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/VectorScoringDialectSupport.html" title="interface in io.micronaut.data.model.query.builder.sql">VectorScoringDialectSupport</a></dt>
 <dd>
 <div class="block">Returns the default scoring function for a query: <a href="io/micronaut/data/model/vector/search/ScoringFunction.html#HAMMING"><code>ScoringFunction.HAMMING</code></a> when the query
-compares Oracle binary vectors, otherwise <a href="io/micronaut/data/model/query/builder/sql/VectorScoringDialectSupport.html#defaultScoringFunction()"><code>VectorScoringDialectSupport.defaultScoringFunction()</code></a>.</div>
+compares Oracle or PostgreSQL binary vectors, otherwise <a href="io/micronaut/data/model/query/builder/sql/VectorScoringDialectSupport.html#defaultScoringFunction()"><code>VectorScoringDialectSupport.defaultScoringFunction()</code></a>.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/VectorScoringDialectSupport.html#defaultScoringFunctionForDialect(io.micronaut.data.model.query.builder.sql.Dialect)" class="member-name-link">defaultScoringFunctionForDialect(Dialect)</a> - Static method in interface io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/VectorScoringDialectSupport.html" title="interface in io.micronaut.data.model.query.builder.sql">VectorScoringDialectSupport</a></dt>
 <dd>
@@ -6271,7 +6275,7 @@ compares Oracle binary vectors, otherwise <a href="io/micronaut/data/model/query
 <dt><a href="io/micronaut/data/model/query/builder/sql/VectorScoringDialectSupport.html#defaultScoringFunctionForQuery(io.micronaut.data.model.query.builder.sql.Dialect,java.lang.String)" class="member-name-link">defaultScoringFunctionForQuery(Dialect, String)</a> - Static method in interface io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/VectorScoringDialectSupport.html" title="interface in io.micronaut.data.model.query.builder.sql">VectorScoringDialectSupport</a></dt>
 <dd>
 <div class="block">Resolves the default scoring function for a query: <a href="io/micronaut/data/model/vector/search/ScoringFunction.html#HAMMING"><code>ScoringFunction.HAMMING</code></a> when the query
-compares Oracle binary vectors, otherwise the dialect default.</div>
+compares Oracle or PostgreSQL binary vectors, otherwise the dialect default.</div>
 </dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/sql/DefaultSqlPreparedQuery.html" class="type-name-link" title="class in io.micronaut.data.runtime.operations.internal.sql">DefaultSqlPreparedQuery&lt;E,<wbr>R&gt;</a> - Class in <a href="io/micronaut/data/runtime/operations/internal/sql/package-summary.html">io.micronaut.data.runtime.operations.internal.sql</a></dt>
 <dd>
@@ -37517,6 +37521,10 @@ the order they are declared.</div>
 <div class="block">Vector index metadata.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/schema/sql/metadata/VectorIndexMetadata.html#%3Cinit%3E(io.micronaut.data.annotation.VectorIndexType,io.micronaut.data.annotation.VectorIndexType.DistanceType,int,boolean)" class="member-name-link">VectorIndexMetadata(VectorIndexType, VectorIndexType.DistanceType, int, boolean)</a> - Constructor for record class io.micronaut.data.model.schema.sql.metadata.<a href="io/micronaut/data/model/schema/sql/metadata/VectorIndexMetadata.html" title="class in io.micronaut.data.model.schema.sql.metadata">VectorIndexMetadata</a></dt>
+<dd>
+<div class="block">Creates metadata of a vector that isn't binary.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/metadata/VectorIndexMetadata.html#%3Cinit%3E(io.micronaut.data.annotation.VectorIndexType,io.micronaut.data.annotation.VectorIndexType.DistanceType,int,boolean,boolean)" class="member-name-link">VectorIndexMetadata(VectorIndexType, VectorIndexType.DistanceType, int, boolean, boolean)</a> - Constructor for record class io.micronaut.data.model.schema.sql.metadata.<a href="io/micronaut/data/model/schema/sql/metadata/VectorIndexMetadata.html" title="class in io.micronaut.data.model.schema.sql.metadata">VectorIndexMetadata</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>VectorIndexMetadata</code> record class.</div>
 </dd>
