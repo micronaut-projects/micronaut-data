@@ -33,7 +33,9 @@ import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.r2dbc.operations.R2dbcSchemaHandler;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.config.SchemaGenerate;
+import io.micronaut.data.runtime.config.SqlDialectOptionsConfiguration;
 import io.r2dbc.spi.Connection;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
@@ -58,6 +60,7 @@ import java.util.stream.Collectors;
 @Internal
 public class R2dbcSchemaGenerator {
     private static final Logger LOG = LoggerFactory.getLogger(R2dbcSchemaGenerator.class);
+    private static final int DDL_LITERAL_LENGTH = 4000;
     private final List<DataR2dbcConfiguration> configurations;
     private final R2dbcSchemaHandler schemaHandler;
     private final List<DefinitionProvider> definitionProviders;
@@ -108,9 +111,10 @@ public class R2dbcSchemaGenerator {
                         .sorted(Comparator.comparing(i -> i.hasAnnotation(JsonView.class)))
                         .map(e -> runtimeEntityRegistry.getEntity(e.getBeanType())).toArray(PersistentEntity[]::new);
                 if (ArrayUtils.isNotEmpty(entities)) {
-                    SqlQueryBuilder builder = new SqlQueryBuilder(configuration.getDialect(), configuration.getDialectOptions().getVersion());
                     Mono.from(configuration.getConnectionFactory().create()).flatMap(connection -> {
                         Dialect dialect = configuration.getDialect();
+                        String dialectVersion = configuration.getDialectOptions().resolveVersion(() -> detectVersion(connection, configuration.getName()));
+                        SqlQueryBuilder builder = new SqlQueryBuilder(dialect, dialectVersion);
                         if (configuration.getSchemaGenerateNames() != null && !configuration.getSchemaGenerateNames().isEmpty()) {
                             Mono<Void> result = Mono.empty();
                             for (String schemaName : configuration.getSchemaGenerateNames()) {
@@ -133,6 +137,25 @@ public class R2dbcSchemaGenerator {
         }
     }
 
+    static @Nullable String detectVersion(Connection connection, String dataSourceName) {
+        String versionText;
+        try {
+            versionText = connection.getMetadata().getDatabaseVersion();
+        } catch (RuntimeException e) {
+            // Oracle R2DBC rethrows a SQLException of the JDBC metadata as an R2dbcException
+            LOG.warn("Unable to detect the database version of datasource [{}]: schema generation uses no target version", dataSourceName, e);
+            return null;
+        }
+        String version = SqlDialectOptionsConfiguration.parseMajorMinor(versionText);
+        if (version == null) {
+            LOG.warn("Unable to detect the database version of datasource [{}] from [{}]: schema generation uses no target version",
+                dataSourceName, versionText);
+        } else if (LOG.isInfoEnabled()) {
+            LOG.info("Schema generation for datasource [{}] targets the detected database version {}", dataSourceName, version);
+        }
+        return version;
+    }
+
     private Mono<Void> generate(Connection connection,
                                 DataR2dbcConfiguration configuration,
                                 PersistentEntity[] entities,
@@ -146,7 +169,9 @@ public class R2dbcSchemaGenerator {
                     if (DataSettings.QUERY_LOG.isDebugEnabled()) {
                         DataSettings.QUERY_LOG.debug("Creating Table: \n{}", sql);
                     }
-                    return execute(connection, sql)
+                    // Only the executed statement is wrapped, so the logs show the DDL as it is
+                    String statement = builder.getDialect() == Dialect.ORACLE ? executeImmediateDualityView(sql) : sql;
+                    return execute(connection, statement)
                             .onErrorResume((throwable -> {
                                 if (LOG.isWarnEnabled()) {
                                     LOG.warn("Unable to create table :{}, {}", throwable.getMessage(), sql);
@@ -215,6 +240,36 @@ public class R2dbcSchemaGenerator {
             case CREATE -> createTables;
             default -> Mono.empty();
         };
+    }
+
+    /**
+     * Oracle R2DBC prepares every statement, and the Oracle driver finds bind markers in duality views whose sub-views
+     * have generated fields with function calls (ORA-17041). The DDL is passed to {@code EXECUTE IMMEDIATE} in string
+     * literals instead, and the driver doesn't look for bind markers inside string literals. A PL/SQL string literal is
+     * limited to 32,767 bytes, so the DDL is appended to a {@code CLOB} in literals of at most
+     * {@value #DDL_LITERAL_LENGTH} characters: up to 3 bytes each in AL32UTF8, twice that with every quote doubled.
+     *
+     * @param sql The CREATE statement
+     * @return The statement to execute
+     */
+    static String executeImmediateDualityView(String sql) {
+        if (!sql.startsWith("CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW")) {
+            return sql;
+        }
+        StringBuilder block = new StringBuilder("DECLARE ddl CLOB; BEGIN");
+        int start = 0;
+        while (start < sql.length()) {
+            int end = Math.min(start + DDL_LITERAL_LENGTH, sql.length());
+            if (end < sql.length() && Character.isHighSurrogate(sql.charAt(end - 1))) {
+                end--;
+            }
+            // Quotes are doubled after splitting, so that a doubled quote is never split
+            block.append(start == 0 ? " ddl := '" : " ddl := ddl || '")
+                .append(sql.substring(start, end).replace("'", "''"))
+                .append("';");
+            start = end;
+        }
+        return block.append(" EXECUTE IMMEDIATE ddl; END;").toString();
     }
 
     /**
