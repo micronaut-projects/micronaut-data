@@ -798,7 +798,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             return predicate;
         }
         List<MethodNameParser.Match> predicateMatches = matches.stream().filter(m -> m.id() == QueryMatchId.PREDICATE).toList();
-        TextPredicate textPredicate = predicateMatches.isEmpty() ? null : resolveTextPredicate(predicateMatches);
+        TextPredicate textPredicate = predicateMatches.isEmpty() ? null : resolveTextPredicate(root.getPersistentEntity(), predicateMatches);
         if (textPredicate == null) {
             throw new MatchFailedException("A Score parameter requires a Search predicate: " + matchContext.getMethodElement().getName());
         }
