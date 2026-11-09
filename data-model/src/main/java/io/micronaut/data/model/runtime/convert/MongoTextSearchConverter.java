@@ -32,10 +32,11 @@ import java.util.StringJoiner;
  *
  * <p>MongoDB matches any term by default, requires every quoted phrase, and excludes terms prefixed
  * with {@code -}; a term that contains a quote is quoted as a phrase. {@link MatchMode#ALL} is rendered
- * by quoting every term, which MongoDB treats as a required phrase. {@code OR} groups are flattened
+ * by quoting every term, which MongoDB treats as a required phrase and matches literally, so the terms of
+ * an all-terms search are not stemmed. {@code OR} groups are flattened
  * for {@link MatchMode#ANY} and rejected for the other modes.</p>
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 public abstract class MongoTextSearchConverter implements TextSearchQueryConverter {

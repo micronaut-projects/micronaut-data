@@ -24,6 +24,7 @@ import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.model.search.TextSearchSupport;
 import io.micronaut.data.mongodb.operations.options.MongoFindOptions;
 import io.micronaut.data.runtime.operations.internal.query.DefaultBindableParametersPreparedQuery;
 import io.micronaut.data.runtime.query.internal.DefaultPreparedQuery;
@@ -97,17 +98,48 @@ final class DefaultMongoPreparedQuery<E, R> extends DefaultBindableParametersPre
         Pageable pageable = getPageable();
         if (!pageable.isUnpaged()) {
             List<Bson> pipeline = new ArrayList<>(aggregation.getPipeline());
+            applyScoreOrderIfUnsorted(pageable.getSort(), pipeline);
             applyPageable(pageable, pipeline);
             return new MongoAggregation(pipeline, aggregation.getOptions());
         }
         Limit limit = getQueryLimit();
         Sort sort = getSort();
-        if (limit.isLimited() || sort.isSorted()) {
+        if (limit.isLimited() || sort.isSorted() || isScoreOrderedWhenUnsorted()) {
             List<Bson> pipeline = new ArrayList<>(aggregation.getPipeline());
+            applyScoreOrderIfUnsorted(sort, pipeline);
             applyPageable(limit, sort, pipeline);
             return new MongoAggregation(pipeline, aggregation.getOptions());
         }
         return aggregation;
+    }
+
+    /**
+     * Orders a full-text search by its relevance score, best match first, when the query left its order to a
+     * {@code Pageable} or {@code Sort} parameter that is unsorted. The {@code _id} breaks ties, so consecutive
+     * pages neither repeat nor skip hits. A query that already sorts keeps its order.
+     *
+     * @param sort The sort of the parameter
+     * @param pipeline The pipeline
+     */
+    private void applyScoreOrderIfUnsorted(Sort sort, List<Bson> pipeline) {
+        if (sort.isSorted() || !isScoreOrderedWhenUnsorted()) {
+            return;
+        }
+        int index = pipeline.size();
+        for (int i = pipeline.size() - 1; i >= 0; i--) {
+            BsonDocument stage = pipeline.get(i).toBsonDocument();
+            if (stage.containsKey(SORT_STAGE)) {
+                return;
+            }
+            if (index == i + 1 && (stage.containsKey(SKIP_STAGE) || stage.containsKey(LIMIT_STAGE))) {
+                // ahead of the trailing pagination stages
+                index = i;
+            }
+        }
+        BsonDocument scoreOrder = new BsonDocument()
+            .append(TextSearchSupport.SCORE_ALIAS, new BsonInt32(-1))
+            .append(MongoUtils.ID, new BsonInt32(1));
+        pipeline.add(index, new BsonDocument(SORT_STAGE, scoreOrder));
     }
 
     @Override
