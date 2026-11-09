@@ -111,6 +111,37 @@ ${methods}
                 '{"query":{"bool":{"must_not":{"wildcard":{"author":{"value":{"$mn_qp":0,"$mn_wildcard":"like"}}}}}}}'
     }
 
+    void "a negated script comparison renders the opposite comparison, and case functions compare in scripts"() {
+        given:
+        def repository = articleRepository("""
+    @jakarta.data.repository.Query("WHERE NOT (pages = views)")
+    List<Article> pagesNotEqualToViews();
+    @jakarta.data.repository.Query("WHERE pages <> views")
+    List<Article> pagesDifferentFromViews();
+    @jakarta.data.repository.Query("WHERE NOT (title < author)")
+    List<Article> titleNotBeforeAuthor();
+    @jakarta.data.repository.Query("WHERE LOWER(author) > :name")
+    List<Article> lowerAuthorAfter(String name);
+    @jakarta.data.repository.Query("WHERE UPPER(author) = UPPER(:name)")
+    List<Article> authorIgnoringCase(String name);
+    @jakarta.data.repository.Query("WHERE LOWER(author) NOT BETWEEN :low AND :high")
+    List<Article> authorsOutsideIgnoringCase(String low, String high);
+""")
+
+        expect: "the existence checks stay, so a document missing a property matches neither form"
+        query(repository.getRequiredMethod("pagesNotEqualToViews")) ==
+                '{"query":{"script":{"script":{"source":"doc[\'pages\'].size() != 0 && doc[\'views\'].size() != 0 && doc[\'pages\'].value != doc[\'views\'].value","lang":"painless"}}}}'
+        query(repository.getRequiredMethod("pagesDifferentFromViews")) == query(repository.getRequiredMethod("pagesNotEqualToViews"))
+        query(repository.getRequiredMethod("titleNotBeforeAuthor")).contains("doc['title.keyword'].value.compareTo(doc['author'].value) >= 0")
+        !query(repository.getRequiredMethod("titleNotBeforeAuthor")).contains("must_not")
+
+        and: "a value is folded only when the query wraps it in a case function"
+        query(repository.getRequiredMethod("lowerAuthorAfter", String)).contains("doc['author'].value.toLowerCase().compareTo(params.value.toString()) > 0")
+        query(repository.getRequiredMethod("authorIgnoringCase", String)).contains("doc['author'].value.toUpperCase().compareTo(params.value.toString().toUpperCase()) == 0")
+        query(repository.getRequiredMethod("authorsOutsideIgnoringCase", String, String)).contains("return !(v.compareTo(params.from.toString()) >= 0")
+        !query(repository.getRequiredMethod("authorsOutsideIgnoringCase", String, String)).contains("must_not")
+    }
+
     private static String query(ExecutableMethod<?, ?> method) {
         // a Jakarta Data query keeps its text as the @Query value and its rendering in the queries of @DataMethod,
         // a finder renders into the @Query value

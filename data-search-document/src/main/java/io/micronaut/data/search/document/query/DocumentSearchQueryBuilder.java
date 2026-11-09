@@ -62,6 +62,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -429,6 +430,9 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
         private Object minScore;
         // the number of OR and NOT predicates around the one being visited, where a score restriction cannot apply
         private int scoreForbiddenDepth;
+        // the opposite of each rendered script comparison, by identity: a must_not around a script would match
+        // the documents missing a compared value, which SQL treats as unknown under NOT as well
+        private final Map<Map<String, Object>, Map<String, Object>> negations = new IdentityHashMap<>();
 
         DocumentPredicateVisitor(PersistentEntity entity, Bindings bindings, int limit) {
             this.entity = entity;
@@ -561,7 +565,7 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
         public void visit(NegatedPredicate negate) {
             scoreForbiddenDepth++;
             try {
-                result = Map.of(BOOL, Map.of(MUST_NOT, render(negate.getNegated())));
+                result = not(render(negate.getNegated()));
             } finally {
                 scoreForbiddenDepth--;
             }
@@ -599,6 +603,10 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
 
         @Override
         public void visitEquals(Expression<?> leftExpression, Expression<?> rightExpression, boolean ignoreCase) {
+            if (fold(leftExpression) != PainlessScripts.Fold.NONE || fold(rightExpression) != PainlessScripts.Fold.NONE) {
+                result = caseFoldedComparison(leftExpression, "==", rightExpression);
+                return;
+            }
             if (rightExpression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?>) {
                 result = compareProperties(leftExpression, "==", rightExpression);
                 return;
@@ -618,7 +626,7 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
         @Override
         public void visitNotEquals(Expression<?> leftExpression, Expression<?> rightExpression, boolean ignoreCase) {
             visitEquals(leftExpression, rightExpression, ignoreCase);
-            result = Map.of(BOOL, Map.of(MUST_NOT, result));
+            result = not(result);
         }
 
         @Override
@@ -657,11 +665,16 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
 
         @Override
         public void visitInBetween(Expression<?> value, Expression<?> from, Expression<?> to, boolean negated) {
-            if (value instanceof UnaryExpression<?> unary && (unary.getType() == UnaryExpressionType.LOWER || unary.getType() == UnaryExpressionType.UPPER)) {
-                // a range query has no case folding, so the bounds compare in a script
-                PersistentPropertyPath propertyPath = requireProperty(unary.getExpression()).getPropertyPath();
-                result = PainlessScripts.caseFoldedRange(keywordPath(propertyPath), unary.getType() == UnaryExpressionType.UPPER,
-                    value(unfold(from), propertyPath), value(unfold(to), propertyPath));
+            PainlessScripts.Fold fold = fold(value);
+            if (fold != PainlessScripts.Fold.NONE) {
+                // a range query has no case folding, so the bounds compare in a script, each bound folded only
+                // when the query wraps it in a case function too
+                PersistentPropertyPath propertyPath = requireProperty(unfold(value)).getPropertyPath();
+                Object low = value(unfold(from), propertyPath);
+                Object high = value(unfold(to), propertyPath);
+                String field = keywordPath(propertyPath);
+                result = negatable(PainlessScripts.caseFoldedRange(field, fold, low, fold(from), high, fold(to), false),
+                    PainlessScripts.caseFoldedRange(field, fold, low, fold(from), high, fold(to), true));
             } else {
                 PersistentPropertyPath propertyPath = requireProperty(value).getPropertyPath();
                 Map<String, Object> bounds = new LinkedHashMap<>();
@@ -670,7 +683,7 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
                 result = Map.of(RANGE, Map.of(keywordPath(propertyPath), bounds));
             }
             if (negated) {
-                result = Map.of(BOOL, Map.of(MUST_NOT, result));
+                result = not(result);
             }
         }
 
@@ -795,6 +808,9 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
         }
 
         private Map<String, Object> range(Expression<?> leftExpression, String operator, Expression<?> rightExpression) {
+            if (fold(leftExpression) != PainlessScripts.Fold.NONE || fold(rightExpression) != PainlessScripts.Fold.NONE) {
+                return caseFoldedComparison(leftExpression, Objects.requireNonNull(RANGE_OPERATORS.get(operator)), rightExpression);
+            }
             if (rightExpression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?>) {
                 return compareProperties(leftExpression, Objects.requireNonNull(RANGE_OPERATORS.get(operator)), rightExpression);
             }
@@ -808,14 +824,55 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
             PersistentPropertyPath left = requireProperty(leftExpression).getPropertyPath();
             PersistentPropertyPath right = requireProperty(rightExpression).getPropertyPath();
             boolean numeric = left.getProperty().getDataType().isNumeric() && right.getProperty().getDataType().isNumeric();
-            return PainlessScripts.compare(keywordPath(left), operator, keywordPath(right), numeric);
+            String leftField = keywordPath(left);
+            String rightField = keywordPath(right);
+            return negatable(PainlessScripts.compare(leftField, operator, rightField, numeric),
+                PainlessScripts.compare(leftField, PainlessScripts.negate(operator), rightField, numeric));
         }
 
-        /** The operand of a lower or upper case function, as the bound values are folded in the script. */
+        /**
+         * Compares the lower or upper case form of a property with a value, which the query DSL cannot do, in a
+         * script; the value is folded only when the query wraps it in a case function too, as in SQL.
+         */
+        private Map<String, Object> caseFoldedComparison(Expression<?> leftExpression, String operator, Expression<?> rightExpression) {
+            PersistentPropertyPath propertyPath = requireProperty(unfold(leftExpression)).getPropertyPath();
+            String field = keywordPath(propertyPath);
+            Object value = value(unfold(rightExpression), propertyPath);
+            PainlessScripts.Fold fold = fold(leftExpression);
+            PainlessScripts.Fold valueFold = fold(rightExpression);
+            return negatable(PainlessScripts.caseFoldedCompare(field, fold, operator, value, valueFold),
+                PainlessScripts.caseFoldedCompare(field, fold, PainlessScripts.negate(operator), value, valueFold));
+        }
+
+        /** Records the opposite of a script comparison, which a NOT renders instead of a must_not. */
+        private Map<String, Object> negatable(Map<String, Object> query, Map<String, Object> negated) {
+            negations.put(query, negated);
+            negations.put(negated, query);
+            return query;
+        }
+
+        /** The negation of a query: the opposite of a script comparison, or else a must_not around it. */
+        private Map<String, Object> not(Map<String, Object> query) {
+            Map<String, Object> negated = negations.get(query);
+            return negated != null ? negated : Map.of(BOOL, Map.of(MUST_NOT, query));
+        }
+
+        /** The case function a string expression is wrapped in, if any. */
+        private static PainlessScripts.Fold fold(Expression<?> expression) {
+            if (expression instanceof UnaryExpression<?> unary) {
+                if (unary.getType() == UnaryExpressionType.LOWER) {
+                    return PainlessScripts.Fold.LOWER;
+                }
+                if (unary.getType() == UnaryExpressionType.UPPER) {
+                    return PainlessScripts.Fold.UPPER;
+                }
+            }
+            return PainlessScripts.Fold.NONE;
+        }
+
+        /** The operand of a lower or upper case function, which the script folds. */
         private static Expression<?> unfold(Expression<?> expression) {
-            return expression instanceof UnaryExpression<?> unary && (unary.getType() == UnaryExpressionType.LOWER || unary.getType() == UnaryExpressionType.UPPER)
-                ? unary.getExpression()
-                : expression;
+            return fold(expression) == PainlessScripts.Fold.NONE ? expression : ((UnaryExpression<?>) expression).getExpression();
         }
 
         private Map<String, Object> wildcard(PersistentPropertyPath propertyPath, Expression<?> expression, String hint) {
