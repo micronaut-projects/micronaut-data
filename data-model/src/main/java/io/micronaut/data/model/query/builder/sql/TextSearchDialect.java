@@ -39,7 +39,7 @@ import java.util.function.Function;
 /**
  * Renders full-text search predicates and scores for a SQL dialect.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 public interface TextSearchDialect {

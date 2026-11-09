@@ -32,9 +32,11 @@ import java.util.StringJoiner;
  *
  * <p>Lexemes are quoted, which makes any user input safe for {@code to_tsquery}; a quoted
  * multi-word lexeme becomes a phrase. Negated terms are joined with {@code & !}. A group made only
- * of negated terms is dropped, so a query such as {@code -spam} matches nothing.</p>
+ * of negated terms is dropped, so a query such as {@code -spam} matches nothing. In
+ * {@link MatchMode#PREFIX} mode every term, including each word of a quoted phrase, is matched as a
+ * prefix, so the unterminated phrase {@code "micronaut da} typed so far finds "micronaut data".</p>
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 public abstract class PostgresTsQueryConverter implements TextSearchQueryConverter {
@@ -116,7 +118,8 @@ public abstract class PostgresTsQueryConverter implements TextSearchQueryConvert
         StringBuilder negative = new StringBuilder();
         for (SearchTerm term : group) {
             String lexeme = quote(term.text());
-            if (mode == MatchMode.PREFIX && !term.phrase()) {
+            if (mode == MatchMode.PREFIX) {
+                // on a quoted phrase PostgreSQL applies the prefix flag to every lexeme of the phrase
                 lexeme += ":*";
             }
             if (term.negated()) {

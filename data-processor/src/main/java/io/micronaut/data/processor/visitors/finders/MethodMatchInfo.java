@@ -59,6 +59,7 @@ public final class MethodMatchInfo {
     @Nullable
     private DataType resultDataType;
     private boolean optionalEmbeddedProjection;
+    private boolean scoreOrderedWhenUnsorted;
     private final List<QueryDefinition> additionalQueries = new ArrayList<>(2);
     private boolean isRawQuery;
     private boolean encodeEntityParameters;
@@ -212,6 +213,18 @@ public final class MethodMatchInfo {
     }
 
     /**
+     * Sets whether the query orders by its relevance score when its {@code Pageable} or {@code Sort}
+     * parameter is unsorted.
+     *
+     * @param scoreOrderedWhenUnsorted Whether an unsorted pageable or sort orders by score
+     * @return this
+     */
+    public MethodMatchInfo scoreOrderedWhenUnsorted(boolean scoreOrderedWhenUnsorted) {
+        this.scoreOrderedWhenUnsorted = scoreOrderedWhenUnsorted;
+        return this;
+    }
+
+    /**
      * @return Whether this method should read a generated identity value.
      */
     public boolean shouldReadGeneratedId() {
@@ -264,6 +277,13 @@ public final class MethodMatchInfo {
      */
     public boolean isOptionalEmbeddedProjection() {
         return optionalEmbeddedProjection;
+    }
+
+    /**
+     * @return Whether the query orders by its relevance score when its pageable or sort is unsorted
+     */
+    public boolean isScoreOrderedWhenUnsorted() {
+        return scoreOrderedWhenUnsorted;
     }
 
     public List<QueryDefinition> getAdditionalQueries() {
