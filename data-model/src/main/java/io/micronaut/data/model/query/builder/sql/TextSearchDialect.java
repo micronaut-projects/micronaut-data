@@ -64,10 +64,23 @@ public interface TextSearchDialect {
      * vector and hybrid search, which the SQL stores serve through their vector support.
      *
      * @return The supported capabilities
-     * @since 5.4.0
+     * @since 5.3.0
      */
     default Set<SearchCapability> capabilities() {
         return Set.of();
+    }
+
+    /**
+     * A query telling whether the database has what a capability of the dialect needs beyond the dialect
+     * itself, such as an extension: it returns one row whose first column is positive when it does.
+     *
+     * @param capability A capability of {@link #capabilities()}
+     * @return The query, or {@code null} when the capability needs nothing more
+     * @since 5.3.0
+     */
+    @Nullable
+    default String capabilityCheckQuery(SearchCapability capability) {
+        return null;
     }
 
     /**
@@ -593,6 +606,13 @@ public interface TextSearchDialect {
             // pg_trgm gives fuzzy matching with a similarity threshold rather than an edit distance, and weights are fixed by the index
             return EnumSet.of(SearchCapability.PHRASE, SearchCapability.PREFIX, SearchCapability.FUZZY, SearchCapability.FIELD_SCOPE,
                 SearchCapability.HIGHLIGHT, SearchCapability.LANGUAGE_OVERRIDE, SearchCapability.MIN_SCORE, SearchCapability.VECTOR, SearchCapability.HYBRID);
+        }
+
+        @Override
+        @Nullable
+        public String capabilityCheckQuery(SearchCapability capability) {
+            // a fuzzy match uses the operators of the pg_trgm extension, which the database may not have
+            return capability == SearchCapability.FUZZY ? "SELECT count(*) FROM pg_extension WHERE extname = 'pg_trgm'" : null;
         }
 
         @Override

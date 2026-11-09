@@ -30,9 +30,14 @@ import java.util.Set;
 /**
  * The search features MongoDB honours: MongoDB Search ({@code $search}) for an entity with a
  * {@code @MongoSearchIndex}, else the {@code $text} operator over the collection's text index.
+ * The set follows the entity's mapping and does not depend on the server version:
+ * {@link SearchCapability#HYBRID} is reported for a MongoDB Search entity because a hybrid search
+ * fuses with {@code $rankFusion} on MongoDB 8.1 or later and falls back to fusing the {@code $search}
+ * and {@code $vectorSearch} rankings in memory on an earlier server. A server without MongoDB Search
+ * fails the {@code $search} features of such an entity whatever this bean reports.
  *
  * @author Graeme Rocher
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Experimental
 @Singleton
