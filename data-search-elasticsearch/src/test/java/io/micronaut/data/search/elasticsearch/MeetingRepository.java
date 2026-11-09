@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.search.elasticsearch;
 
+import io.micronaut.data.model.CursoredPage;
+import io.micronaut.data.model.CursoredPageable;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.search.elasticsearch.annotation.ElasticsearchRepository;
 
@@ -35,4 +37,6 @@ public interface MeetingRepository extends CrudRepository<Meeting, String> {
     List<Meeting> findByPriority(Meeting.Priority priority);
 
     List<Meeting> findByPriorityInList(List<Meeting.Priority> priorities);
+
+    CursoredPage<Meeting> findByPriority(Meeting.Priority priority, CursoredPageable pageable);
 }

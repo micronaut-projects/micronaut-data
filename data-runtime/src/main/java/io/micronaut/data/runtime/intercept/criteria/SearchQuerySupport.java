@@ -18,11 +18,13 @@ package io.micronaut.data.runtime.intercept.criteria;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractCriteriaBuilder;
 import io.micronaut.data.model.query.builder.sql.VectorScoringDialectSupport;
+import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.search.SearchCapability;
@@ -34,6 +36,7 @@ import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.model.vector.search.Score;
 import io.micronaut.data.model.vector.search.SearchResult;
 import io.micronaut.data.model.vector.search.SearchResults;
+import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.ParameterExpression;
 import jakarta.persistence.criteria.Predicate;
@@ -53,7 +56,7 @@ import java.util.Set;
  * The criteria queries and the result handling of {@code search(SearchQuery)}, shared by the blocking,
  * reactive and async interceptors.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 public final class SearchQuerySupport {
@@ -99,11 +102,7 @@ public final class SearchQuerySupport {
         PersistentEntityRoot<Object> root = criteriaQuery.from(rootEntity);
         List<Expression<?>> fields = resolveFields(root, searchQuery);
         ParameterExpression<String> queryParameter = cb.parameter(String.class, null, searchQuery.getQuery());
-        for (String boosted : searchQuery.getBoosts().keySet()) {
-            // a boost of a property that is not searched would otherwise be ignored silently
-            requireSearchField(root, boosted);
-        }
-        TextMatchOptions options = new TextMatchOptions(searchQuery.getBoosts(), searchQuery.getFuzziness());
+        TextMatchOptions options = textMatchOptions(root, searchQuery);
         Expression<Double> score = cb.searchScore(fields, queryParameter, searchQuery.getMode(), options);
         Predicate match = cb.textMatch(fields, queryParameter, searchQuery.getMode(), options);
         if (searchQuery.getMinScore() != null && !searchQuery.isHybrid()) {
@@ -179,25 +178,70 @@ public final class SearchQuerySupport {
     }
 
     /**
-     * Translates the failure of a store without vector search into the portable exception.
+     * Renders the nearest-neighbour query and then checks its vector property, so a store without vector
+     * search reports that first and a property that holds no vector never reaches the database. The text
+     * query of the same entity has already rendered, so an {@link UnsupportedOperationException} or
+     * {@link IllegalStateException} while rendering comes from the vector score the store cannot render,
+     * and is reported as an unsupported hybrid search with the failure as its cause. The query runs
+     * afterwards, outside this method, so a failure while it runs or its rows are read is not relabelled.
      *
-     * @param e The failure
-     * @param operations The operations that failed
-     * @return The exception to throw
+     * @param criteriaOperations The prepared query criteria operations
+     * @param criteriaQuery The query built by {@link #vectorQuery}, with its window applied
+     * @param persistentEntity The entity
+     * @param searchQuery The query
+     * @param operations The operations, named by the unsupported search exception
+     * @return The prepared query to run
+     * @throws io.micronaut.data.model.search.UnsupportedSearchFeatureException When the store cannot render the vector score
+     * @throws IllegalArgumentException When the vector property is not a {@link Vector}
      */
-    public static RuntimeException vectorFailure(Throwable e, Object operations) {
-        if (e instanceof UnsupportedOperationException || e instanceof IllegalStateException) {
+    public static PreparedQuery<Object, SearchResults<Object>> renderVectorQuery(AbstractPreparedQueryCriteriaRepositoryOperations criteriaOperations,
+                                                                                PersistentEntityCriteriaQuery<SearchResults> criteriaQuery,
+                                                                                PersistentEntity persistentEntity,
+                                                                                SearchQuery searchQuery,
+                                                                                Object operations) {
+        PreparedQuery<Object, SearchResults<Object>> preparedQuery;
+        try {
+            preparedQuery = criteriaOperations.createFindOne(resultsQuery(criteriaQuery));
+        } catch (UnsupportedOperationException | IllegalStateException e) {
             UnsupportedSearchFeatureException unsupported = new UnsupportedSearchFeatureException(SearchCapability.HYBRID, operations.getClass().getSimpleName());
             unsupported.initCause(e);
-            return unsupported;
+            throw unsupported;
         }
-        return e instanceof RuntimeException runtime ? runtime : new IllegalStateException(e);
+        requireVectorProperty(persistentEntity, searchQuery);
+        return preparedQuery;
+    }
+
+    /**
+     * Checks that the vector property named by a hybrid query holds a {@link Vector}.
+     *
+     * @param persistentEntity The entity
+     * @param searchQuery The hybrid query
+     * @throws IllegalArgumentException When the property is missing or not a {@link Vector}
+     */
+    public static void requireVectorProperty(PersistentEntity persistentEntity, SearchQuery searchQuery) {
+        String property = Objects.requireNonNull(searchQuery.getVectorProperty());
+        PersistentProperty persistentProperty = persistentEntity.getPropertyByName(property);
+        if (persistentProperty == null || !persistentProperty.isAssignable(Vector.class)) {
+            throw new IllegalArgumentException("Property '" + property + "' of entity " + persistentEntity.getSimpleName()
+                + " is not a Vector property; a hybrid search ranks by the similarity of a vector property");
+        }
+    }
+
+    /**
+     * @param criteriaQuery A query built by {@link #textQuery} or {@link #vectorQuery}
+     * @return The same query, typed by its results
+     */
+    @SuppressWarnings("unchecked")
+    public static CriteriaQuery<SearchResults<Object>> resultsQuery(PersistentEntityCriteriaQuery<SearchResults> criteriaQuery) {
+        return (CriteriaQuery<SearchResults<Object>>) (CriteriaQuery<?>) criteriaQuery;
     }
 
     /**
      * Merges the text hits and the vector hits with reciprocal rank fusion: each hit scores
      * {@code weight / (k + rank)} per ranking it appears in, and the sums order the result. The page
-     * is cut from the fused list.
+     * is cut from the fused list. The total hits are the size of the fused list, the distinct hits of
+     * both candidate windows left after {@code minScore}, not the number of rows matching the text or
+     * having a vector.
      *
      * @param persistentEntity The entity, for the identity of a hit
      * @param textResults The text hits, best first
@@ -294,14 +338,40 @@ public final class SearchQuerySupport {
         return entity;
     }
 
+    private static Set<String> searchFieldNames(PersistentEntityRoot<Object> root) {
+        Set<String> names = new LinkedHashSet<>();
+        for (PersistentProperty property : TextSearchSupport.searchFields(root.getPersistentEntity())) {
+            names.add(property.getName());
+        }
+        return names;
+    }
+
     /** A field named by a SearchQuery, which must be one of the entity's search fields. */
     private static String requireSearchField(PersistentEntityRoot<Object> root, String field) {
-        List<String> searchFields = TextSearchSupport.searchFields(root.getPersistentEntity()).stream().map(PersistentProperty::getName).toList();
+        Set<String> searchFields = searchFieldNames(root);
         if (!searchFields.contains(field)) {
             throw new IllegalArgumentException("Property '" + field + "' of entity " + root.getPersistentEntity().getSimpleName()
                 + " is not a @SearchField; the search fields are " + searchFields);
         }
         return field;
+    }
+
+    /**
+     * The boosts and the edit distance of a SearchQuery; each boost must name one of the searched fields,
+     * as a boost of a property that is not searched would otherwise be ignored silently.
+     */
+    private static TextMatchOptions textMatchOptions(PersistentEntityRoot<Object> root, SearchQuery searchQuery) {
+        Set<String> searched = searchQuery.getFields().isEmpty()
+            ? searchFieldNames(root)
+            : searchQuery.getFields();
+        for (String boosted : searchQuery.getBoosts().keySet()) {
+            requireSearchField(root, boosted);
+            if (!searched.contains(boosted)) {
+                throw new IllegalArgumentException("Property '" + boosted + "' of entity " + root.getPersistentEntity().getSimpleName()
+                    + " is boosted but not searched; the searched fields are " + searched);
+            }
+        }
+        return TextMatchOptions.of(searchQuery);
     }
 
     private static List<Expression<?>> resolveFields(PersistentEntityRoot<Object> root, SearchQuery searchQuery) {
