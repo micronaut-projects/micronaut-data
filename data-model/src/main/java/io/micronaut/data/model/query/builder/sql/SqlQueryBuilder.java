@@ -1173,6 +1173,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         String language = TextSearchSupport.resolveLanguage(entity);
         String indexName = entity.getAnnotationMetadata().stringValue(Searchable.class, "name")
             .filter(StringUtils::isNotEmpty)
+            .map(TextSearchDialect::requireIndexName)
             .orElseGet(() -> "idx_" + prepareNames(table.name()) + "_search");
         String languageColumn = languageColumn(entity, namingStrategy, escape);
         for (String ddl : textSearchDialect.buildSearchIndex(escape ? quote(indexName) : indexName, escapedTableName, columns, language, languageColumn)) {
