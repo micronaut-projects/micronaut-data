@@ -169,29 +169,34 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
     // ---------- raw bodies
 
     @Override
-    public <T> SearchResults<T> search(Class<T> entityType, String body) {
+    public <T> SearchResults<T> search(Class<T> entityType, String body, Map<String, ?> parameters) {
         RuntimePersistentEntity<T> entity = runtimeEntityRegistry.getEntity(entityType);
-        return toSearchResults(transport.search(indexName(entity), searchJson(parseBody(body), entity)), entity, null);
+        Map<String, Object> request = parseBody(body, parameters);
+        // totalHits is exact, as for a SearchResults method, unless the body asks otherwise
+        request.putIfAbsent("track_total_hits", true);
+        return toSearchResults(transport.search(indexName(entity), searchJson(request, entity)), entity, null);
     }
 
     @Override
-    public <T> List<T> find(Class<T> entityType, String body) {
+    public <T> List<T> find(Class<T> entityType, String body, Map<String, ?> parameters) {
         RuntimePersistentEntity<T> entity = runtimeEntityRegistry.getEntity(entityType);
-        return search(parseBody(body), entity, null);
+        return search(parseBody(body, parameters), entity, null);
     }
 
     @Override
-    public long count(Class<?> entityType, String body) {
+    public long count(Class<?> entityType, String body, Map<String, ?> parameters) {
         RuntimePersistentEntity<?> entity = runtimeEntityRegistry.getEntity(entityType);
-        return transport.count(indexName(entity), queryOnly(parseBody(body)));
+        return transport.count(indexName(entity), queryOnly(parseBody(body, parameters)));
     }
 
-    private Map<String, Object> parseBody(String body) {
+    private Map<String, Object> parseBody(String body, Map<String, ?> parameters) {
+        Map<String, Object> parsed;
         try {
-            return Objects.requireNonNull(jsonMapper.readValue(body, Argument.mapOf(String.class, Object.class)), "body");
+            parsed = Objects.requireNonNull(jsonMapper.readValue(body, Argument.mapOf(String.class, Object.class)), "body");
         } catch (IOException e) {
             throw new DataAccessException("Cannot parse the search request body: " + e.getMessage(), e);
         }
+        return DocumentStoredQuery.bindNamed(parsed, parameters, jsonMapper);
     }
 
     // ---------- reads

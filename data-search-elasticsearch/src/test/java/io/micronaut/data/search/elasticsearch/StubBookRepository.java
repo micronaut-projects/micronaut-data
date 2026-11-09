@@ -19,4 +19,7 @@ public interface StubBookRepository extends ReactorBookSearchRepository {
 
     @Query("{\"query\": {\"bool\": {\"must\": {\"simple_query_string\": {\"query\": \":query\", \"fields\": [\"title\"]}}, \"filter\": {\"range\": {\"pages\": {\"gte\": \":minPages\"}}}}}}")
     Mono<SearchResults<Book>> rawSearch(String query, int minPages);
+
+    @Query("{\"query\": {\"match\": {\"title\": \":title\"}}}")
+    Mono<Long> rawCount(String title);
 }

@@ -71,6 +71,14 @@ class StubTransportReactiveSpec extends Specification {
         then:
         transport.bodies.last().contains('"simple_query_string":{"query":"coffee | tea","fields":["title"]}')
         transport.bodies.last().contains('"range":{"pages":{"gte":100}}')
+
+        when: "a reactive @Query method returning a number counts through the count API"
+        def calls = transport.calls.size()
+        def count = repository.rawCount("rust").block()
+
+        then:
+        count instanceof Long
+        transport.calls.drop(calls) == ["async:count"]
     }
 
     void "the SearchQueryExecutor runs a raw body against the entity index"() {
