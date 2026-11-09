@@ -150,7 +150,7 @@ interface PostRepository extends CrudRepository<Post, String> {
         combined.contains('{$match:{\'writer.name\':{$eq:{$mn_qp:1}}}}')
     }
 
-    void "prefix and fuzzy searches are rejected at compile time"() {
+    void "prefix and fuzzy searches are rejected at compile time with a clear error"() {
         when:
         articleRepository("""
     List<Article> findByTitleSearchPrefix(String q);
@@ -158,7 +158,47 @@ interface PostRepository extends CrudRepository<Post, String> {
 
         then:
         def e = thrown(RuntimeException)
-        e.message.contains("PREFIX is not supported by MongoDB")
+        e.message.contains("Unable to implement Repository method: test.ArticleRepository.findByTitleSearchPrefix(String q). Search feature PREFIX is not supported by MongoDB")
+        !e.message.contains("Exception occurred while processing")
+    }
+
+    void "a highlightable search field is not highlighted by default on MongoDB \$text"() {
+        given:
+        def repository = buildRepository('test.NoteRepository', """
+import io.micronaut.data.annotation.search.SearchField;
+import io.micronaut.data.annotation.search.Searchable;
+import io.micronaut.data.model.vector.search.SearchResults;
+import io.micronaut.data.mongodb.annotation.MongoRepository;
+import io.micronaut.data.repository.SearchRepository;
+
+@MappedEntity
+@Searchable
+class Note {
+    @Id
+    @GeneratedValue
+    private String id;
+    @SearchField(highlightable = true)
+    private String title;
+
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+}
+
+@MongoRepository
+interface NoteRepository extends CrudRepository<Note, String>, SearchRepository<Note, String> {
+    SearchResults<Note> searchByTitleSearch(String q);
+}
+""")
+        def derived = TestUtils.getQuery(repository.getRequiredMethod("searchByTitleSearch", String))
+        def search = TestUtils.getQuery(repository.getRequiredMethod("search", String))
+
+        expect:
+        derived.contains('{$addFields:{mn_score:{$meta:\'textScore\'}}}')
+        !derived.contains('mn_hl')
+        search.contains('{$addFields:{mn_score:{$meta:\'textScore\'}}}')
+        !search.contains('mn_hl')
     }
 
     void "a property keyword on a property outside the text index is rejected at compile time"() {

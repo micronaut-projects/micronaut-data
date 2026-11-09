@@ -939,7 +939,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
             columnNameResultSetReader,
             "mn_score",
             resolveVectorScoringFunction(preparedQuery),
-            TextSearchSupport.highlightedProperties(preparedQuery.getQuery())
+            TextSearchSupport.highlightedProperties(preparedQuery.getQuery(), persistentEntity)
         );
     }
 
