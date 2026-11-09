@@ -68,8 +68,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Builds queries for Oracle property graphs, which are defined over tables with {@code CREATE PROPERTY GRAPH}.
@@ -127,6 +129,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     private static final String START = "s";
     private static final String END = "t";
     private static final String EDGE = "x";
+    private static final String PATH_EDGE = "e";
     private static final String RESULT = "result";
     private static final String COUNT_AS = "COUNT(*) AS ";
     private static final String LOWER = "LOWER(";
@@ -383,10 +386,11 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         String quantifier = "{1," + (definition.maxDepthBound() ? PathQueryDefinition.PATH_LIMIT_TOKEN : String.valueOf(definition.maxDepth())) + "}";
         Query query = new Query(entity);
         boolean elements = definition.result() == PathQueryDefinition.Result.ELEMENTS;
-        if (elements && sqlPgq()) {
-            throw new IllegalArgumentException("Returning paths is not supported by the SQL/PGQ dialect: it checks for paths and counts them");
+        if (elements && sqlPgq() && definition.kind() != PathQueryDefinition.Kind.ALL) {
+            throw new IllegalArgumentException("Shortest paths are not supported by the SQL/PGQ dialect, which has no shortest path search: return every path up to the depth with findAllPaths");
         }
-        String edgeVariable = elements ? EDGE : "";
+        // SQL/PGQ iterates the steps with variables of their own, so the edge of the pattern takes another name
+        String edgeVariable = sqlPgq() ? PATH_EDGE : elements ? EDGE : "";
         String pattern = directed(node(START, entity), edge(edgeVariable, types, "") + quantifier, node(END, entity), definition.direction());
         query.pattern = sqlPgq() ? pattern : pathPrefix(definition.kind(), elements) + pattern;
         if (elements) {
@@ -403,6 +407,12 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             // cycles through a (the quantifier starts at one step, so no path of length zero is counted)
             PersistentProperty identity = identity(entity);
             query.and(property(START, identity) + " <> " + property(END, identity));
+        }
+        if (sqlPgq()) {
+            // SQL/PGQ matches walks, which may take an edge more than once, while a Cypher path takes each relationship
+            // once, so the match keeps the walks whose edges are distinct
+            String edgeId = "JSON_SERIALIZE(EDGE_ID(" + PATH_EDGE + "))";
+            query.and("COUNT(DISTINCT " + edgeId + ") = COUNT(" + edgeId + ")");
         }
         String text = query.render(false);
         if (definition.result() == PathQueryDefinition.Result.EXISTS) {
@@ -421,18 +431,35 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
 
     private void appendStepColumns(Query query, PathQueryDefinition definition, PersistentEntity entity) {
         query.rowsPer = "ONE ROW PER STEP (" + STEP_START + ", " + EDGE + ", " + STEP_END + ")";
-        query.column("MATCHNUM(" + STEP_START + ")", PATH_MATCH_COLUMN);
+        // SQL/PGQ numbers the match without a variable
+        query.column(sqlPgq() ? "MATCHNUM()" : "MATCHNUM(" + STEP_START + ")", PATH_MATCH_COLUMN);
         query.column("ELEMENT_NUMBER(" + EDGE + ")", PATH_STEP_COLUMN);
         query.entityColumns(STEP_START, entity);
         query.entityColumns(STEP_END, entity);
-        if (definition.relationships().size() == 1) {
-            query.column(literal(GraphEntities.relationshipType(definition.relationships().get(0))), EDGE + SEPARATOR + TYPE_COLUMN);
-        } else {
+        Set<String> types = new LinkedHashSet<>();
+        for (Association relationship : definition.relationships()) {
+            types.add(GraphEntities.relationshipType(relationship));
+        }
+        if (types.size() == 1) {
+            query.column(literal(types.iterator().next()), EDGE + SEPARATOR + TYPE_COLUMN);
+        } else if (!sqlPgq()) {
             // A path over several relationship types, or over any type, reads the type of each step from the label
             // of its edge, which the graph definition gives each edge table
             query.column("LABEL(" + EDGE + ")", EDGE + SEPARATOR + TYPE_COLUMN);
+        } else if (types.isEmpty()) {
+            throw new IllegalArgumentException("Paths over any relationship type are not supported by the SQL/PGQ dialect, which cannot read the label of an edge: name the relationships of the path");
+        } else {
+            // SQL/PGQ has no function returning the label, so each step tests the labels of the path
+            StringBuilder type = new StringBuilder("CASE");
+            for (String name : types) {
+                type.append(" WHEN ").append(EDGE).append(" IS LABELED ").append(identifier(name)).append(" THEN ").append(literal(name));
+            }
+            query.column(type.append(" END").toString(), EDGE + SEPARATOR + TYPE_COLUMN);
         }
-        query.orderBy = "MATCHNUM(" + STEP_START + "), ELEMENT_NUMBER(" + EDGE + ")";
+        // SQL/PGQ orders the rows of the graph table by their columns
+        query.orderBy = sqlPgq()
+            ? alias(PATH_MATCH_COLUMN) + ", " + alias(PATH_STEP_COLUMN)
+            : "MATCHNUM(" + STEP_START + "), ELEMENT_NUMBER(" + EDGE + ")";
     }
 
     private QueryResult buildRelationshipsQuery(PathQueryDefinition definition, PersistentEntity entity, String types) {
@@ -773,11 +800,15 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         }
 
         private void appendRowsAndWhere(StringBuilder sb) {
-            if (rowsPer != null) {
+            // PGQL puts ONE ROW PER STEP before the WHERE clause, SQL/PGQ after it
+            if (rowsPer != null && !sqlPgq()) {
                 sb.append(' ').append(rowsPer);
             }
             if (!where.isEmpty()) {
                 sb.append(" WHERE ").append(where);
+            }
+            if (rowsPer != null && sqlPgq()) {
+                sb.append(' ').append(rowsPer);
             }
         }
 
