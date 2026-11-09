@@ -56,7 +56,7 @@ public interface SearchResults<T> extends Iterable<SearchResult<T>> {
      * full count.</p>
      *
      * @return The total hits
-     * @since 5.4.0
+     * @since 5.3.0
      */
     default long totalHits() {
         return results().size();
@@ -67,7 +67,7 @@ public interface SearchResults<T> extends Iterable<SearchResult<T>> {
      * across backends.
      *
      * @return The maximum score, or {@code null} when there are no results
-     * @since 5.4.0
+     * @since 5.3.0
      */
     default @Nullable Score maxScore() {
         Score max = null;
@@ -86,7 +86,7 @@ public interface SearchResults<T> extends Iterable<SearchResult<T>> {
      * @param totalHits The total number of hits
      * @param <T> The entity type
      * @return Search results wrapper
-     * @since 5.4.0
+     * @since 5.3.0
      */
     static <T> SearchResults<T> of(List<SearchResult<T>> results, long totalHits) {
         return new DefaultSearchResults<>(results, totalHits);
