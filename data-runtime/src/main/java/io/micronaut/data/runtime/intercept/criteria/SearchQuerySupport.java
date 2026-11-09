@@ -163,6 +163,7 @@ public final class SearchQuerySupport {
      * @param searchQuery The query
      * @param pageable The requested page, which sizes the window
      * @return The criteria query
+     * @throws IllegalArgumentException When the vector property of the query is not a {@link Vector} property
      */
     public static PersistentEntityCriteriaQuery<SearchResults> hybridQuery(AbstractCriteriaBuilder cb,
                                                                           Class<Object> rootEntity,
@@ -171,6 +172,8 @@ public final class SearchQuerySupport {
         int candidates = hybridWindow(searchQuery, pageable).getSize();
         PersistentEntityCriteriaQuery<SearchResults> criteriaQuery = cb.createQuery(SearchResults.class);
         PersistentEntityRoot<Object> root = criteriaQuery.from(rootEntity);
+        // the in-memory fusion checks this before its vector query runs; the store would only report an index error
+        requireVectorProperty(root.getPersistentEntity(), searchQuery);
         List<Expression<?>> fields = resolveFields(root, searchQuery);
         ParameterExpression<String> queryParameter = cb.parameter(String.class, null, searchQuery.getQuery());
         TextMatchOptions options = textMatchOptions(root, searchQuery);
