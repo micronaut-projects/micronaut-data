@@ -103,6 +103,12 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
      */
     public static final String COSINE_SIMILARITY_HINT = "cosine_similarity";
 
+    /**
+     * The largest {@code k} and {@code num_candidates} of a {@code knn} query that Elasticsearch accepts.
+     */
+    public static final int MAX_KNN_CANDIDATES = 10_000;
+
+    // the k of a knn query without a limit: the stores' default size, the hits an unpaged query returns
     private static final int DEFAULT_K = 10;
     private static final int DEFAULT_NUM_CANDIDATES = 100;
 
@@ -118,6 +124,12 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
     private static final String FIELD = "field";
     private static final String RANGE = "range";
     private static final String ORDER = "order";
+    private static final String KNN = "knn";
+    private static final String FILTER = "filter";
+    // One fragment per field, like the single snippet the SQL stores return, of a pinned length so the
+    // shape does not follow the store defaults (five fragments of 100 characters)
+    private static final int HIGHLIGHT_FRAGMENTS = 1;
+    private static final int HIGHLIGHT_FRAGMENT_SIZE = 100;
 
     @Override
     @SuppressWarnings("NullAway")
@@ -177,7 +189,8 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
 
     /**
      * Finds the {@link TextSearchSupport#HIGHLIGHT_FUNCTION} projections of a selection and registers their
-     * fields; the fragments come back in each hit's {@code highlight} with the default {@code &lt;em&gt;} tags.
+     * fields; the fragments come back in each hit's {@code highlight} with the default {@code &lt;em&gt;} tags,
+     * at most one fragment of about {@value #HIGHLIGHT_FRAGMENT_SIZE} characters per field.
      */
     private static void collectHighlightFields(Selection<?> selection, Map<String, Object> highlightFields) {
         if (selection instanceof AliasedSelection<?> aliased) {
@@ -217,19 +230,45 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
 
     /**
      * Puts restrictions into the {@code filter} of a {@code knn} query, so the nearest neighbours are searched
-     * among the documents they select rather than the top {@code k} being filtered afterwards.
+     * among the documents they select rather than the top {@code k} being filtered afterwards. A filter the
+     * clause already carries, from an inner conjunction, is kept: the restrictions are added to it.
      */
     private static Map<String, Object> withFilter(Map<String, Object> knnQuery, List<Map<String, Object>> filters) {
         if (filters.isEmpty()) {
             return knnQuery;
         }
-        Map<String, Object> knn = new LinkedHashMap<>((Map<String, Object>) knnQuery.get("knn"));
-        knn.put("filter", filters.size() == 1 ? filters.get(0) : Map.of(BOOL, Map.of(MUST, filters)));
-        return Map.of("knn", knn);
+        List<Map<String, Object>> combined = new ArrayList<>(filterClauses(knnQuery));
+        for (Map<String, Object> filter : filters) {
+            if (!combined.contains(filter)) {
+                combined.add(filter);
+            }
+        }
+        Map<String, Object> knn = new LinkedHashMap<>((Map<String, Object>) knnQuery.get(KNN));
+        knn.put(FILTER, combined.size() == 1 ? combined.get(0) : Map.of(BOOL, Map.of(MUST, combined)));
+        return Map.of(KNN, knn);
+    }
+
+    /** The restrictions in the {@code filter} of a {@code knn} query, one per AND condition. */
+    private static List<Map<String, Object>> filterClauses(Map<String, Object> knnQuery) {
+        Object filter = knnQuery.get(KNN) instanceof Map<?, ?> knn ? knn.get(FILTER) : null;
+        if (filter == null) {
+            return List.of();
+        }
+        List<Map<String, Object>> conjuncts = conjuncts((Map<String, Object>) filter);
+        return conjuncts == null ? List.of((Map<String, Object>) filter) : conjuncts;
+    }
+
+    /** The clauses of a {@code bool} query holding only {@code must} clauses, or {@code null} for any other query. */
+    @Nullable
+    private static List<Map<String, Object>> conjuncts(Map<String, Object> query) {
+        if (query.size() == 1 && query.get(BOOL) instanceof Map<?, ?> bool && bool.size() == 1 && bool.get(MUST) instanceof List<?> must) {
+            return (List<Map<String, Object>>) must;
+        }
+        return null;
     }
 
     private static boolean isKnn(Map<String, Object> query) {
-        return query.size() == 1 && query.get("knn") instanceof Map<?, ?>;
+        return query.size() == 1 && query.get(KNN) instanceof Map<?, ?>;
     }
 
     private static void addHighlight(SelectQueryDefinition definition, Map<String, Object> body) {
@@ -245,7 +284,11 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
         for (Map.Entry<String, Object> field : highlightFields.entrySet()) {
             fields.add(Map.of(field.getKey(), field.getValue()));
         }
-        body.put("highlight", Map.of("fields", fields));
+        Map<String, Object> highlight = new LinkedHashMap<>();
+        highlight.put("number_of_fragments", HIGHLIGHT_FRAGMENTS);
+        highlight.put("fragment_size", HIGHLIGHT_FRAGMENT_SIZE);
+        highlight.put("fields", fields);
+        body.put("highlight", highlight);
     }
 
     private Map<String, Object> buildQuery(@Nullable Predicate predicate, PersistentEntity entity, Bindings bindings) {
@@ -356,8 +399,9 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
 
         /**
          * The {@code knn} query of a {@code mn_vector_score(field, vector)} function, in the Elasticsearch
-         * shape; the OpenSearch transport translates it. {@code k} follows the requested size and the
-         * optional maximum cosine distance becomes the store's similarity threshold.
+         * shape; the OpenSearch transport translates it. {@code k} follows the requested size, both it and
+         * {@code num_candidates} capped at {@value #MAX_KNN_CANDIDATES}, and the optional maximum cosine distance
+         * becomes the store's similarity threshold.
          */
         Map<String, Object> knn(FunctionExpression<?> function, @Nullable Expression<?> maxDistance) {
             PersistentPropertyPath propertyPath = requireProperty(function.getExpressions().get(0)).getPropertyPath();
@@ -365,14 +409,14 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
             Map<String, Object> knn = new LinkedHashMap<>();
             knn.put(FIELD, fieldName(propertyPath));
             knn.put("query_vector", value(vector, propertyPath));
-            int k = limit > 0 ? limit : DEFAULT_K;
+            int k = Math.min(limit > 0 ? limit : DEFAULT_K, MAX_KNN_CANDIDATES);
             knn.put("k", k);
-            knn.put("num_candidates", Math.max(k * 10, DEFAULT_NUM_CANDIDATES));
+            knn.put("num_candidates", Math.min(Math.max(k * 10, DEFAULT_NUM_CANDIDATES), MAX_KNN_CANDIDATES));
             if (maxDistance != null) {
                 knn.put("similarity", distanceToSimilarity(maxDistance));
             }
             knnFields.add(fieldName(propertyPath));
-            return Map.of("knn", knn);
+            return Map.of(KNN, knn);
         }
 
         private Object distanceToSimilarity(Expression<?> maxDistance) {
@@ -413,23 +457,44 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
             List<Map<String, Object>> must = new ArrayList<>();
             for (IExpression<Boolean> predicate : conjunction.getPredicates()) {
                 Map<String, Object> rendered = render(predicate);
-                // match_all restricts nothing but adds 1.0 to every hit's score inside "must", which would
-                // shift the scores a min_score compares against
-                if (!MATCH_ALL.equals(rendered)) {
+                List<Map<String, Object>> nested = conjuncts(rendered);
+                if (nested != null) {
+                    // an AND nested in an AND, as Specification.and and the tenant restriction compose them,
+                    // is one list of conditions, so a knn query among them is found and filtered
+                    must.addAll(nested);
+                } else if (!MATCH_ALL.equals(rendered)) {
+                    // match_all restricts nothing but adds 1.0 to every hit's score inside "must", which would
+                    // shift the scores a min_score compares against
                     must.add(rendered);
                 }
             }
             List<Map<String, Object>> knn = must.stream().filter(DocumentSearchQueryBuilder::isKnn).toList();
-            if (knn.size() == 1 && must.size() > 1 && minScore == null) {
-                // the other conditions select the documents the nearest neighbours are searched among
+            if (knn.size() == 1 && must.size() > 1) {
                 List<Map<String, Object>> filters = new ArrayList<>(must);
                 filters.remove(knn.get(0));
-                result = withFilter(knn.get(0), filters);
+                result = knnConjunction(knn.get(0), filters);
             } else if (must.isEmpty()) {
                 result = MATCH_ALL;
             } else {
                 result = must.size() == 1 ? must.get(0) : Map.of(BOOL, Map.of(MUST, must));
             }
+        }
+
+        /**
+         * A {@code knn} query AND other conditions: the conditions select the documents the nearest neighbours
+         * are searched among. With a minimum score they also stay scoring clauses beside the {@code knn} query,
+         * including the ones an inner conjunction already moved into its filter, because the
+         * {@code min_score} compares the score of every clause.
+         */
+        private Map<String, Object> knnConjunction(Map<String, Object> knnQuery, List<Map<String, Object>> filters) {
+            Map<String, Object> filtered = withFilter(knnQuery, filters);
+            if (minScore == null) {
+                return filtered;
+            }
+            List<Map<String, Object>> must = new ArrayList<>();
+            must.add(filtered);
+            must.addAll(filterClauses(filtered));
+            return Map.of(BOOL, Map.of(MUST, must));
         }
 
         @Override
@@ -634,7 +699,7 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
             for (Expression<?> field : fields) {
                 PersistentPropertyPath propertyPath = requireProperty(field).getPropertyPath();
                 // a query-time boost replaces the index-time weight of the field
-                Double boost = options.boostFor(propertyPath.getProperty().getName());
+                Double boost = options.boostFor(propertyPath.getPath());
                 SearchWeight weight = propertyPath.getProperty().getAnnotationMetadata().enumValue(SearchField.class, SearchField.MEMBER_WEIGHT, SearchWeight.class).orElse(null);
                 if (boost != null) {
                     fieldNames.add(fieldName(propertyPath) + "^" + boost);

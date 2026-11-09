@@ -98,6 +98,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -506,18 +507,17 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             addJsonViewCreateStatement(createStatements, entity);
             return createStatements.toArray(new String[0]);
         }
+        boolean escape = shouldEscape(entity);
+        String schema = SqlQueryBuilderUtils.getSchemaName(entity);
+        if (StringUtils.isNotEmpty(schema)) {
+            createStatements.add(createSchemaStatement(schema, escape, true));
+        }
         if (isSearchableJsonEntity(entity)) {
             addJsonEntityCreateStatements(createStatements, createStatements, entity);
             return createStatements.toArray(new String[0]);
         }
         List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(definitionProviders, entity, getDialect());
         assert CollectionUtils.isNotEmpty(tables);
-        boolean escape = shouldEscape(entity);
-        String schema = SqlQueryBuilderUtils.getSchemaName(entity);
-
-        if (StringUtils.isNotEmpty(schema)) {
-            createStatements.add(createSchemaStatement(schema, escape, true));
-        }
 
         for (SqlTableMapping table : tables) {
            addTableCreateStatements(createStatements, table, schema, escape);
@@ -569,14 +569,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             if (addJsonViewCreateStatements(entity, dialect, jsonViewCreateStatements)) {
                 continue;
             }
+            if (StringUtils.isNotEmpty(schema)) {
+                addToCollectionIfNotContains(createStatements, createSchemaStatement(schema, escape, false));
+            }
             if (isSearchableJsonEntity(entity)) {
                 addJsonEntityCreateStatements(createStatements, searchIndexStatements, entity);
                 continue;
             }
             List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(definitionProviders, entity, dialect);
-            if (StringUtils.isNotEmpty(schema)) {
-                addToCollectionIfNotContains(createStatements, createSchemaStatement(schema, escape, false));
-            }
             for (SqlTableMapping table : tables) {
                 addTable(table, sqlTableMappingByTableName);
                 Boolean shouldEscapeDialect = shouldEscapeDialect(dialect);
@@ -1125,7 +1125,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     /**
      * Adds the table of an entity stored as one JSON column ({@code @EntityRepresentation(columnType = JSON)}),
-     * and the JSON search index when the entity is {@link Searchable}.
+     * a unique index over the identity in the document, and the JSON search index when the entity is {@link Searchable}.
      */
     private void addJsonEntityCreateStatements(List<String> createStatements, List<String> searchIndexStatements, PersistentEntity entity) {
         if (!dialect.supportsJsonEntity()) {
@@ -1137,6 +1137,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         String jsonColumn = Objects.requireNonNull(getJsonEntityColumn(entity.getAnnotationMetadata()), "JSON entity column");
         String escapedJsonColumn = escape ? quote(jsonColumn) : jsonColumn;
         createStatements.add("CREATE TABLE " + tableName + " (" + escapedJsonColumn + " JSON NOT NULL);");
+        String identityIndex = jsonIdentityIndexStatement(entity, tableName, escapedJsonColumn, escape);
+        if (identityIndex != null) {
+            createStatements.add(identityIndex);
+        }
         TextSearchDialect textSearchDialect = TextSearchDialect.forDialect(dialect);
         if (textSearchDialect == null || !entity.getAnnotationMetadata().hasAnnotation(Searchable.class) || TextSearchSupport.searchFields(entity).isEmpty()) {
             return;
@@ -1147,6 +1151,26 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         for (String ddl : textSearchDialect.buildJsonSearchIndex(escape ? quote(indexName) : indexName, tableName, escapedJsonColumn)) {
             addToCollectionIfNotContains(searchIndexStatements, ddl);
         }
+    }
+
+    /**
+     * The table of a JSON entity has only the JSON column, so the identity is kept unique by an index over its
+     * keys in the document, {@code JSON_VALUE(<column>, '$.<key>')}, as the inserts do not name columns. An
+     * embedded identity is not indexed.
+     */
+    @Nullable
+    private String jsonIdentityIndexStatement(PersistentEntity entity, String tableName, String escapedJsonColumn, boolean escape) {
+        StringJoiner keys = new StringJoiner(",");
+        for (PersistentProperty identity : entity.getIdentityProperties()) {
+            if (!(identity instanceof Association)) {
+                keys.add("JSON_VALUE(" + escapedJsonColumn + ",'$." + TextSearchDialect.jsonKeyPath(new PersistentPropertyPath(identity)) + "' ERROR ON ERROR NULL ON EMPTY)");
+            }
+        }
+        if (keys.length() == 0) {
+            return null;
+        }
+        String indexName = "idx_" + prepareNames(getUnescapedTableName(entity)) + "_id";
+        return "CREATE UNIQUE INDEX " + (escape ? quote(indexName) : indexName) + " ON " + tableName + " (" + keys + ");";
     }
 
     /**
@@ -1170,7 +1194,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         for (PersistentProperty field : fields) {
             columns.add(searchColumn(field, table.name(), namingStrategy, escape));
         }
-        String language = TextSearchSupport.resolveLanguage(entity);
+        String language = TextSearchSupport.requireLanguageName(TextSearchSupport.resolveLanguage(entity));
         String indexName = entity.getAnnotationMetadata().stringValue(Searchable.class, "name")
             .filter(StringUtils::isNotEmpty)
             .map(TextSearchDialect::requireIndexName)

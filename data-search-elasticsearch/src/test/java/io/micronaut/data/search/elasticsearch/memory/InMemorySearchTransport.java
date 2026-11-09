@@ -44,6 +44,7 @@ public class InMemorySearchTransport implements SearchTransport {
     final Map<String, String> createdIndexes = new LinkedHashMap<>();
     final List<String> bodies = new ArrayList<>();
     final List<DocumentSearchConfiguration.Refresh> refreshes = new ArrayList<>();
+    final List<Integer> bulkSizes = new ArrayList<>();
     private int generated;
 
     private Map<String, Map<String, Object>> documents(String index) {
@@ -54,6 +55,7 @@ public class InMemorySearchTransport implements SearchTransport {
         indexes.clear();
         bodies.clear();
         refreshes.clear();
+        bulkSizes.clear();
         generated = 0;
     }
 
@@ -85,6 +87,12 @@ public class InMemorySearchTransport implements SearchTransport {
         String documentId = id == null ? "generated-" + (++generated) : id;
         documents(index).put(documentId, new LinkedHashMap<>(source));
         return documentId;
+    }
+
+    @Override
+    public List<String> bulkIndex(String index, List<BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
+        bulkSizes.add(documents.size());
+        return SearchTransport.super.bulkIndex(index, documents, refresh);
     }
 
     @Override

@@ -26,7 +26,7 @@ import java.util.Map;
  * Renders the aggregation pipeline the {@link MongoQueryBuilder} assembles as the relaxed JSON MongoDB parses:
  * single-quoted strings, bare keys where possible and empty documents or arrays left out.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 final class MongoPipelineJson {

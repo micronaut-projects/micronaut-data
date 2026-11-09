@@ -116,6 +116,16 @@ abstract class AbstractHybridSearchSpec extends Specification {
                 .results()[0].entity().title == "Baking Bread"
     }
 
+    void "a hybrid search rejects a vector property that holds no vector before querying"() {
+        when:
+        articleRepository.search(SearchQuery.builder("bread").vector("title", COFFEE_LIKE).build())
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains("'title'")
+        e.message.contains("is not a Vector property")
+    }
+
     void "a hybrid search pages the fused ranking"() {
         given:
         def query = SearchQuery.builder("bread").vector("embedding", COFFEE_LIKE).build()
