@@ -23,6 +23,7 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.TypeRole;
+import io.micronaut.data.annotation.search.SearchField;
 import io.micronaut.data.document.mongo.MongoAnnotations;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
@@ -1591,7 +1592,10 @@ public final class MongoQueryBuilder implements QueryBuilder {
             if (!(queryExpression instanceof BindingParameter bindingParameter)) {
                 throw new IllegalStateException("A full-text search query must be a parameter, got: " + queryExpression);
             }
-            // $text always searches the collection's text index; the fields only decide the language
+            for (Expression<?> field : fields) {
+                requireIndexedSearchField(field);
+            }
+            // $text always searches the whole text index of the collection, whatever the fields, in the entity's language
             String converter = MongoTextSearchConverter.converterFor(mode);
             BindingParameter converted = context -> TextSearchSupport.withConverter(bindingParameter.bind(context), converter);
             int index = queryState.pushParameter(converted, newBindingContext(null));
@@ -1599,6 +1603,23 @@ public final class MongoQueryBuilder implements QueryBuilder {
             text.put("$search", Map.of(QUERY_PARAMETER_PLACEHOLDER, index));
             text.put("$language", TextSearchSupport.resolveLanguage(persistentEntity));
             query.put(TEXT, text);
+        }
+
+        /**
+         * Rejects a searched field that is not in the collection's text index: {@code $text} cannot scope a
+         * search, so a property of a joined entity or a property without {@code @SearchField} would otherwise
+         * silently search the indexed fields of the root entity instead.
+         *
+         * @param field The searched field
+         */
+        private void requireIndexedSearchField(Expression<?> field) {
+            PersistentPropertyPath propertyPath = requireProperty(field).getPropertyPath();
+            if (!propertyPath.getAssociations().isEmpty()
+                || !propertyPath.getProperty().getAnnotationMetadata().hasAnnotation(SearchField.class)) {
+                throw new IllegalArgumentException("MongoDB $text can only search the @SearchField properties of "
+                    + persistentEntity.getName() + ", which form its text index, but [" + propertyPath.getPath()
+                    + "] is not one of them");
+            }
         }
 
         @Override
