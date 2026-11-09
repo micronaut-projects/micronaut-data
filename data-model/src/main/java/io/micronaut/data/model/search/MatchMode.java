@@ -38,7 +38,8 @@ public enum MatchMode {
      */
     PHRASE,
     /**
-     * Every term is matched as a prefix, for search-as-you-type.
+     * Every term is matched as a prefix, for search-as-you-type. Each word of a quoted phrase is a
+     * prefix as well, so the phrase being typed, {@code "micronaut da}, already finds "micronaut data".
      */
     PREFIX,
     /**
