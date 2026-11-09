@@ -141,6 +141,18 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
     }
 
     /**
+     * Returns whether the query is a full-text search that orders its results by relevance score, descending,
+     * when its {@code Pageable} or {@code Sort} parameter is unsorted. The query itself leaves the order to that
+     * parameter, so a sorted parameter replaces the relevance order. Defaults to false.
+     *
+     * @return Whether an unsorted pageable or sort orders the results by score
+     * @since 5.3.0
+     */
+    default boolean isScoreOrderedWhenUnsorted() {
+        return false;
+    }
+
+    /**
      * @return Is this a count query.
      */
     boolean isCount();
