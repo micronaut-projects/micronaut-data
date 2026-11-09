@@ -10,9 +10,15 @@ import io.micronaut.data.runtime.query.internal.DefaultPagedQuery
 import io.micronaut.data.search.document.conf.DocumentSearchConfiguration
 import io.micronaut.data.search.document.query.SearchJson
 import io.micronaut.data.search.document.runtime.DocumentSearchRepositoryOperations
+import io.micronaut.data.search.elasticsearch.Meeting
+import io.micronaut.data.search.elasticsearch.MeetingRepository
+import io.micronaut.json.JsonMapper
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Specification
+
+import java.time.ZoneId
+import java.time.ZonedDateTime
 
 /**
  * Runs the document search repository operations against an in-memory transport, checking the
@@ -34,6 +40,12 @@ class DocumentSearchOperationsSpec extends Specification {
 
     @Inject
     CounterRepository counters
+
+    @Inject
+    MeetingRepository meetings
+
+    @Inject
+    JsonMapper jsonMapper
 
     @Inject
     DocumentSearchRepositoryOperations operations
@@ -328,6 +340,43 @@ class DocumentSearchOperationsSpec extends Specification {
         "findByTitleNotInList"                                | [["Coffee", "Tea"]]      | '{"query":{"bool":{"must_not":{"terms":{"title.keyword":["Coffee","Tea"]}}}}}'
         "findByTitleInList"                                   | [["Coffee", "Tea"] as String[]] | '{"query":{"terms":{"title.keyword":["Coffee","Tea"]}}}'
         "findByTitleNotEqual"                                 | ["Coffee"]               | '{"query":{"bool":{"must_not":{"term":{"title.keyword":"Coffee"}}}}}'
+    }
+
+    void "dates, temporals and enums are bound in the form the documents store them"() {
+        given:
+        def start = ZonedDateTime.of(2026, 11, 5, 14, 21, 0, 0, ZoneId.of("Europe/Paris"))
+        def created = Date.from(start.toInstant())
+        def saved = meetings.save(new Meeting(null, "Planning", created, start, Meeting.Priority.HIGH))
+        def document = transport.indexes["test_meetings"][saved.id()]
+
+        when:
+        meetings.findByCreatedAtAfter(created)
+
+        then:
+        query().range.createdAt.gt == document.createdAt
+
+        when:
+        meetings.findByStartsAtBefore(start)
+
+        then:
+        query().range.startsAt.lt == document.startsAt
+
+        when:
+        meetings.findByPriority(Meeting.Priority.HIGH)
+
+        then:
+        document.priority == "urgent"
+        query().term.priority == "urgent"
+
+        when:
+        meetings.findByPriorityInList([Meeting.Priority.HIGH, Meeting.Priority.LOW])
+
+        then:
+        query().terms.priority == ["urgent", "routine"]
+    }
+
+    private Map<String, Object> query() {
+        return jsonMapper.readValue(transport.lastBody(), Map).query as Map<String, Object>
     }
 
     void "the index mapping renders keyword, autocomplete and analyzer fields"() {

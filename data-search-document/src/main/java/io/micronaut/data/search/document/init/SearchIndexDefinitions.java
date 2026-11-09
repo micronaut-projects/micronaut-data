@@ -36,7 +36,7 @@ import java.util.Map;
  * {@link SearchFieldType#KEYWORD}, and {@code search_as_you_type} for {@link SearchFieldType#AUTOCOMPLETE}.
  * Every other property is mapped dynamically by the store.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 public final class SearchIndexDefinitions {

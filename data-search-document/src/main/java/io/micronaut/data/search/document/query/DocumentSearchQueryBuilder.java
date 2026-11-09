@@ -66,7 +66,7 @@ import java.util.Map;
  * renders a {@code simple_query_string} over the search fields, boosted by their weights, with the
  * search string converted to Lucene syntax at bind time.</p>
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 @Introspected
