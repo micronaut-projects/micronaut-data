@@ -30,7 +30,7 @@ import java.lang.annotation.Target;
 /**
  * Marks a repository backed by an Elasticsearch index.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @RepositoryConfiguration(
     queryBuilder = DocumentSearchQueryBuilder.class,
