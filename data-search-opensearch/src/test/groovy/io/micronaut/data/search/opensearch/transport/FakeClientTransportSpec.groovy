@@ -11,7 +11,13 @@ import io.micronaut.data.search.document.runtime.SearchTransport.SearchHit
 import io.micronaut.data.search.document.runtime.SearchTransport.SearchHits
 import jakarta.json.Json
 import jakarta.json.JsonValue
+import org.apache.hc.core5.http.HttpHost
+import org.apache.hc.core5.http.HttpVersion
+import org.apache.hc.core5.http.message.BasicClassicHttpResponse
+import org.apache.hc.core5.http.message.RequestLine
 import org.opensearch.client.opensearch.OpenSearchClient
+import org.opensearch.client.transport.httpclient5.Response
+import org.opensearch.client.transport.httpclient5.ResponseException
 import org.opensearch.client.opensearch._types.ErrorResponse
 import org.opensearch.client.opensearch._types.FieldValue
 import org.opensearch.client.opensearch._types.OpenSearchException
@@ -636,6 +642,27 @@ class FakeClientTransportSpec extends Specification {
         OpenSearchRequests.deleteByQueryRefresh(Refresh.NONE).jsonValue() == "false"
         OpenSearchRequests.deleteByQueryRefresh(Refresh.WAIT_FOR).jsonValue() == "true"
         OpenSearchRequests.deleteByQueryRefresh(Refresh.TRUE).jsonValue() == "true"
+    }
+
+    void "conflictOrFailure reads the status of the HTTP transport's ResponseException, as the async client reports a store response with it"() {
+        given:
+        def stale = responseException(409)
+        def failed = responseException(500)
+
+        expect:
+        OpenSearchRequests.conflictOrFailure(new CompletionException(stale), "1") instanceof OptimisticLockException
+        OpenSearchRequests.conflictOrFailure(new CompletionException(stale), "1").message.startsWith("Document 1 was modified concurrently: ")
+        OpenSearchRequests.conflictOrFailure(new CompletionException(stale), "1").cause.is(stale)
+        !(OpenSearchRequests.conflictOrFailure(failed, "1", "delete") instanceof OptimisticLockException)
+        OpenSearchRequests.conflictOrFailure(failed, "1", "delete").message.startsWith("OpenSearch delete failed: ")
+        OpenSearchRequests.conflictOrFailure(failed, "1", "delete").cause.is(failed)
+    }
+
+    private static ResponseException responseException(int status) {
+        // the client creates both from the HTTP response; their constructors are package-private
+        def response = new Response(new RequestLine("PUT", "/books/_doc/1", HttpVersion.HTTP_1_1), new HttpHost("localhost", 9200),
+                new BasicClassicHttpResponse(status, "status " + status))
+        return new ResponseException(response)
     }
 
     void "conflictOrFailure maps a 409 to an OptimisticLockException, wraps other store and I/O failures and passes other runtime failures through"() {

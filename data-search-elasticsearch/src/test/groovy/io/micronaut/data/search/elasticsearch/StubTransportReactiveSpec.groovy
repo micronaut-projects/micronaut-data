@@ -2,19 +2,27 @@ package io.micronaut.data.search.elasticsearch
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Requires
+import io.micronaut.data.event.listeners.PostPersistEventListener
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.search.SearchQuery
+import io.micronaut.data.model.runtime.AttributeConverterRegistry
+import io.micronaut.data.model.runtime.RuntimeEntityRegistry
+import io.micronaut.data.runtime.convert.DataConversionService
+import io.micronaut.data.runtime.date.DateTimeProvider
 import io.micronaut.data.runtime.query.internal.DefaultPagedQuery
 import io.micronaut.data.search.document.conf.DocumentSearchConfiguration
 import io.micronaut.data.search.document.runtime.AsyncSearchTransport
+import io.micronaut.data.search.document.runtime.BulkIndexException
 import io.micronaut.data.search.document.runtime.DefaultDocumentSearchReactiveRepositoryOperations
 import io.micronaut.data.search.document.runtime.DefaultDocumentSearchRepositoryOperations
+import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.exceptions.OptimisticLockException
 import io.micronaut.data.search.document.runtime.SearchTransport
 import io.micronaut.data.search.document.runtime.SearchTransport.SearchHit
 import io.micronaut.data.search.document.runtime.SearchTransport.SearchHits
 import io.micronaut.data.search.tck.entities.Book
 import io.micronaut.inject.qualifiers.Qualifiers
+import io.micronaut.json.JsonMapper
 import jakarta.inject.Named
 import jakarta.inject.Singleton
 import org.jspecify.annotations.Nullable
@@ -33,7 +41,7 @@ class StubTransportReactiveSpec extends Specification {
 
     @AutoCleanup
     @Shared
-    ApplicationContext context = ApplicationContext.run(["spec.name": "StubTransportReactiveSpec"])
+    ApplicationContext context = ApplicationContext.run(["spec.name": "StubTransportReactiveSpec", "micronaut.data.search.bulk-size": "2"])
 
     @Shared
     StubBookRepository repository = context.getBean(StubBookRepository)
@@ -85,6 +93,105 @@ class StubTransportReactiveSpec extends Specification {
         versioned.deleteAll()
     }
 
+    void "a versioned delete is checked against the version the entity was read at"() {
+        given:
+        def versioned = context.getBean(StubVersionedBookRepository)
+        def transport = context.getBean(StubSearchTransport)
+        def saved = versioned.save(new VersionedBook("d1", "Programming Kotlin"))
+        def stale = versioned.findById("d1").get()
+        saved.title = "Programming Scala"
+        versioned.update(saved)
+
+        when: "an instance read before the update is deleted"
+        versioned.delete(stale)
+
+        then: "it is deleted at the version it was read at, which the store rejects"
+        thrown(OptimisticLockException)
+        transport.deleteVersions.last() == 0L
+        versioned.findById("d1").present
+
+        when:
+        versioned.delete(versioned.findById("d1").get())
+
+        then:
+        transport.deleteVersions.last() == 1L
+        !versioned.findById("d1").present
+
+        cleanup:
+        versioned.deleteAll()
+    }
+
+    void "a reactive versioned delete is checked against the version the entity was read at"() {
+        given:
+        def versioned = context.getBean(StubReactiveVersionedBookRepository)
+        def transport = context.getBean(StubSearchTransport)
+        def saved = versioned.save(new VersionedBook("d2", "Programming Kotlin")).block()
+        def stale = versioned.findById("d2").block()
+        saved.title = "Programming Scala"
+        versioned.update(saved).block()
+
+        when: "an instance read before the update is deleted"
+        versioned.delete(stale).block()
+
+        then: "it is deleted at the version it was read at, which the store rejects"
+        thrown(OptimisticLockException)
+        transport.deleteVersions.last() == 0L
+        versioned.existsById("d2").block()
+
+        when:
+        versioned.delete(versioned.findById("d2").block()).block()
+
+        then:
+        transport.deleteVersions.last() == 1L
+        !versioned.existsById("d2").block()
+
+        cleanup:
+        versioned.deleteAll().block()
+    }
+
+    void "a versioned entity without an id is saved under a generated id at version 0"() {
+        given:
+        def versioned = context.getBean(StubVersionedBookRepository)
+        def reactive = context.getBean(StubReactiveVersionedBookRepository)
+        def transport = context.getBean(StubSearchTransport)
+
+        when:
+        def saved = versioned.save(new VersionedBook(null, "Programming Kotlin"))
+        def savedAll = versioned.saveAll([new VersionedBook(null, "Baking Bread"), new VersionedBook(null, "Cooking with Coffee")])
+        def savedReactive = reactive.save(new VersionedBook(null, "Programming Rust")).block()
+
+        then: "the id is generated before the write and is kept in the document"
+        ([saved] + savedAll + [savedReactive]).every { UUID.fromString(it.id) && it.version == 0L }
+        transport.docs("versioned_book")[saved.id].id == saved.id
+        transport.docs("versioned_book")[savedReactive.id].title == "Programming Rust"
+
+        cleanup:
+        versioned.deleteAll()
+    }
+
+    void "a versioned saveAll that meets an existing document fails with an OptimisticLockException and keeps the written documents"() {
+        given:
+        def versioned = context.getBean(StubVersionedBookRepository)
+        def transport = context.getBean(StubSearchTransport)
+        versioned.save(new VersionedBook("dup", "Existing"))
+        def first = new VersionedBook(null, "First")
+        def duplicate = new VersionedBook("dup", "Duplicate")
+        def notSent = new VersionedBook(null, "Not sent")
+
+        when:
+        versioned.saveAll([first, duplicate, notSent])
+
+        then:
+        OptimisticLockException e = thrown()
+        e.cause instanceof BulkIndexException
+        (e.cause as BulkIndexException).ids == [first.id, null]
+        transport.docs("versioned_book").keySet() == ["dup", first.id] as Set
+        transport.docs("versioned_book")["dup"].title == "Existing"
+
+        cleanup:
+        versioned.deleteAll()
+    }
+
     void "saveAll indexes in bulk through the async transport"() {
         when:
         def saved = repository.saveAll([
@@ -102,6 +209,47 @@ class StubTransportReactiveSpec extends Specification {
         repository.deleteAll().block()
     }
 
+    void "saveAll sends bulk requests of the configured size in sequence"() {
+        given:
+        def transport = context.getBean(StubSearchTransport)
+        def before = transport.calls.count { it == "async:bulkIndex" }
+
+        when:
+        def saved = repository.saveAll((1..5).collect { new Book("Book " + it, "Body", "Author", it) }).collectList().block()
+
+        then:
+        saved*.title == (1..5).collect { "Book " + it }
+        transport.calls.count { it == "async:bulkIndex" } - before == 3
+        repository.count().block() == 5L
+
+        cleanup:
+        repository.deleteAll().block()
+    }
+
+    void "a partly failed reactive saveAll fires the post-persist event of the written entities and sends no further request"() {
+        given:
+        def recorder = context.getBean(PostPersistRecorder)
+        recorder.titles.clear()
+        def transport = context.getBean(StubSearchTransport)
+        def before = transport.calls.count { it == "async:bulkIndex" }
+
+        when:
+        repository.saveAll(["Written 1", "Written 2", "Written 3", "Rejected", "Not sent"].collect { new Book(it, "Body", "Author", 1) })
+                .collectList().block()
+
+        then:
+        BulkIndexException e = thrown()
+        e.ids.size() == 2
+        e.ids[0] != null
+        e.ids[1] == null
+        recorder.titles == ["Written 1", "Written 2", "Written 3"]
+        transport.calls.count { it == "async:bulkIndex" } - before == 2
+        repository.count().block() == 3L
+
+        cleanup:
+        repository.deleteAll().block()
+    }
+
     void "the reactive and async operations are created once and the async ones adapt the reactive ones"() {
         given:
         def operations = context.getBean(DefaultDocumentSearchRepositoryOperations, Qualifiers.byName("stub"))
@@ -110,6 +258,36 @@ class StubTransportReactiveSpec extends Specification {
         operations.reactive().is(operations.reactive())
         operations.async().is(operations.async())
         operations.async().class.simpleName == "ReactorToAsyncOperationsAdaptor"
+    }
+
+    void "closing the operations shuts down the thread pool created when no IO executor is configured"() {
+        given:
+        def operations = new DefaultDocumentSearchRepositoryOperations("stub", context.getBean(StubSearchTransport),
+                context.getBean(JsonMapper), context.getBean(DocumentSearchConfiguration), context.getBean(DateTimeProvider),
+                context.getBean(RuntimeEntityRegistry), context.getBean(DataConversionService), context.getBean(AttributeConverterRegistry),
+                context, null)
+        def executor = operations.async().executor
+
+        expect:
+        !executor.isShutdown()
+
+        when:
+        operations.close()
+
+        then:
+        executor.isShutdown()
+    }
+
+    void "closing the operations leaves the configured IO executor running"() {
+        given:
+        def operations = context.getBean(DefaultDocumentSearchRepositoryOperations, Qualifiers.byName("stub"))
+        def executor = operations.async().executor
+
+        when:
+        operations.close()
+
+        then:
+        !executor.isShutdown()
     }
 
     void "the reactive operations find by id, page, and update and delete in batches"() {
@@ -227,6 +405,7 @@ class StubTransportReactiveSpec extends Specification {
         final Map<String, Long> versions = [:]
         final List<String> calls = []
         final List<String> bodies = []
+        final List<Long> deleteVersions = []
 
         Map<String, Map<String, Object>> docs(String index) {
             return indexes.computeIfAbsent(index, { new LinkedHashMap<>() })
@@ -242,6 +421,10 @@ class StubTransportReactiveSpec extends Specification {
         }
 
         String put(String index, @Nullable String id, Map<String, Object> source, @Nullable Long version) {
+            if (version != null && id == null) {
+                // as the stores answer a versioned write without an id
+                throw new DataAccessException("an id must be provided if version type or value are set")
+            }
             String documentId = id ?: UUID.randomUUID().toString()
             String key = index + "/" + documentId
             if (version != null) {
@@ -261,8 +444,26 @@ class StubTransportReactiveSpec extends Specification {
             return source == null ? null : new SearchHit(id, null, source, Map.of(), versions.get(index + "/" + id), List.of())
         }
 
+        /**
+         * Deletes a document, checking a version like {@code external_gte}: the delete is accepted at the
+         * stored version or a later one and rejected when the stored document is newer.
+         */
+        boolean remove(String index, String id, @Nullable Long version) {
+            String key = index + "/" + id
+            if (version != null) {
+                deleteVersions.add(version)
+                Long current = versions.get(key)
+                if (current != null && current > version) {
+                    throw new OptimisticLockException("Document " + id + " is at version " + current + ", above " + version)
+                }
+            }
+            versions.remove(key)
+            return docs(index).remove(id) != null
+        }
+
         long clear(String index) {
             int size = docs(index).size()
+            versions.keySet().removeIf { it.startsWith(index + "/") }
             docs(index).clear()
             return size
         }
@@ -306,7 +507,13 @@ class StubTransportReactiveSpec extends Specification {
         @Override
         boolean delete(String index, String id, DocumentSearchConfiguration.Refresh refresh) {
             calls.add("sync:delete")
-            return docs(index).remove(id) != null
+            return remove(index, id, null)
+        }
+
+        @Override
+        boolean delete(String index, String id, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
+            calls.add("sync:delete")
+            return remove(index, id, version)
         }
 
         @Override
@@ -362,7 +569,7 @@ class StubTransportReactiveSpec extends Specification {
         CompletionStage<String> index(String index, @Nullable String id, Map<String, Object> source, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
             try {
                 return done("index", store.put(index, id, source, version))
-            } catch (OptimisticLockException e) {
+            } catch (DataAccessException e) {
                 return CompletableFuture.failedFuture(e)
             }
         }
@@ -374,7 +581,14 @@ class StubTransportReactiveSpec extends Specification {
 
         @Override
         CompletionStage<List<String>> bulkIndex(String index, List<SearchTransport.BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
-            return done("bulkIndex", documents.collect { store.put(index, it.id(), it.source(), it.version()) })
+            // a document titled "Rejected" is rejected, the others are written, as a store does with a bulk request
+            List<String> ids = documents.collect { it.source().title == "Rejected" ? null : store.put(index, it.id(), it.source(), it.version()) }
+            return done("bulkIndex", ids).thenApply { written ->
+                if (written.contains(null)) {
+                    throw new BulkIndexException("Stub bulk request rejected a document", written)
+                }
+                return written
+            }
         }
 
         @Override
@@ -389,12 +603,33 @@ class StubTransportReactiveSpec extends Specification {
 
         @Override
         CompletionStage<Boolean> delete(String index, String id, DocumentSearchConfiguration.Refresh refresh) {
-            return done("delete", store.docs(index).remove(id) != null)
+            return done("delete", store.remove(index, id, null))
+        }
+
+        @Override
+        CompletionStage<Boolean> delete(String index, String id, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
+            try {
+                return done("delete", store.remove(index, id, version))
+            } catch (OptimisticLockException e) {
+                return CompletableFuture.failedFuture(e)
+            }
         }
 
         @Override
         CompletionStage<Long> deleteByQuery(String index, String body, DocumentSearchConfiguration.Refresh refresh) {
             return done("deleteByQuery", store.clear(index))
+        }
+    }
+
+    @Singleton
+    @Requires(property = "spec.name", value = "StubTransportReactiveSpec")
+    static class PostPersistRecorder implements PostPersistEventListener<Book> {
+
+        final List<String> titles = []
+
+        @Override
+        void postPersist(Book entity) {
+            titles.add(entity.title)
         }
     }
 }
