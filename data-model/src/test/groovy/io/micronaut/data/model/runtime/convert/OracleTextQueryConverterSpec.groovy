@@ -67,4 +67,25 @@ class OracleTextQueryConverterSpec extends Specification {
         OracleTextQueryConverter.converterFor(MatchMode.PHRASE, NEGATED) == OracleTextQueryConverter.Negated.name
         new OracleTextQueryConverter.FuzzyPositive().convertToPersistedValue("coffe -x", null) == "fuzzy({coffe},60,100)"
     }
+
+    void "a native query with balanced parentheses and escapes is passed through: #query"() {
+        expect:
+        OracleTextQueryConverter.render(query, MatchMode.NATIVE, FULL) == query
+        new OracleTextQueryConverter.Native().convertToPersistedValue(query, null) == query
+
+        where:
+        query << ["programming NOT kotlin", "(coffee OR tea) AND (cake)", "{a)b}", "a\\)", "near((coffee, tea), 5)"]
+    }
+
+    void "a native query that leaves a parenthesis or an escape open is rejected: #query"() {
+        when:
+        OracleTextQueryConverter.render(query, MatchMode.NATIVE, FULL)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains("must close every parenthesis")
+
+        where:
+        query << ["x) INPATH (/author) OR (y", "(coffee", "coffee)", "{coffee", "coffee\\", ")("]
+    }
 }

@@ -29,9 +29,13 @@ import java.lang.annotation.Target;
  * analyzer and {@code fielddata}, a {@code dense_vector} with its own options. The SQL stores and MongoDB
  * ignore it.
  *
- * <p>The JSON is trusted configuration and is sent as written.</p>
+ * <p>On an analysed {@link SearchField} the {@code keyword} sub-field that exact matches and sorts address is
+ * added to the declared {@code fields}, unless they declare a {@code keyword} sub-field of their own.</p>
  *
- * @since 5.4.0
+ * <p>The JSON is trusted configuration and is sent as written; the compilation fails when it is not one
+ * JSON object.</p>
+ *
+ * @since 5.3.0
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Documented

@@ -15,6 +15,7 @@ import org.jspecify.annotations.Nullable;
 public class VersionedBook {
 
     @Id
+    @Nullable
     private String id;
 
     @Version
@@ -24,16 +25,17 @@ public class VersionedBook {
     @SearchField
     private String title;
 
-    public VersionedBook(String id, String title) {
+    public VersionedBook(@Nullable String id, String title) {
         this.id = id;
         this.title = title;
     }
 
+    @Nullable
     public String getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(@Nullable String id) {
         this.id = id;
     }
 

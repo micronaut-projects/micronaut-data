@@ -512,6 +512,20 @@ abstract class AbstractTextSearchSpec extends Specification {
         boosted.results().size() == 2
     }
 
+    void "query-time boosts weigh a field's matches with the native syntax"() {
+        assumeTrue(capabilities().contains(SearchCapability.BOOST) && nativeProgrammingWithoutKotlinQuery() != null)
+
+        when: "a one-word native query, valid in every store's syntax, boosts the title far above the description"
+        def boosted = bookSearchRepository.search(SearchQuery.builder("programming").syntax(SearchSyntax.NATIVE).boost("title", 10).boost("description", 1).build())
+        def plain = bookSearchRepository.search(SearchQuery.builder("programming").syntax(SearchSyntax.NATIVE).boost("title", 1).boost("description", 1).build())
+
+        then:
+        def kotlinBoosted = boosted.results().find { it.entity().title == "Programming Kotlin" }
+        def kotlinPlain = plain.results().find { it.entity().title == "Programming Kotlin" }
+        kotlinBoosted.score().value() > kotlinPlain.score().value()
+        boosted.results().size() == 2
+    }
+
     void "fuzzy matching tolerates a typo"() {
         assumeTrue(capabilities().contains(SearchCapability.FUZZY))
 
@@ -570,6 +584,25 @@ abstract class AbstractTextSearchSpec extends Specification {
 
         then:
         thrown(UnsupportedSearchFeatureException)
+    }
+
+    void "search with a SearchQuery returns one highlighted fragment per field on every store"() {
+        assumeTrue(capabilities().contains(SearchCapability.HIGHLIGHT))
+
+        given: "a description matching the query in two sentences kept apart by filler"
+        bookSearchRepository.save(newBook("Growing Spices",
+                "Saffron crocus bulbs are planted in late summer. " +
+                        "The middle of this text is filler about soil, water and light that keeps the sentences apart. " +
+                        "Harvesting saffron threads by hand takes patience.", "Grower", 90))
+        awaitIndexing()
+
+        when:
+        def results = bookSearchRepository.search(SearchQuery.builder("saffron").highlight("description").build())
+
+        then:
+        results.results()*.entity()*.title == ["Growing Spices"]
+        results.results()[0].highlights()["description"].size() == 1
+        results.results()[0].highlights()["description"][0].toLowerCase().contains("<em>saffron</em>")
     }
 
     void "search with a SearchQuery rejects highlighting when the store cannot highlight"() {

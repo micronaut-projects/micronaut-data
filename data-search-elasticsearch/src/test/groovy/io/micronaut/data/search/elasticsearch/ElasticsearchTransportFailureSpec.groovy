@@ -1,5 +1,6 @@
 package io.micronaut.data.search.elasticsearch
 
+import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient
 import co.elastic.clients.elasticsearch.ElasticsearchClient
 import co.elastic.clients.elasticsearch._types.ElasticsearchException
 import co.elastic.clients.elasticsearch._types.ErrorResponse
@@ -9,13 +10,17 @@ import co.elastic.clients.transport.DefaultTransportOptions
 import co.elastic.clients.transport.ElasticsearchTransport
 import co.elastic.clients.transport.Endpoint
 import co.elastic.clients.transport.TransportOptions
+import co.elastic.clients.transport.TransportException
+import co.elastic.clients.transport.http.TransportHttpClient
 import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.exceptions.OptimisticLockException
 import io.micronaut.data.search.document.runtime.SearchTransport
+import io.micronaut.data.search.elasticsearch.transport.ElasticsearchAsyncSearchTransport
 import io.micronaut.data.search.elasticsearch.transport.ElasticsearchSearchTransport
 import spock.lang.Specification
 
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletionException
 
 import static io.micronaut.data.search.document.conf.DocumentSearchConfiguration.Refresh.NONE
 
@@ -29,6 +34,7 @@ class ElasticsearchTransportFailureSpec extends Specification {
 
     FailingTransport fake = new FailingTransport()
     ElasticsearchSearchTransport transport = new ElasticsearchSearchTransport(new ElasticsearchClient(fake))
+    ElasticsearchAsyncSearchTransport asyncTransport = new ElasticsearchAsyncSearchTransport(new ElasticsearchAsyncClient(fake))
 
     private static ElasticsearchException storeError(int status) {
         return new ElasticsearchException("es/test", ErrorResponse.of { it.status(status).error { e -> e.type("search_phase_execution_exception").reason("Result window is too large") } })
@@ -128,6 +134,75 @@ class ElasticsearchTransportFailureSpec extends Specification {
         status | message
         409    | "A document with id 1 already exists in index books"
         400    | "Cannot create the document with id 1 in index books: "
+    }
+
+    void "an async create of an existing id says the document exists and other create errors are wrapped"() {
+        given:
+        def failure = storeError(status)
+        fake.failure = failure
+
+        when:
+        asyncTransport.create("books", "1", [title: "Kotlin"], NONE).toCompletableFuture().join()
+
+        then:
+        CompletionException e = thrown()
+        e.cause instanceof DataAccessException
+        e.cause.message.startsWith(message)
+        e.cause.cause.is(failure)
+
+        where:
+        status | message
+        409    | "A document with id 1 already exists in index books"
+        400    | "Cannot create the document with id 1 in index books: "
+    }
+
+    void "an async create failing for another reason passes the failure on"() {
+        given:
+        def failure = new IOException("connection reset")
+        fake.failure = failure
+
+        when:
+        asyncTransport.create("books", "1", [title: "Kotlin"], NONE).toCompletableFuture().join()
+
+        then:
+        CompletionException e = thrown()
+        e.cause.is(failure)
+    }
+
+    void "an async versioned #operation answered with HTTP 409 by the low-level client is an OptimisticLockException"() {
+        given: "the async client reports a store response as the exception of its HTTP client"
+        def failure = new TransportException(Stub(TransportHttpClient.Response) { statusCode() >> 409 }, "version conflict", "es/test")
+        fake.failure = failure
+
+        when:
+        call.call(asyncTransport).toCompletableFuture().join()
+
+        then:
+        CompletionException e = thrown()
+        e.cause instanceof OptimisticLockException
+        e.cause.message.startsWith("Document 1 was modified concurrently: ")
+        e.cause.message.endsWith("version conflict")
+        e.cause.cause.is(failure)
+
+        where:
+        operation | call
+        "index"   | { ElasticsearchAsyncSearchTransport t -> t.index("books", "1", [title: "Kotlin"], 2L, NONE) }
+        "delete"  | { ElasticsearchAsyncSearchTransport t -> t.delete("books", "1", 2L, NONE) }
+    }
+
+    void "an async versioned index answered with another status by the low-level client is a DataAccessException"() {
+        given:
+        def failure = new TransportException(Stub(TransportHttpClient.Response) { statusCode() >> 500 }, "boom", "es/test")
+        fake.failure = failure
+
+        when:
+        asyncTransport.index("books", "1", [title: "Kotlin"], 2L, NONE).toCompletableFuture().join()
+
+        then:
+        CompletionException e = thrown()
+        e.cause instanceof DataAccessException
+        !(e.cause instanceof OptimisticLockException)
+        e.cause.cause.is(failure)
     }
 
     /**

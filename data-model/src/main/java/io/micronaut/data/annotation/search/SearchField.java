@@ -113,7 +113,7 @@ public @interface SearchField {
      * {@code SearchFuzzy} keyword and {@code SearchQuery.fuzzy} use. Fuzzy queries run without the index too.
      *
      * @return True to index the field for fuzzy matching
-     * @since 5.4.0
+     * @since 5.3.0
      */
     boolean fuzzy() default false;
 }

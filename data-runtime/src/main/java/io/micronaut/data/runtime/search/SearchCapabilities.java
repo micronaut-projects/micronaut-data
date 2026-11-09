@@ -22,11 +22,26 @@ import java.util.Set;
 
 /**
  * Reports which search features a store honours for an entity, beyond term matching and score
- * ordering. Each store registers one bean per datasource or client; a feature that is not reported
- * is rejected with an {@link io.micronaut.data.model.search.UnsupportedSearchFeatureException}.
+ * ordering; a feature that is not reported is rejected with an
+ * {@link io.micronaut.data.model.search.UnsupportedSearchFeatureException}.
+ *
+ * <p>There is no aggregate bean: each store registers its own, one per JDBC or R2DBC datasource, named
+ * after the datasource, one for MongoDB ({@code MongoSearchCapabilities}) and one for Elasticsearch and
+ * OpenSearch ({@code DocumentSearchIndexOperations}). An unqualified injection resolves to the only bean,
+ * or else to the bean of the datasource named {@code default}, which is primary, even when the entity is
+ * held by another store; without a single primary bean, as with MongoDB and Elasticsearch, it fails with a
+ * {@link io.micronaut.context.exceptions.NonUniqueBeanException}. With several stores, inject the bean of
+ * the store that holds the entity: by datasource name ({@code @Named("other") SearchCapabilities}) or by
+ * the implementation type, or all of them as a {@code List<SearchCapabilities>}.</p>
+ *
+ * <p>A bean answers for any {@code @Searchable} entity from the store's dialect or mapping, not from
+ * where the entity is stored, and it does not probe the server version: the JDBC bean of a PostgreSQL
+ * datasource reports {@link io.micronaut.data.model.search.SearchCapability#FUZZY} only when the
+ * {@code pg_trgm} extension is installed, while the R2DBC bean reports it from the dialect, so a
+ * fuzzy search on a database without the extension fails there.</p>
  *
  * @author Graeme Rocher
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Experimental
 public interface SearchCapabilities {

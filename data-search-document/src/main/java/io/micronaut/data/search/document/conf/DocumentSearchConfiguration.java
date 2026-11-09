@@ -37,11 +37,17 @@ public class DocumentSearchConfiguration {
      */
     public static final String CREATE_INDEXES_PROPERTY = PREFIX + ".create-indexes";
 
+    /**
+     * The default number of documents of one bulk request.
+     */
+    public static final int DEFAULT_BULK_SIZE = 1000;
+
     @Nullable
     private String indexPrefix;
     private Refresh refresh = Refresh.WAIT_FOR;
     private boolean createIndexes = true;
     private SchemaGenerate schemaGenerate = SchemaGenerate.CREATE;
+    private int bulkSize = DEFAULT_BULK_SIZE;
 
     /**
      * @return A prefix added to every index name, for per-environment naming
@@ -101,6 +107,24 @@ public class DocumentSearchConfiguration {
      */
     public void setCreateIndexes(boolean createIndexes) {
         this.createIndexes = createIndexes;
+    }
+
+    /**
+     * @return The largest number of documents a {@code saveAll} sends in one bulk request; a larger
+     * batch is sent as several requests in sequence. Defaults to {@value #DEFAULT_BULK_SIZE}
+     */
+    public int getBulkSize() {
+        return bulkSize;
+    }
+
+    /**
+     * @param bulkSize The largest number of documents of one bulk request, at least 1
+     */
+    public void setBulkSize(int bulkSize) {
+        if (bulkSize < 1) {
+            throw new IllegalArgumentException("The bulk size must be at least 1, was " + bulkSize);
+        }
+        this.bulkSize = bulkSize;
     }
 
     /**

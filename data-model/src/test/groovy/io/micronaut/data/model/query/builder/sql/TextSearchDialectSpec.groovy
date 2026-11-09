@@ -65,20 +65,28 @@ class TextSearchDialectSpec extends Specification {
         }.capabilities().isEmpty()
     }
 
+    void "only the PostgreSQL fuzzy match needs a database check, for the pg_trgm extension"() {
+        expect:
+        TextSearchDialect.forDialect(Dialect.POSTGRES).capabilityCheckQuery(SearchCapability.FUZZY) == "SELECT count(*) FROM pg_extension WHERE extname = 'pg_trgm'"
+        TextSearchDialect.forDialect(Dialect.POSTGRES).capabilityCheckQuery(SearchCapability.PHRASE) == null
+        TextSearchDialect.forDialect(Dialect.ORACLE).capabilityCheckQuery(SearchCapability.FUZZY) == null
+    }
+
     void "a query language that is not a configuration name is rejected before it reaches the SQL"() {
         when:
-        TextSearchDialect.resolveLanguage([], new io.micronaut.data.model.search.TextMatchOptions(Map.of(), 0, language))
+        TextSearchDialect.resolveLanguage([], io.micronaut.data.model.search.TextMatchOptions.builder().language(language).build())
 
         then:
         thrown(IllegalArgumentException)
 
         where:
-        language << ["english'", "english',title),'') OR 1=1 --", "en-US", "english;"]
+        language << ["english'", "english',title),'') OR 1=1 --", "en-US", "english;", "pg_catalog.", ".english", "a.b.c", "my-folding"]
     }
 
     void "a configuration name is accepted as the query language"() {
         expect:
-        TextSearchDialect.resolveLanguage([], new io.micronaut.data.model.search.TextMatchOptions(Map.of(), 0, "german")) == "german"
+        TextSearchDialect.resolveLanguage([], io.micronaut.data.model.search.TextMatchOptions.builder().language("german").build()) == "german"
+        TextSearchDialect.resolveLanguage([], io.micronaut.data.model.search.TextMatchOptions.builder().language("pg_catalog.english").build()) == "pg_catalog.english"
         io.micronaut.data.model.search.SearchQuery.builder("x").language("simple").build().language == "simple"
     }
 

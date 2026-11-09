@@ -32,7 +32,7 @@ import java.lang.annotation.Target;
  * <p>The parameters are trusted configuration copied into the DDL as written: they can name any datastore,
  * lexer or other preference the schema user can reach, so they must not come from user input.</p>
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
