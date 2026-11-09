@@ -246,16 +246,21 @@ class FakeClientTransportSpec extends Specification {
     }
 
     @Unroll("#kind index failure")
-    void "another OpenSearch failure on index passes through"() {
+    void "another OpenSearch failure on index is a DataAccessException"() {
         given:
-        driver.fake.answer(IndexRequest, conflict(400, "bad request"))
+        def failure = conflict(400, "bad request")
+        driver.fake.answer(IndexRequest, failure)
 
         when:
         driver.index("books", "42", [title: "Kotlin"], Refresh.NONE)
 
         then:
-        OpenSearchException e = thrown()
-        e.status() == 400
+        DataAccessException e = thrown()
+        !(e instanceof OptimisticLockException)
+        e.message.startsWith("OpenSearch ")
+        e.message.contains(" failed: ")
+        e.message.contains("bad request")
+        e.cause.is(failure)
 
         where:
         kind << KINDS
@@ -633,11 +638,12 @@ class FakeClientTransportSpec extends Specification {
         OpenSearchRequests.deleteByQueryRefresh(Refresh.TRUE).jsonValue() == "true"
     }
 
-    void "conflictOrFailure maps a 409 to an OptimisticLockException and passes other failures through"() {
+    void "conflictOrFailure maps a 409 to an OptimisticLockException, wraps other store and I/O failures and passes other runtime failures through"() {
         given:
         def stale = conflict(409, "stale")
         def other = conflict(500, "boom")
         def io = new IOException("io")
+        def runtime = new IllegalStateException("broken")
 
         expect:
         OpenSearchRequests.conflictOrFailure(stale, "1") instanceof OptimisticLockException
@@ -645,8 +651,14 @@ class FakeClientTransportSpec extends Specification {
         OpenSearchRequests.conflictOrFailure(stale, "1").cause.is(stale)
         OpenSearchRequests.conflictOrFailure(new CompletionException(stale), "2") instanceof OptimisticLockException
         OpenSearchRequests.conflictOrFailure(new CompletionException(stale), "2").cause.is(stale)
-        OpenSearchRequests.conflictOrFailure(other, "1").is(other)
-        OpenSearchRequests.conflictOrFailure(new CompletionException(other), "1").is(other)
+        OpenSearchRequests.conflictOrFailure(other, "1") instanceof DataAccessException
+        !(OpenSearchRequests.conflictOrFailure(other, "1") instanceof OptimisticLockException)
+        OpenSearchRequests.conflictOrFailure(other, "1").message.startsWith("OpenSearch request failed: ")
+        OpenSearchRequests.conflictOrFailure(other, "1").cause.is(other)
+        OpenSearchRequests.conflictOrFailure(new CompletionException(other), "1").cause.is(other)
+        OpenSearchRequests.conflictOrFailure(other, "1", "index").message.startsWith("OpenSearch index failed: ")
+        OpenSearchRequests.conflictOrFailure(runtime, "1").is(runtime)
+        OpenSearchRequests.conflictOrFailure(new CompletionException(runtime), "1").is(runtime)
         OpenSearchRequests.conflictOrFailure(new CompletionException(io), "1") instanceof DataAccessException
         OpenSearchRequests.conflictOrFailure(new CompletionException(io), "1").message == "OpenSearch request failed: io"
         OpenSearchRequests.conflictOrFailure(new CompletionException(io), "1").cause.is(io)

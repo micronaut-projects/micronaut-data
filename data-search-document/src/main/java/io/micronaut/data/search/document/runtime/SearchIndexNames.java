@@ -23,7 +23,7 @@ import java.nio.charset.StandardCharsets;
  * Checks index names against the Elasticsearch and OpenSearch naming rules before they go into a
  * request path, where {@code *} or {@code ,} would address several indices.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 public final class SearchIndexNames {
