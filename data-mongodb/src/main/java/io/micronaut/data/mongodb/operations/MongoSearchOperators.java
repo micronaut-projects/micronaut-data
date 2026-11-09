@@ -107,22 +107,20 @@ public final class MongoSearchOperators {
             }
             (term.negated() ? negative : positive).add(termOperator(term, mode, paths, boosts));
         }
-        if (positive.isEmpty() && negative.isEmpty()) {
+        if (positive.isEmpty()) {
+            // a negated term only narrows the terms beside it, so an alternative made only of negated
+            // terms matches nothing, as on the other stores
             return null;
         }
         if (positive.size() == 1 && negative.isEmpty()) {
             return positive.get(0).asDocument();
         }
-        return compound(positive, negative, mode, paths);
+        return compound(positive, negative, mode);
     }
 
     /** Combines a group's terms: all or any of the positive ones, and none of the negated ones. */
-    private static BsonDocument compound(BsonArray positive, BsonArray negative, MatchMode mode, List<String> paths) {
+    private static BsonDocument compound(BsonArray positive, BsonArray negative, MatchMode mode) {
         BsonDocument compound = new BsonDocument();
-        if (positive.isEmpty()) {
-            // A purely negative query still has to select something to exclude from
-            return new BsonDocument(COMPOUND, compound.append(MUST_NOT, negative).append(MUST, new BsonArray(List.of(exists(paths.get(0))))));
-        }
         if (mode == MatchMode.ALL) {
             compound.append(MUST, positive);
         } else {

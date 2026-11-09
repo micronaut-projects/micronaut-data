@@ -52,11 +52,13 @@ snippet::example.ArticleRepository[project-base="doc-examples/mongo-search-examp
 <2> `SearchPrefix` renders a `wildcard` operator over the analyzed field. The wildcard matches the indexed tokens, which a language analyzer such as `lucene.english` has stemmed, so a prefix longer than the stem, such as `runni` for `running` (indexed as `run`), finds nothing. For search-as-you-type, index the field with `lucene.standard` through `@MongoSearchIndex(analyzer)`, or keep prefixes short.
 <3> `SearchFuzzy` renders a `text` operator with `fuzzy: { maxEdits: 1 }`.
 <4> A trailing api:data.model.vector.search.Score[] parameter keeps the hits whose `searchScore` is at least its value.
-<5> The other predicates follow the `$search` stage in a `$match`; a search predicate cannot be part of an `OR`.
+<5> The other predicates follow the `$search` stage in a `$match`; a search predicate can neither be part of an `OR` nor be negated.
 
 The search string grammar is rendered into `compound` operators at bind time: every term becomes a `text` operator over the searched paths, a quoted phrase a `phrase` operator, a negated term a `mustNot` clause, and `OR` groups `should` clauses. `SearchAll` puts the terms in `must`, so every one is required.
 
 `search(SearchQuery)` honours the `fields`, `mode`, `highlight` and `minScore` options. Highlights are read from the `searchHighlights` metadata and returned as one fragment per field with the hits wrapped in `<em>` tags, like the other stores. The relevance score is the `searchScore`.
+
+NOTE: A `SearchResults` query, with `$text` or `$search`, adds the relevance score to each document as a field named `mn_score` and each highlight as a field named `mn_hl_<property>`, and removes them before the entity is decoded. These names are reserved: a stored field named `mn_score`, or one whose name starts with `mn_hl_`, is not mapped to the entity by a `SearchResults` query.
 
 == Limitations
 
@@ -72,7 +74,7 @@ The search string grammar is rendered into `compound` operators at bind time: ev
 |Query-time boosts (`SearchQuery.boost`) |not supported |not supported, the index weights boost the fields
 |Per-document language (`@Language`) |`language_override` |not supported, the analyzer is fixed per index
 |Search with joins |the `$text` match is moved ahead of the join lookups, as MongoDB requires it in the first stage |`$search` must be the first stage, so joined queries are rejected at compile time
-|Search predicate inside `OR` or `NOT` |rejected at compile time, as MongoDB only allows `$text` as a top-level condition |`OR` is rejected at compile time
+|Search predicate inside `OR` or `NOT` |rejected at compile time, as MongoDB only allows `$text` as a top-level condition |rejected, as the `$search` stage runs before the other conditions
 |Cursored paging |not supported |not supported
 |===
 

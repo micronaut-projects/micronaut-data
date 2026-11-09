@@ -71,9 +71,9 @@ import java.util.function.Function;
 @Internal
 public class AbstractMongoCollectionsCreator<Dtbs> {
     private static final Logger LOG = LoggerFactory.getLogger(AbstractMongoCollectionsCreator.class);
-    // CommandNotFound, CommandNotSupported, SearchNotEnabled and "only allowed on MongoDB Atlas": a deployment
-    // without MongoDB Search
-    private static final Set<Integer> SEARCH_UNAVAILABLE_CODES = Set.of(59, 115, 31082, 6047401);
+    // CommandNotFound, CommandNotSupported, SearchNotEnabled, "only allowed on MongoDB Atlas" and the unrecognized
+    // $listSearchIndexes stage of a server before 6.0.7: a deployment without MongoDB Search
+    private static final Set<Integer> SEARCH_UNAVAILABLE_CODES = Set.of(59, 115, 31082, 6047401, 40324);
     // the languages MongoDB Search has a lucene.<language> analyzer for
     private static final Set<String> LANGUAGE_ANALYZERS = Set.of("arabic", "armenian", "basque", "bengali", "brazilian", "bulgarian",
         "catalan", "chinese", "cjk", "czech", "danish", "dutch", "english", "finnish", "french", "galician", "german", "greek", "hindi",
