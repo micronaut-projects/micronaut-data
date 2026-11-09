@@ -11,6 +11,7 @@ Derived finders, the criteria API and the search keywords all compile to one JSO
 |`IsNull`, `IsNotNull`, `IsEmpty` |`exists`, negated inside `bool.must_not`
 |`And`, `Or`, `Not` |`bool.must`, `bool.should` with `minimum_should_match: 1`, `bool.must_not`
 |`Search`, `SearchAll`, `SearchPhrase`, `SearchPrefix`, `SearchFuzzy` |`simple_query_string` over the fields with their boosts
+|`SearchNative` |`query_string` over the fields with their boosts, the bound string passed unparsed
 |`OrderBy...`, `Pageable`, `Sort` |`sort` on the keyword field, `from` and `size`
 |===
 
@@ -23,13 +24,17 @@ snippet::example.BookService[project-base="doc-examples/elasticsearch-search-exa
 <3> The `_score` of the hit.
 <4> `countHits` runs the same query through the count API.
 
-The search string uses the portable grammar and is converted to Lucene `simple_query_string` syntax at bind time with `default_operator` set to `and`: `Search` joins the terms with `|` (`coffee | tea`), `SearchAll` with spaces, `"quoted phrases"` stay phrases, `-negated` terms always exclude (`(coffee | tea) -cake`), `OR` groups become `(a b) | (c)`, `SearchPrefix` renders `term*` with `analyze_wildcard` and `SearchFuzzy` `term~1`, or `term~2` when `SearchQuery.fuzzy(2)` asks for two edits. A `SearchQuery.boost` replaces the field's weight in the `fields` list. Special characters in terms are escaped, so user input is matched literally.
+The search string uses the portable grammar and is converted to Lucene `simple_query_string` syntax at bind time with `default_operator` set to `and`: `Search` joins the terms with `|` (`coffee | tea`), `SearchAll` with spaces, `"quoted phrases"` stay phrases, `-negated` terms always exclude (`(coffee | tea) -cake`), `OR` groups become `(a b) | (c)`, `SearchPrefix` renders `term*` with `analyze_wildcard` and `SearchFuzzy` `term~1`, or `term~2` when `SearchQuery.fuzzy(2)` asks for two edits. A `SearchQuery.boost` replaces the field's weight in the `fields` list. Special characters in terms are escaped, so user input is matched literally. The `SearchNative` keyword and `SearchQuery.syntax(SearchSyntax.NATIVE)` are the exception: the string is sent unescaped as a Lucene `query_string` with leading wildcards disabled, so `field:value` reaches fields outside the search fields and regular expression, range and fuzzy syntax applies; pass only trusted input, as described in the <<sqlTextSearch, SQL full-text search section>>.
 
-A api:data.model.search.SearchQuery[] passed to `search(SearchQuery)` builds the same `simple_query_string` request at runtime, as described in the <<sqlTextSearch, SQL full-text search section>>: its `fields` select the fields to search, with their declared weights as boosts, and its `mode` selects the operator and the prefix or fuzzy suffix, and its `highlight` properties are requested in the `highlight` clause and returned through `SearchResult.highlights()` with the default `<em>` tags.
+A api:data.model.search.SearchQuery[] passed to `search(SearchQuery)` builds the same `simple_query_string` request at runtime, as described in the <<sqlTextSearch, SQL full-text search section>>: its `fields` select the fields to search, with their declared weights as boosts, and its `mode` selects the operator and the prefix or fuzzy suffix, and its `highlight` properties are requested in the `highlight` clause, with `number_of_fragments: 1` and a `fragment_size` of 100 characters, and returned through `SearchResult.highlights()` with the default `<em>` tags, at most one fragment per property.
 
 == Vector and hybrid search
 
-A derived method with the `Near` keyword on a vector property, `searchByEmbeddingNear(Vector vector, Score maxDistance)`, renders a `knn` query whose `k` follows the method's limit and grows to cover a `Pageable` passed at runtime, with the maximum cosine distance turned into the store's similarity threshold. Hits carry the store's similarity score rather than the distance the SQL stores return, highest first. api:data.model.search.SearchQuery[]`.vector(property, vector)` runs the same nearest-neighbour query and fuses it with the text ranking as described in the <<sqlTextSearch, SQL full-text search section>>; the native `rrf` retriever and the OpenSearch hybrid pipeline are not used, so hybrid search works on the basic licence.
+A derived method with the `Near` keyword on a vector property, `searchByEmbeddingNear(Vector vector, Score maxDistance)`, renders a `knn` query with the maximum cosine distance turned into the store's similarity threshold. Its `k`, the number of nearest neighbours the store returns, covers the hits the request asks for: the method's limit, or the end of the page of a `Pageable` passed at runtime. A method with neither returns the stores' default of 10 hits, as any request without a size does, so declare a limit (`findTop50By...`) or pass a `Pageable` to get more. `k` and `num_candidates` are capped at 10,000, the most Elasticsearch accepts, so a vector search returns at most the 10,000 nearest neighbours and a page beyond them is empty.
+
+The other AND conditions of the method, including those of nested conjunctions such as a `Specification` combined with `and` or a tenant restriction, become the `filter` of the `knn` query, so the nearest neighbours are searched among the documents they select instead of the top `k` being filtered afterwards. With a minimum `Score` on a text search in the same method they also stay scoring clauses beside the `knn` query, because `min_score` compares the sum of the scores. A `CursoredPageable` is rejected for a vector search with `UnsupportedOperationException`: `search_after` pages through the `k` nearest neighbours and a cursor does not tell how many precede it, so use an offset `Pageable`.
+
+Hits carry the store's similarity score rather than the distance the SQL stores return, highest first. api:data.model.search.SearchQuery[]`.vector(property, vector)` runs the same nearest-neighbour query and fuses it with the text ranking as described in the <<sqlTextSearch, SQL full-text search section>>; the native `rrf` retriever and the OpenSearch hybrid pipeline are not used, so hybrid search works on the basic licence.
 
 == Paging and sorting
 
@@ -37,9 +42,17 @@ A derived method with the `Near` keyword on a vector property, `searchByEmbeddin
 
 A `CursoredPageable` pages with `search_after`: the request sorts by the pageable's sort with the entity id appended as a tiebreaker, and each hit's sort values become its cursor, so `CursoredPage.nextPageable()` and `previousPageable()` continue the scan without `from`, which the stores cap at 10,000 documents. A backward page reverses the sort and restores the order of the results.
 
+The tiebreaker sorts on the id held in the document source, so it needs that field to be a `keyword` and present in every document. Both hold for an index Micronaut Data creates and documents it writes. An index created by an earlier snapshot of this module, or by other tooling, may map the id as `text`, and then the first cursored query fails with `Fielddata is disabled on text fields`; documents written without the id in their source sort without a tiebreaker, so pages can skip or repeat documents with equal sort values. The mapping of an existing field cannot be changed: create a new index with the current mapping and reindex the documents into it, writing the id into the source, before using cursored paging.
+
 == Optimistic locking and transactions
 
-A `@Version` property maps to the document version. Micronaut Data writes with external versioning: a new entity is indexed at version `0`, an update increments the property and indexes with that version, and the store rejects the write with api:data.exceptions.OptimisticLockException[] when it already holds the document at that version or a later one. Reads take the version from the hit, so the property always reflects the stored document.
+A `@Version` property maps to the document version. Micronaut Data writes with external versioning: a new entity is indexed at version `0`, an update increments the property and indexes with that version, and the store rejects the write with api:data.exceptions.OptimisticLockException[] when it already holds the document at that version or a later one. A delete is sent with the version the entity was read at, before the delete event increments it, using `external_gte`, so the store rejects it when the document has been updated since. Reads take the version from the hit, so the property always reflects the stored document.
+
+External versioning checks that the written version is greater than the stored one, not that the stored version is the one the entity was read at, which has some consequences:
+
+- Saving a new entity whose id is already used by a versioned document fails with an `OptimisticLockException`, not with the `DataAccessException` saying that the document exists, as both writes are at version `0`. The same holds for a while after a delete, as long as the store keeps the deleted version (`index.gc_deletes`, 60 seconds by default).
+- A version set by the application is sent as it is: updating an entity whose version was raised by hand, or deserialised from a client with a higher value, overwrites the stored document without a conflict. Do not accept the version from untrusted input.
+- A versioned entity whose `@Version` property is `null` is written and deleted without a version check. The version-generating listener prevents this for updates and deletes, which fail on a `null` version, so it only happens when that listener does not run.
 
 Elasticsearch and OpenSearch have no transactions. A repository method annotated with `@Transactional` fails at its first call with a configuration error naming the missing `TransactionOperations`; writes are visible according to the `refresh` policy and cannot be rolled back.
 
@@ -54,6 +67,10 @@ snippet::example.ReactiveBookRepository[project-base="doc-examples/elasticsearch
 <3> Any derived finder can return a `Flux`.
 
 Elasticsearch and OpenSearch run reactive and async repositories on their async clients through api:data.search.document.runtime.AsyncSearchTransport[], so no thread blocks on a request. A store that provides only a blocking api:data.search.document.runtime.SearchTransport[] still gets reactive repositories, run on the IO executor. `search(SearchQuery)` of the reactive, async and coroutine search repositories runs on the same async client.
+
+The results of a reactive or async repository are emitted on the thread that completes the request, which for Elasticsearch and OpenSearch is an I/O thread of the HTTP client; there is no scheduler hop, as with the other non-blocking Micronaut Data stores. Operators applied to the result (`map`, `flatMap`, `thenApply`) run on that thread too, so code that blocks, such as a call to a blocking repository or `block()`, stalls the client: move it to another scheduler first with `publishOn(Schedulers.boundedElastic())` or `thenApplyAsync` with an executor.
+
+Saving an entity whose id is already used by a document fails with a `DataAccessException` saying that the document exists, on the blocking, reactive and async repositories alike.
 
 == Limitations
 

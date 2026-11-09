@@ -160,7 +160,7 @@ public interface AdvancedPredicateVisitor<P> extends PredicateVisitor {
      * @param query The query expression
      * @param mode The match mode
      * @param options The boosts and fuzziness
-     * @since 5.4.0
+     * @since 5.3.0
      */
     default void visitTextMatch(List<Expression<?>> fields, Expression<String> query, MatchMode mode, TextMatchOptions options) {
         if (!options.isDefault()) {

@@ -28,7 +28,7 @@ import java.util.concurrent.CompletableFuture;
  *
  * @param <E> The entity type
  * @param <ID> The ID type
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Experimental
 public interface AsyncSearchRepository<E, ID> extends GenericRepository<E, ID> {
