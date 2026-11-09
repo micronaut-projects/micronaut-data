@@ -32,7 +32,7 @@ import java.lang.annotation.Target;
  * an Elasticsearch mapping) is decided by the backend module; this annotation only carries the
  * portable facts.</p>
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
