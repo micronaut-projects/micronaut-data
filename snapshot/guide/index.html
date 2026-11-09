@@ -1129,6 +1129,61 @@ Lombok plugins like the Gradle plugin <code>io.franzbecker.gradle-lombok</code> 
 <div class="paragraph">
 <p>It&#8217;s possible to annotate the repository injection point with <a href="../api/io/micronaut/data/annotation/Repository.html">@Repository</a> and set the data source name. Note that you cannot inject generic repositories, each repository needs to be bound to an entity.</p>
 </div>
+<div class="sect1">
+<h2 id="_repository_scope">Repository scope</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To support choosing the data source at the injection point, a repository without a scope annotation is a <code>@Prototype</code>: every injection point gets its own repository instance, with its own interceptor.</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+In a large application, with many repositories each injected into many beans, these instances add up to a visible share of startup time and memory. It shows most where every singleton is created eagerly at startup, as in an AWS Lambda function.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>If a repository&#8217;s data source is fixed, either the default one or the one named on the repository itself, annotate the repository with <code>@Singleton</code> so that it is created once:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Singleton
+@Repository
+public interface SingletonManufacturerRepository extends CrudRepository&lt;Manufacturer, Long&gt; {
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@Singleton
+@Repository
+class SingletonManufacturerRepository(CrudRepository[Manufacturer, int]):
+    pass</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@Singleton
+@Repository
+interface SingletonManufacturerRepository : CrudRepository&lt;Manufacturer, Long&gt;</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">@Singleton
+@Repository
+interface SingletonManufacturerRepository extends CrudRepository&lt;Manufacturer, Long&gt; {
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>A data source named on the repository takes precedence over one named at the injection point. A singleton repository is created once, from whichever injection point is resolved first, so keep the default <code>@Prototype</code> scope for a repository whose data source is chosen at the injection point.</p>
+</div>
 <div class="paragraph">
 <p>The entity to treat as the root entity for the purposes of querying is established either from the method signature or from the generic type parameter specified to the <a href="../api/io/micronaut/data/repository/GenericRepository.html">GenericRepository</a> interface.</p>
 </div>
@@ -1323,6 +1378,8 @@ abstract class AbstractBookRepository implements CrudRepository&lt;Book, Long&gt
 </div>
 <div class="paragraph">
 <p>As you can see from the above example, using abstract classes can be useful as it allows you to combine custom code that interacts with a repository interface implemented automatically by Micronaut Data.</p>
+</div>
+</div>
 </div>
 
 <h2 id="validation"><a class="anchor" href="#validation"></a>3.2 Validation</h2>

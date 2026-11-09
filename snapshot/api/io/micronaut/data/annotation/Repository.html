@@ -77,7 +77,11 @@ loadScripts(document, 'script');</script>
 @DefaultScope(io.micronaut.context.annotation.Prototype.class)
 </span><span class="modifiers">public @interface </span><span class="element-name type-name-label">Repository</span></div>
 <div class="block">Designates a type of data repository. If the type is an interface or abstract
-class this annotation will attempt to automatically provide implementations at compilation time.</div>
+class this annotation will attempt to automatically provide implementations at compilation time.
+
+<p>A repository without a scope annotation is a <code>Prototype</code>, so that each injection point can choose
+its own data source: every injection point gets a new instance. Annotate a repository whose data source is
+fixed with <code>@Singleton</code> to create it once.</p></div>
 <dl class="notes">
 <dt>Since:</dt>
 <dd>1.0</dd>
