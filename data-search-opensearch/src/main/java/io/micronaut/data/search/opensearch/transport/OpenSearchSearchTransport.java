@@ -92,7 +92,7 @@ public final class OpenSearchSearchTransport implements SearchTransport {
     public List<String> bulkIndex(String index, List<BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
         try {
             return OpenSearchRequests.bulkIds(client.bulk(OpenSearchRequests.bulkRequest(index, documents, refresh)));
-        } catch (IOException e) {
+        } catch (IOException | OpenSearchException e) {
             throw new DataAccessException("OpenSearch bulk failed: " + e.getMessage(), e);
         }
     }
