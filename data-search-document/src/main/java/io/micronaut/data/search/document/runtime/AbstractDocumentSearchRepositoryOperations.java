@@ -623,20 +623,25 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
     }
 
     /**
-     * Adds the sort of a pageable after the query's own {@code OrderBy}, which takes precedence.
+     * Adds the sort of a pageable after the query's own {@code OrderBy} or the {@code sort} of a native body,
+     * which take precedence. A declared entry may be an object or a field name, the string form both stores accept.
      */
     private <T> void appendSort(Map<String, Object> body, Sort sort, RuntimePersistentEntity<T> entity) {
         if (!sort.isSorted()) {
             return;
         }
-        List<Map<String, Object>> entries = new ArrayList<>();
-        if (body.get(SORT) instanceof List<?> declared) {
-            for (Object entry : declared) {
-                entries.add((Map<String, Object>) entry);
-            }
-        }
+        List<Object> entries = new ArrayList<>(declaredSort(body));
         entries.addAll(sortEntries(sort.getOrderBy(), entity, false));
         body.put(SORT, entries);
+    }
+
+    /** The {@code sort} a body declares: a list of entries, or a single entry. */
+    private static List<?> declaredSort(Map<String, Object> body) {
+        Object declared = body.get(SORT);
+        if (declared instanceof List<?> list) {
+            return list;
+        }
+        return declared == null ? List.of() : List.of(declared);
     }
 
     protected final <T> void applyPageable(Map<String, Object> body, Pageable pageable, RuntimePersistentEntity<T> entity) {
@@ -722,10 +727,9 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
         List<Sort.Order> orders = cursorOrders(pageable, entity);
         // the method's OrderBy comes first, then the pageable's sort and the id tiebreaker
         List<Map<String, Object>> entries = new ArrayList<>();
-        if (body.get(SORT) instanceof List<?> declared) {
-            for (Object entry : declared) {
-                entries.add(pageable.isBackward() ? reversed((Map<String, Object>) entry) : (Map<String, Object>) entry);
-            }
+        for (Object entry : declaredSort(body)) {
+            Map<String, Object> object = sortObject(entry);
+            entries.add(pageable.isBackward() ? reversed(object) : object);
         }
         for (Map<String, Object> entry : sortEntries(orders, entity, pageable.isBackward())) {
             // a field the OrderBy already sorts on is one sort value, not two
@@ -747,6 +751,36 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
     }
 
     /** A sort entry with its direction flipped, for a backward cursored page. */
+    /**
+     * A declared sort entry in the object form with an explicit order: a field name, {@code "title"}, or a field
+     * with its order as a string, {@code {"title": "desc"}}, sorts in the stores' default order, descending for
+     * the score and ascending otherwise.
+     */
+    private static Map<String, Object> sortObject(Object entry) {
+        if (entry instanceof String field) {
+            return Map.of(field, Map.of(ORDER, defaultOrder(field)));
+        }
+        if (!(entry instanceof Map<?, ?> map)) {
+            throw new DataAccessException("A sort entry must be a field name or an object, got: " + entry);
+        }
+        Map<String, Object> object = new LinkedHashMap<>();
+        map.forEach((field, options) -> {
+            Map<String, Object> order = new LinkedHashMap<>();
+            if (options instanceof Map<?, ?> declared) {
+                declared.forEach((key, value) -> order.put(String.valueOf(key), value));
+            } else if (options != null) {
+                order.put(ORDER, options);
+            }
+            order.putIfAbsent(ORDER, defaultOrder(String.valueOf(field)));
+            object.put(String.valueOf(field), order);
+        });
+        return object;
+    }
+
+    private static String defaultOrder(String field) {
+        return DocumentSearchQueryBuilder.SCORE_FIELD.equals(field) ? DESC : ASC;
+    }
+
     private static Map<String, Object> reversed(Map<String, Object> entry) {
         Map<String, Object> flipped = new LinkedHashMap<>();
         entry.forEach((field, options) -> {

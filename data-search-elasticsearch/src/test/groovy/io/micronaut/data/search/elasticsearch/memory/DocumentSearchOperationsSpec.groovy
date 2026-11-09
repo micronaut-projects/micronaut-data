@@ -532,6 +532,37 @@ class DocumentSearchOperationsSpec extends Specification {
         transport.lastBody().contains('"sort":[{"title.keyword":{"order":"desc"}},{"id":{"order":"asc"}}]')
     }
 
+    void "the string form of a native sort is kept ahead of the pageable sort"() {
+        when:
+        notes.sortedByTitle(Pageable.from(0, 10, Sort.of(Sort.Order.asc("body"))))
+
+        then: "the declared entries are sent as written, the pageable's sort after them"
+        transport.lastBody().contains('"sort":["title.keyword",{"pages":"desc"},{"body.keyword":{"order":"asc"}}]')
+
+        when: "a single entry instead of a list"
+        notes.sortedByScore(Pageable.from(0, 10, Sort.of(Sort.Order.asc("body"))))
+
+        then:
+        transport.lastBody().contains('"sort":["_score",{"body.keyword":{"order":"asc"}}]')
+    }
+
+    void "a cursored page turns the string form of a native sort into objects it can reverse"() {
+        given:
+        notes.saveAll([new Note("Coffee", "Roasting beans", 120), new Note("Bread", "Sourdough", 80)])
+
+        when:
+        notes.sortedByTitle(CursoredPageable.from(10, Sort.of(Sort.Order.asc("body"))))
+
+        then:
+        transport.lastBody().contains('"sort":[{"title.keyword":{"order":"asc"}},{"pages":{"order":"desc"}},{"body.keyword":{"order":"asc"}},{"id":{"order":"asc"}}]')
+
+        when: "a backward page reverses every entry, the score from its default descending order"
+        notes.sortedByScore(Pageable.beforeCursor(Pageable.Cursor.of(1.0d, "id"), 1, 10, Sort.UNSORTED))
+
+        then:
+        transport.lastBody().contains('"sort":[{"_score":{"order":"asc"}},{"id":{"order":"desc"}}]')
+    }
+
     void "deletes remove documents by id and by query"() {
         given:
         def saved = notes.saveAll([new Note("Coffee", "Roasting beans", 120), new Note("Bread", "Sourdough", 80), new Note("Tea", "Green", 40)])

@@ -101,6 +101,13 @@ public interface NoteRepository extends PageableRepository<Note, String>, Search
     @Query("{\"query\": {\"bool\": {\"must\": {\"match\": {\"title\": \":title\"}}, \"filter\": {\"match_phrase\": {\"body\": \"at 10\\:30\"}}}}}")
     List<Note> findTitledAtHalfPastTen(String title);
 
+    // the string form of sort entries, which both stores accept
+    @Query("{\"query\": {\"match_all\": {}}, \"sort\": [\"title.keyword\", {\"pages\": \"desc\"}]}")
+    List<Note> sortedByTitle(Pageable pageable);
+
+    @Query("{\"query\": {\"match_all\": {}}, \"sort\": \"_score\"}")
+    List<Note> sortedByScore(Pageable pageable);
+
     // the stores have no transactions, so this fails at its first call
     @Transactional
     long countByBody(String body);
