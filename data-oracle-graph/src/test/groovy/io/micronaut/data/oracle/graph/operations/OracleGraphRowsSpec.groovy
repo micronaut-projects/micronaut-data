@@ -203,10 +203,13 @@ class OracleGraphRowsSpec extends Specification {
 
         when:
         def records = OracleGraphRows.decode(columns, rows)
-        def path = (GraphPathValue) records[0].get("p")
-        def loop = (GraphPathValue) records[1].get("p")
+        def path = (GraphPathValue) records[1].get("p")
+        def loop = (GraphPathValue) records[0].get("p")
 
-        then:
+        then: "the paths come shortest first, as Cypher orders them"
+        records*.get("p")*.relationships()*.size() == [1, 3]
+
+        and:
         path.nodes()*.properties()*.name == ["Fred", "Barney", "Fred", "Wilma"]
         path.nodes()*.id() == [0, 1, 0, 2]
         path.relationships()*.startId() == [0, 1, 0]
