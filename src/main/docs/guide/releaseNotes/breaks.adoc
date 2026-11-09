@@ -56,6 +56,15 @@ Jakarta Data `@Query` methods (JDQL) on entities with a `@TenantId` property now
 
 When a repository doesn't declare its root entity, for example because it doesn't extend `GenericRepository<E, ID>`, the methods that need one, such as `countById`, use the entity of the lifecycle methods (`@Insert`, `@Update`, `@Upsert`, `@Delete`). If those methods use different entities, such a method now fails to compile. Previously, it silently used the entity of the first lifecycle method, so the result depended on the declaration order. Declare the root entity, for example by extending `GenericRepository<E, ID>`.
 
+=== MongoDB ids of entities with a serialization naming strategy
+
+The id of a MongoDB entity whose names come from a serialization naming strategy resolved at compile time, such as `@Serdeable(naming = SnakeCaseStrategy.class)` with an id property `userId`, is now stored as `_id`. Previously the naming strategy renamed the id, so it was stored as a separate field, such as `user_id`, and the driver added its own `_id` next to it. The id did not round-trip:
+
+* With a generated id, `save` returned the value of `_id`, while reads returned the value of `user_id`. `findById` with the id read back found nothing, and `delete` of an entity read back failed.
+* With an assigned id, `findById` and `deleteById` matched nothing, as they query `_id`.
+
+Documents written that way cannot be read after the upgrade: reading one fails with a `Duplicate property` deserialization error. Migrate them before upgrading. With a generated id, remove the renamed id field, such as `user_id`, to keep `_id`. With an assigned id, write the value of the renamed field to `_id` and remove the field.
+
 == 5.2
 
 === MySQL WKT geographic axis order (5.2.3)
