@@ -104,7 +104,10 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
     // ---------- entity events around writes
 
     /**
-     * Fires the pre-persist event and assigns a client-side id when the entity needs one.
+     * Fires the pre-persist event and assigns a client-side id when the entity has none: a random
+     * {@code UUID}, or its string form for a {@code String} id. The id is generated here rather than by
+     * the store so the document source holds it, which the cursored paging tiebreaker sorts on, and so
+     * an externally versioned write, which the stores reject without an id, can be sent.
      *
      * @return The entity to index, or {@code null} when a listener vetoed the persist
      */
@@ -120,8 +123,10 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
         if (id == null) {
             if (identity.getType() == UUID.class) {
                 current = setId(identity, current, UUID.randomUUID());
-            } else if (identity.getType() != String.class) {
-                throw new DataAccessException("Document search stores generate String ids only; assign the id of " + entity.getName() + " or use a String or UUID id");
+            } else if (identity.getType() == String.class) {
+                current = setId(identity, current, UUID.randomUUID().toString());
+            } else {
+                throw new DataAccessException("Document search stores generate String and UUID ids only; assign the id of " + entity.getName() + " or use a String or UUID id");
             }
         }
         return current;
@@ -161,7 +166,8 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
 
     /**
      * The version to delete an entity at: its {@code @Version} property as read, so the store rejects
-     * the delete when the document has been updated since.
+     * the delete when the document has been updated since. It must be read before the pre-remove event,
+     * whose version-generating listener increments the property of a mutable entity in place.
      *
      * @param current The entity
      * @param entity The persistent entity

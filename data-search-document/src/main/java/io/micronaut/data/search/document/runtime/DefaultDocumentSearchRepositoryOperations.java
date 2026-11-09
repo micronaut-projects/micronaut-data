@@ -352,11 +352,13 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
     }
 
     private <T> boolean deleteOne(T value, RuntimePersistentEntity<T> entity) {
+        // the version as read: the pre-remove event increments it
+        Long version = deleteVersion(value, entity);
         String id = preRemove(value, entity);
         if (id == null) {
             return false;
         }
-        boolean deleted = transport.delete(indexName(entity), id, deleteVersion(value, entity), configuration.getRefresh());
+        boolean deleted = transport.delete(indexName(entity), id, version, configuration.getRefresh());
         if (deleted) {
             postRemove(value, entity);
         }

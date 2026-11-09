@@ -297,11 +297,12 @@ public final class DefaultDocumentSearchReactiveRepositoryOperations extends Abs
 
     private <T> Mono<Boolean> deleteOne(T value, RuntimePersistentEntity<T> entity) {
         return Mono.defer(() -> {
+            // the version as read: the pre-remove event increments it
+            Long version = deleteVersion(value, entity);
             String id = preRemove(value, entity);
             if (id == null) {
                 return Mono.just(false);
             }
-            Long version = deleteVersion(value, entity);
             return call(() -> transport.delete(indexName(entity), id, version, configuration.getRefresh()))
                 .doOnNext(deleted -> {
                     if (deleted) {
