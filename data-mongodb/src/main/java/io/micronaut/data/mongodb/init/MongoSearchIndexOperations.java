@@ -28,6 +28,8 @@ import io.micronaut.data.mongodb.operations.MongoDatabaseNameProvider;
 import io.micronaut.data.runtime.search.SearchIndexOperations;
 import jakarta.inject.Singleton;
 import org.bson.Document;
+import org.jspecify.annotations.Nullable;
+
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -76,7 +78,8 @@ public final class MongoSearchIndexOperations implements SearchIndexOperations {
             return names.contains(searchIndex.name()) && (vectorIndex == null || names.contains(vectorIndex.name()));
         }
         AbstractMongoCollectionsCreator.TextIndexDefinition textIndex = AbstractMongoCollectionsCreator.textIndexDefinition(entity, collection.getNamespace().getCollectionName());
-        return textIndex != null && indexNames(collection).contains(textIndex.name());
+        // a collection holds at most one text index, which the startup creator keeps whatever its name
+        return textIndex != null && existingTextIndex(collection) != null;
     }
 
     @Override
@@ -96,7 +99,7 @@ public final class MongoSearchIndexOperations implements SearchIndexOperations {
             return;
         }
         AbstractMongoCollectionsCreator.TextIndexDefinition textIndex = AbstractMongoCollectionsCreator.textIndexDefinition(entity, collection.getNamespace().getCollectionName());
-        if (textIndex != null && !indexNames(collection).contains(textIndex.name())) {
+        if (textIndex != null && existingTextIndex(collection) == null) {
             collection.createIndex(textIndex.keys(), textIndex.options());
         }
     }
@@ -123,8 +126,9 @@ public final class MongoSearchIndexOperations implements SearchIndexOperations {
             return;
         }
         AbstractMongoCollectionsCreator.TextIndexDefinition textIndex = AbstractMongoCollectionsCreator.textIndexDefinition(entity, collection.getNamespace().getCollectionName());
-        if (textIndex != null && indexNames(collection).contains(textIndex.name())) {
-            collection.dropIndex(textIndex.name());
+        Document existing = textIndex == null ? null : existingTextIndex(collection);
+        if (existing != null) {
+            collection.dropIndex(existing.getString("name"));
         }
     }
 
@@ -186,11 +190,16 @@ public final class MongoSearchIndexOperations implements SearchIndexOperations {
         return names;
     }
 
-    private static Set<String> indexNames(MongoCollection<Document> collection) {
-        Set<String> names = new HashSet<>();
+    /**
+     * @return The text index of the collection whatever its name, like the startup creator finds it, or {@code null}
+     */
+    @Nullable
+    private static Document existingTextIndex(MongoCollection<Document> collection) {
         for (Document index : collection.listIndexes()) {
-            names.add(index.getString("name"));
+            if (AbstractMongoCollectionsCreator.isTextIndex(index)) {
+                return index;
+            }
         }
-        return names;
+        return null;
     }
 }
