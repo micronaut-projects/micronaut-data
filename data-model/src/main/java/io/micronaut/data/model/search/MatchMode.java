@@ -21,7 +21,7 @@ import org.jspecify.annotations.Nullable;
 /**
  * How the terms of a full-text query are matched against a field.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Experimental
 public enum MatchMode {

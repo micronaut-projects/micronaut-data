@@ -31,7 +31,7 @@ import java.util.Set;
  * it to its native form and reports the options it cannot honour through
  * {@link UnsupportedSearchFeatureException}.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Experimental
 public final class SearchQuery {

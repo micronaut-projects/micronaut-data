@@ -29,7 +29,7 @@ import io.micronaut.data.model.vector.search.SearchResults;
  *
  * @param <E> The entity type
  * @param <ID> The ID type
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Blocking
 @Experimental

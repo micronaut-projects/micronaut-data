@@ -36,7 +36,7 @@ import java.util.StringJoiner;
  * multi-word lexeme becomes a phrase. Negated terms are joined with {@code & !}. A group made only
  * of negated terms is dropped, so a query such as {@code -spam} matches nothing.</p>
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 public abstract class PostgresTsQueryConverter implements TextSearchQueryConverter {
