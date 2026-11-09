@@ -31,7 +31,7 @@ import java.lang.annotation.Target;
  *
  * <p>The JSON is trusted configuration and is sent as written.</p>
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Documented

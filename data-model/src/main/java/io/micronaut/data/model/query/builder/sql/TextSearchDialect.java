@@ -308,7 +308,7 @@ public interface TextSearchDialect {
      * @param languageColumn The escaped column holding the per-row language, or {@code null}
      * @param parameters The store's index parameters ({@code @OracleTextIndex}), or {@code null} for its defaults
      * @return The {@code CREATE INDEX} statements
-     * @since 5.4.0
+     * @since 5.3.0
      */
     default List<String> buildSearchIndex(String indexName, String escapedTableName, List<SearchColumn> columns, String language, @Nullable String languageColumn, @Nullable String parameters) {
         return buildSearchIndex(indexName, escapedTableName, columns, language, languageColumn);
@@ -322,7 +322,7 @@ public interface TextSearchDialect {
      * @param escapedJsonColumn The escaped JSON column holding the whole entity
      * @param parameters The store's index parameters, or {@code null} for its defaults
      * @return The {@code CREATE INDEX} statements, empty when the dialect needs no index
-     * @since 5.4.0
+     * @since 5.3.0
      */
     default List<String> buildJsonSearchIndex(String indexName, String escapedTableName, String escapedJsonColumn, @Nullable String parameters) {
         return buildJsonSearchIndex(indexName, escapedTableName, escapedJsonColumn);
