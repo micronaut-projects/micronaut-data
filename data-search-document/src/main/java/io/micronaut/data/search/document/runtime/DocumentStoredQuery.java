@@ -116,7 +116,8 @@ public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersSt
     @Nullable
     private Object replace(@Nullable Object node, List<Object> values, Map<String, Object> named) {
         if (node instanceof String string && named.containsKey(string)) {
-            return normalize(named.get(string));
+            // a named parameter is a bound value, converted like a placeholder after its vector or score is normalized
+            return toJsonValue(normalize(named.get(string)));
         }
         if (node instanceof Map<?, ?> map && !map.containsKey(DocumentSearchQueryBuilder.QUERY_PARAMETER_PLACEHOLDER)) {
             Map<String, Object> copy = new LinkedHashMap<>();

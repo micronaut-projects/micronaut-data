@@ -373,6 +373,12 @@ class DocumentSearchOperationsSpec extends Specification {
 
         then:
         query().terms.priority == ["urgent", "routine"]
+
+        when: "a named parameter of a @Query body"
+        meetings.startingBefore(start)
+
+        then:
+        query().range.startsAt.lt == document.startsAt
     }
 
     private Map<String, Object> query() {
