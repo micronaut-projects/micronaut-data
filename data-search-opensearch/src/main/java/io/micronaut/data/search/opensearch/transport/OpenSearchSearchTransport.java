@@ -39,7 +39,7 @@ import java.util.Map;
  * {@link SearchTransport} over the OpenSearch Java client provided by {@code micronaut-opensearch}.
  * The JSON bodies are parsed with the client's own mapper into typed requests.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 @Singleton
@@ -63,7 +63,7 @@ public final class OpenSearchSearchTransport implements SearchTransport {
     public SearchHits search(String index, String body) {
         try {
             return OpenSearchRequests.toHits(client.search(OpenSearchRequests.searchRequest(mapper, index, body), Map.class));
-        } catch (IOException e) {
+        } catch (IOException | OpenSearchException e) {
             throw new DataAccessException("OpenSearch search failed: " + e.getMessage(), e);
         }
     }
@@ -73,7 +73,7 @@ public final class OpenSearchSearchTransport implements SearchTransport {
         try {
             Query query = query(parse(body));
             return client.count(c -> c.index(index).query(query)).count();
-        } catch (IOException e) {
+        } catch (IOException | OpenSearchException e) {
             throw new DataAccessException("OpenSearch count failed: " + e.getMessage(), e);
         }
     }
@@ -82,7 +82,7 @@ public final class OpenSearchSearchTransport implements SearchTransport {
     public String index(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh) {
         try {
             return client.index(i -> i.index(index).id(id).document(source).refresh(refresh(refresh))).id();
-        } catch (IOException e) {
+        } catch (IOException | OpenSearchException e) {
             throw new DataAccessException("OpenSearch index failed: " + e.getMessage(), e);
         }
     }
@@ -104,7 +104,7 @@ public final class OpenSearchSearchTransport implements SearchTransport {
         try {
             var response = client.get(g -> g.index(index).id(id), Map.class);
             return response.found() ? (Map<String, Object>) response.source() : null;
-        } catch (IOException e) {
+        } catch (IOException | OpenSearchException e) {
             throw new DataAccessException("OpenSearch get failed: " + e.getMessage(), e);
         }
     }
@@ -113,7 +113,7 @@ public final class OpenSearchSearchTransport implements SearchTransport {
     public boolean delete(String index, String id, DocumentSearchConfiguration.Refresh refresh) {
         try {
             return client.delete(d -> d.index(index).id(id).refresh(refresh(refresh))).result().jsonValue().equals("deleted");
-        } catch (IOException e) {
+        } catch (IOException | OpenSearchException e) {
             throw new DataAccessException("OpenSearch delete failed: " + e.getMessage(), e);
         }
     }
@@ -125,7 +125,7 @@ public final class OpenSearchSearchTransport implements SearchTransport {
             // delete_by_query only accepts true or false, not wait_for
             Long deleted = client.deleteByQuery(d -> d.index(index).query(query).refresh(OpenSearchRequests.deleteByQueryRefresh(refresh))).deleted();
             return deleted == null ? 0 : deleted;
-        } catch (IOException e) {
+        } catch (IOException | OpenSearchException e) {
             throw new DataAccessException("OpenSearch delete by query failed: " + e.getMessage(), e);
         }
     }
@@ -134,7 +134,7 @@ public final class OpenSearchSearchTransport implements SearchTransport {
     public boolean indexExists(String index) {
         try {
             return client.indices().exists(e -> e.index(index)).value();
-        } catch (IOException e) {
+        } catch (IOException | OpenSearchException e) {
             throw new DataAccessException("OpenSearch index exists failed: " + e.getMessage(), e);
         }
     }
@@ -151,7 +151,7 @@ public final class OpenSearchSearchTransport implements SearchTransport {
                 }
                 return c;
             });
-        } catch (IOException e) {
+        } catch (IOException | OpenSearchException e) {
             throw new DataAccessException("OpenSearch create index failed: " + e.getMessage(), e);
         }
     }

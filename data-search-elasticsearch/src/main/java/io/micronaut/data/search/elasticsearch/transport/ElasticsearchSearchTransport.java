@@ -40,7 +40,7 @@ import java.util.Map;
 /**
  * {@link SearchTransport} over the Elasticsearch Java client provided by {@code micronaut-elasticsearch}.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 @Singleton
@@ -64,7 +64,7 @@ public final class ElasticsearchSearchTransport implements SearchTransport {
     public SearchHits search(String index, String body) {
         try {
             return ElasticsearchAsyncSearchTransport.toHits(client.search(s -> s.index(index).withJson(new StringReader(body)), Map.class));
-        } catch (IOException e) {
+        } catch (IOException | ElasticsearchException e) {
             throw new DataAccessException("Elasticsearch search failed: " + e.getMessage(), e);
         }
     }
@@ -73,7 +73,7 @@ public final class ElasticsearchSearchTransport implements SearchTransport {
     public long count(String index, String body) {
         try {
             return client.count(c -> c.index(index).withJson(new StringReader(body))).count();
-        } catch (IOException e) {
+        } catch (IOException | ElasticsearchException e) {
             throw new DataAccessException("Elasticsearch count failed: " + e.getMessage(), e);
         }
     }
@@ -82,7 +82,7 @@ public final class ElasticsearchSearchTransport implements SearchTransport {
     public String index(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh) {
         try {
             return client.index(i -> i.index(index).id(id).document(source).refresh(refresh(refresh))).id();
-        } catch (IOException e) {
+        } catch (IOException | ElasticsearchException e) {
             throw new DataAccessException("Elasticsearch index failed: " + e.getMessage(), e);
         }
     }
@@ -104,7 +104,7 @@ public final class ElasticsearchSearchTransport implements SearchTransport {
         try {
             var response = client.get(g -> g.index(index).id(id), Map.class);
             return response.found() ? (Map<String, Object>) response.source() : null;
-        } catch (IOException e) {
+        } catch (IOException | ElasticsearchException e) {
             throw new DataAccessException("Elasticsearch get failed: " + e.getMessage(), e);
         }
     }
@@ -113,7 +113,7 @@ public final class ElasticsearchSearchTransport implements SearchTransport {
     public boolean delete(String index, String id, DocumentSearchConfiguration.Refresh refresh) {
         try {
             return client.delete(d -> d.index(index).id(id).refresh(refresh(refresh))).result().jsonValue().equals("deleted");
-        } catch (IOException e) {
+        } catch (IOException | ElasticsearchException e) {
             throw new DataAccessException("Elasticsearch delete failed: " + e.getMessage(), e);
         }
     }
@@ -123,7 +123,7 @@ public final class ElasticsearchSearchTransport implements SearchTransport {
         try {
             Long deleted = client.deleteByQuery(d -> d.index(index).withJson(new StringReader(body)).refresh(refresh != DocumentSearchConfiguration.Refresh.NONE)).deleted();
             return deleted == null ? 0 : deleted;
-        } catch (IOException e) {
+        } catch (IOException | ElasticsearchException e) {
             throw new DataAccessException("Elasticsearch delete by query failed: " + e.getMessage(), e);
         }
     }
@@ -132,7 +132,7 @@ public final class ElasticsearchSearchTransport implements SearchTransport {
     public boolean indexExists(String index) {
         try {
             return client.indices().exists(e -> e.index(index)).value();
-        } catch (IOException e) {
+        } catch (IOException | ElasticsearchException e) {
             throw new DataAccessException("Elasticsearch index exists failed: " + e.getMessage(), e);
         }
     }
@@ -141,7 +141,7 @@ public final class ElasticsearchSearchTransport implements SearchTransport {
     public void createIndex(String index, String body) {
         try {
             client.indices().create(c -> c.index(index).withJson(new StringReader(body)));
-        } catch (IOException e) {
+        } catch (IOException | ElasticsearchException e) {
             throw new DataAccessException("Elasticsearch create index failed: " + e.getMessage(), e);
         }
     }

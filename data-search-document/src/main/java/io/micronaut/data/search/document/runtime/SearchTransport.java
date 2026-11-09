@@ -24,9 +24,10 @@ import java.util.Map;
 /**
  * The small client-facing SPI the document search runtime needs. Elasticsearch and OpenSearch each
  * implement it on top of their own Java client; query bodies are passed as JSON so no client type
- * appears in the shared runtime.
+ * appears in the shared runtime. The store transports report every failure of the store or of the
+ * connection as a {@link io.micronaut.data.exceptions.DataAccessException}.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 public interface SearchTransport {
 
@@ -76,8 +77,9 @@ public interface SearchTransport {
     }
 
     /**
-     * The failure of a create-only write: a {@link io.micronaut.data.exceptions.DataAccessException} when the
-     * store reports a conflict (HTTP 409), the store's own exception otherwise.
+     * The failure of a create-only write as a {@link io.micronaut.data.exceptions.DataAccessException}: one
+     * saying the document exists when the store reports a conflict (HTTP 409), one wrapping the store's own
+     * exception otherwise.
      *
      * @param index The index
      * @param id The document id
@@ -89,7 +91,7 @@ public interface SearchTransport {
         if (status == 409) {
             return new io.micronaut.data.exceptions.DataAccessException("A document with id " + id + " already exists in index " + index, failure);
         }
-        return failure;
+        return new io.micronaut.data.exceptions.DataAccessException("Cannot create the document with id " + id + " in index " + index + ": " + failure.getMessage(), failure);
     }
 
     /**
