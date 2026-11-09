@@ -365,7 +365,7 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
      * @param mode The match mode
      * @param options The match options
      * @return the highlight expression
-     * @since 5.4.0
+     * @since 5.3.0
      */
     default Expression<String> searchHighlight(Expression<?> field, Expression<String> query, MatchMode mode, TextMatchOptions options) {
         if (!options.isDefault()) {

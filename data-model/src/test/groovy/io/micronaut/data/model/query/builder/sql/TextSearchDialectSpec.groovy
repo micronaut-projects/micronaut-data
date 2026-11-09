@@ -34,7 +34,7 @@ class TextSearchDialectSpec extends Specification {
 
     void "a query language that is not a configuration name is rejected before it reaches the SQL"() {
         when:
-        TextSearchDialect.resolveLanguage([], new io.micronaut.data.model.search.TextMatchOptions(Map.of(), 0, language))
+        TextSearchDialect.resolveLanguage([], io.micronaut.data.model.search.TextMatchOptions.builder().language(language).build())
 
         then:
         thrown(IllegalArgumentException)
@@ -45,7 +45,7 @@ class TextSearchDialectSpec extends Specification {
 
     void "a configuration name is accepted as the query language"() {
         expect:
-        TextSearchDialect.resolveLanguage([], new io.micronaut.data.model.search.TextMatchOptions(Map.of(), 0, "german")) == "german"
+        TextSearchDialect.resolveLanguage([], io.micronaut.data.model.search.TextMatchOptions.builder().language("german").build()) == "german"
         io.micronaut.data.model.search.SearchQuery.builder("x").language("simple").build().language == "simple"
     }
 
