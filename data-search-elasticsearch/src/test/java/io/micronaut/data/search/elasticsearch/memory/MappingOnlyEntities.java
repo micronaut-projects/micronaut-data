@@ -22,12 +22,23 @@ import io.micronaut.data.annotation.search.Searchable;
 import org.jspecify.annotations.Nullable;
 
 /**
- * A searchable entity analysed by a custom analyzer, whose name is not a SQL configuration name.
- *
- * @param id The id
- * @param text The text
+ * Entities for the mapping specs that must not get an index on a real cluster: the startup index creator
+ * skips nested types.
  */
-@MappedEntity("folded_notes")
-@Searchable(language = "my-folding")
-public record FoldedNote(@Id @Nullable String id, @SearchField String text) {
+public final class MappingOnlyEntities {
+
+    private MappingOnlyEntities() {
+    }
+
+    /**
+     * A searchable entity analysed by a custom analyzer, whose name is not a SQL configuration name. No
+     * cluster defines the analyzer, so the entity is nested to keep it out of index creation.
+     *
+     * @param id The id
+     * @param text The text
+     */
+    @MappedEntity("folded_notes")
+    @Searchable(language = "my-folding")
+    public record FoldedNote(@Id @Nullable String id, @SearchField String text) {
+    }
 }
