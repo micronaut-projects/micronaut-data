@@ -43,7 +43,7 @@ import java.util.List;
  * so every store that renders {@link io.micronaut.data.model.jpa.criteria.impl.predicate.TextMatchPredicate}
  * supports it.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 public class SearchQueryInterceptor extends AbstractSpecificationInterceptor<Object, Object> {
