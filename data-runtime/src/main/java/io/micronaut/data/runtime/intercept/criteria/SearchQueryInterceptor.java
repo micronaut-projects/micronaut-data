@@ -58,7 +58,7 @@ import java.util.Objects;
  * supports it. A hybrid query additionally runs the nearest-neighbour query of its vector and fuses
  * both rankings with reciprocal rank fusion.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 public class SearchQueryInterceptor extends AbstractSpecificationInterceptor<Object, Object> {
