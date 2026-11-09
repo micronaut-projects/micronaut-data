@@ -31,6 +31,8 @@ import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.annotation.search.SearchField;
+import io.micronaut.data.annotation.search.SearchIndexSettings;
+import io.micronaut.data.annotation.search.SearchMapping;
 import io.micronaut.data.annotation.search.Searchable;
 import io.micronaut.data.annotation.sql.JoinColumn;
 import io.micronaut.data.annotation.sql.JoinColumns;
@@ -43,6 +45,7 @@ import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.ConstructorElement;
+import io.micronaut.inject.ast.Element;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.ast.PropertyElement;
@@ -171,6 +174,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         GeneratedETagUtils.synthesizeColumnTransformer(entity, properties);
         if (visitsOwnElements) {
             validateSearchFields(entity, properties);
+            validateSearchJson(element, entity, properties);
         }
 
         if (entity.hasAnnotation(JSON_VIEW_ANNOTATION) || entity.hasAnnotation(JSON_SUB_VIEW_ANNOTATION)) {
@@ -200,6 +204,38 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
                     + entity.getName() + "] must be a text property, such as a String, because search fields are indexed as text, but its type is "
                     + property.getTypeName());
             }
+        }
+    }
+
+    /**
+     * Rejects {@link SearchIndexSettings} and {@link SearchMapping} values that are not one JSON object, which the
+     * document stores would only report when the index is created.
+     *
+     * @param element    The entity or embeddable
+     * @param entity     The source persistent entity
+     * @param properties Its persistent properties
+     */
+    private static void validateSearchJson(ClassElement element, SourcePersistentEntity entity, List<SourcePersistentProperty> properties) {
+        entity.stringValue(SearchIndexSettings.class)
+            .ifPresent(json -> requireJsonObject(element, json, "@SearchIndexSettings of [" + entity.getName() + "]"));
+        List<SourcePersistentProperty> mapped = new ArrayList<>(properties);
+        if (entity.hasIdentity()) {
+            mapped.add(entity.getIdentity());
+        }
+        for (SourcePersistentProperty property : mapped) {
+            property.stringValue(SearchMapping.class)
+                .ifPresent(json -> requireJsonObject(property.getPropertyElement(), json,
+                    "@SearchMapping of property [" + property.getName() + "] of [" + entity.getName() + "]"));
+        }
+    }
+
+    private static void requireJsonObject(Element element, String json, String what) {
+        if (json.isBlank()) {
+            return;
+        }
+        String error = JsonObjectSyntax.objectError(json);
+        if (error != null) {
+            throw new ProcessingException(element, "The " + what + " must be one JSON object: " + error);
         }
     }
 

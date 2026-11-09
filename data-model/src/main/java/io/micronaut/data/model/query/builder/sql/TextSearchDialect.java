@@ -33,6 +33,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -137,7 +138,8 @@ public interface TextSearchDialect {
     }
 
     /**
-     * Resolves the language of the entity owning the given fields.
+     * Resolves the language of the entity owning the given fields, checked to be a configuration name as it
+     * is rendered inside the statement.
      *
      * @param fields The field expressions
      * @return The language, {@link #DEFAULT_LANGUAGE} when unset
@@ -146,7 +148,7 @@ public interface TextSearchDialect {
         for (Expression<?> field : fields) {
             PersistentProperty property = asProperty(field);
             if (property != null) {
-                return TextSearchSupport.resolveLanguage(property.getOwner());
+                return TextSearchSupport.requireLanguageName(TextSearchSupport.resolveLanguage(property.getOwner()));
             }
         }
         return DEFAULT_LANGUAGE;
@@ -180,19 +182,15 @@ public interface TextSearchDialect {
     }
 
     /**
-     * @param field A field expression
-     * @return The declared {@link SearchField#weight()}, or {@code null} when the property has none
-     */
-    /**
      * @param field The field expression
      * @param options The options
-     * @return The query-time boost of the field, or {@code null}
+     * @return The query-time boost of the field, by its property path, or {@code null}
      */
     static @Nullable Double boostOf(Expression<?> field, TextMatchOptions options) {
         if (options.boosts().isEmpty() || !(field instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath)) {
             return null;
         }
-        return options.boostFor(propertyPath.getProperty().getName());
+        return options.boostFor(propertyPath.getPathAsString());
     }
 
     /**
@@ -249,6 +247,10 @@ public interface TextSearchDialect {
         return options.language() != null ? TextSearchSupport.requireLanguageName(options.language()) : resolveLanguage(fields);
     }
 
+    /**
+     * @param field A field expression
+     * @return The declared {@link SearchField#weight()}, or {@code null} when the property has none
+     */
     static @Nullable SearchWeight resolveWeight(Expression<?> field) {
         PersistentProperty property = asProperty(field);
         if (property == null) {
@@ -306,7 +308,7 @@ public interface TextSearchDialect {
      * @param languageColumn The escaped column holding the per-row language, or {@code null}
      * @param parameters The store's index parameters ({@code @OracleTextIndex}), or {@code null} for its defaults
      * @return The {@code CREATE INDEX} statements
-     * @since 5.4.0
+     * @since 5.3.0
      */
     default List<String> buildSearchIndex(String indexName, String escapedTableName, List<SearchColumn> columns, String language, @Nullable String languageColumn, @Nullable String parameters) {
         return buildSearchIndex(indexName, escapedTableName, columns, language, languageColumn);
@@ -320,7 +322,7 @@ public interface TextSearchDialect {
      * @param escapedJsonColumn The escaped JSON column holding the whole entity
      * @param parameters The store's index parameters, or {@code null} for its defaults
      * @return The {@code CREATE INDEX} statements, empty when the dialect needs no index
-     * @since 5.4.0
+     * @since 5.3.0
      */
     default List<String> buildJsonSearchIndex(String indexName, String escapedTableName, String escapedJsonColumn, @Nullable String parameters) {
         return buildJsonSearchIndex(indexName, escapedTableName, escapedJsonColumn);
@@ -332,7 +334,7 @@ public interface TextSearchDialect {
      * @param indexName The escaped index name
      * @param columns The search field columns
      * @return The index names, empty when the dialect needs no index
-     * @since 5.4.0
+     * @since 5.3.0
      */
     default List<String> searchIndexNames(String indexName, List<SearchColumn> columns) {
         return List.of();
@@ -340,10 +342,11 @@ public interface TextSearchDialect {
 
     /**
      * @param indexName An escaped index name
+     * @param schema The escaped schema of the entity's table, or {@code null} when it declares none
      * @return The statement dropping it
-     * @since 5.4.0
+     * @since 5.3.0
      */
-    default String buildDropSearchIndex(String indexName) {
+    default String buildDropSearchIndex(String indexName, @Nullable String schema) {
         return "DROP INDEX " + indexName;
     }
 
@@ -352,26 +355,27 @@ public interface TextSearchDialect {
      *
      * @param indexNames The escaped index names
      * @return The statements, empty when the indexes are always current
-     * @since 5.4.0
+     * @since 5.3.0
      */
     default List<String> buildSyncSearchIndex(List<String> indexNames) {
         return List.of();
     }
 
     /**
-     * @return A query counting the indexes with the name bound as its one parameter, in the form the
-     * catalog stores it, or {@code null} when the dialect cannot tell
-     * @since 5.4.0
+     * @param schema The escaped schema of the entity's table, or {@code null} when it declares none
+     * @return A query counting the indexes with the name bound as its one parameter, in the form
+     * {@link #catalogIndexName} gives, among the indexes of the entity, or {@code null} when the dialect cannot tell
+     * @since 5.3.0
      */
     @Nullable
-    default String searchIndexExistsQuery() {
+    default String searchIndexExistsQuery(@Nullable String schema) {
         return null;
     }
 
     /**
      * @param indexName An escaped index name
      * @return The name as the catalog stores it
-     * @since 5.4.0
+     * @since 5.3.0
      */
     default String catalogIndexName(String indexName) {
         return indexName.replace("\"", "");
@@ -570,6 +574,7 @@ public interface TextSearchDialect {
         // PostgreSQL can skip an index that exists, so schema generation can run against an existing database
         private static final String CREATE_INDEX_IF_NOT_EXISTS = "CREATE INDEX IF NOT EXISTS ";
         private static final String POSTGRESQL_TEXT_SEARCH = "PostgreSQL text search";
+        private static final String PG_TRGM = "PostgreSQL pg_trgm";
 
         @Override
         public void appendTextMatch(StringBuilder query,
@@ -582,12 +587,12 @@ public interface TextSearchDialect {
                                     Function<String, Consumer<Expression<?>>> appendParameter) {
             rejectBoosts(options, POSTGRESQL_TEXT_SEARCH);
             if (mode == MatchMode.FUZZY) {
-                rejectFuzziness(options, "PostgreSQL pg_trgm");
+                rejectTrigramOptions(options);
                 appendFuzzyMatch(query, fields, queryExpression, appendExpression, appendParameter);
                 return;
             }
             String language = resolveLanguage(fields, options);
-            appendVector(query, fields, language, target.languageColumn(), appendExpression);
+            appendVector(query, fields, language, languageColumn(target, options), appendExpression);
             query.append(" @@ ");
             appendTsQuery(query, queryExpression, mode, language, appendParameter);
         }
@@ -681,13 +686,13 @@ public interface TextSearchDialect {
                                       Function<String, Consumer<Expression<?>>> appendParameter) {
             rejectBoosts(options, POSTGRESQL_TEXT_SEARCH);
             if (mode == MatchMode.FUZZY) {
-                rejectFuzziness(options, "PostgreSQL pg_trgm");
+                rejectTrigramOptions(options);
                 appendFuzzyScore(query, fields, queryExpression, appendExpression, appendParameter);
                 return;
             }
             String language = resolveLanguage(fields, options);
             query.append("ts_rank_cd(");
-            appendVector(query, fields, language, target.languageColumn(), appendExpression);
+            appendVector(query, fields, language, languageColumn(target, options), appendExpression);
             query.append(',');
             appendTsQuery(query, queryExpression, mode, language, appendParameter);
             query.append(')');
@@ -718,6 +723,23 @@ public interface TextSearchDialect {
                 .append(",StopSel=").append(TextSearchSupport.HIGHLIGHT_END_TAG).append("')");
         }
 
+        /**
+         * Rejects the options a {@code pg_trgm} match cannot honour: it has a fixed similarity threshold rather
+         * than an edit distance, and compares character trigrams with no text search configuration.
+         */
+        private static void rejectTrigramOptions(TextMatchOptions options) {
+            rejectFuzziness(options, PG_TRGM);
+            rejectLanguage(options, PG_TRGM);
+        }
+
+        /**
+         * A language override analyses both the query and the rows with it, so a row whose {@code @Language}
+         * column holds another configuration is matched with the same stemming as the query terms.
+         */
+        private static @Nullable String languageColumn(Target target, TextMatchOptions options) {
+            return options.language() != null ? null : target.languageColumn();
+        }
+
         private void appendTsQuery(StringBuilder query,
                                    Expression<String> queryExpression,
                                    MatchMode mode,
@@ -746,14 +768,22 @@ public interface TextSearchDialect {
         }
 
         @Override
-        public String buildDropSearchIndex(String indexName) {
-            return "DROP INDEX IF EXISTS " + indexName + ";";
+        public String buildDropSearchIndex(String indexName, @Nullable String schema) {
+            // an index lives in the schema of its table, which the search path may not reach
+            return "DROP INDEX IF EXISTS " + (schema == null ? indexName : schema + "." + indexName) + ";";
         }
 
         @Override
-        public String searchIndexExistsQuery() {
-            // index names are unique per schema, so the lookup stays in the schema the indexes are created in
-            return "SELECT count(*) FROM pg_indexes WHERE schemaname = current_schema() AND indexname = ?";
+        public String searchIndexExistsQuery(@Nullable String schema) {
+            // index names are unique per schema, and an index is created in the schema of its table
+            String schemaName = schema == null ? "current_schema()" : "'" + catalogIndexName(schema).replace("'", "''") + "'";
+            return "SELECT count(*) FROM pg_indexes WHERE schemaname = " + schemaName + " AND indexname = ?";
+        }
+
+        @Override
+        public String catalogIndexName(String indexName) {
+            // an unquoted identifier is stored in lower case
+            return indexName.startsWith("\"") ? indexName.replace("\"", "") : indexName.toLowerCase(Locale.ROOT);
         }
 
         @Override
@@ -1018,7 +1048,8 @@ public interface TextSearchDialect {
         }
 
         @Override
-        public String searchIndexExistsQuery() {
+        public String searchIndexExistsQuery(@Nullable String schema) {
+            // the index name is not qualified, so the index is created in the current schema whatever the table's
             return "SELECT count(*) FROM user_indexes WHERE index_name = ?";
         }
 

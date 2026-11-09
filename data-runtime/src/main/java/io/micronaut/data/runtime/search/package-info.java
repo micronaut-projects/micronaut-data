@@ -16,6 +16,6 @@
 /**
  * Runtime management of full-text search indexes.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 package io.micronaut.data.runtime.search;

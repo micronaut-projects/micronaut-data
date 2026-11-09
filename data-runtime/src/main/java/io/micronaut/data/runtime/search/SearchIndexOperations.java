@@ -22,7 +22,7 @@ import io.micronaut.core.annotation.Experimental;
  * runtime, beyond the create-if-missing of schema generation: one bean per store (a JDBC datasource, the
  * MongoDB client, the document search transports). An R2DBC datasource has none, as the operations block.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Experimental
 public interface SearchIndexOperations {

@@ -20,9 +20,9 @@ public interface MongoAtlasArticleHybridSearchRepository extends CrudRepository<
 
     SearchResults<AtlasArticle> searchByTitleSearch(String query);
 
-    SearchResults<AtlasArticle> searchByTitleSearchAndEmbeddingNear(String query, Vector vector);
+    SearchResults<AtlasArticle> hybridSearchByTitleSearchAndEmbeddingNear(String query, Vector vector);
 
-    SearchResults<AtlasArticle> searchBySearchAndEmbeddingNear(String query, Vector vector, Pageable pageable);
+    SearchResults<AtlasArticle> hybridSearchBySearchAndEmbeddingNear(String query, Vector vector, Pageable pageable);
 
     SearchResults<AtlasArticle> searchByEmbeddingNear(Vector vector, Score maxDistance);
 

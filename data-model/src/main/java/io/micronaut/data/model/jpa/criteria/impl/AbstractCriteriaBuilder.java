@@ -1386,6 +1386,7 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
 
     @Override
     public Expression<Double> searchScore(List<Expression<?>> fields, Expression<String> query, MatchMode mode, TextMatchOptions options) {
+        TextSearchSupport.validateOptions(fields, mode, options);
         List<Expression<?>> args = new ArrayList<>(fields.size() + 3);
         args.addAll(fields);
         args.add(query);

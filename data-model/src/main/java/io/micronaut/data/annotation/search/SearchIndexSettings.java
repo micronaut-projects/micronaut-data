@@ -30,9 +30,10 @@ import java.lang.annotation.Target;
  * defaults when schema generation or {@code SearchIndexOperations} creates the index; the SQL stores and
  * MongoDB ignore them.
  *
- * <p>The JSON is trusted configuration and is sent as written.</p>
+ * <p>The JSON is trusted configuration and is sent as written; the compilation fails when it is not one
+ * JSON object.</p>
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Documented

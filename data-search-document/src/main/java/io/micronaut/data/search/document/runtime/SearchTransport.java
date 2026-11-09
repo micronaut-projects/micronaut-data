@@ -81,20 +81,29 @@ public interface SearchTransport {
 
     /**
      * Indexes several new documents in one request, each a create-only write like
-     * {@link #create(String, String, Map, DocumentSearchConfiguration.Refresh)}. The default sends one
-     * request per document.
+     * {@link #create(String, String, Map, DocumentSearchConfiguration.Refresh)}, or, for a document with
+     * a version, an externally versioned write like
+     * {@link #index(String, String, Map, Long, DocumentSearchConfiguration.Refresh)}. The default sends one
+     * request per document and stops at the first failure.
      *
      * @param index The index name
      * @param documents The documents, in order
      * @param refresh The refresh policy
      * @return The document ids, in the same order
+     * @throws BulkIndexException When the store rejected some of the documents and wrote the others
+     * @throws io.micronaut.data.exceptions.OptimisticLockException When a rejected document conflicted with
+     * the stored version; its cause is the {@link BulkIndexException} holding the ids of the written documents
      */
     default List<String> bulkIndex(String index, List<BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
         List<String> ids = new java.util.ArrayList<>(documents.size());
         for (BulkDocument document : documents) {
-            ids.add(document.version() == null
-                ? create(index, document.id(), document.source(), refresh)
-                : index(index, document.id(), document.source(), document.version(), refresh));
+            try {
+                ids.add(document.version() == null
+                    ? create(index, document.id(), document.source(), refresh)
+                    : index(index, document.id(), document.source(), document.version(), refresh));
+            } catch (RuntimeException e) {
+                throw BulkResponses.stopped(ids, documents.size(), e);
+            }
         }
         return ids;
     }
@@ -232,7 +241,7 @@ public interface SearchTransport {
      * Deletes an index with its documents.
      *
      * @param index The index name
-     * @since 5.4.0
+     * @since 5.3.0
      */
     void deleteIndex(String index);
 
@@ -240,18 +249,10 @@ public interface SearchTransport {
      * Refreshes an index, so the documents indexed so far are searchable.
      *
      * @param index The index name
-     * @since 5.4.0
+     * @since 5.3.0
      */
     void refresh(String index);
 
-    /**
-     * One search hit.
-     *
-     * @param id The document id
-     * @param score The relevance score, or {@code null} when the search was not scored
-     * @param source The document
-     * @param highlights The highlighted fragments by field, empty when none were requested
-     */
     /**
      * A document of a bulk request.
      *
@@ -270,6 +271,16 @@ public interface SearchTransport {
         }
     }
 
+    /**
+     * One search hit.
+     *
+     * @param id The document id
+     * @param score The relevance score, or {@code null} when the search was not scored
+     * @param source The document
+     * @param highlights The highlighted fragments by field, empty when none were requested
+     * @param version The document version, or {@code null} when it was not requested
+     * @param sort The sort values of the hit, empty when the search was not sorted
+     */
     record SearchHit(String id,
                      @Nullable Double score,
                      Map<String, Object> source,

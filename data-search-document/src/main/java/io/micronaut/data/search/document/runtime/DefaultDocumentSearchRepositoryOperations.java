@@ -51,6 +51,7 @@ import io.micronaut.data.search.document.conf.DocumentSearchConfiguration;
 import io.micronaut.data.search.document.query.SearchJson;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.json.JsonMapper;
+import jakarta.annotation.PreDestroy;
 import jakarta.inject.Named;
 import java.io.IOException;
 import java.util.Objects;
@@ -111,6 +112,15 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
         this.transport = transport;
         this.beanContext = beanContext;
         this.executorServiceResolver = new ExecutorServiceResolver(executorService);
+    }
+
+    /**
+     * Shuts down the thread pool created for the reactive and async repositories when no IO executor
+     * was configured; a configured executor is left to its owner.
+     */
+    @PreDestroy
+    public void close() {
+        executorServiceResolver.close();
     }
 
     @Override
@@ -271,34 +281,23 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
 
     @Override
     public <T> Iterable<T> persistAll(InsertBatchOperation<T> operation) {
-        RuntimePersistentEntity<T> entity = runtimeEntityRegistry.getEntity(operation.getRootEntity());
-        List<T> persisted = new ArrayList<>();
-        List<T> toIndex = new ArrayList<>();
-        // the position of each indexed entity in the result, as equal entities cannot be told apart by indexOf
-        List<Integer> positions = new ArrayList<>();
-        List<SearchTransport.BulkDocument> documents = new ArrayList<>();
-        for (T value : operation) {
-            T current = prePersist(value, entity);
-            if (current == null) {
-                persisted.add(value);
-            } else {
-                positions.add(persisted.size());
-                persisted.add(current);
-                toIndex.add(current);
-                Long version = persistVersion(current, entity);
-                documents.add(new SearchTransport.BulkDocument(documentId(current, entity), toDocument(current, entity), version));
+        PersistBatch<T> batch = persistBatch(operation, runtimeEntityRegistry.getEntity(operation.getRootEntity()));
+        List<List<SearchTransport.BulkDocument>> requests = batch.requests();
+        for (int i = 0; i < requests.size(); i++) {
+            List<String> ids;
+            try {
+                ids = transport.bulkIndex(batch.index(), requests.get(i), configuration.getRefresh());
+            } catch (DataAccessException e) {
+                BulkIndexException partial = BulkResponses.partialFailure(e);
+                if (partial != null) {
+                    // a bulk request is not atomic: the written entities still get their ids and events
+                    batch.written(i, partial.getIds());
+                }
+                throw e;
             }
+            batch.written(i, ids);
         }
-        if (documents.isEmpty()) {
-            return persisted;
-        }
-        List<String> ids = transport.bulkIndex(indexName(entity), documents, configuration.getRefresh());
-        for (int i = 0; i < toIndex.size(); i++) {
-            T current = toIndex.get(i);
-            T result = postPersist(current, entity, ids.get(i));
-            persisted.set(positions.get(i), result);
-        }
-        return persisted;
+        return batch.results();
     }
 
     @Override
@@ -384,11 +383,13 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
     }
 
     private <T> boolean deleteOne(T value, RuntimePersistentEntity<T> entity) {
+        // the version as read: the pre-remove event increments it
+        Long version = deleteVersion(value, entity);
         String id = preRemove(value, entity);
         if (id == null) {
             return false;
         }
-        boolean deleted = transport.delete(indexName(entity), id, deleteVersion(value, entity), configuration.getRefresh());
+        boolean deleted = transport.delete(indexName(entity), id, version, configuration.getRefresh());
         if (deleted) {
             postRemove(value, entity);
         }

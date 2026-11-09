@@ -140,7 +140,8 @@ public final class SearchQuery {
     }
 
     /**
-     * @return The maximum edit distance for {@link MatchMode#FUZZY}, {@code 0} for the backend default
+     * @return The maximum edit distance of a {@link MatchMode#FUZZY} match, {@code 0} for the store default
+     * or another mode; matching without edits is the {@link MatchMode#ANY} mode, see {@link Builder#fuzzy(int)}
      */
     public int getFuzziness() {
         return fuzziness;
@@ -343,17 +344,32 @@ public final class SearchQuery {
         }
 
         /**
-         * Requests fuzzy matching with the given maximum edit distance.
+         * Requests the {@link MatchMode#FUZZY} mode with the store's default edit distance.
          *
-         * @param maxEdits The maximum edit distance from {@code 0} to {@code 2}, {@code 0} for the backend default
+         * @return This builder
+         */
+        public Builder fuzzy() {
+            this.mode = MatchMode.FUZZY;
+            this.fuzziness = 0;
+            return this;
+        }
+
+        /**
+         * Requests matching with the given maximum edit distance. {@code 1} or {@code 2} selects the
+         * {@link MatchMode#FUZZY} mode with that distance; {@code 0} matches the terms without edits,
+         * which is the {@link MatchMode#ANY} mode. Like {@link #mode(MatchMode)}, the last of the two
+         * calls decides the mode, and a mode other than {@link MatchMode#FUZZY} drops the edit distance.
+         *
+         * @param maxEdits The maximum edit distance from {@code 0} to {@code 2}
          * @return This builder
          * @throws IllegalArgumentException When the edit distance is outside that range
+         * @see #fuzzy()
          */
         public Builder fuzzy(int maxEdits) {
             if (maxEdits < 0 || maxEdits > 2) {
                 throw new IllegalArgumentException("The fuzzy edit distance must be between 0 and 2: " + maxEdits);
             }
-            this.mode = MatchMode.FUZZY;
+            this.mode = maxEdits == 0 ? MatchMode.ANY : MatchMode.FUZZY;
             this.fuzziness = maxEdits;
             return this;
         }
@@ -409,8 +425,12 @@ public final class SearchQuery {
         /**
          * Analyses the query with another language than the entity's. The SQL stores render the
          * language inside the statement, so they accept only a configuration name of letters, digits
-         * and underscores and reject any other value when the search runs; the document stores take
-         * their analyzer names as they are. Pass an application constant, not user input.
+         * and underscores, optionally schema-qualified, and reject any other value when the search runs;
+         * the document stores take their analyzer names as they are. Pass an application constant, not
+         * user input. PostgreSQL analyses the rows with the same language, in place of their
+         * {@code @Language} column, and rejects it with a {@link MatchMode#FUZZY} match; MongoDB
+         * {@code $text} only analyses the query terms with it, as each document stays indexed with its own
+         * language.
          *
          * @param language The language to analyse the query with
          * @return This builder
@@ -422,9 +442,13 @@ public final class SearchQuery {
 
         /**
          * Makes the search hybrid: the hits of the text match and the nearest neighbours of the given
-         * vector are merged with reciprocal rank fusion, so a row matching both ranks first.
+         * vector are merged with reciprocal rank fusion, so a row matching both ranks first. The
+         * {@code totalHits} of a hybrid result is the number of distinct hits in the fused ranking, the
+         * union of both rankings' candidate windows left after {@link #minScore(double)}, not the number of
+         * matching rows.
          *
-         * @param property The vector property of the entity
+         * @param property The vector property of the entity, which must be a {@link Vector}; the search
+         * throws {@link IllegalArgumentException} for another property
          * @param vector The query vector
          * @return This builder
          */
@@ -435,7 +459,9 @@ public final class SearchQuery {
         }
 
         /**
-         * @param textWeight The weight of the text rank in the hybrid score, {@code 1} by default
+         * @param textWeight The weight of the text rank in the hybrid score, {@code 1} by default. A weight
+         * of {@code 0} ignores the text ranking, so only the vector hits are returned; {@link #build()}
+         * rejects a hybrid query whose weights are both {@code 0}
          * @return This builder
          * @throws IllegalArgumentException When the weight is negative or not finite
          */
@@ -445,7 +471,9 @@ public final class SearchQuery {
         }
 
         /**
-         * @param vectorWeight The weight of the vector rank in the hybrid score, {@code 1} by default
+         * @param vectorWeight The weight of the vector rank in the hybrid score, {@code 1} by default. A
+         * weight of {@code 0} ignores the vector ranking, so only the text hits are returned; {@link #build()}
+         * rejects a hybrid query whose weights are both {@code 0}
          * @return This builder
          * @throws IllegalArgumentException When the weight is negative or not finite
          */
@@ -489,8 +517,13 @@ public final class SearchQuery {
 
         /**
          * @return The query
+         * @throws IllegalArgumentException When the query is hybrid and both weights are {@code 0}, which
+         * would score every hit {@code 0} and return nothing
          */
         public SearchQuery build() {
+            if (vector != null && textWeight == 0 && vectorWeight == 0) {
+                throw new IllegalArgumentException("A hybrid search needs a positive textWeight or vectorWeight; with both 0 no hit can score");
+            }
             return new SearchQuery(this);
         }
     }
