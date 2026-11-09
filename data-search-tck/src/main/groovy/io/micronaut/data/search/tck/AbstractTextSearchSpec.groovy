@@ -446,6 +446,25 @@ abstract class AbstractTextSearchSpec extends Specification {
         thrown(UnsupportedSearchFeatureException)
     }
 
+    void "search with a SearchQuery returns one highlighted fragment per field on every store"() {
+        assumeTrue(capabilities().contains(SearchCapability.HIGHLIGHT))
+
+        given: "a description matching the query in two sentences kept apart by filler"
+        bookSearchRepository.save(newBook("Growing Spices",
+                "Saffron crocus bulbs are planted in late summer. " +
+                        "The middle of this text is filler about soil, water and light that keeps the sentences apart. " +
+                        "Harvesting saffron threads by hand takes patience.", "Grower", 90))
+        awaitIndexing()
+
+        when:
+        def results = bookSearchRepository.search(SearchQuery.builder("saffron").highlight("description").build())
+
+        then:
+        results.results()*.entity()*.title == ["Growing Spices"]
+        results.results()[0].highlights()["description"].size() == 1
+        results.results()[0].highlights()["description"][0].toLowerCase().contains("<em>saffron</em>")
+    }
+
     void "search with a SearchQuery rejects highlighting when the store cannot highlight"() {
         assumeTrue(!capabilities().contains(SearchCapability.HIGHLIGHT))
 
