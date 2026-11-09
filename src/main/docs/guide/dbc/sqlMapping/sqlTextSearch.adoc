@@ -77,6 +77,8 @@ snippet::example.BookService[project-base="doc-examples/jdbc-search-example", so
 <1> Each named property must be a `@SearchField`.
 <2> `SearchResult.highlights()` maps a property name to its fragments; a property that does not match the query has one fragment without tags on PostgreSQL and Oracle, and none on Elasticsearch and OpenSearch.
 
+Every store returns at most one fragment per property, but its length follows the store: PostgreSQL uses the `ts_headline` defaults (between 15 and 35 words), Oracle the `CTX_DOC.POLICY_SNIPPET` default snippet length, and Elasticsearch and OpenSearch request `number_of_fragments: 1` with a `fragment_size` of 100 characters, so the fragment is the best-scoring passage of about 100 characters rather than the store default of up to five. A matched term outside that passage is not shown, and a fragment can start or end mid-sentence.
+
 The tags are the same on every store, so a client can render them without knowing the backend. A fragment is document text with the tags inserted and is not HTML-escaped, so it carries any markup stored in the document; before putting fragments into an HTML page, use `SearchResult.escapedHighlights()`, which escapes the text and keeps only the `<em>` and `</em>` tags. PostgreSQL renders `ts_headline`, Oracle `CTX_DOC.POLICY_SNIPPET`, and the document stores the `highlight` request clause. MongoDB `$text` cannot highlight and throws api:data.model.search.UnsupportedSearchFeatureException[]. The criteria API exposes the same projection as `PersistentEntityCriteriaBuilder.searchHighlight(field, query, MatchMode)`.
 
 == Hybrid search
