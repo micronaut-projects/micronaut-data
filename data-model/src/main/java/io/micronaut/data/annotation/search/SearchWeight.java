@@ -23,7 +23,7 @@ import io.micronaut.core.annotation.Experimental;
  * <p>Backends map the four levels to their own scale: PostgreSQL weight labels {@code A} to
  * {@code D}, MongoDB index weights, Elasticsearch boosts.</p>
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Experimental
 public enum SearchWeight {

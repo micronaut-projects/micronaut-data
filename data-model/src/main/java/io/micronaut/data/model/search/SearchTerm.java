@@ -23,7 +23,7 @@ import io.micronaut.core.annotation.Experimental;
  * @param text The term text, with quotes and the negation marker removed
  * @param phrase Whether the term was quoted and must match as a phrase
  * @param negated Whether the term was prefixed with {@code -} and must not match
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Experimental
 public record SearchTerm(String text, boolean phrase, boolean negated) {
