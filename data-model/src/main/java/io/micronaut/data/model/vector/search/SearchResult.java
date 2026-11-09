@@ -91,7 +91,7 @@ public record SearchResult<T>(@NonNull T entity,
      * and only the {@code <em>} and {@code </em>} markers around the matched terms remain tags.
      *
      * @return The escaped fragments by property name
-     * @since 5.4.0
+     * @since 5.3.0
      */
     public @NonNull Map<String, List<String>> escapedHighlights() {
         if (highlights.isEmpty()) {

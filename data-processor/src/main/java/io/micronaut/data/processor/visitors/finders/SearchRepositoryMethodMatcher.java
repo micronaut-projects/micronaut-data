@@ -42,7 +42,7 @@ import java.util.List;
  * through {@code SearchQueryInterceptor}, or its reactive and async variants for a {@code Publisher},
  * future or Kotlin coroutine return type.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 public final class SearchRepositoryMethodMatcher implements MethodMatcher {
