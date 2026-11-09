@@ -248,10 +248,16 @@ public final class SearchQuery {
         }
 
         /**
-         * @param minScore The minimum relevance score
+         * Sets the minimum relevance score a hit needs to be returned.
+         *
+         * @param minScore The minimum relevance score, a finite number of {@code 0} or more
          * @return This builder
+         * @throws IllegalArgumentException When the score is negative, infinite or {@code NaN}
          */
         public Builder minScore(double minScore) {
+            if (!Double.isFinite(minScore) || minScore < 0) {
+                throw new IllegalArgumentException("The minimum score must be a finite number of 0 or more: " + minScore);
+            }
             this.minScore = minScore;
             return this;
         }
