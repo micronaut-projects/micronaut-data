@@ -385,20 +385,34 @@ public interface TextSearchDialect {
      * @param escapedTableName The escaped table name
      * @param escapedJsonColumn The escaped JSON column holding the whole entity
      * @return The {@code CREATE INDEX} statements, empty when the dialect needs no index
-     * @since 5.4.0
+     * @since 5.3.0
      */
     default List<String> buildJsonSearchIndex(String indexName, String escapedTableName, String escapedJsonColumn) {
         return List.of();
     }
 
     /**
+     * The path of a property's keys in the JSON document of a JSON-represented entity. Each step is renamed
+     * when its property declares its key with {@code @SerdeConfig(property)} or {@code @JsonProperty}; a naming
+     * strategy of the serializer, such as {@code @JsonNaming}, is not applied, nor is {@code @MappedProperty},
+     * which names columns rather than JSON keys.
+     *
      * @param propertyPath A property path of a JSON-represented entity
-     * @return The path of its keys in the JSON document, honouring {@code @SerdeConfig(property)} and {@code @JsonProperty}
+     * @return The path of its keys in the JSON document
      */
     static String jsonKeyPath(io.micronaut.data.model.PersistentPropertyPath propertyPath) {
-        // the property path as the model names it, with the leaf renamed when it declares its JSON key;
-        // the path itself stays as built, as embedded and joined paths do not list every step as an association
         String path = propertyPath.getPath();
+        List<PersistentProperty> steps = propertyPath.getPropertyPath();
+        java.util.StringJoiner names = new java.util.StringJoiner(".");
+        java.util.StringJoiner keys = new java.util.StringJoiner(".");
+        for (PersistentProperty step : steps) {
+            names.add(step.getName());
+            keys.add(jsonKey(step));
+        }
+        if (path.equals(names.toString())) {
+            return keys.toString();
+        }
+        // a path whose steps are not all listed as associations, such as a joined path: only the leaf is renamed
         PersistentProperty property = propertyPath.getProperty();
         String key = jsonKey(property);
         if (key.equals(property.getName()) || !path.endsWith(property.getName())) {
@@ -458,23 +472,49 @@ public interface TextSearchDialect {
      * The {@code CONTAINS} labels of one statement. Each text match takes its own range, and its score,
      * rendered in the select list and the order, reads the same labels: a match is known by its fields
      * and its query parameter, as each clause holds its own copy of the expressions.
+     *
+     * <p>Two matches with the same key, such as two criteria text matches on one field whose parameters
+     * are both unnamed, still take a range each, as Oracle rejects a label used by two {@code CONTAINS}
+     * calls (ORA-29907); a score with that key reads the range of the first.</p>
      */
     final class Labels {
         private final java.util.Map<String, Integer> bases = new java.util.HashMap<>();
+        private final java.util.Set<String> matched = new java.util.HashSet<>();
         private int next = 1;
 
         /**
+         * The first label a score reads: the range of the first match with the same key.
+         *
          * @param fields The fields of the text match
          * @param queryExpression The query expression of the text match
          * @param count The number of labels the match uses
          * @return The first label of the match
          */
         public int base(List<Expression<?>> fields, Expression<?> queryExpression, int count) {
-            return bases.computeIfAbsent(key(fields, queryExpression), k -> {
-                int base = next;
-                next += count;
-                return base;
-            });
+            return bases.computeIfAbsent(key(fields, queryExpression), k -> allocate(count));
+        }
+
+        /**
+         * The first label of a {@code CONTAINS} call: the range a score with the same key reads when this is
+         * the first match with that key, else a new range.
+         *
+         * @param fields The fields of the text match
+         * @param queryExpression The query expression of the text match
+         * @param count The number of labels the match uses
+         * @return The first label of the match
+         */
+        public int match(List<Expression<?>> fields, Expression<?> queryExpression, int count) {
+            String key = key(fields, queryExpression);
+            if (matched.add(key)) {
+                return base(fields, queryExpression, count);
+            }
+            return allocate(count);
+        }
+
+        private int allocate(int count) {
+            int base = next;
+            next += count;
+            return base;
         }
 
         private static String key(List<Expression<?>> fields, Expression<?> queryExpression) {
@@ -802,9 +842,10 @@ public interface TextSearchDialect {
      * per field and {@code SCORE(n)} for the relevance, weighted by {@link SearchField#weight()}.
      *
      * <p>A search over several fields matches any field with the positive terms and then excludes rows
-     * where any field matches a negated term. JSON-represented entities get one JSON search index over
-     * the column and use {@code CONTAINS(column, '(' || ? || ') INPATH (/path)', n) > 0}, which unlike
-     * {@code JSON_TEXTCONTAINS} carries a label for {@code SCORE(n)}.</p>
+     * where any field matches a negated term; a phrase search has no negated terms and renders no exclusion.
+     * The {@link OracleTextQueryConverter} decides at bind time which terms each part holds. JSON-represented entities
+     * get one JSON search index over the column and use {@code CONTAINS(column, '(' || ? || ') INPATH (/path)', n) > 0},
+     * which unlike {@code JSON_TEXTCONTAINS} carries a label for {@code SCORE(n)}.</p>
      */
     enum OracleTextSearchDialect implements TextSearchDialect {
         INSTANCE;
@@ -830,7 +871,8 @@ public interface TextSearchDialect {
                                     Function<String, Consumer<Expression<?>>> appendParameter) {
             rejectFuzziness(options, ORACLE_TEXT);
             rejectLanguage(options, ORACLE_TEXT);
-            int base = firstLabel(fields, queryExpression, target);
+            Labels labels = target.labels();
+            int base = labels == null ? 1 : labels.match(fields, queryExpression, labelCount(fields, mode));
             if (fields.size() == 1) {
                 appendContains(query, fields.get(0), base, queryExpression, target, appendExpression,
                     appendParameter.apply(OracleTextQueryConverter.converterFor(mode, OracleTextQueryConverter.Part.FULL)));
@@ -844,8 +886,15 @@ public interface TextSearchDialect {
                 query.append(')');
                 return;
             }
-            query.append("((");
             Consumer<Expression<?>> positive = appendParameter.apply(OracleTextQueryConverter.converterFor(mode, OracleTextQueryConverter.Part.POSITIVE));
+            if (mode == MatchMode.PHRASE) {
+                // a phrase has no negated terms: a - inside it is part of the phrase
+                query.append('(');
+                appendAnyField(query, fields, base, queryExpression, target, appendExpression, positive);
+                query.append(')');
+                return;
+            }
+            query.append("((");
             appendAnyField(query, fields, base, queryExpression, target, appendExpression, positive);
             query.append(") AND NOT (");
             Consumer<Expression<?>> negated = appendParameter.apply(OracleTextQueryConverter.converterFor(mode, OracleTextQueryConverter.Part.NEGATED));
@@ -864,7 +913,8 @@ public interface TextSearchDialect {
                                       Function<String, Consumer<Expression<?>>> appendParameter) {
             rejectFuzziness(options, ORACLE_TEXT);
             rejectLanguage(options, ORACLE_TEXT);
-            int base = firstLabel(fields, queryExpression, target);
+            Labels labels = target.labels();
+            int base = labels == null ? 1 : labels.base(fields, queryExpression, labelCount(fields, mode));
             if (fields.size() == 1) {
                 query.append("SCORE(").append(base).append(')');
                 Double boost = boostOf(fields.get(0), options);
@@ -1003,13 +1053,15 @@ public interface TextSearchDialect {
         }
 
         /**
-         * The first label of a match: from the statement's labels when the builder passes them, so two
-         * matches in one statement never share a label, else 1. A single field takes one label; several
-         * fields take one per field for the positive terms and one per field for the negated ones.
+         * The number of labels a match takes from the statement's labels, so two matches in one statement
+         * never share a label: one for a single field; for several fields one per field for the positive
+         * terms and, unless the match is a phrase, one per field for the negated ones.
          */
-        private static int firstLabel(List<Expression<?>> fields, Expression<String> queryExpression, Target target) {
-            Labels labels = target.labels();
-            return labels == null ? 1 : labels.base(fields, queryExpression, fields.size() == 1 ? 1 : 2 * fields.size());
+        private static int labelCount(List<Expression<?>> fields, MatchMode mode) {
+            if (fields.size() == 1) {
+                return 1;
+            }
+            return mode == MatchMode.PHRASE ? fields.size() : 2 * fields.size();
         }
 
         private void appendAnyField(StringBuilder query,
