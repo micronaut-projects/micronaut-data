@@ -70,7 +70,7 @@ import java.util.stream.Stream;
  * Repository operations over a {@link SearchTransport}. Entities are converted to and from documents
  * with the Micronaut {@link JsonMapper}, so Serde annotations control the document shape.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 @EachBean(SearchTransport.class)

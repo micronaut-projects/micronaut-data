@@ -29,7 +29,7 @@ A api:data.model.search.SearchQuery[] passed to `search(SearchQuery)` builds the
 
 == Paging and sorting
 
-`Pageable` and `Sort` parameters set `from`, `size` and `sort`; a `Page` is built with `track_total_hits` so its total is exact. Sorting on an analysed search field sorts on its `keyword` sub-field. Cursored pagination is not supported yet.
+`Pageable` and `Sort` parameters set `from`, `size` and `sort`; a `Page` is built with `track_total_hits` so its total is exact. Sorting on an analysed search field sorts on its `keyword` sub-field. Without a sort the store returns hits in `_score` order, so an unsorted `Pageable` or `Sort` of a `SearchResults` method keeps the relevance order, best match first, as on SQL and MongoDB; a `Pageable` or `Sort` with orders replaces it. Cursored pagination is not supported yet.
 
 == Limitations
 
