@@ -114,6 +114,10 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
     private static final String FIELD = "field";
     private static final String RANGE = "range";
     private static final String ORDER = "order";
+    // One fragment per field, like the single snippet the SQL stores return, of a pinned length so the
+    // shape does not follow the store defaults (five fragments of 100 characters)
+    private static final int HIGHLIGHT_FRAGMENTS = 1;
+    private static final int HIGHLIGHT_FRAGMENT_SIZE = 100;
 
     @Override
     @SuppressWarnings("NullAway")
@@ -173,7 +177,8 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
 
     /**
      * Finds the {@link TextSearchSupport#HIGHLIGHT_FUNCTION} projections of a selection and registers their
-     * fields; the fragments come back in each hit's {@code highlight} with the default {@code &lt;em&gt;} tags.
+     * fields; the fragments come back in each hit's {@code highlight} with the default {@code &lt;em&gt;} tags,
+     * at most one fragment of about {@value #HIGHLIGHT_FRAGMENT_SIZE} characters per field.
      */
     private static void collectHighlightFields(Selection<?> selection, Map<String, Object> highlightFields) {
         if (selection instanceof AliasedSelection<?> aliased) {
@@ -241,7 +246,11 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
         for (Map.Entry<String, Object> field : highlightFields.entrySet()) {
             fields.add(Map.of(field.getKey(), field.getValue()));
         }
-        body.put("highlight", Map.of("fields", fields));
+        Map<String, Object> highlight = new LinkedHashMap<>();
+        highlight.put("number_of_fragments", HIGHLIGHT_FRAGMENTS);
+        highlight.put("fragment_size", HIGHLIGHT_FRAGMENT_SIZE);
+        highlight.put("fields", fields);
+        body.put("highlight", highlight);
     }
 
     private Map<String, Object> buildQuery(@Nullable Predicate predicate, PersistentEntity entity, Bindings bindings) {
