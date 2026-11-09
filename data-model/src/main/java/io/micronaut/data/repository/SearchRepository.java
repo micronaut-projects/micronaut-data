@@ -47,7 +47,8 @@ public interface SearchRepository<E, ID> extends GenericRepository<E, ID> {
      * Searches every {@code @SearchField} property for the given query, returning one page.
      *
      * @param query The search string
-     * @param pageable The page to return; a sort on the pageable replaces the relevance order
+     * @param pageable The page to return; an unsorted pageable keeps the relevance order, best match first,
+     *                 so consecutive pages do not repeat or skip hits, and a sort on the pageable replaces it
      * @return The matching entities with their relevance score
      */
     SearchResults<E> search(String query, Pageable pageable);
