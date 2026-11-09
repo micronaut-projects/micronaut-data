@@ -211,7 +211,7 @@ public final class OpenSearchSearchTransport implements SearchTransport {
     public void deleteIndex(String index) {
         try {
             client.indices().delete(d -> d.index(index));
-        } catch (IOException e) {
+        } catch (IOException | OpenSearchException e) {
             throw new DataAccessException("OpenSearch delete index failed: " + e.getMessage(), e);
         }
     }
@@ -220,7 +220,7 @@ public final class OpenSearchSearchTransport implements SearchTransport {
     public void refresh(String index) {
         try {
             client.indices().refresh(r -> r.index(index));
-        } catch (IOException e) {
+        } catch (IOException | OpenSearchException e) {
             throw new DataAccessException("OpenSearch refresh failed: " + e.getMessage(), e);
         }
     }
