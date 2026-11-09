@@ -46,7 +46,7 @@ import javax.sql.DataSource;
  * {@link SearchIndexOperations} of a JDBC datasource: runs the full-text search index DDL the
  * {@link SqlQueryBuilder} renders for the datasource's dialect.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Experimental
 @EachBean(DataJdbcConfiguration.class)

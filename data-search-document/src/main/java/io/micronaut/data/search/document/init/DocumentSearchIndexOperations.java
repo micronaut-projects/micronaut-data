@@ -29,7 +29,7 @@ import java.util.List;
  * {@link SearchIndexOperations} of the document search stores: the index of an entity holds its documents,
  * so {@link #drop} removes them too, and {@link #sync} refreshes the index.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Experimental
 @Singleton

@@ -303,7 +303,7 @@ public interface TextSearchDialect {
      * @param indexName The escaped index name
      * @param columns The search field columns
      * @return The index names, empty when the dialect needs no index
-     * @since 5.4.0
+     * @since 5.3.0
      */
     default List<String> searchIndexNames(String indexName, List<SearchColumn> columns) {
         return List.of();
@@ -312,7 +312,7 @@ public interface TextSearchDialect {
     /**
      * @param indexName An escaped index name
      * @return The statement dropping it
-     * @since 5.4.0
+     * @since 5.3.0
      */
     default String buildDropSearchIndex(String indexName) {
         return "DROP INDEX " + indexName;
@@ -323,7 +323,7 @@ public interface TextSearchDialect {
      *
      * @param indexNames The escaped index names
      * @return The statements, empty when the indexes are always current
-     * @since 5.4.0
+     * @since 5.3.0
      */
     default List<String> buildSyncSearchIndex(List<String> indexNames) {
         return List.of();
@@ -332,7 +332,7 @@ public interface TextSearchDialect {
     /**
      * @return A query counting the indexes with the name bound as its one parameter, in the form the
      * catalog stores it, or {@code null} when the dialect cannot tell
-     * @since 5.4.0
+     * @since 5.3.0
      */
     @Nullable
     default String searchIndexExistsQuery() {
@@ -342,7 +342,7 @@ public interface TextSearchDialect {
     /**
      * @param indexName An escaped index name
      * @return The name as the catalog stores it
-     * @since 5.4.0
+     * @since 5.3.0
      */
     default String catalogIndexName(String indexName) {
         return indexName.replace("\"", "");

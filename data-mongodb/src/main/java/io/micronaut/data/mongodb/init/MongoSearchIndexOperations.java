@@ -40,7 +40,7 @@ import java.util.Set;
  * the search and vector search indexes of a {@code @MongoSearchIndex} one. {@link #sync} waits until the
  * search indexes are queryable, as MongoDB Search builds them asynchronously.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Experimental
 @Singleton

@@ -16,6 +16,6 @@
 /**
  * Full-text search index management over JDBC.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 package io.micronaut.data.jdbc.search;
