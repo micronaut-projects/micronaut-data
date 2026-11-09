@@ -31,7 +31,7 @@ import java.lang.annotation.Target;
  * <p>The annotation is repeatable so one property can be indexed both as analysed
  * {@link SearchFieldType#TEXT} and as an exact {@link SearchFieldType#KEYWORD}.</p>
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Documented

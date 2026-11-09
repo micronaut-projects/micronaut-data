@@ -2,7 +2,10 @@ package io.micronaut.data.processor.sql
 
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.annotation.search.HybridSearchMethod
+import io.micronaut.data.intercept.annotation.DataMethodQuery
 import io.micronaut.data.intercept.annotation.DataMethodQueryParameter
+import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.Sort
 import io.micronaut.data.model.runtime.convert.OracleTextQueryConverter
 import io.micronaut.data.model.runtime.convert.PostgresTsQueryConverter
 import io.micronaut.data.model.search.MatchMode
@@ -119,14 +122,183 @@ ${methods}
         converters(countHits) == [PostgresTsQueryConverter.Any.name]
     }
 
-    void "SearchRepository search with a pageable leaves ordering to the pageable"() {
+    void "SearchRepository search with a pageable orders by the score unless the pageable is sorted"() {
         given:
-        def repository = articleRepository("")
-        def search = repository.getRequiredMethod("search", String, io.micronaut.data.model.Pageable)
+        def repository = articleRepository("""
+    SearchResults<Article> searchByTitleSearch(String q, Sort sort);
+    SearchResults<Article> searchByTitleSearchAll(String q, Pageable pageable);
+    List<Article> findByTitleSearch(String q, Pageable pageable);
+""")
+        def search = repository.getRequiredMethod("search", String, Pageable)
+        def sorted = repository.getRequiredMethod("searchByTitleSearch", String, Sort)
+        def paged = repository.getRequiredMethod("searchByTitleSearchAll", String, Pageable)
 
-        expect:
+        expect: 'the query leaves the order to the runtime, which falls back to the score for an unsorted pageable or sort'
         !getQuery(search).contains("ORDER BY")
         getQuery(search).contains(" AS mn_score FROM ")
+        search.getAnnotation(DataMethod).isTrue(DataMethodQuery.META_MEMBER_SCORE_ORDER)
+        !getQuery(sorted).contains("ORDER BY")
+        sorted.getAnnotation(DataMethod).isTrue(DataMethodQuery.META_MEMBER_SCORE_ORDER)
+        paged.getAnnotation(DataMethod).isTrue(DataMethodQuery.META_MEMBER_SCORE_ORDER)
+
+        and: 'a query that orders itself, or has no score, is not marked'
+        !repository.getRequiredMethod("search", String).getAnnotation(DataMethod).isTrue(DataMethodQuery.META_MEMBER_SCORE_ORDER)
+        !repository.getRequiredMethod("findByTitleSearch", String, Pageable).getAnnotation(DataMethod).isTrue(DataMethodQuery.META_MEMBER_SCORE_ORDER)
+    }
+
+    void "a property whose name ends in Search keeps its equality meaning"() {
+        given:
+        def repository = buildRepository('test.QueryRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+
+@MappedEntity
+class SavedQuery {
+    @Id
+    @GeneratedValue
+    private Long id;
+    private String savedSearch;
+    private String search;
+    private String searchAll;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getSavedSearch() { return savedSearch; }
+    public void setSavedSearch(String savedSearch) { this.savedSearch = savedSearch; }
+    public String getSearch() { return search; }
+    public void setSearch(String search) { this.search = search; }
+    public String getSearchAll() { return searchAll; }
+    public void setSearchAll(String searchAll) { this.searchAll = searchAll; }
+}
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+interface QueryRepository extends CrudRepository<SavedQuery, Long> {
+    List<SavedQuery> findBySavedSearch(String savedSearch);
+    List<SavedQuery> findBySearch(String search);
+    List<SavedQuery> findBySearchAll(String searchAll);
+    long countBySavedSearchAndSearch(String savedSearch, String search);
+}
+""")
+
+        expect:
+        getQuery(repository.getRequiredMethod("findBySavedSearch", String)) == 'SELECT saved_query_."id",saved_query_."saved_search",saved_query_."search",saved_query_."search_all" FROM "saved_query" saved_query_ WHERE (saved_query_."saved_search" = ?)'
+        getQuery(repository.getRequiredMethod("findBySearch", String)).endsWith('WHERE (saved_query_."search" = ?)')
+        getQuery(repository.getRequiredMethod("findBySearchAll", String)).endsWith('WHERE (saved_query_."search_all" = ?)')
+        getQuery(repository.getRequiredMethod("countBySavedSearchAndSearch", String, String)).endsWith('WHERE (saved_query_."saved_search" = ? AND saved_query_."search" = ?)')
+    }
+
+    void "the search keyword applies when the property before it exists, also next to a property ending in Search"() {
+        given:
+        def repository = buildRepository('test.NoteRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.annotation.search.SearchField;
+import io.micronaut.data.annotation.search.Searchable;
+import io.micronaut.data.model.vector.search.SearchResults;
+
+@MappedEntity
+@Searchable
+class Note {
+    @Id
+    @GeneratedValue
+    private Long id;
+    @SearchField
+    private String text;
+    private String textSearch;
+    private String savedSearch;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getText() { return text; }
+    public void setText(String text) { this.text = text; }
+    public String getTextSearch() { return textSearch; }
+    public void setTextSearch(String textSearch) { this.textSearch = textSearch; }
+    public String getSavedSearch() { return savedSearch; }
+    public void setSavedSearch(String savedSearch) { this.savedSearch = savedSearch; }
+}
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+interface NoteRepository extends CrudRepository<Note, Long> {
+    List<Note> findByTextSearch(String q);
+    SearchResults<Note> searchBySavedSearchAndTextSearchAll(String savedSearch, String q);
+}
+""")
+        def scored = repository.getRequiredMethod("searchBySavedSearchAndTextSearchAll", String, String)
+
+        expect: 'an existing property before the keyword still makes it a text search'
+        getQuery(repository.getRequiredMethod("findByTextSearch", String)).endsWith("WHERE (to_tsvector('english',note_.\"text\") @@ to_tsquery('english',?))")
+        getQuery(scored).endsWith("WHERE (note_.\"saved_search\" = ? AND to_tsvector('english',note_.\"text\") @@ to_tsquery('english',?)) ORDER BY ts_rank_cd(to_tsvector('english',note_.\"text\"),to_tsquery('english',?)) DESC")
+        converters(scored) == [PostgresTsQueryConverter.All.name, null, PostgresTsQueryConverter.All.name, PostgresTsQueryConverter.All.name]
+    }
+
+    void "a SearchResults finder scores by its first search predicate that is not negated"() {
+        given:
+        def repository = articleRepository("""
+    SearchResults<Article> searchByTitleNotSearchAndBodySearchAll(String excluded, String q);
+    List<Article> findByTitleNotSearch(String q);
+""")
+        def method = repository.getRequiredMethod("searchByTitleNotSearchAndBodySearchAll", String, String)
+
+        expect:
+        getQuery(method).endsWith("WHERE (NOT(setweight(to_tsvector('english',article_.\"title\"),'A') @@ to_tsquery('english',?)) AND setweight(to_tsvector('english',article_.\"body\"),'D') @@ to_tsquery('english',?)) ORDER BY ts_rank_cd(setweight(to_tsvector('english',article_.\"body\"),'D'),to_tsquery('english',?)) DESC")
+        getQuery(repository.getRequiredMethod("findByTitleNotSearch", String)).contains("NOT(")
+    }
+
+    void "a SearchResults finder whose only search predicate is negated is rejected with a clear message"() {
+        when:
+        articleRepository("""
+    SearchResults<Article> searchByTitleNotSearch(String q);
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("A SearchResults finder cannot score its results by a negated search predicate")
+    }
+
+    @Unroll
+    void "@SearchField on #description is rejected at compile time"() {
+        when:
+        buildRepository('test.PostRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.annotation.search.SearchField;
+import io.micronaut.data.annotation.search.Searchable;
+
+@MappedEntity
+${searchable ? '@Searchable' : ''}
+class Post {
+    @Id
+    @GeneratedValue
+    private Long id;
+    @SearchField
+    private ${type} value;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public ${type} getValue() { return value; }
+    public void setValue(${type} value) { this.value = value; }
+}
+
+@MappedEntity
+class Author {
+    @Id
+    @GeneratedValue
+    private Long id;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+}
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+interface PostRepository extends CrudRepository<Post, Long> {
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains(message)
+
+        where:
+        description                    | type      | searchable | message
+        "a number"                     | "Integer" | true       | "@SearchField property [value] of [test.Post] must be a text property, such as a String"
+        "an association"               | "Author"  | true       | "@SearchField property [value] of [test.Post] must be a text property, such as a String"
+        "an entity without @Searchable" | "String"  | false      | "@SearchField property [value] of [test.Post] is never searched: annotate the entity with @Searchable"
     }
 
     void "no-property Search keyword and other predicates combine"() {
