@@ -20,7 +20,7 @@ import io.micronaut.core.annotation.Experimental;
 /**
  * How a {@link SearchField} is indexed.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Experimental
 public enum SearchFieldType {

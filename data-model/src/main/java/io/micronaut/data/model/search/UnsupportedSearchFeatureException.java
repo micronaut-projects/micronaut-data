@@ -21,7 +21,7 @@ import io.micronaut.data.exceptions.DataAccessException;
 /**
  * Thrown when a search query uses a {@link SearchCapability} the backend does not support.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Experimental
 public class UnsupportedSearchFeatureException extends DataAccessException {
