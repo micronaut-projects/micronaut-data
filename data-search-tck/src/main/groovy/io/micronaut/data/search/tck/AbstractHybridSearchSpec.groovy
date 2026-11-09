@@ -92,14 +92,14 @@ abstract class AbstractHybridSearchSpec extends Specification {
 
     void "a derived hybrid finder fuses the text and the vector ranking"() {
         when:
-        def results = articleRepository.searchByTitleSearchAndEmbeddingNear("bread", COFFEE_LIKE)
+        def results = articleRepository.hybridSearchByTitleSearchAndEmbeddingNear("bread", COFFEE_LIKE)
 
         then:
         results.results()*.entity()*.title == ["Baking Bread", "Cooking with Coffee", "Coffee Roasting", "Java Concurrency"]
         Math.abs(results.results()[0].score().value() - (1d / 61 + 1d / 63)) < 1e-9
 
         when:
-        def page = articleRepository.searchBySearchAndEmbeddingNear("bread", COFFEE_LIKE, Pageable.from(1, 2))
+        def page = articleRepository.hybridSearchBySearchAndEmbeddingNear("bread", COFFEE_LIKE, Pageable.from(1, 2))
 
         then:
         page.results()*.entity()*.title == ["Coffee Roasting", "Java Concurrency"]
@@ -114,6 +114,16 @@ abstract class AbstractHybridSearchSpec extends Specification {
                 .results()*.entity()*.title == ["Cooking with Coffee", "Coffee Roasting", "Baking Bread", "Java Concurrency"]
         articleRepository.search(SearchQuery.builder("bread").vector("embedding", COFFEE_LIKE).rankConstant(0).build())
                 .results()[0].entity().title == "Baking Bread"
+    }
+
+    void "a hybrid search rejects a vector property that holds no vector before querying"() {
+        when:
+        articleRepository.search(SearchQuery.builder("bread").vector("title", COFFEE_LIKE).build())
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains("'title'")
+        e.message.contains("is not a Vector property")
     }
 
     void "a hybrid search pages the fused ranking"() {

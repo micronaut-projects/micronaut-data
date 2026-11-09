@@ -24,10 +24,10 @@ import java.lang.annotation.Target;
 
 /**
  * Added by the processor to a derived hybrid finder such as
- * {@code searchByTitleSearchAndEmbeddingNear(String, Vector)}: the search fields and the vector property
+ * {@code hybridSearchByTitleSearchAndEmbeddingNear(String, Vector)}: the search fields and the vector property
  * the runtime builds the {@link io.micronaut.data.model.search.SearchQuery} from.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)

@@ -98,7 +98,38 @@ public @interface MongoSearchIndex {
     String vectorIndex() default "vector";
 
     /**
-     * @return The similarity of the vector search index: {@code cosine}, {@code euclidean} or {@code dotProduct}
+     * @return The similarity of the vector search index, {@link Similarity#COSINE} unless set
      */
-    String similarity() default "cosine";
+    Similarity similarity() default Similarity.COSINE;
+
+    /**
+     * The similarity functions of a MongoDB vector search index.
+     */
+    enum Similarity {
+        /**
+         * Cosine similarity, {@code cosine}.
+         */
+        COSINE("cosine"),
+        /**
+         * Euclidean distance, {@code euclidean}.
+         */
+        EUCLIDEAN("euclidean"),
+        /**
+         * Dot product, {@code dotProduct}, for vectors normalized to unit length.
+         */
+        DOT_PRODUCT("dotProduct");
+
+        private final String indexValue;
+
+        Similarity(String indexValue) {
+            this.indexValue = indexValue;
+        }
+
+        /**
+         * @return The value of the {@code similarity} option of the index definition
+         */
+        public String indexValue() {
+            return indexValue;
+        }
+    }
 }

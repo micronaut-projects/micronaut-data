@@ -26,7 +26,7 @@ import reactor.core.publisher.Mono;
  *
  * @param <E> The entity type
  * @param <ID> The ID type
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Experimental
 public interface ReactorSearchRepository<E, ID> extends ReactiveStreamsSearchRepository<E, ID> {

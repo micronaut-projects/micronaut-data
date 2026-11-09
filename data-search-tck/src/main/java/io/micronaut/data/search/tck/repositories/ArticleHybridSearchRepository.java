@@ -31,7 +31,7 @@ public interface ArticleHybridSearchRepository extends CrudRepository<Article, U
 
     SearchResults<Article> searchByTitleSearch(String query);
 
-    SearchResults<Article> searchByTitleSearchAndEmbeddingNear(String query, Vector vector);
+    SearchResults<Article> hybridSearchByTitleSearchAndEmbeddingNear(String query, Vector vector);
 
-    SearchResults<Article> searchBySearchAndEmbeddingNear(String query, Vector vector, Pageable pageable);
+    SearchResults<Article> hybridSearchBySearchAndEmbeddingNear(String query, Vector vector, Pageable pageable);
 }
