@@ -12,7 +12,7 @@ snippet::example.Book[project-base="doc-examples/jdbc-search-example", source="m
 <2> `weight` makes matches in this property count more in the relevance score; PostgreSQL maps `HIGH`, `MEDIUM`, `LOW` and `LOWEST` to the labels `A` to `D` of `setweight`.
 <3> A property without a declared weight is indexed without a label.
 
-With schema generation enabled, Micronaut Data creates a `GIN` expression index over the combined `tsvector` of the search fields (`CREATE INDEX IF NOT EXISTS`, so it can run against an existing database). Searches over every field, such as `search(String)` and `findBySearch(String)`, use that index. A derived method on one property, such as `findByTitleSearch(String)`, renders the `tsvector` of that property alone, which the combined index cannot serve; when an entity has several search fields, add an index for each property you search on its own, for example `CREATE INDEX idx_book_title_search ON book USING GIN (setweight(to_tsvector('english',title),'A'))`. The expression must match the generated query exactly, weight included. For a production schema, create the indexes with your migration tool; the expressions are printed in the generated DDL.
+With schema generation enabled, Micronaut Data creates a `GIN` expression index over the combined `tsvector` of the search fields (`CREATE INDEX IF NOT EXISTS`, so it can run against an existing database). The index is named `idx_<table>_search` unless `@Searchable(name)` sets a name, which must be a letter or underscore followed by letters, digits and underscores; any other name fails schema generation before a statement is run. PostgreSQL always creates an index in the schema of its table, so same-named tables in different schemas get separate indexes of the same name. Searches over every field, such as `search(String)` and `findBySearch(String)`, use that index. A derived method on one property, such as `findByTitleSearch(String)`, renders the `tsvector` of that property alone, which the combined index cannot serve; when an entity has several search fields, add an index for each property you search on its own, for example `CREATE INDEX idx_book_title_search ON book USING GIN (setweight(to_tsvector('english',title),'A'))`. The expression must match the generated query exactly, weight included. For a production schema, create the indexes with your migration tool; the expressions are printed in the generated DDL.
 
 == Searching
 
@@ -20,7 +20,7 @@ A repository that extends api:data.repository.SearchRepository[] searches every 
 
 snippet::example.BookService[project-base="doc-examples/jdbc-search-example", source="main", tags="search"]
 
-<1> `search(String)` returns api:data.model.vector.search.SearchResults[], ordered by relevance with the best match first. `search(String, Pageable)` returns one page and orders by the pageable's sort.
+<1> `search(String)` returns api:data.model.vector.search.SearchResults[], ordered by relevance with the best match first. `search(String, Pageable)` returns one page; an unsorted pageable keeps the relevance order, so consecutive pages neither repeat nor skip hits, and a sort on the pageable replaces it.
 <2> Each api:data.model.vector.search.SearchResult[] holds the entity.
 <3> The relevance score of the hit. On PostgreSQL it is the `ts_rank_cd` rank. Scores order the results and are not comparable between stores; `SearchResults.maxScore()` helps to normalise them.
 <4> `countHits(String)` counts the matches.
@@ -37,7 +37,7 @@ snippet::example.BookRepository[project-base="doc-examples/jdbc-search-example",
 <2> `Search` after a property matches any term in that property; `findBySearch(String)` with no property matches every search field.
 <3> A method with the `search` prefix that returns `SearchResults` projects the score and orders by it, like a vector search. `SearchAll` requires every term.
 <4> `SearchPhrase` requires the terms to be adjacent and in order.
-<5> `SearchPrefix` matches every term as a prefix, for search-as-you-type.
+<5> `SearchPrefix` matches every term as a prefix, for search-as-you-type. Each word of a quoted phrase is a prefix too, so the phrase being typed, `"micronaut da`, already finds `micronaut data`.
 <6> Search keywords combine with any other predicate.
 
 |===
@@ -46,13 +46,13 @@ snippet::example.BookRepository[project-base="doc-examples/jdbc-search-example",
 |`Search` |any term |`to_tsquery('a' \| 'b')`
 |`SearchAll` |every term |`to_tsquery('a' & 'b')`
 |`SearchPhrase` |adjacent terms, in order |`to_tsquery('a b')`
-|`SearchPrefix` |every term as a prefix |`to_tsquery('a:*' & 'b:*')`
+|`SearchPrefix` |every term, and every word of a phrase, as a prefix |`to_tsquery('a:*' & 'b:*')`
 |`SearchFuzzy` |edit-distance match |not supported, fails at compile time
 |===
 
 On Oracle the same keywords render `CONTAINS` queries: `{a} | {b}`, `{a} & {b}`, `{a b}`, `a% & b%` and `fuzzy(a,60,100)` respectively, so `SearchFuzzy` is available there.
 
-Methods that return `List`, `Page` or a DTO filter by the search without projecting a score. A sort parameter or a `Pageable` replaces the relevance order.
+Methods that return `List`, `Page` or a DTO filter by the search without projecting a score, so they are not ordered by relevance. On a `SearchResults` method a `Sort` or `Pageable` with orders replaces the relevance order, and an unsorted one keeps it.
 
 == Programmatic queries
 
