@@ -29,7 +29,7 @@ import java.lang.annotation.Target;
  * overriding {@link Searchable#language()} per document. Supported by backends that index
  * per-document languages (for example MongoDB {@code language_override}).
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
