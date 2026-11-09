@@ -97,7 +97,8 @@ public final class TextSearchSupport {
      */
     public static final String HIGHLIGHT_END_TAG = "</em>";
 
-    private static final java.util.regex.Pattern LANGUAGE_NAME = java.util.regex.Pattern.compile("[A-Za-z][A-Za-z0-9_]*");
+    // a text search configuration name, optionally qualified by its schema such as pg_catalog.english
+    private static final java.util.regex.Pattern LANGUAGE_NAME = java.util.regex.Pattern.compile("[A-Za-z][A-Za-z0-9_]*(\\.[A-Za-z][A-Za-z0-9_]*)?");
 
     private static final String HIGHLIGHT_ALIAS_CLAUSE = " AS " + HIGHLIGHT_ALIAS_PREFIX;
 
@@ -261,20 +262,23 @@ public final class TextSearchSupport {
     }
 
     /**
-     * Resolves the search language of an entity.
+     * Resolves the search language of an entity as declared. The document stores take it as is, such as the
+     * name of a custom Elasticsearch analyzer; the SQL dialects check it with {@link #requireLanguageName}
+     * before they render it.
      *
      * @param entity The entity
      * @return The declared {@code @Searchable(language)}, or {@link #DEFAULT_LANGUAGE}
      */
     public static String resolveLanguage(PersistentEntity entity) {
-        return requireLanguageName(entity.getAnnotationMetadata().stringValue(Searchable.class, Searchable.MEMBER_LANGUAGE)
+        return entity.getAnnotationMetadata().stringValue(Searchable.class, Searchable.MEMBER_LANGUAGE)
             .filter(l -> !l.isEmpty())
-            .orElse(DEFAULT_LANGUAGE));
+            .orElse(DEFAULT_LANGUAGE);
     }
 
     /**
      * Checks that a language is a plain configuration name, as the SQL dialects render it inside the
-     * statement rather than binding it: letters, digits and underscores only.
+     * statement rather than binding it: letters, digits and underscores, optionally qualified by a schema
+     * name such as {@code pg_catalog.english}.
      *
      * @param language The language from {@code @Searchable(language)} or {@code SearchQuery.language}
      * @return The language
@@ -282,7 +286,7 @@ public final class TextSearchSupport {
      */
     public static String requireLanguageName(String language) {
         if (!LANGUAGE_NAME.matcher(language).matches()) {
-            throw new IllegalArgumentException("A search language must be a text search configuration name of letters, digits and underscores");
+            throw new IllegalArgumentException("A search language must be a text search configuration name of letters, digits and underscores, optionally schema-qualified: " + language);
         }
         return language;
     }

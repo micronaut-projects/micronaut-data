@@ -400,8 +400,12 @@ public final class SearchQuery {
         /**
          * Analyses the query with another language than the entity's. The SQL stores render the
          * language inside the statement, so they accept only a configuration name of letters, digits
-         * and underscores and reject any other value when the search runs; the document stores take
-         * their analyzer names as they are. Pass an application constant, not user input.
+         * and underscores, optionally schema-qualified, and reject any other value when the search runs;
+         * the document stores take their analyzer names as they are. Pass an application constant, not
+         * user input. PostgreSQL analyses the rows with the same language, in place of their
+         * {@code @Language} column, and rejects it with a {@link MatchMode#FUZZY} match; MongoDB
+         * {@code $text} only analyses the query terms with it, as each document stays indexed with its own
+         * language.
          *
          * @param language The language to analyse the query with
          * @return This builder

@@ -137,7 +137,8 @@ public interface TextSearchDialect {
     }
 
     /**
-     * Resolves the language of the entity owning the given fields.
+     * Resolves the language of the entity owning the given fields, checked to be a configuration name as it
+     * is rendered inside the statement.
      *
      * @param fields The field expressions
      * @return The language, {@link #DEFAULT_LANGUAGE} when unset
@@ -146,7 +147,7 @@ public interface TextSearchDialect {
         for (Expression<?> field : fields) {
             PersistentProperty property = asProperty(field);
             if (property != null) {
-                return TextSearchSupport.resolveLanguage(property.getOwner());
+                return TextSearchSupport.requireLanguageName(TextSearchSupport.resolveLanguage(property.getOwner()));
             }
         }
         return DEFAULT_LANGUAGE;
@@ -482,6 +483,7 @@ public interface TextSearchDialect {
         // PostgreSQL can skip an index that exists, so schema generation can run against an existing database
         private static final String CREATE_INDEX_IF_NOT_EXISTS = "CREATE INDEX IF NOT EXISTS ";
         private static final String POSTGRESQL_TEXT_SEARCH = "PostgreSQL text search";
+        private static final String PG_TRGM = "PostgreSQL pg_trgm";
 
         @Override
         public void appendTextMatch(StringBuilder query,
@@ -494,12 +496,12 @@ public interface TextSearchDialect {
                                     Function<String, Consumer<Expression<?>>> appendParameter) {
             rejectBoosts(options, POSTGRESQL_TEXT_SEARCH);
             if (mode == MatchMode.FUZZY) {
-                rejectFuzziness(options, "PostgreSQL pg_trgm");
+                rejectTrigramOptions(options);
                 appendFuzzyMatch(query, fields, queryExpression, appendExpression, appendParameter);
                 return;
             }
             String language = resolveLanguage(fields, options);
-            appendVector(query, fields, language, target.languageColumn(), appendExpression);
+            appendVector(query, fields, language, languageColumn(target, options), appendExpression);
             query.append(" @@ ");
             appendTsQuery(query, queryExpression, mode, language, appendParameter);
         }
@@ -593,13 +595,13 @@ public interface TextSearchDialect {
                                       Function<String, Consumer<Expression<?>>> appendParameter) {
             rejectBoosts(options, POSTGRESQL_TEXT_SEARCH);
             if (mode == MatchMode.FUZZY) {
-                rejectFuzziness(options, "PostgreSQL pg_trgm");
+                rejectTrigramOptions(options);
                 appendFuzzyScore(query, fields, queryExpression, appendExpression, appendParameter);
                 return;
             }
             String language = resolveLanguage(fields, options);
             query.append("ts_rank_cd(");
-            appendVector(query, fields, language, target.languageColumn(), appendExpression);
+            appendVector(query, fields, language, languageColumn(target, options), appendExpression);
             query.append(',');
             appendTsQuery(query, queryExpression, mode, language, appendParameter);
             query.append(')');
@@ -628,6 +630,23 @@ public interface TextSearchDialect {
             }
             query.append(",'StartSel=").append(TextSearchSupport.HIGHLIGHT_START_TAG)
                 .append(",StopSel=").append(TextSearchSupport.HIGHLIGHT_END_TAG).append("')");
+        }
+
+        /**
+         * Rejects the options a {@code pg_trgm} match cannot honour: it has a fixed similarity threshold rather
+         * than an edit distance, and compares character trigrams with no text search configuration.
+         */
+        private static void rejectTrigramOptions(TextMatchOptions options) {
+            rejectFuzziness(options, PG_TRGM);
+            rejectLanguage(options, PG_TRGM);
+        }
+
+        /**
+         * A language override analyses both the query and the rows with it, so a row whose {@code @Language}
+         * column holds another configuration is matched with the same stemming as the query terms.
+         */
+        private static @Nullable String languageColumn(Target target, TextMatchOptions options) {
+            return options.language() != null ? null : target.languageColumn();
         }
 
         private void appendTsQuery(StringBuilder query,

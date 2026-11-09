@@ -40,12 +40,13 @@ class TextSearchDialectSpec extends Specification {
         thrown(IllegalArgumentException)
 
         where:
-        language << ["english'", "english',title),'') OR 1=1 --", "en-US", "english;"]
+        language << ["english'", "english',title),'') OR 1=1 --", "en-US", "english;", "pg_catalog.", ".english", "a.b.c", "my-folding"]
     }
 
     void "a configuration name is accepted as the query language"() {
         expect:
         TextSearchDialect.resolveLanguage([], io.micronaut.data.model.search.TextMatchOptions.builder().language("german").build()) == "german"
+        TextSearchDialect.resolveLanguage([], io.micronaut.data.model.search.TextMatchOptions.builder().language("pg_catalog.english").build()) == "pg_catalog.english"
         io.micronaut.data.model.search.SearchQuery.builder("x").language("simple").build().language == "simple"
     }
 
