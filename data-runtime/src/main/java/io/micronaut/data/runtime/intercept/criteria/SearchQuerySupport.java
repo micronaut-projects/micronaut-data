@@ -173,7 +173,7 @@ public final class SearchQuerySupport {
         PersistentEntityRoot<Object> root = criteriaQuery.from(rootEntity);
         List<Expression<?>> fields = resolveFields(root, searchQuery);
         ParameterExpression<String> queryParameter = cb.parameter(String.class, null, searchQuery.getQuery());
-        TextMatchOptions options = new TextMatchOptions(searchQuery.getBoosts(), searchQuery.getFuzziness());
+        TextMatchOptions options = textMatchOptions(root, searchQuery);
         Expression<Double> textScore = cb.searchScore(fields, queryParameter, searchQuery.getMode(), options);
         Expression<Double> vectorScore = cb.function(
             VectorScoringDialectSupport.SCORE_FUNCTION,

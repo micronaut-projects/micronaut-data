@@ -24,7 +24,7 @@ import io.micronaut.data.model.search.SearchQuery;
  * carrying the {@link io.micronaut.data.model.search.TextSearchSupport#HYBRID_SCORE_FUNCTION} instead of
  * fusing the text and the vector rankings in memory.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 public interface NativeHybridSearch {
 

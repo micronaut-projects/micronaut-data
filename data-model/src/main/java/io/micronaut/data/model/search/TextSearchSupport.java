@@ -65,7 +65,7 @@ public final class TextSearchSupport {
      * computes natively. The arguments are the {@link #SCORE_FUNCTION} expression, the vector score
      * expression, and literals holding the text weight, the vector weight and the candidates of each ranking.
      *
-     * @since 5.4.0
+     * @since 5.3.0
      */
     public static final String HYBRID_SCORE_FUNCTION = "mn_hybrid_score";
 
