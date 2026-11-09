@@ -1,5 +1,6 @@
 package io.micronaut.data.model.search
 
+import io.micronaut.data.model.vector.Vector
 import spock.lang.Specification
 
 class SearchQuerySpec extends Specification {
@@ -106,6 +107,25 @@ class SearchQuerySpec extends Specification {
 
         where:
         weight << [-1d, Double.NaN, Double.POSITIVE_INFINITY]
+    }
+
+    void "a hybrid query needs one positive weight"() {
+        when:
+        SearchQuery.builder("a").vector("embedding", Vector.of([1f, 0f] as float[])).textWeight(0).vectorWeight(0).build()
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains("positive textWeight or vectorWeight")
+    }
+
+    void "a zero weight is accepted when the other one is positive or the query is not hybrid"() {
+        given:
+        def vector = Vector.of([1f, 0f] as float[])
+
+        expect:
+        SearchQuery.builder("a").vector("embedding", vector).textWeight(0).build().textWeight == 0d
+        SearchQuery.builder("a").vector("embedding", vector).vectorWeight(0).build().vectorWeight == 0d
+        !SearchQuery.builder("a").textWeight(0).vectorWeight(0).build().hybrid
     }
 
     void "toString leaves the search string out"() {
