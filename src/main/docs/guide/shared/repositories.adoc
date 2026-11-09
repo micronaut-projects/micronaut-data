@@ -12,13 +12,7 @@ WARNING: In a large application, with many repositories each injected into many 
 
 If a repository's data source is fixed, either the default one or the one named on the repository itself, annotate the repository with `@Singleton` so that it is created once:
 
-[source,java]
-----
-@Singleton
-@JdbcRepository(dialect = Dialect.POSTGRES, dataSource = "other")
-public interface BookRepository extends CrudRepository<Book, Long> {
-}
-----
+snippet::example.SingletonManufacturerRepository[project-base="doc-examples/hibernate-example", source="main", tags="singleton", indent="0"]
 
 A data source named on the repository takes precedence over one named at the injection point. A singleton repository is created once, from whichever injection point is resolved first, so keep the default `@Prototype` scope for a repository whose data source is chosen at the injection point.
 
