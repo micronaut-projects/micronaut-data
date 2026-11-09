@@ -2,6 +2,7 @@ package io.micronaut.data.oracle.graph
 
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
 import io.micronaut.data.graph.tck.AbstractGraphRepositorySpec
+import io.micronaut.data.graph.tck.entities.Movie
 import io.micronaut.data.graph.tck.repositories.ColleagueRepository
 import io.micronaut.data.graph.tck.repositories.FriendRepository
 import io.micronaut.data.oracle.graph.tck.OracleMovieRepository
@@ -52,6 +53,24 @@ class OracleGraphRepositorySpec extends AbstractGraphRepositorySpec {
     @Override
     boolean supportsCypher() {
         false
+    }
+
+    /**
+     * A save with the directors or roles set fails, as they would be lost, so the movie is saved with them cleared
+     * and restored. The TCK property graph has no edge tables, so the relationships are not written.
+     */
+    @Override
+    protected Movie saveMovie(Movie movie) {
+        def directors = movie.directors
+        def roles = movie.roles
+        movie.directors = []
+        movie.roles = []
+        try {
+            return movieRepository.save(movie)
+        } finally {
+            movie.directors = directors
+            movie.roles = roles
+        }
     }
 
     @Shared
