@@ -49,6 +49,7 @@ import java.util.stream.Collectors;
 public class DefaultSqlStoredQuery<E, R> extends DefaultBindableParametersStoredQuery<E, R> implements SqlStoredQuery<E, R> {
 
     private final boolean expandableQuery;
+    private final boolean textSearch;
     private final SqlQueryBuilder queryBuilder;
     @Nullable
     private final QueryResultInfo queryResultInfo;
@@ -70,6 +71,7 @@ public class DefaultSqlStoredQuery<E, R> extends DefaultBindableParametersStored
         String[] expandableQueryParts = storedQuery.getExpandableQueryParts();
         List<QueryParameterBinding> queryParameterBindings = storedQuery.getQueryBindings();
         this.expandableQuery = expandableQueryParts.length > 1 && queryParameterBindings.stream().anyMatch(QueryParameterBinding::isExpandable);
+        this.textSearch = SqlStoredQuery.hasTextSearchBinding(queryParameterBindings);
         if (expandableQuery && expandableQueryParts.length != queryParameterBindings.size() + 1) {
             throw new IllegalStateException("Expandable query parts size should be the same as parameters size + 1. " + expandableQueryParts.length + " != 1 + " + queryParameterBindings.size() + " " + storedQuery.getQuery() + " " + Arrays.toString(expandableQueryParts));
         }
@@ -103,6 +105,11 @@ public class DefaultSqlStoredQuery<E, R> extends DefaultBindableParametersStored
     @Override
     public boolean isExpandableQuery() {
         return expandableQuery;
+    }
+
+    @Override
+    public boolean isTextSearch() {
+        return textSearch;
     }
 
     @Override
