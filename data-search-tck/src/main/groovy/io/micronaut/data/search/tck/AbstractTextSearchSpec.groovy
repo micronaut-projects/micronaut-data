@@ -408,10 +408,11 @@ abstract class AbstractTextSearchSpec extends Specification {
         assumeTrue(capabilities().contains(SearchCapability.HIGHLIGHT))
 
         given: "a description matching the query in two sentences kept apart by filler"
-        bookSearchRepository.save(new Book("Growing Spices",
+        bookSearchRepository.save(newBook("Growing Spices",
                 "Saffron crocus bulbs are planted in late summer. " +
                         "The middle of this text is filler about soil, water and light that keeps the sentences apart. " +
                         "Harvesting saffron threads by hand takes patience.", "Grower", 90))
+        awaitIndexing()
 
         when:
         def results = bookSearchRepository.search(SearchQuery.builder("saffron").highlight("description").build())

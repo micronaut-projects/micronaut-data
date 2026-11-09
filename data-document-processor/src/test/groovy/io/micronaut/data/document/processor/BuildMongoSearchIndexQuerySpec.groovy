@@ -107,7 +107,45 @@ ${methods}
 
         then:
         def e = thrown(RuntimeException)
-        e.message.contains("cannot be combined with OR")
+        e.message.contains("cannot be combined with OR or negated")
+    }
+
+    void "a highlightable search field is highlighted by default on MongoDB Search"() {
+        given:
+        def repository = buildRepository('test.NoteRepository', """
+import io.micronaut.data.annotation.search.SearchField;
+import io.micronaut.data.annotation.search.Searchable;
+import io.micronaut.data.model.vector.search.SearchResults;
+import io.micronaut.data.mongodb.annotation.MongoRepository;
+import io.micronaut.data.mongodb.annotation.MongoSearchIndex;
+import io.micronaut.data.repository.SearchRepository;
+
+@MappedEntity
+@Searchable
+@MongoSearchIndex
+class Note {
+    @Id
+    @GeneratedValue
+    private String id;
+    @SearchField(highlightable = true)
+    private String title;
+
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+}
+
+@MongoRepository
+interface NoteRepository extends CrudRepository<Note, String>, SearchRepository<Note, String> {
+    SearchResults<Note> searchByTitleSearch(String q);
+}
+""")
+        def derived = TestUtils.getQuery(repository.getRequiredMethod("searchByTitleSearch", String))
+
+        expect:
+        derived.contains('searchHighlights')
+        derived.contains('mn_hl_title')
     }
 
     void "a delete or an update selected by a search predicate is rejected at compile time"() {
