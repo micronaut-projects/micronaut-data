@@ -48,9 +48,11 @@ import java.util.function.Supplier;
 
 /**
  * Non-blocking repository operations over an {@link AsyncSearchTransport}, backing the reactive and
- * async repositories of the {@link SearchTransport} with the same name.
+ * async repositories of the {@link SearchTransport} with the same name. Results are emitted on the
+ * thread that completes the transport's stage, the HTTP client's I/O thread for the store transports;
+ * there is no scheduler hop, so code that blocks must move to another scheduler first.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 @EachBean(AsyncSearchTransport.class)
