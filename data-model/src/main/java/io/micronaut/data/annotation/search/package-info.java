@@ -16,7 +16,7 @@
 /**
  * Full-text search mapping annotations.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @org.jspecify.annotations.NullMarked
 package io.micronaut.data.annotation.search;
