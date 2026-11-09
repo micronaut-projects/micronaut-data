@@ -28,7 +28,7 @@ import java.util.function.ToIntFunction;
 /**
  * Reads the outcome of a bulk request the same way for every client library.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 public final class BulkResponses {
@@ -38,7 +38,8 @@ public final class BulkResponses {
 
     /**
      * Collects the ids of the indexed documents, failing when the store rejected any item. A bulk
-     * request is not atomic: the error names every rejected item and how many others were written.
+     * request is not atomic: the {@link BulkIndexException} names every rejected item and how many
+     * others were written, and carries the ids of the written ones.
      *
      * @param store The store name, for the error message
      * @param items The response items, in request order
@@ -47,10 +48,12 @@ public final class BulkResponses {
      * @param status Reads an item's HTTP status; a 409 is a version conflict
      * @param <I> The item type of the client library
      * @return The ids, in request order
-     * @throws OptimisticLockException When an item conflicted with the stored document
+     * @throws BulkIndexException When the store rejected some of the items
+     * @throws OptimisticLockException When a rejected item conflicted with the stored document, caused by
+     * the {@link BulkIndexException}
      */
     public static <I> List<String> ids(String store, List<I> items, Function<I, @Nullable String> error, Function<I, String> id, ToIntFunction<I> status) {
-        List<String> ids = new ArrayList<>(items.size());
+        List<@Nullable String> ids = new ArrayList<>(items.size());
         List<String> failures = new ArrayList<>();
         boolean conflict = false;
         for (int i = 0; i < items.size(); i++) {
@@ -61,14 +64,54 @@ public final class BulkResponses {
                     conflict = true;
                 }
                 failures.add("item " + i + " (id " + id.apply(item) + "): " + reason);
+                ids.add(null);
+            } else {
+                ids.add(id.apply(item));
             }
-            ids.add(id.apply(item));
         }
         if (!failures.isEmpty()) {
             String message = store + " bulk request rejected " + failures.size() + " of " + items.size()
                 + " documents, the other " + (items.size() - failures.size()) + " were written: " + String.join("; ", failures);
-            throw conflict ? new OptimisticLockException(message) : new DataAccessException(message);
+            BulkIndexException failure = new BulkIndexException(message, ids);
+            throw conflict ? new OptimisticLockException(message, failure) : failure;
         }
-        return ids;
+        return (List<String>) (List<?>) ids;
+    }
+
+    /**
+     * The failure of a bulk index sent as one write per document, which stops at the first failure. A
+     * version conflict stays an {@link OptimisticLockException}, caused by the {@link BulkIndexException}.
+     *
+     * @param written The ids of the documents written before the failure
+     * @param total The number of documents of the request
+     * @param cause The failure
+     * @return The exception
+     */
+    static DataAccessException stopped(List<String> written, int total, Throwable cause) {
+        List<@Nullable String> ids = new ArrayList<>(written);
+        while (ids.size() < total) {
+            ids.add(null);
+        }
+        String message = "Indexing document " + written.size() + " of " + total + " failed, the "
+            + written.size() + " before it were written and the rest were not sent: " + cause.getMessage();
+        BulkIndexException failure = new BulkIndexException(message, ids, cause);
+        return cause instanceof OptimisticLockException ? new OptimisticLockException(message, failure) : failure;
+    }
+
+    /**
+     * The {@link BulkIndexException} of a failed bulk index: the failure itself, or the cause of the
+     * {@link OptimisticLockException} reporting a version conflict.
+     *
+     * @param failure The failure of a bulk index
+     * @return The exception holding the ids of the written documents, or {@code null} for another failure
+     */
+    @Nullable
+    public static BulkIndexException partialFailure(Throwable failure) {
+        if (failure instanceof BulkIndexException bulkIndexException) {
+            return bulkIndexException;
+        }
+        return failure instanceof OptimisticLockException && failure.getCause() instanceof BulkIndexException bulkIndexException
+            ? bulkIndexException
+            : null;
     }
 }

@@ -29,10 +29,12 @@ import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
 import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
 import co.elastic.clients.elasticsearch.core.search.Hit;
+import co.elastic.clients.transport.TransportException;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.OptimisticLockException;
+import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.data.search.document.conf.DocumentSearchConfiguration;
 import io.micronaut.data.search.document.runtime.AsyncSearchTransport;
 import io.micronaut.data.search.document.runtime.BulkResponses;
@@ -53,13 +55,15 @@ import java.util.concurrent.CompletionStage;
  * The non-blocking {@link AsyncSearchTransport} over the {@link ElasticsearchAsyncClient}, which
  * completes on the HTTP client's threads.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 @Singleton
 @Named("default")
 @Requires(beans = ElasticsearchAsyncClient.class)
 public final class ElasticsearchAsyncSearchTransport implements AsyncSearchTransport {
+
+    private static final boolean REST_CLIENT_PRESENT = ClassUtils.isPresent("org.elasticsearch.client.ResponseException", ElasticsearchAsyncSearchTransport.class.getClassLoader());
 
     private final ElasticsearchAsyncClient client;
 
@@ -125,15 +129,16 @@ public final class ElasticsearchAsyncSearchTransport implements AsyncSearchTrans
     /**
      * Maps a version conflict (HTTP 409) to {@link OptimisticLockException} and the other errors of the
      * store and the I/O failures to {@link DataAccessException} naming the operation; other runtime
-     * failures pass through.
+     * failures pass through. The status is read like {@link #status(Throwable)}, as the async client
+     * reports a store response as the exception of its low-level HTTP client.
      */
     static RuntimeException conflictOrFailure(Throwable error, @Nullable String id, String operation) {
         Throwable cause = error instanceof CompletionException && error.getCause() != null ? error.getCause() : error;
-        if (cause instanceof ElasticsearchException elasticsearchException) {
-            if (elasticsearchException.status() == 409) {
-                return new OptimisticLockException("Document " + id + " was modified concurrently: " + elasticsearchException.error().reason(), cause);
-            }
-        } else if (cause instanceof RuntimeException runtime) {
+        if (status(cause) == 409) {
+            String reason = cause instanceof ElasticsearchException elasticsearchException ? elasticsearchException.error().reason() : cause.getMessage();
+            return new OptimisticLockException("Document " + id + " was modified concurrently: " + reason, cause);
+        }
+        if (cause instanceof RuntimeException runtime && !(cause instanceof ElasticsearchException)) {
             return runtime;
         }
         return new DataAccessException("Elasticsearch " + operation + " failed: " + cause.getMessage(), cause);
@@ -186,7 +191,34 @@ public final class ElasticsearchAsyncSearchTransport implements AsyncSearchTrans
 
     @Override
     public CompletionStage<String> create(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh) {
-        return client.index(i -> i.index(index).id(id).opType(OpType.Create).document(source).refresh(refresh(refresh))).thenApply(response -> response.id());
+        return client.index(i -> i.index(index).id(id).opType(OpType.Create).document(source).refresh(refresh(refresh)))
+            .handle((response, failure) -> {
+                if (failure != null) {
+                    throw AsyncSearchTransport.createFailure(index, id, failure, ElasticsearchAsyncSearchTransport::status);
+                }
+                return response.id();
+            });
+    }
+
+    /**
+     * The HTTP status of a failed request. The async client completes a request the store answered
+     * with an error with the exception of the low-level HTTP client rather than an
+     * {@link ElasticsearchException}, so both are read.
+     *
+     * @param failure The failure
+     * @return The status, or {@code 0} when the failure is not a store response
+     */
+    static int status(Throwable failure) {
+        if (failure instanceof ElasticsearchException e) {
+            return e.status();
+        }
+        if (failure instanceof TransportException e) {
+            return e.statusCode();
+        }
+        if (failure instanceof co.elastic.clients.transport.rest5_client.low_level.ResponseException e) {
+            return e.getResponse().getStatusCode();
+        }
+        return REST_CLIENT_PRESENT ? RestClientStatus.status(failure) : 0;
     }
 
     @Override
@@ -235,5 +267,16 @@ public final class ElasticsearchAsyncSearchTransport implements AsyncSearchTrans
             case WAIT_FOR -> Refresh.WaitFor;
             case TRUE -> Refresh.True;
         };
+    }
+
+    /**
+     * Reads the low-level {@code RestClient} exception, in its own class so the optional client is
+     * loaded only when present.
+     */
+    private static final class RestClientStatus {
+
+        static int status(Throwable failure) {
+            return failure instanceof org.elasticsearch.client.ResponseException e ? e.getResponse().getStatusLine().getStatusCode() : 0;
+        }
     }
 }

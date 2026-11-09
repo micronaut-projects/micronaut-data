@@ -38,18 +38,22 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import org.jspecify.annotations.Nullable;
 
 import javax.sql.DataSource;
 
 /**
  * {@link SearchIndexOperations} of a JDBC datasource: runs the full-text search index DDL the
- * {@link SqlQueryBuilder} renders for the datasource's dialect.
+ * {@link SqlQueryBuilder} renders for the datasource's dialect. As {@link SearchCapabilities} it reports the
+ * features of the dialect that the database can serve: on PostgreSQL, {@link SearchCapability#FUZZY} only once
+ * the {@code pg_trgm} extension is installed, which is checked on the database until it is found.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Experimental
 @EachBean(DataJdbcConfiguration.class)
@@ -61,6 +65,8 @@ public class JdbcSearchIndexOperations implements SearchIndexOperations, SearchC
     private final SqlQueryBuilder queryBuilder;
     @Nullable
     private final TextSearchDialect textSearchDialect;
+    // the capabilities whose database requirement was found; one that is missing is checked again on the next call
+    private final Set<SearchCapability> verified = ConcurrentHashMap.newKeySet();
 
     /**
      * @param configuration The datasource configuration
@@ -82,13 +88,41 @@ public class JdbcSearchIndexOperations implements SearchIndexOperations, SearchC
         if (textSearchDialect == null || !runtimeEntityRegistry.getEntity(entityType).getAnnotationMetadata().hasAnnotation(Searchable.class)) {
             return Set.of();
         }
-        return textSearchDialect.capabilities();
+        Set<SearchCapability> capabilities = textSearchDialect.capabilities();
+        Set<SearchCapability> available = null;
+        for (SearchCapability capability : capabilities) {
+            if (!availableInDatabase(textSearchDialect, capability)) {
+                if (available == null) {
+                    available = EnumSet.copyOf(capabilities);
+                }
+                available.remove(capability);
+            }
+        }
+        return available == null ? capabilities : available;
+    }
+
+    private boolean availableInDatabase(TextSearchDialect dialect, SearchCapability capability) {
+        String query = dialect.capabilityCheckQuery(capability);
+        if (query == null || verified.contains(capability)) {
+            return true;
+        }
+        try (Connection connection = dataSource().getConnection();
+             PreparedStatement ps = connection.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next() && rs.getLong(1) > 0) {
+                verified.add(capability);
+                return true;
+            }
+            return false;
+        } catch (SQLException e) {
+            throw new DataAccessException("Cannot check whether the database supports the search capability " + capability + ": " + e.getMessage(), e);
+        }
     }
 
     @Override
     public boolean exists(Class<?> entityType) {
         List<String> names = searchIndexNames(entityType);
-        if (textSearchDialect == null || names.isEmpty() || textSearchDialect.searchIndexExistsQuery() == null) {
+        if (textSearchDialect == null || names.isEmpty() || textSearchDialect.searchIndexExistsQuery(schema(entityType)) == null) {
             return false;
         }
         return existingIndexes(entityType, names).size() == names.size();
@@ -117,12 +151,13 @@ public class JdbcSearchIndexOperations implements SearchIndexOperations, SearchC
             return;
         }
         List<String> names = searchIndexNames(entityType);
+        String schema = schema(entityType);
         // only the indexes that exist are dropped, as Oracle has no DROP INDEX IF EXISTS before 23ai
-        Set<String> existing = textSearchDialect.searchIndexExistsQuery() == null ? new LinkedHashSet<>(names) : existingIndexes(entityType, names);
+        Set<String> existing = textSearchDialect.searchIndexExistsQuery(schema) == null ? new LinkedHashSet<>(names) : existingIndexes(entityType, names);
         List<String> statements = new ArrayList<>();
         for (String name : names) {
             if (existing.contains(name)) {
-                statements.add(textSearchDialect.buildDropSearchIndex(name));
+                statements.add(textSearchDialect.buildDropSearchIndex(name, schema));
             }
         }
         execute(entityType, statements);
@@ -137,7 +172,7 @@ public class JdbcSearchIndexOperations implements SearchIndexOperations, SearchC
         if (dialect == null || names.isEmpty()) {
             return existing;
         }
-        String query = dialect.searchIndexExistsQuery();
+        String query = dialect.searchIndexExistsQuery(schema(entityType));
         if (query == null) {
             return existing;
         }
@@ -168,6 +203,11 @@ public class JdbcSearchIndexOperations implements SearchIndexOperations, SearchC
 
     private List<String> searchIndexNames(Class<?> entityType) {
         return queryBuilder.searchIndexNames(entity(entityType));
+    }
+
+    @Nullable
+    private String schema(Class<?> entityType) {
+        return queryBuilder.searchIndexSchema(entity(entityType));
     }
 
     private PersistentEntity entity(Class<?> entityType) {

@@ -11,9 +11,12 @@ import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.model.Sort
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.runtime.query.internal.DefaultPagedQuery
+import io.micronaut.data.runtime.search.SearchIndexOperations
 import io.micronaut.data.search.document.conf.DocumentSearchConfiguration
 import io.micronaut.data.search.document.query.SearchJson
+import io.micronaut.data.search.document.runtime.BulkIndexException
 import io.micronaut.data.search.document.runtime.DocumentSearchRepositoryOperations
+import io.micronaut.data.search.document.runtime.SearchQueryExecutor
 import io.micronaut.data.search.elasticsearch.Meeting
 import io.micronaut.data.search.elasticsearch.MeetingRepository
 import io.micronaut.json.JsonMapper
@@ -31,6 +34,7 @@ import java.time.ZonedDateTime
 @MicronautTest(transactional = false)
 @Property(name = "spec.name", value = "DocumentSearchOperationsSpec")
 @Property(name = "micronaut.data.search.index-prefix", value = "test_")
+@Property(name = "micronaut.data.search.bulk-size", value = "2")
 class DocumentSearchOperationsSpec extends Specification {
 
     @Inject
@@ -81,7 +85,7 @@ class DocumentSearchOperationsSpec extends Specification {
         Map<String, Object> document = transport.indexes["test_flags"][saved.id]
 
         then:
-        document.keySet() == ["label", "isActive"] as Set
+        document.keySet() == ["id", "label", "isActive"] as Set
         document.isActive == true
         flags.findById(saved.id).get().isActive()
         flags.findById(saved.id).get().label == "pinned"
@@ -135,14 +139,53 @@ class DocumentSearchOperationsSpec extends Specification {
         transport.lastBody().contains('"wildcard":{"label":{"value":"Port*-?*"}}')
     }
 
-    void "saving generates String ids and the entities read back by id"() {
+    void "creating an index that a concurrent create made in the meantime leaves it alone"() {
+        given:
+        def indexOperations = context.getBean(SearchIndexOperations)
+        def mapping = transport.createdIndexes.remove("test_notes")
+        transport.createFailure = new DataAccessException("resource_already_exists_exception")
+        transport.createRacing = true
+
         when:
-        def saved = notes.saveAll([new Note("Coffee", "Roasting beans", 120), new Note("Bread", "Sourdough", 0)])
+        indexOperations.create(Note)
 
         then:
-        saved*.id == ["generated-1", "generated-2"]
+        noExceptionThrown()
+        indexOperations.exists(Note)
+
+        cleanup:
+        transport.createdIndexes.put("test_notes", mapping)
+    }
+
+    void "a failed index creation is reported when the index still does not exist"() {
+        given:
+        def indexOperations = context.getBean(SearchIndexOperations)
+        def mapping = transport.createdIndexes.remove("test_notes")
+        transport.createFailure = new DataAccessException("Elasticsearch create index failed: mapper_parsing_exception")
+
+        when:
+        indexOperations.create(Note)
+
+        then:
+        def e = thrown(DataAccessException)
+        e.message.contains("mapper_parsing_exception")
+        !indexOperations.exists(Note)
+
+        cleanup:
+        transport.createdIndexes.put("test_notes", mapping)
+    }
+
+    void "saving generates String ids, kept in the document source, and the entities read back by id"() {
+        when:
+        def saved = notes.saveAll([new Note("Coffee", "Roasting beans", 120), new Note("Bread", "Sourdough", 0)])
+        def single = notes.save(new Note("Tea", "Green tea", 40))
+
+        then: "the ids are generated before the write, so the source holds them for the cursored paging tiebreaker"
+        (saved + single)*.id.every { UUID.fromString(it) }
+        (saved + single)*.id.toSet().size() == 3
+        (saved + single).every { transport.indexes["test_notes"][it.id].id == it.id }
         transport.refreshes.every { it == DocumentSearchConfiguration.Refresh.WAIT_FOR }
-        operations.findOne(Note, "generated-1").title == "Coffee"
+        operations.findOne(Note, saved[0].id).title == "Coffee"
         operations.findOne(Note, "missing") == null
     }
 
@@ -170,6 +213,57 @@ class DocumentSearchOperationsSpec extends Specification {
         saved*.id().every { it != null }
         saved*.id().toSet().size() == 3
         transport.indexes["test_tags"].size() == 3
+    }
+
+    void "saveAll sends the batch in bulk requests of the configured size and keeps the order of the ids"() {
+        when:
+        def saved = notes.saveAll((1..5).collect { new Note("Note " + it, "Body", it) })
+
+        then:
+        transport.bulkSizes == [2, 2, 1]
+        saved*.title == (1..5).collect { "Note " + it }
+        transport.indexes["test_notes"].keySet().toList() == saved*.id
+    }
+
+    void "a partly failed saveAll gives the written entities their ids and sends no further request"() {
+        given:
+        notes.save(new Note("Tea", "Green tea", 40).tap { id = "tea" })
+        def coffee = new Note("Coffee", "Roasting beans", 120)
+        def cocoa = new Note("Cocoa", "Beans", 80)
+        def bread = new Note("Bread", "Sourdough", 60)
+        def duplicate = new Note("Other", "Black tea", 10).tap { id = "tea" }
+        def cake = new Note("Cake", "Sponge", 10)
+
+        when:
+        notes.saveAll([coffee, cocoa, bread, duplicate, cake])
+
+        then:
+        BulkIndexException e = thrown()
+        e.message.startsWith("Indexing document 1 of 2 failed, the 1 before it were written and the rest were not sent: ")
+        e.ids == [bread.id, null]
+        transport.bulkSizes == [2, 2]
+        transport.indexes["test_notes"].keySet() == ["tea", coffee.id, cocoa.id, bread.id] as Set
+        !transport.indexes["test_notes"].containsKey(cake.id)
+        transport.indexes["test_notes"]["tea"].title == "Tea"
+    }
+
+    void "a @Transactional repository method fails at its first call naming the missing TransactionOperations"() {
+        when:
+        notes.countByBody("Sourdough")
+
+        then:
+        Exception e = thrown()
+        e.message.contains("TransactionOperations")
+        transport.bodies.isEmpty()
+    }
+
+    void "the bulk size must be positive"() {
+        when:
+        new DocumentSearchConfiguration().bulkSize = 0
+
+        then:
+        IllegalArgumentException e = thrown()
+        e.message == "The bulk size must be at least 1, was 0"
     }
 
     void "saving an entity with the id of an existing document fails instead of replacing it"() {
@@ -221,7 +315,7 @@ class DocumentSearchOperationsSpec extends Specification {
 
         then:
         def e = thrown(DataAccessException)
-        e.message.contains("String ids only")
+        e.message.contains("String and UUID ids only")
 
         when:
         def counter = counters.save(new Counter(7L, 3))
@@ -255,6 +349,83 @@ class DocumentSearchOperationsSpec extends Specification {
         notes.findByBody("Sourdough").count() == 2
         notes.count() == 2
         notes.findAll().size() == 2
+    }
+
+    void "a @Query method returning a number counts the documents its body's query matches"() {
+        given:
+        notes.saveAll([new Note("Coffee", "Roasting beans", 120), new Note("Bread", "Sourdough", 0)])
+
+        expect:
+        notes.countMatchingTitle("Coffee") == 2L
+        jsonMapper.readValue(transport.lastBody(), Map) == [query: [match: [title: "Coffee"]]]
+        notes.countMatchingTitleBoxed("Coffee") == 2L
+        transport.bodies.every { !it.contains('"size"') }
+    }
+
+    void "a backslash before a colon in a @Query body keeps the colon literal"() {
+        when:
+        notes.findTitledAtHalfPastTen("Coffee")
+
+        then:
+        jsonMapper.readValue(transport.lastBody(), Map).query.bool.filter == [match_phrase: [body: "at 10:30"]]
+        jsonMapper.readValue(transport.lastBody(), Map).query.bool.must == [match: [title: "Coffee"]]
+    }
+
+    void "the SearchQueryExecutor binds parameters as JSON values that cannot change the body"() {
+        given:
+        def executor = context.getBean(SearchQueryExecutor)
+        notes.saveAll([new Note("Coffee", "Roasting beans", 120), new Note("Bread", "Sourdough", 0)])
+        def injection = 'x"}}, "size": 3, "query": {"match_all": {}}, "x": {"y": "'
+        def body = '{"query": {"bool": {"must": {"match": {"title": ":title"}}, "filter": {"terms": {"pages": ":pages"}}}}}'
+
+        when:
+        def results = executor.search(Note, body, [title: injection, pages: [120, 0]])
+        def sent = jsonMapper.readValue(transport.lastBody(), Map)
+
+        then: "the value stays one string, a list becomes an array and the total is exact"
+        results.results().size() == 2
+        sent.query.bool.must == [match: [title: injection]]
+        sent.query.bool.filter == [terms: [pages: [120, 0]]]
+        sent.track_total_hits == true
+
+        and: "a body without a size gets the max-results ceiling of an unpaged query method"
+        sent.size == DocumentSearchConfiguration.DEFAULT_MAX_RESULTS
+
+        when:
+        def found = executor.find(Note, body, [title: "Coffee", pages: [120]])
+
+        then:
+        found*.title == ["Coffee", "Bread"]
+        jsonMapper.readValue(transport.lastBody(), Map).query.bool.must == [match: [title: "Coffee"]]
+        !jsonMapper.readValue(transport.lastBody(), Map).containsKey("track_total_hits")
+        jsonMapper.readValue(transport.lastBody(), Map).size == DocumentSearchConfiguration.DEFAULT_MAX_RESULTS
+
+        when: "the body declares its own size"
+        executor.find(Note, '{"size": 1, "query": {"match_all": {}}}')
+
+        then: "it is kept"
+        jsonMapper.readValue(transport.lastBody(), Map).size == 1
+
+        when:
+        def count = executor.count(Note, body, [title: "Coffee", pages: [120]])
+
+        then:
+        count == 2L
+        jsonMapper.readValue(transport.lastBody(), Map).query.bool.must == [match: [title: "Coffee"]]
+
+        when: "a body that sets track_total_hits keeps it"
+        executor.search(Note, '{"query": {"match_all": {}}, "track_total_hits": false, "size": 1}')
+
+        then:
+        jsonMapper.readValue(transport.lastBody(), Map).track_total_hits == false
+        jsonMapper.readValue(transport.lastBody(), Map).size == 1
+
+        when: "a parameter the body does not reference"
+        executor.find(Note, '{"query": {"match": {"title": ":title"}}}', [titel: "Coffee"])
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains('":titel"')
     }
 
     void "a single result finder returns null without hits"() {
@@ -370,7 +541,7 @@ class DocumentSearchOperationsSpec extends Specification {
         notes.deleteAll([saved[1]])
 
         then:
-        transport.indexes["test_notes"].keySet() == ["generated-3"] as Set
+        transport.indexes["test_notes"].keySet() == [saved[2].id] as Set
 
         when:
         notes.delete(new Note("No id", "None", 1))

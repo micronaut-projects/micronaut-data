@@ -29,10 +29,12 @@ import org.jspecify.annotations.Nullable;
 import java.util.Set;
 
 /**
- * The search features an R2DBC datasource honours, by its dialect.
+ * The search features an R2DBC datasource honours, by its dialect. Unlike the JDBC bean it does not
+ * query the database, as the answer is synchronous: on PostgreSQL it reports
+ * {@link SearchCapability#FUZZY} whether or not the {@code pg_trgm} extension is installed.
  *
  * @author Graeme Rocher
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Experimental
 @EachBean(DataR2dbcConfiguration.class)

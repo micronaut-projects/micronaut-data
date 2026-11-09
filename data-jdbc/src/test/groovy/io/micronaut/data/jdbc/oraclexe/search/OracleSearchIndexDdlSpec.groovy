@@ -30,15 +30,16 @@ class OracleSearchIndexDdlSpec extends Specification {
         statements[0].startsWith('CREATE TABLE ')
     }
 
-    void "a JSON entity gets one JSON search index over its column on Oracle"() {
+    void "a JSON entity gets a unique identity index and one JSON search index over its column on Oracle"() {
         when:
         def statements = new SqlQueryBuilder(Dialect.ORACLE).buildCreateTableStatements(new RuntimePersistentEntity<>(OracleJsonBook))
 
         then:
-        statements.size() == 3
+        statements.size() == 4
         statements[0] == 'CREATE TABLE "JSON_BOOK" ("DATA" JSON NOT NULL);'
-        statements[1] == 'CREATE SEARCH INDEX "IDX_JSON_BOOK_SEARCH" ON "JSON_BOOK" ("DATA") FOR JSON PARAMETERS (\'SYNC (ON COMMIT)\');'
-        statements[2] == "BEGIN CTX_DDL.CREATE_POLICY('MN_SEARCH_POLICY'); EXCEPTION WHEN OTHERS THEN IF SQLCODE != -20000 OR INSTR(SQLERRM, 'DRG-10507') = 0 THEN RAISE; END IF; END;"
+        statements[1] == 'CREATE UNIQUE INDEX "IDX_JSON_BOOK_ID" ON "JSON_BOOK" (JSON_VALUE("DATA",\'$.id\' ERROR ON ERROR NULL ON EMPTY));'
+        statements[2] == 'CREATE SEARCH INDEX "IDX_JSON_BOOK_SEARCH" ON "JSON_BOOK" ("DATA") FOR JSON PARAMETERS (\'SYNC (ON COMMIT)\');'
+        statements[3] == "BEGIN CTX_DDL.CREATE_POLICY('MN_SEARCH_POLICY'); EXCEPTION WHEN OTHERS THEN IF SQLCODE != -20000 OR INSTR(SQLERRM, 'DRG-10507') = 0 THEN RAISE; END IF; END;"
     }
 
     void "the search index names and statements are exposed for the runtime index operations"() {
@@ -50,8 +51,12 @@ class OracleSearchIndexDdlSpec extends Specification {
         builder.searchIndexNames(new RuntimePersistentEntity<>(Book)) == ['"IDX_SEARCH_BOOK_SEARCH_TITLE"', '"IDX_SEARCH_BOOK_SEARCH_DESCRIPTION"']
         builder.searchIndexNames(new RuntimePersistentEntity<>(OracleJsonBook)) == ['"IDX_JSON_BOOK_SEARCH"']
         builder.buildCreateSearchIndexStatements(new RuntimePersistentEntity<>(Book)) == builder.buildCreateTableStatements(new RuntimePersistentEntity<>(Book)).toList().drop(1)
-        builder.buildCreateSearchIndexStatements(new RuntimePersistentEntity<>(OracleJsonBook)) == builder.buildCreateTableStatements(new RuntimePersistentEntity<>(OracleJsonBook)).toList().drop(1)
-        dialect.buildDropSearchIndex('"IDX_JSON_BOOK_SEARCH"') == 'DROP INDEX "IDX_JSON_BOOK_SEARCH"'
+        // the table and the unique index over its identity are left out
+        builder.buildCreateSearchIndexStatements(new RuntimePersistentEntity<>(OracleJsonBook)) == builder.buildCreateTableStatements(new RuntimePersistentEntity<>(OracleJsonBook)).toList().drop(2)
+        dialect.buildDropSearchIndex('"IDX_JSON_BOOK_SEARCH"', null) == 'DROP INDEX "IDX_JSON_BOOK_SEARCH"'
+        // an unqualified index is created in the current schema, whatever the schema of its table
+        dialect.buildDropSearchIndex('"IDX_JSON_BOOK_SEARCH"', '"CATALOG"') == 'DROP INDEX "IDX_JSON_BOOK_SEARCH"'
+        dialect.searchIndexExistsQuery('"CATALOG"') == 'SELECT count(*) FROM user_indexes WHERE index_name = ?'
         dialect.catalogIndexName('"IDX_JSON_BOOK_SEARCH"') == 'IDX_JSON_BOOK_SEARCH'
         dialect.catalogIndexName('idx_plain') == 'IDX_PLAIN'
         dialect.buildSyncSearchIndex(['"IDX_JSON_BOOK_SEARCH"']) == ["BEGIN CTX_DDL.SYNC_INDEX('IDX_JSON_BOOK_SEARCH'); END;"]

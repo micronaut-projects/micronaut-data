@@ -45,6 +45,12 @@ public class InMemorySearchTransport implements SearchTransport {
     final List<String> bodies = new ArrayList<>();
     final List<DocumentSearchConfiguration.Refresh> refreshes = new ArrayList<>();
     final List<String> refreshed = new ArrayList<>();
+    final List<Integer> bulkSizes = new ArrayList<>();
+    /**
+     * When set, the next index creation fails with it, after creating the index when {@link #createRacing} is set.
+     */
+    RuntimeException createFailure;
+    boolean createRacing;
     private int generated;
 
     private Map<String, Map<String, Object>> documents(String index) {
@@ -55,6 +61,9 @@ public class InMemorySearchTransport implements SearchTransport {
         indexes.clear();
         bodies.clear();
         refreshes.clear();
+        bulkSizes.clear();
+        createFailure = null;
+        createRacing = false;
         generated = 0;
     }
 
@@ -86,6 +95,12 @@ public class InMemorySearchTransport implements SearchTransport {
         String documentId = id == null ? "generated-" + (++generated) : id;
         documents(index).put(documentId, new LinkedHashMap<>(source));
         return documentId;
+    }
+
+    @Override
+    public List<String> bulkIndex(String index, List<BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
+        bulkSizes.add(documents.size());
+        return SearchTransport.super.bulkIndex(index, documents, refresh);
     }
 
     @Override
@@ -123,6 +138,15 @@ public class InMemorySearchTransport implements SearchTransport {
 
     @Override
     public void createIndex(String index, String body) {
+        RuntimeException failure = createFailure;
+        if (failure != null) {
+            createFailure = null;
+            if (createRacing) {
+                // another caller created the index first, which the store reports as an index that exists
+                createdIndexes.put(index, body);
+            }
+            throw failure;
+        }
         createdIndexes.put(index, body);
     }
 

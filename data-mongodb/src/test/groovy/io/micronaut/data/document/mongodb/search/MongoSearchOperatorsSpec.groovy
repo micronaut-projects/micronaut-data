@@ -24,6 +24,12 @@ class MongoSearchOperatorsSpec extends Specification {
         render("coffee", MatchMode.NATIVE) == '{"compound": {"should": [{"queryString": {"defaultPath": "title", "query": "coffee"}}, {"queryString": {"defaultPath": "body", "query": "coffee"}}], "minimumShouldMatch": 1}}'
     }
 
+    void "a native query string carries the boost of each path"() {
+        expect:
+        render("coffee", MatchMode.NATIVE, ["title", "body"], [title: 10, body: 2.5d]) == '{"compound": {"should": [{"queryString": {"defaultPath": "title", "query": "coffee", "score": {"boost": {"value": 10.0}}}}, {"queryString": {"defaultPath": "body", "query": "coffee", "score": {"boost": {"value": 2.5}}}}], "minimumShouldMatch": 1}}'
+        render("coffee", MatchMode.NATIVE, ["title"], [title: 1]) == '{"queryString": {"defaultPath": "title", "query": "coffee"}}'
+    }
+
     void "all-terms queries become must clauses"() {
         expect:
         render("coffee tea", MatchMode.ALL) == '{"compound": {"must": [{"text": {"query": "coffee", "path": ["title", "body"]}}, {"text": {"query": "tea", "path": ["title", "body"]}}]}}'
@@ -51,7 +57,13 @@ class MongoSearchOperatorsSpec extends Specification {
         expect:
         render("", MatchMode.ANY).contains("mustNot")
         render(null, MatchMode.ANY).contains("mustNot")
-        render("-cake", MatchMode.ANY) == '{"compound": {"mustNot": [{"text": {"query": "cake", "path": ["title", "body"]}}], "must": [{"exists": {"path": "title"}}]}}'
         render("", MatchMode.ANY) == '{"compound": {"must": [{"exists": {"path": "title"}}], "mustNot": [{"exists": {"path": "title"}}]}}'
+    }
+
+    void "an alternative made only of negated terms matches nothing"() {
+        expect:
+        render("-cake", MatchMode.ANY) == render("", MatchMode.ANY)
+        render("-cake -tea", MatchMode.ALL) == render("", MatchMode.ALL)
+        render("coffee OR -cake", MatchMode.ANY) == '{"text": {"query": "coffee", "path": ["title", "body"]}}'
     }
 }

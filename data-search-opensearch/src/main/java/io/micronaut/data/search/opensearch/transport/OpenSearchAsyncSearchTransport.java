@@ -27,8 +27,10 @@ import org.jspecify.annotations.Nullable;
 import org.opensearch.client.json.JsonpMapper;
 import org.opensearch.client.opensearch.OpenSearchAsyncClient;
 import org.opensearch.client.opensearch._types.OpType;
+import org.opensearch.client.opensearch._types.OpenSearchException;
 import org.opensearch.client.opensearch._types.query_dsl.Query;
 import org.opensearch.client.transport.OpenSearchTransport;
+import org.opensearch.client.transport.httpclient5.ResponseException;
 
 import java.io.IOException;
 import java.util.List;
@@ -41,7 +43,7 @@ import java.util.concurrent.CompletionStage;
  * The non-blocking {@link AsyncSearchTransport} over an {@link OpenSearchAsyncClient} created from
  * the configured {@link OpenSearchTransport}.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 @Singleton
@@ -102,7 +104,31 @@ public final class OpenSearchAsyncSearchTransport implements AsyncSearchTranspor
 
     @Override
     public CompletionStage<String> create(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh) {
-        return call(() -> client.index(i -> i.index(index).id(id).opType(OpType.Create).document(source).refresh(OpenSearchRequests.refresh(refresh)))).thenApply(response -> response.id());
+        return call(() -> client.index(i -> i.index(index).id(id).opType(OpType.Create).document(source).refresh(OpenSearchRequests.refresh(refresh))))
+            .handle((response, failure) -> {
+                if (failure != null) {
+                    throw AsyncSearchTransport.createFailure(index, id, failure, OpenSearchAsyncSearchTransport::status);
+                }
+                return response.id();
+            });
+    }
+
+    /**
+     * The HTTP status of a failed request. The async client over the Apache HttpClient 5 transport
+     * completes a request the store answered with an error with the transport's
+     * {@link ResponseException} rather than an {@link OpenSearchException}, so both are read.
+     *
+     * @param failure The failure
+     * @return The status, or {@code 0} when the failure is not a store response
+     */
+    static int status(Throwable failure) {
+        if (failure instanceof OpenSearchException e) {
+            return e.status();
+        }
+        if (failure instanceof ResponseException e) {
+            return e.status();
+        }
+        return 0;
     }
 
     @Override

@@ -1,12 +1,20 @@
 package io.micronaut.data.document.mongodb.search
 
+import com.mongodb.client.MongoClient
+import com.mongodb.client.MongoCollection
+import com.mongodb.client.model.IndexOptions
+import com.mongodb.client.model.Indexes
 import groovy.transform.Memoized
 import io.micronaut.data.document.mongodb.MongoTestPropertyProvider
 import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.runtime.RuntimeEntityRegistry
 import io.micronaut.data.model.search.SearchCapability
 import io.micronaut.data.search.tck.AbstractTextSearchSpec
 import io.micronaut.data.search.tck.entities.Book
+import io.micronaut.data.mongodb.operations.MongoCollectionNameProvider
+import io.micronaut.data.mongodb.operations.MongoDatabaseNameProvider
 import io.micronaut.data.search.tck.repositories.BookSearchRepository
+import org.bson.Document
 
 class MongoTextSearchSpec extends AbstractTextSearchSpec implements MongoTestPropertyProvider {
 
@@ -66,5 +74,41 @@ class MongoTextSearchSpec extends AbstractTextSearchSpec implements MongoTestPro
     @Override
     String nativeProgrammingWithoutKotlinQuery() {
         return "programming -kotlin"
+    }
+
+    void "the index operations take a text index under another name for the entity's, like the startup creator"() {
+        given:
+        def operations = searchIndexOperations()
+        def collection = context.getBean(MongoClient)
+                .getDatabase(context.getBean(MongoDatabaseNameProvider).provide(Book))
+                .getCollection(context.getBean(MongoCollectionNameProvider).provide(context.getBean(RuntimeEntityRegistry).getEntity(Book)))
+
+        when: "the text index is replaced by one under another name, as a migration may leave it"
+        operations.drop(Book)
+        collection.createIndex(Indexes.compoundIndex(Indexes.text("title"), Indexes.text("description")), new IndexOptions().name("legacy_text"))
+
+        then:
+        operations.exists(Book)
+
+        when:
+        operations.create(Book)
+
+        then: "the existing text index is kept rather than adding a second one, which MongoDB rejects"
+        textIndexNames(collection) == ["legacy_text"]
+
+        when:
+        operations.drop(Book)
+
+        then:
+        textIndexNames(collection).isEmpty()
+        !operations.exists(Book)
+
+        cleanup:
+        operations.drop(Book)
+        operations.create(Book)
+    }
+
+    private static List<String> textIndexNames(MongoCollection<Document> collection) {
+        return collection.listIndexes().into([]).findAll { (it.get("key") as Document).containsKey("_fts") }*.getString("name")
     }
 }

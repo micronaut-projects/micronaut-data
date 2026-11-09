@@ -72,7 +72,7 @@ import java.util.UUID;
  * The request building, document mapping and entity events shared by the blocking and the
  * reactive document search operations.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 abstract class AbstractDocumentSearchRepositoryOperations extends AbstractRepositoryOperations {
@@ -81,6 +81,13 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
     private static final String ORDER = "order";
     private static final String ASC = "asc";
     private static final String DESC = "desc";
+    private static final String FROM = "from";
+    private static final String SIZE = "size";
+    private static final String SORT = "sort";
+    private static final String KNN = "knn";
+    private static final String NUM_CANDIDATES = "num_candidates";
+    // the hits a request without a size returns, the default of Elasticsearch and OpenSearch
+    private static final int DEFAULT_SIZE = 10;
 
     protected final JsonMapper jsonMapper;
     protected final DocumentSearchConfiguration configuration;
@@ -114,7 +121,10 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
     // ---------- entity events around writes
 
     /**
-     * Fires the pre-persist event and assigns a client-side id when the entity needs one.
+     * Fires the pre-persist event and assigns a client-side id when the entity has none: a random
+     * {@code UUID}, or its string form for a {@code String} id. The id is generated here rather than by
+     * the store so the document source holds it, which the cursored paging tiebreaker sorts on, and so
+     * an externally versioned write, which the stores reject without an id, can be sent.
      *
      * @return The entity to index, or {@code null} when a listener vetoed the persist
      */
@@ -130,8 +140,10 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
         if (id == null) {
             if (identity.getType() == UUID.class) {
                 current = setId(identity, current, UUID.randomUUID());
-            } else if (identity.getType() != String.class) {
-                throw new DataAccessException("Document search stores generate String ids only; assign the id of " + entity.getName() + " or use a String or UUID id");
+            } else if (identity.getType() == String.class) {
+                current = setId(identity, current, UUID.randomUUID().toString());
+            } else {
+                throw new DataAccessException("Document search stores generate String and UUID ids only; assign the id of " + entity.getName() + " or use a String or UUID id");
             }
         }
         return current;
@@ -170,15 +182,6 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
     }
 
     /**
-     * The version to delete an entity at: its {@code @Version} property as read, so the store rejects
-     * the delete when the document has been updated since.
-     *
-     * @param current The entity
-     * @param entity The persistent entity
-     * @param <T> The entity type
-     * @return The version, or {@code null} for an entity without a version property
-     */
-    /**
      * Whether a save may replace a document with the same id: Jakarta Data's {@code @Save} inserts or
      * replaces, while an insert is a create-only write.
      *
@@ -189,6 +192,16 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
         return annotationMetadata.hasAnnotation("jakarta.data.repository.Save");
     }
 
+    /**
+     * The version to delete an entity at: its {@code @Version} property as read, so the store rejects
+     * the delete when the document has been updated since. It must be read before the pre-remove event,
+     * whose version-generating listener increments the property of a mutable entity in place.
+     *
+     * @param current The entity
+     * @param entity The persistent entity
+     * @param <T> The entity type
+     * @return The version, or {@code null} for an entity without a version property
+     */
     @Nullable
     protected final <T> Long deleteVersion(T current, RuntimePersistentEntity<T> entity) {
         return documentVersion(current, entity);
@@ -228,6 +241,33 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
         EntityEventContext<T> post = new DefaultEntityEventContext<>(entity, current);
         entityEventRegistry.postPersist((EntityEventContext<Object>) post);
         return post.getEntity();
+    }
+
+    /**
+     * Fires the pre-persist event of each entity of a batch and builds the documents to index.
+     *
+     * @param values The entities
+     * @param entity The entity type
+     * @param replace Whether a document without a version replaces one with the same id, as a Jakarta Data
+     *                {@code @Save} does, rather than being a create-only write
+     * @param <T> The entity type
+     * @return The batch
+     */
+    protected final <T> PersistBatch<T> persistBatch(Iterable<T> values, RuntimePersistentEntity<T> entity, boolean replace) {
+        PersistBatch<T> batch = new PersistBatch<>(entity);
+        for (T value : values) {
+            T current = prePersist(value, entity);
+            if (current == null) {
+                batch.results.add(value);
+            } else {
+                batch.positions.add(batch.results.size());
+                batch.results.add(current);
+                batch.toIndex.add(current);
+                Long version = persistVersion(current, entity);
+                batch.documents.add(new SearchTransport.BulkDocument(documentId(current, entity), toDocument(current, entity), version, !replace && version == null));
+            }
+        }
+        return batch;
     }
 
     /**
@@ -367,27 +407,62 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
         }
     }
 
+    /**
+     * Reads an entity from its document. The constructor arguments are passed to the constructor and the other
+     * properties set afterwards, so a property the document leaves out, because it was {@code null} when written,
+     * keeps its default, also in a package whose types are non-null by default.
+     */
     private <T> T readDocument(Map<String, Object> source, RuntimePersistentEntity<T> entity) throws IOException {
-        BeanIntrospection.Builder<T> builder = entity.getIntrospection().builder();
+        Map<String, Object> values = new LinkedHashMap<>();
         for (RuntimePersistentProperty<T> property : documentProperties(entity)) {
             Object raw = source.get(property.getName());
-            if (raw == null) {
-                continue;
+            if (raw != null) {
+                values.put(property.getName(), readValue(raw, property));
             }
-            Object converted;
-            if (property instanceof Embedded && raw instanceof Map<?, ?> nested) {
-                RuntimePersistentEntity<Object> embedded = (RuntimePersistentEntity<Object>) ((RuntimeAssociation<T>) property).getAssociatedEntity();
-                converted = readDocument((Map<String, Object>) nested, embedded);
-            } else if (ReflectionUtils.getWrapperType(property.getType()).isInstance(raw) && !(raw instanceof Map) && !(raw instanceof Iterable)) {
-                converted = raw;
-            } else if (Vector.class.isAssignableFrom(property.getType()) && raw instanceof Collection<?> numbers) {
-                converted = vectorOf((Collection<? extends Number>) numbers, property.getType());
-            } else {
-                converted = jsonMapper.readValue(jsonMapper.writeValueAsBytes(raw), property.getArgument());
-            }
-            builder.with(property.getName(), converted);
         }
-        return builder.build();
+        BeanIntrospection<T> introspection = entity.getIntrospection();
+        Argument<?>[] constructorArguments = introspection.getConstructorArguments();
+        Object[] arguments = new Object[constructorArguments.length];
+        for (int i = 0; i < constructorArguments.length; i++) {
+            Argument<?> argument = constructorArguments[i];
+            Object value = values.remove(argument.getName());
+            arguments[i] = value == null && argument.isPrimitive() ? primitiveDefault(argument.getType()) : value;
+        }
+        T instance = introspection.instantiate(arguments);
+        for (Map.Entry<String, Object> value : values.entrySet()) {
+            BeanProperty<T, Object> property = introspection.getRequiredProperty(value.getKey(), Object.class);
+            if (property.isReadOnly()) {
+                instance = property.withValue(instance, value.getValue());
+            } else {
+                property.set(instance, value.getValue());
+            }
+        }
+        return instance;
+    }
+
+    private <T> @Nullable Object readValue(Object raw, RuntimePersistentProperty<T> property) throws IOException {
+        if (property instanceof Embedded && raw instanceof Map<?, ?> nested) {
+            RuntimePersistentEntity<Object> embedded = (RuntimePersistentEntity<Object>) ((RuntimeAssociation<T>) property).getAssociatedEntity();
+            return readDocument((Map<String, Object>) nested, embedded);
+        }
+        if (ReflectionUtils.getWrapperType(property.getType()).isInstance(raw) && !(raw instanceof Map) && !(raw instanceof Iterable)) {
+            return raw;
+        }
+        if (Vector.class.isAssignableFrom(property.getType()) && raw instanceof Collection<?> numbers) {
+            return vectorOf((Collection<? extends Number>) numbers, property.getType());
+        }
+        return jsonMapper.readValue(jsonMapper.writeValueAsBytes(raw), property.getArgument());
+    }
+
+    /** The value a primitive constructor argument gets when the document has none, as Java initialises a field. */
+    private Object primitiveDefault(Class<?> type) {
+        if (type == boolean.class) {
+            return false;
+        }
+        if (type == char.class) {
+            return '\0';
+        }
+        return conversionService.convertRequired(0, type);
     }
 
     /** A stored JSON array of numbers as the vector type of the property. */
@@ -500,9 +575,9 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
             }
             if (limit.isLimited()) {
                 if (limit.offset() > 0) {
-                    body.put("from", limit.offset());
+                    body.put(FROM, limit.offset());
                 }
-                body.put("size", limit.maxResults());
+                body.put(SIZE, limit.maxResults());
             }
             applyPageable(body, Pageable.UNPAGED.withSort(preparedQuery.getSort()), entity);
             return;
@@ -521,10 +596,13 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
      * @return Whether the results must be checked for a second hit
      */
     protected final <T> boolean applySingleResult(Map<String, Object> body, PreparedQuery<?, ?> query, RuntimePersistentEntity<T> entity) {
-        Object declaredSize = body.get("size");
-        applyPageable(body, query, entity);
+        Object declaredSize = body.get(SIZE);
         boolean checkUnique = configuration.isUniqueResultOnFindOne() && declaredSize == null;
-        body.put("size", checkUnique ? 2 : declaredSize == null ? 1 : declaredSize);
+        Object size = checkUnique ? 2 : declaredSize == null ? 1 : declaredSize;
+        // set before the pageable, so an unpaged vector search sizes its knn clause for this window
+        body.put(SIZE, size);
+        applyPageable(body, query, entity);
+        body.put(SIZE, size);
         return checkUnique;
     }
 
@@ -552,28 +630,34 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
             return;
         }
         List<Map<String, Object>> entries = new ArrayList<>();
-        if (body.get("sort") instanceof List<?> declared) {
+        if (body.get(SORT) instanceof List<?> declared) {
             for (Object entry : declared) {
                 entries.add((Map<String, Object>) entry);
             }
         }
         entries.addAll(sortEntries(sort.getOrderBy(), entity, false));
-        body.put("sort", entries);
+        body.put(SORT, entries);
     }
 
     protected final <T> void applyPageable(Map<String, Object> body, Pageable pageable, RuntimePersistentEntity<T> entity) {
         if (pageable instanceof CursoredPageable cursored) {
+            if (containsKnn(body)) {
+                // the k nearest neighbours are the documents search_after pages through, and the position of a
+                // cursor in that window is unknown, so no k covers the next page
+                throw new UnsupportedOperationException("Cursored paging is not supported for a vector search in a document search store, use a Pageable with an offset");
+            }
             applyCursoredPageable(body, cursored, entity);
             return;
         }
         if (pageable.isUnpaged()) {
             // without a size the stores return only their default of 10 hits; a query's own limit stays
-            body.putIfAbsent("size", configuration.getMaxResults());
+            body.putIfAbsent(SIZE, configuration.getMaxResults());
         } else {
-            body.put("from", pageable.getOffset());
-            body.put("size", pageable.getSize());
-            sizeKnn(body, (int) Math.min(Integer.MAX_VALUE, pageable.getOffset() + pageable.getSize()));
+            body.put(FROM, pageable.getOffset());
+            body.put(SIZE, pageable.getSize());
         }
+        // after the window is known, so an unlimited vector search follows the max-results ceiling
+        sizeKnn(body, window(body));
         appendSort(body, pageable.getSort(), entity);
     }
 
@@ -589,18 +673,36 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
         return DocumentSearchQueryBuilder.keywordPath(path);
     }
 
+    /** The end of the window of hits a request returns: its {@code from} plus its {@code size}, or the stores' default size. */
+    private static int window(Map<String, Object> body) {
+        long from = body.get(FROM) instanceof Number number ? number.longValue() : 0;
+        long size = body.get(SIZE) instanceof Number number ? number.longValue() : DEFAULT_SIZE;
+        return (int) Math.min(Integer.MAX_VALUE, from + size);
+    }
+
+    /** Whether a request holds a {@code knn} query. */
+    private static boolean containsKnn(Object node) {
+        if (node instanceof Map<?, ?> map) {
+            return map.containsKey(KNN) || map.values().stream().anyMatch(AbstractDocumentSearchRepositoryOperations::containsKnn);
+        }
+        return node instanceof List<?> list && list.stream().anyMatch(AbstractDocumentSearchRepositoryOperations::containsKnn);
+    }
+
     /**
      * A {@code knn} clause compiled with the method's limit returns at most {@code k} hits, so a page beyond
-     * that window would be empty: {@code k} and {@code num_candidates} grow to cover the requested window.
+     * that window would be empty: {@code k} and {@code num_candidates} grow to cover the requested window,
+     * up to the {@value DocumentSearchQueryBuilder#MAX_KNN_CANDIDATES} the stores accept.
      */
     @SuppressWarnings("unchecked")
     private static void sizeKnn(Object node, int window) {
+        int k = Math.min(window, DocumentSearchQueryBuilder.MAX_KNN_CANDIDATES);
         if (node instanceof Map<?, ?> map) {
             for (Map.Entry<?, ?> entry : map.entrySet()) {
-                if ("knn".equals(entry.getKey()) && entry.getValue() instanceof Map<?, ?> knn && knn.get("k") instanceof Number k && k.intValue() < window) {
+                if (KNN.equals(entry.getKey()) && entry.getValue() instanceof Map<?, ?> knn && knn.get("k") instanceof Number current && current.intValue() < k) {
                     Map<String, Object> clause = (Map<String, Object>) knn;
-                    clause.put("k", window);
-                    clause.put("num_candidates", Math.max(window * 10, knn.get("num_candidates") instanceof Number c ? c.intValue() : 0));
+                    int candidates = Math.max(k * 10, knn.get(NUM_CANDIDATES) instanceof Number c ? c.intValue() : 0);
+                    clause.put("k", k);
+                    clause.put(NUM_CANDIDATES, Math.min(candidates, DocumentSearchQueryBuilder.MAX_KNN_CANDIDATES));
                 } else {
                     sizeKnn(entry.getValue(), window);
                 }
@@ -620,7 +722,7 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
         List<Sort.Order> orders = cursorOrders(pageable, entity);
         // the method's OrderBy comes first, then the pageable's sort and the id tiebreaker
         List<Map<String, Object>> entries = new ArrayList<>();
-        if (body.get("sort") instanceof List<?> declared) {
+        if (body.get(SORT) instanceof List<?> declared) {
             for (Object entry : declared) {
                 entries.add(pageable.isBackward() ? reversed((Map<String, Object>) entry) : (Map<String, Object>) entry);
             }
@@ -631,9 +733,9 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
                 entries.add(entry);
             }
         }
-        body.put("sort", entries);
+        body.put(SORT, entries);
         if (pageable.getSize() > 0) {
-            body.put("size", pageable.getSize());
+            body.put(SIZE, pageable.getSize());
         }
         int sortValues = entries.size();
         pageable.cursor().ifPresent(cursor -> {
@@ -762,6 +864,70 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
         @Override
         public void bindMany(io.micronaut.data.model.runtime.QueryParameterBinding binding, java.util.Collection<Object> values) {
             // values are collected by the stored query
+        }
+    }
+
+    /**
+     * The entities of a batch insert after the pre-persist event, sent in bulk requests of at most
+     * the configured bulk size. Each written entity gets its id and the post-persist event as soon as
+     * its request returns, also when the store rejected other documents of the request.
+     *
+     * @param <T> The entity type
+     */
+    protected final class PersistBatch<T> {
+
+        // the results keep the input order, with vetoed entities in place
+        private final List<T> results = new ArrayList<>();
+        private final List<T> toIndex = new ArrayList<>();
+        // the position of each indexed entity in the results, as equal entities cannot be told apart by indexOf
+        private final List<Integer> positions = new ArrayList<>();
+        private final List<SearchTransport.BulkDocument> documents = new ArrayList<>();
+        private final RuntimePersistentEntity<T> entity;
+
+        private PersistBatch(RuntimePersistentEntity<T> entity) {
+            this.entity = entity;
+        }
+
+        /**
+         * @return The entities in input order, the persisted ones after their post-persist event
+         */
+        public List<T> results() {
+            return results;
+        }
+
+        /**
+         * @return The index the entities go to
+         */
+        public String index() {
+            return indexName(entity);
+        }
+
+        /**
+         * @return The documents to index, split into requests of at most the configured bulk size
+         */
+        public List<List<SearchTransport.BulkDocument>> requests() {
+            int size = configuration.getBulkSize();
+            List<List<SearchTransport.BulkDocument>> requests = new ArrayList<>((documents.size() + size - 1) / size);
+            for (int from = 0; from < documents.size(); from += size) {
+                requests.add(documents.subList(from, Math.min(from + size, documents.size())));
+            }
+            return requests;
+        }
+
+        /**
+         * Stores the ids of the written documents of one request and fires their post-persist event.
+         *
+         * @param request The position of the request in {@link #requests()}
+         * @param ids The id of each document of the request, {@code null} for one that was not written
+         */
+        public void written(int request, List<@Nullable String> ids) {
+            int offset = request * configuration.getBulkSize();
+            for (int i = 0; i < ids.size(); i++) {
+                String id = ids.get(i);
+                if (id != null) {
+                    results.set(positions.get(offset + i), postPersist(toIndex.get(offset + i), entity, id));
+                }
+            }
         }
     }
 }

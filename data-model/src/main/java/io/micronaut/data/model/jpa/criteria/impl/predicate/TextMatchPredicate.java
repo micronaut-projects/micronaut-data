@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
 import io.micronaut.data.model.search.MatchMode;
 import io.micronaut.data.model.search.TextMatchOptions;
+import io.micronaut.data.model.search.TextSearchSupport;
 import jakarta.persistence.criteria.Expression;
 
 import java.util.List;
@@ -51,13 +52,14 @@ public final class TextMatchPredicate extends AbstractPredicate {
      * @param fields The fields to match
      * @param query The query expression
      * @param mode The match mode
-     * @param options The boosts and fuzziness
-     * @since 5.4.0
+     * @param options The boosts and fuzziness, checked with {@link TextSearchSupport#validateOptions}
+     * @since 5.3.0
      */
     public TextMatchPredicate(List<Expression<?>> fields, Expression<String> query, MatchMode mode, TextMatchOptions options) {
         if (fields.isEmpty()) {
             throw new IllegalArgumentException("A text match requires at least one field");
         }
+        TextSearchSupport.validateOptions(fields, mode, options);
         this.fields = List.copyOf(fields);
         this.query = query;
         this.mode = mode;
@@ -66,7 +68,7 @@ public final class TextMatchPredicate extends AbstractPredicate {
 
     /**
      * @return The boosts and fuzziness
-     * @since 5.4.0
+     * @since 5.3.0
      */
     public TextMatchOptions getOptions() {
         return options;

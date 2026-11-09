@@ -53,8 +53,11 @@ public enum MatchMode {
      * Elasticsearch and OpenSearch.
      *
      * <p>Only pass trusted input: the native syntax is not escaped, so a user could widen the query.
-     * On Elasticsearch and OpenSearch {@code field:value} reaches fields outside the search fields;
-     * leading wildcards are disabled there.</p>
+     * On Elasticsearch and OpenSearch {@code field:value} reaches fields outside the search fields
+     * (leading wildcards are disabled there), and on MongoDB Search it reaches any path of the search
+     * index, including dynamically mapped fields. On an Oracle JSON entity a query that leaves a
+     * parenthesis or an escape open is rejected with {@link IllegalArgumentException}, as it could
+     * leave the {@code INPATH} of its field.</p>
      */
     NATIVE;
 
