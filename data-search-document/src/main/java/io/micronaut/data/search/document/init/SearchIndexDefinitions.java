@@ -26,6 +26,7 @@ import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.search.TextSearchSupport;
+import io.micronaut.data.search.document.query.DocumentSearchQueryBuilder;
 import io.micronaut.data.search.document.query.SearchJson;
 import io.micronaut.json.JsonMapper;
 import java.io.IOException;
@@ -125,8 +126,29 @@ public final class SearchIndexDefinitions {
     private static Map<String, Object> declaredMapping(PersistentProperty property) {
         return property.getAnnotationMetadata().stringValue(SearchMapping.class)
             .filter(json -> !json.isBlank())
-            .map(json -> readJson(json, "@SearchMapping of " + property.getName()))
+            .map(json -> withKeywordSubField(property, readJson(json, "@SearchMapping of " + property.getName())))
             .orElse(null);
+    }
+
+    /**
+     * Adds the {@code keyword} sub-field to the declared mapping of an analysed search field, unless it declares
+     * one, as the derived equality, range and sort queries address {@code <field>.keyword}.
+     */
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> withKeywordSubField(PersistentProperty property, Map<String, Object> mapping) {
+        if (!DocumentSearchQueryBuilder.isAnalysed(property)) {
+            return mapping;
+        }
+        Map<String, Object> fields = mapping.get(FIELDS) instanceof Map<?, ?> declared
+            ? new LinkedHashMap<>((Map<String, Object>) declared)
+            : new LinkedHashMap<>();
+        if (fields.containsKey(KEYWORD)) {
+            return mapping;
+        }
+        fields.putAll(KEYWORD_SUB_FIELD);
+        Map<String, Object> merged = new LinkedHashMap<>(mapping);
+        merged.put(FIELDS, fields);
+        return merged;
     }
 
     /**
