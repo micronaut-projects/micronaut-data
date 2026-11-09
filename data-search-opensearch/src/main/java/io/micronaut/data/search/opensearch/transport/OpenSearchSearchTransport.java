@@ -47,7 +47,6 @@ import java.util.Map;
 @Requires(beans = OpenSearchClient.class)
 public final class OpenSearchSearchTransport implements SearchTransport {
 
-
     private final OpenSearchClient client;
     private final JsonpMapper mapper;
 

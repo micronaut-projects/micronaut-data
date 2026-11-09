@@ -372,9 +372,13 @@ public final class SearchQuery {
 
         /**
          * Makes the search hybrid: the hits of the text match and the nearest neighbours of the given
-         * vector are merged with reciprocal rank fusion, so a row matching both ranks first.
+         * vector are merged with reciprocal rank fusion, so a row matching both ranks first. The
+         * {@code totalHits} of a hybrid result is the number of distinct hits in the fused ranking, the
+         * union of both rankings' candidate windows left after {@link #minScore(double)}, not the number of
+         * matching rows.
          *
-         * @param property The vector property of the entity
+         * @param property The vector property of the entity, which must be a {@link Vector}; the search
+         * throws {@link IllegalArgumentException} for another property
          * @param vector The query vector
          * @return This builder
          */
@@ -385,7 +389,9 @@ public final class SearchQuery {
         }
 
         /**
-         * @param textWeight The weight of the text rank in the hybrid score, {@code 1} by default
+         * @param textWeight The weight of the text rank in the hybrid score, {@code 1} by default. A weight
+         * of {@code 0} ignores the text ranking, so only the vector hits are returned; {@link #build()}
+         * rejects a hybrid query whose weights are both {@code 0}
          * @return This builder
          * @throws IllegalArgumentException When the weight is negative or not finite
          */
@@ -395,7 +401,9 @@ public final class SearchQuery {
         }
 
         /**
-         * @param vectorWeight The weight of the vector rank in the hybrid score, {@code 1} by default
+         * @param vectorWeight The weight of the vector rank in the hybrid score, {@code 1} by default. A
+         * weight of {@code 0} ignores the vector ranking, so only the text hits are returned; {@link #build()}
+         * rejects a hybrid query whose weights are both {@code 0}
          * @return This builder
          * @throws IllegalArgumentException When the weight is negative or not finite
          */
@@ -439,8 +447,13 @@ public final class SearchQuery {
 
         /**
          * @return The query
+         * @throws IllegalArgumentException When the query is hybrid and both weights are {@code 0}, which
+         * would score every hit {@code 0} and return nothing
          */
         public SearchQuery build() {
+            if (vector != null && textWeight == 0 && vectorWeight == 0) {
+                throw new IllegalArgumentException("A hybrid search needs a positive textWeight or vectorWeight; with both 0 no hit can score");
+            }
             return new SearchQuery(this);
         }
     }

@@ -18,6 +18,7 @@ package io.micronaut.data.search.opensearch.transport;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.search.document.conf.DocumentSearchConfiguration;
 import io.micronaut.data.search.document.runtime.SearchTransport;
+import jakarta.json.JsonNumber;
 import jakarta.json.stream.JsonParser;
 import org.jspecify.annotations.Nullable;
 import org.opensearch.client.json.JsonData;
@@ -105,7 +106,8 @@ final class OpenSearchRequests {
 
     /**
      * The query builder lists the highlighted fields as one object per field; the OpenSearch client
-     * only reads them as a map.
+     * only reads them as a map. The clause options, such as {@code number_of_fragments}, are parsed as
+     * JSON-P numbers, which the client's mapper would write as objects, so they become Java numbers.
      *
      * @param highlight The parsed highlight clause
      * @return The clause with the fields as a map
@@ -119,11 +121,18 @@ final class OpenSearchRequests {
                     merged.putAll((Map<String, Object>) entry);
                 }
             }
-            Map<String, Object> rewritten = new LinkedHashMap<>((Map<String, Object>) clause);
+            Map<String, Object> rewritten = new LinkedHashMap<>();
+            for (Map.Entry<String, Object> option : ((Map<String, Object>) clause).entrySet()) {
+                rewritten.put(option.getKey(), option.getValue() instanceof JsonNumber number ? plainNumber(number) : option.getValue());
+            }
             rewritten.put("fields", merged);
             return rewritten;
         }
         return highlight;
+    }
+
+    private static Number plainNumber(JsonNumber number) {
+        return number.isIntegral() ? number.longValue() : number.doubleValue();
     }
 
     /**
