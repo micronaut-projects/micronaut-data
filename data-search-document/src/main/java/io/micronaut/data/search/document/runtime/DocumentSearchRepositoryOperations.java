@@ -20,7 +20,7 @@ import io.micronaut.data.operations.RepositoryOperations;
 /**
  * Repository operations backed by a document search store through a {@link SearchTransport}.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 public interface DocumentSearchRepositoryOperations extends RepositoryOperations {
 
