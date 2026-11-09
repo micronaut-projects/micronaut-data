@@ -34,7 +34,7 @@ import java.util.StringJoiner;
  * {@code prefix*} and {@code term~1}. Special characters in terms are escaped so user input is matched
  * literally.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 public abstract class SimpleQueryStringConverter implements TextSearchQueryConverter {
