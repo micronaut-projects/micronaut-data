@@ -237,7 +237,7 @@ class FakeClientTransportSpec extends Specification {
         "async" | asyncAsBlocking | true
     }
 
-    void "another Elasticsearch error on index passes through unchanged (#name, wrapped=#wrapped)"() {
+    void "another Elasticsearch error on index is a DataAccessException (#name, wrapped=#wrapped)"() {
         given:
         def failure = FakeElasticsearchTransport.error("es/index", 400, "mapper_parsing_exception", "failed to parse")
         fake.fail("es/index", failure)
@@ -247,15 +247,17 @@ class FakeClientTransportSpec extends Specification {
         transport.index(INDEX, "k1", [title: "Bad"], NONE)
 
         then:
-        ElasticsearchException e = thrown()
-        e.is(failure)
-        e.status() == 400
+        DataAccessException e = thrown()
+        !(e instanceof OptimisticLockException)
+        e.message.startsWith("Elasticsearch $operation failed: ")
+        e.message.contains("failed to parse")
+        e.cause.is(failure)
 
         where:
-        name    | transport       | wrapped
-        "sync"  | sync            | false
-        "async" | asyncAsBlocking | false
-        "async" | asyncAsBlocking | true
+        name    | transport       | wrapped | operation
+        "sync"  | sync            | false   | "index"
+        "async" | asyncAsBlocking | false   | "request"
+        "async" | asyncAsBlocking | true    | "request"
     }
 
     void "a runtime failure on index passes through unchanged (#name)"() {
@@ -539,12 +541,13 @@ class FakeClientTransportSpec extends Specification {
         then:
         Throwable e = thrown()
         expected.isInstance(e)
-        status == 409 ? e.message == "Document null was modified concurrently: reason" && e.cause.is(failure) : e.is(failure)
+        e.cause.is(failure)
+        e.message == (status == 409 ? "Document null was modified concurrently: reason" : "Elasticsearch bulk failed: " + failure.message)
 
         where:
         status | expected
         409    | OptimisticLockException
-        500    | ElasticsearchException
+        500    | DataAccessException
     }
 
     // --- indices (blocking transport only) -----------------------------------------------------
@@ -658,6 +661,7 @@ class FakeClientTransportSpec extends Specification {
     void "conflictOrFailure unwraps a CompletionException and keeps the cause"() {
         given:
         def conflict = FakeElasticsearchTransport.error("es/index", 409, "version_conflict_engine_exception", "stale")
+        def store = FakeElasticsearchTransport.error("es/index", 400, "mapper_parsing_exception", "failed to parse")
         def io = new IOException("lost")
         def runtime = new IllegalArgumentException("bad")
 
@@ -672,6 +676,13 @@ class FakeClientTransportSpec extends Specification {
             message == "Elasticsearch request failed: lost"
             cause.is(io)
         }
+        with(ElasticsearchAsyncSearchTransport.conflictOrFailure(new CompletionException(store), "k1")) {
+            it instanceof DataAccessException
+            !(it instanceof OptimisticLockException)
+            message == "Elasticsearch request failed: " + store.message
+            cause.is(store)
+        }
+        ElasticsearchAsyncSearchTransport.conflictOrFailure(store, "k1", "delete").message == "Elasticsearch delete failed: " + store.message
         ElasticsearchAsyncSearchTransport.conflictOrFailure(new CompletionException(runtime), null).is(runtime)
         ElasticsearchAsyncSearchTransport.conflictOrFailure(runtime, null).is(runtime)
 

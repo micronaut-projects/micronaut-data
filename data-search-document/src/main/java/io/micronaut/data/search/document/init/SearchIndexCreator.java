@@ -37,7 +37,7 @@ import java.util.List;
 /**
  * Creates the index of every {@link Searchable} entity on startup when it does not exist.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Context
 @Internal
