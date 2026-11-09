@@ -21,7 +21,7 @@ import io.micronaut.core.annotation.Experimental;
  * A full-text search feature a backend may or may not support. Every backend supports
  * {@link MatchMode#ANY}, {@link MatchMode#ALL} and ordering by score; everything else is a capability.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Experimental
 public enum SearchCapability {

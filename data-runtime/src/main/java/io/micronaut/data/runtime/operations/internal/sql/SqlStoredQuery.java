@@ -21,8 +21,10 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.QueryResultInfo;
+import io.micronaut.data.model.runtime.convert.TextSearchQueryConverter;
 import io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -40,6 +42,32 @@ public interface SqlStoredQuery<E, R> extends BindableParametersStoredQuery<E, R
      * @return true if query is expandable
      */
     boolean isExpandableQuery();
+
+    /**
+     * Whether the query is a full-text search: its compiled parameter metadata binds a parameter through a
+     * {@link TextSearchQueryConverter}. Its {@code SearchResults} score is then a relevance rank, not a vector distance.
+     *
+     * @return true if the query is a full-text search
+     * @since 5.3.0
+     */
+    default boolean isTextSearch() {
+        return hasTextSearchBinding(getQueryBindings());
+    }
+
+    /**
+     * @param bindings The query parameter bindings
+     * @return Whether one of the bindings converts its value through a {@link TextSearchQueryConverter}
+     * @since 5.3.0
+     */
+    static boolean hasTextSearchBinding(List<QueryParameterBinding> bindings) {
+        for (QueryParameterBinding binding : bindings) {
+            Class<?> converter = binding.getParameterConverterClass();
+            if (converter != null && TextSearchQueryConverter.class.isAssignableFrom(converter)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     /**
      * Get dialect.

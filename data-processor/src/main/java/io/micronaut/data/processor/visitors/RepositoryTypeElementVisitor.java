@@ -751,6 +751,9 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             if (methodInfo.isOptionalEmbeddedProjection()) {
                 annotationBuilder.member(DataMethodQuery.META_MEMBER_OPTIONAL_EMBEDDED_PROJECTION, true);
             }
+            if (methodInfo.isScoreOrderedWhenUnsorted()) {
+                annotationBuilder.member(DataMethodQuery.META_MEMBER_SCORE_ORDER, true);
+            }
 
             addQueryDefinition(methodMatchContext,
                 annotationBuilder,
