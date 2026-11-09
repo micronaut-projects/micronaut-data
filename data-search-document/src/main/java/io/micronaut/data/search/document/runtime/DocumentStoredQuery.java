@@ -19,6 +19,7 @@ import io.micronaut.aop.InvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
@@ -39,7 +40,9 @@ import java.util.Objects;
 
 /**
  * A stored query whose JSON body is parsed once and whose parameter placeholders are replaced per
- * invocation.
+ * invocation. Bound values other than strings, numbers and booleans are converted with the
+ * {@link JsonMapper} that writes the documents, so a date, a temporal or an enum with a custom
+ * serialised name is compared in the form it is stored in.
  *
  * @param <E> The entity type
  * @param <R> The result type
@@ -49,6 +52,7 @@ import java.util.Objects;
 public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersStoredQuery<E, R> {
 
     private final Map<String, Object> body;
+    private final JsonMapper jsonMapper;
 
     /**
      * @param storedQuery The stored query
@@ -61,6 +65,7 @@ public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersSt
                                ConversionService conversionService,
                                JsonMapper jsonMapper) {
         super(storedQuery, persistentEntity, conversionService);
+        this.jsonMapper = jsonMapper;
         try {
             this.body = Objects.requireNonNull(jsonMapper.readValue(storedQuery.getQuery(), Argument.mapOf(String.class, Object.class)), "query body");
         } catch (IOException e) {
@@ -118,14 +123,37 @@ public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersSt
 
     /** The value a placeholder stands for: a bound parameter, or the literal it carries when the index is negative. */
     @Nullable
-    private static Object resolvePlaceholder(Map<?, ?> placeholder, int index, List<Object> values) {
-        Object value = index < 0 ? placeholder.get("value") : values.get(index);
-        if (value != null && value.getClass().isArray()) {
-            // an array bound to an In predicate is spliced into the list like a collection
-            value = SearchJson.arrayToList(value);
-        }
+    private Object resolvePlaceholder(Map<?, ?> placeholder, int index, List<Object> values) {
+        // a literal comes from the parsed body and is JSON already
+        Object value = index < 0 ? placeholder.get("value") : toJsonValue(values.get(index));
         Object hint = placeholder.get(DocumentSearchQueryBuilder.WILDCARD_HINT);
         return hint == null ? value : wildcard(value, hint.toString());
+    }
+
+    /**
+     * Converts a bound value to the JSON form the {@link JsonMapper} writes it in within a document;
+     * an array or a collection, as bound to an In predicate, becomes a list of converted elements.
+     */
+    @Nullable
+    private Object toJsonValue(@Nullable Object value) {
+        if (value == null || value instanceof String || value instanceof Number || value instanceof Boolean) {
+            return value;
+        }
+        if (value.getClass().isArray()) {
+            return toJsonValue(SearchJson.arrayToList(value));
+        }
+        if (value instanceof Collection<?> collection) {
+            List<Object> converted = new ArrayList<>(collection.size());
+            for (Object item : collection) {
+                converted.add(toJsonValue(item));
+            }
+            return converted;
+        }
+        try {
+            return jsonMapper.readValue(jsonMapper.writeValueAsBytes(value), Argument.OBJECT_ARGUMENT);
+        } catch (IOException e) {
+            throw new DataAccessException("Cannot write the query parameter " + value + " as JSON: " + e.getMessage(), e);
+        }
     }
 
     private static Object wildcard(@Nullable Object value, String hint) {
