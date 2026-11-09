@@ -149,9 +149,6 @@ final class OpenSearchRequests {
     }
 
     /**
-     * Maps a version conflict (HTTP 409) to {@link OptimisticLockException}; other failures pass through.
-     */
-    /**
      * A delete checked against the version the entity was read at: {@code external_gte} accepts that
      * version and rejects the delete when the stored document is newer.
      */
@@ -174,15 +171,16 @@ final class OpenSearchRequests {
     /**
      * Maps a version conflict (HTTP 409) to {@link OptimisticLockException} and the other errors of the
      * store and the I/O failures to {@link DataAccessException} naming the operation; other runtime
-     * failures pass through.
+     * failures pass through. The status is read like {@link OpenSearchAsyncSearchTransport#status(Throwable)},
+     * as the async client reports a store response as the exception of its HTTP transport.
      */
     static RuntimeException conflictOrFailure(Throwable error, @Nullable String id, String operation) {
         Throwable cause = error instanceof CompletionException && error.getCause() != null ? error.getCause() : error;
-        if (cause instanceof OpenSearchException openSearchException) {
-            if (openSearchException.status() == 409) {
-                return new OptimisticLockException("Document " + id + " was modified concurrently: " + openSearchException.error().reason(), cause);
-            }
-        } else if (cause instanceof RuntimeException runtime) {
+        if (OpenSearchAsyncSearchTransport.status(cause) == 409) {
+            String reason = cause instanceof OpenSearchException openSearchException ? openSearchException.error().reason() : cause.getMessage();
+            return new OptimisticLockException("Document " + id + " was modified concurrently: " + reason, cause);
+        }
+        if (cause instanceof RuntimeException runtime && !(cause instanceof OpenSearchException)) {
             return runtime;
         }
         return new DataAccessException("OpenSearch " + operation + " failed: " + cause.getMessage(), cause);
@@ -349,7 +347,8 @@ final class OpenSearchRequests {
 
     /**
      * The query builder lists the highlighted fields as one object per field; the OpenSearch client
-     * only reads them as a map.
+     * only reads them as a map. The clause options, such as {@code number_of_fragments}, are parsed as
+     * JSON-P numbers, which the client's mapper would write as objects, so they become Java numbers.
      *
      * @param highlight The parsed highlight clause
      * @return The clause with the fields as a map
@@ -363,11 +362,18 @@ final class OpenSearchRequests {
                     merged.putAll((Map<String, Object>) entry);
                 }
             }
-            Map<String, Object> rewritten = new LinkedHashMap<>((Map<String, Object>) clause);
+            Map<String, Object> rewritten = new LinkedHashMap<>();
+            for (Map.Entry<String, Object> option : ((Map<String, Object>) clause).entrySet()) {
+                rewritten.put(option.getKey(), option.getValue() instanceof JsonNumber number ? plainNumber(number) : option.getValue());
+            }
             rewritten.put("fields", merged);
             return rewritten;
         }
         return highlight;
+    }
+
+    private static Number plainNumber(JsonNumber number) {
+        return number.isIntegral() ? number.longValue() : number.doubleValue();
     }
 
     /**
