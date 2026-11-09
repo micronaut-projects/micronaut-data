@@ -69,7 +69,7 @@ public final class SearchQuerySupport {
 
     /**
      * Finds the {@link SearchQuery} argument, or builds it from the search string and the vector of a
-     * derived hybrid finder such as {@code searchByTitleSearchAndEmbeddingNear(String, Vector)}.
+     * derived hybrid finder such as {@code hybridSearchByTitleSearchAndEmbeddingNear(String, Vector)}.
      *
      * @param context The invocation context
      * @return The query

@@ -8,6 +8,8 @@ import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.runtime.convert.OracleTextQueryConverter
 import io.micronaut.data.model.runtime.convert.PostgresTsQueryConverter
+import io.micronaut.data.model.vector.Vector
+import io.micronaut.data.model.vector.search.Score
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.ExecutableMethod
@@ -731,6 +733,7 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.vector.Vector;
+import io.micronaut.data.model.vector.search.Score;
 import io.micronaut.data.model.vector.search.SearchResults;
 import io.micronaut.data.annotation.search.SearchField;
 import io.micronaut.data.annotation.search.Searchable;
@@ -745,6 +748,7 @@ class Doc {
     private String title;
     @SearchField
     private String body;
+    private String category;
     @jakarta.persistence.Column(length = 3)
     private Vector embedding;
     public Long getId() { return id; }
@@ -753,20 +757,24 @@ class Doc {
     public void setTitle(String title) { this.title = title; }
     public String getBody() { return body; }
     public void setBody(String body) { this.body = body; }
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
     public Vector getEmbedding() { return embedding; }
     public void setEmbedding(Vector embedding) { this.embedding = embedding; }
 }
 
 @JdbcRepository(dialect = Dialect.POSTGRES)
 interface HybridRepository extends CrudRepository<Doc, Long> {
-    SearchResults<Doc> searchByTitleSearchAndEmbeddingNear(String query, Vector vector);
-    SearchResults<Doc> searchBySearchAndEmbeddingNear(String query, Vector vector, Pageable pageable);
+    SearchResults<Doc> hybridSearchByTitleSearchAndEmbeddingNear(String query, Vector vector);
+    SearchResults<Doc> hybridSearchBySearchAndEmbeddingNear(String query, Vector vector, Pageable pageable);
+    SearchResults<Doc> searchByTitleSearchAndEmbeddingNear(String query, Vector vector, Score maxDistance);
     List<Doc> searchByTitleSearchAndEmbeddingNear(String query, Vector vector, Double maxDistance);
 }
 """)
-        def titled = repository.getExecutableMethods().find { it.name == "searchByTitleSearchAndEmbeddingNear" && it.argumentTypes.length == 2 }
-        def all = repository.getExecutableMethods().find { it.name == "searchBySearchAndEmbeddingNear" }
-        def filtered = repository.getExecutableMethods().find { it.name == "searchByTitleSearchAndEmbeddingNear" && it.argumentTypes.length == 3 }
+        def titled = repository.getRequiredMethod("hybridSearchByTitleSearchAndEmbeddingNear", String, Vector)
+        def all = repository.getRequiredMethod("hybridSearchBySearchAndEmbeddingNear", String, Vector, Pageable)
+        def scored = repository.getRequiredMethod("searchByTitleSearchAndEmbeddingNear", String, Vector, Score)
+        def filtered = repository.getRequiredMethod("searchByTitleSearchAndEmbeddingNear", String, Vector, Double)
 
         expect:
         titled.stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == "io.micronaut.data.runtime.intercept.criteria.SearchQueryInterceptor"
@@ -776,8 +784,110 @@ interface HybridRepository extends CrudRepository<Doc, Long> {
         all.stringValues(HybridSearchMethod, "fields").length == 0
         all.stringValue(HybridSearchMethod, "vectorProperty").get() == "embedding"
 
-        and: "another shape keeps its meaning as a vector search filtered by the text match"
+        and: "without the hybridSearch prefix the method stays a vector search filtered by the text match, whatever its result"
+        !scored.hasAnnotation(HybridSearchMethod)
+        scored.stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() != "io.micronaut.data.runtime.intercept.criteria.SearchQueryInterceptor"
+        getQuery(scored).contains("@@")
+        getQuery(scored).contains("<=>")
         !filtered.hasAnnotation(HybridSearchMethod)
         filtered.stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() != "io.micronaut.data.runtime.intercept.criteria.SearchQueryInterceptor"
+    }
+
+    void "a hybridSearch method without the hybrid shape fails the compilation: #description"() {
+        when:
+        buildRepository('test.HybridRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.vector.Vector;
+import io.micronaut.data.model.vector.search.Score;
+import io.micronaut.data.model.vector.search.SearchResults;
+import io.micronaut.data.annotation.search.SearchField;
+import io.micronaut.data.annotation.search.Searchable;
+
+@MappedEntity
+@Searchable
+class Doc {
+    @Id
+    @GeneratedValue
+    private Long id;
+    @SearchField
+    private String title;
+    @SearchField
+    private String body;
+    private String category;
+    @jakarta.persistence.Column(length = 3)
+    private Vector embedding;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    public String getBody() { return body; }
+    public void setBody(String body) { this.body = body; }
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
+    public Vector getEmbedding() { return embedding; }
+    public void setEmbedding(Vector embedding) { this.embedding = embedding; }
+}
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+interface HybridRepository extends CrudRepository<Doc, Long> {
+    ${method};
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("A hybrid search method has the form")
+        e.message.contains(message)
+
+        where:
+        description           | method                                                                                    | message
+        "a limit"             | "SearchResults<Doc> hybridSearchTop5ByTitleSearchAndEmbeddingNear(String q, Vector v)"    | "a limit such as Top5 or another predicate is not supported"
+        "another predicate"   | "SearchResults<Doc> hybridSearchByTitleSearchAndCategoryAndEmbeddingNear(String q, Vector v)" | "categoryAndEmbedding is not a Vector property of Doc"
+        "a second text field" | "SearchResults<Doc> hybridSearchByTitleSearchAndBodySearchAndEmbeddingNear(String q, Vector v)" | "bodySearchAndEmbedding is not a Vector property of Doc"
+        "a list result"       | "List<Doc> hybridSearchByTitleSearchAndEmbeddingNear(String q, Vector v)"                 | "it must return SearchResults"
+        "a distance argument" | "SearchResults<Doc> hybridSearchByTitleSearchAndEmbeddingNear(String q, Vector v, Double d)" | "it takes the search string and the query vector"
+        "a non-search field"  | "SearchResults<Doc> hybridSearchByCategorySearchAndEmbeddingNear(String q, Vector v)"     | "category is not a @SearchField property of Doc"
+        "a non-vector field"  | "SearchResults<Doc> hybridSearchByTitleSearchAndBodyNear(String q, Vector v)"             | "body is not a Vector property of Doc"
+    }
+
+    void "a searchBy...SearchAnd...Near method without a distance is not a hybrid finder"() {
+        when:
+        buildRepository('test.HybridRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.vector.Vector;
+import io.micronaut.data.model.vector.search.SearchResults;
+import io.micronaut.data.annotation.search.SearchField;
+import io.micronaut.data.annotation.search.Searchable;
+
+@MappedEntity
+@Searchable
+class Doc {
+    @Id
+    @GeneratedValue
+    private Long id;
+    @SearchField
+    private String title;
+    @jakarta.persistence.Column(length = 3)
+    private Vector embedding;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    public Vector getEmbedding() { return embedding; }
+    public void setEmbedding(Vector embedding) { this.embedding = embedding; }
+}
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+interface HybridRepository extends CrudRepository<Doc, Long> {
+    SearchResults<Doc> searchByTitleSearchAndEmbeddingNear(String query, Vector vector);
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("Insufficient arguments to method criteria: Near")
     }
 }
