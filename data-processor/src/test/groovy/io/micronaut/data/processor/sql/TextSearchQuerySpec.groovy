@@ -492,6 +492,22 @@ interface PlainRepository extends CrudRepository<Plain, Long>, SearchRepository<
         getQuery(countHits) == 'SELECT COUNT(*) FROM "ARTICLE" article_ WHERE (((CONTAINS(article_."TITLE",?,1) > 0 OR CONTAINS(article_."BODY",?,2) > 0) AND NOT (CONTAINS(article_."TITLE",?,3) > 0 OR CONTAINS(article_."BODY",?,4) > 0)))'
     }
 
+    void "Oracle searches several fields for a phrase without excluding its words"() {
+        given:
+        def repository = articleRepository("""
+    List<Article> findBySearchPhrase(String q);
+    SearchResults<Article> searchBySearchPhrase(String q);
+""", "ORACLE")
+        def find = repository.getRequiredMethod("findBySearchPhrase", String)
+        def search = repository.getRequiredMethod("searchBySearchPhrase", String)
+
+        expect: "a - inside a phrase is part of it, so there is no exclusion clause"
+        getQuery(find) == 'SELECT article_."ID",article_."TITLE",article_."BODY",article_."AUTHOR" FROM "ARTICLE" article_ WHERE ((CONTAINS(article_."TITLE",?,1) > 0 OR CONTAINS(article_."BODY",?,2) > 0))'
+        converters(find) == [OracleTextQueryConverter.PhrasePositive.name, OracleTextQueryConverter.PhrasePositive.name]
+        getQuery(search).contains('(SCORE(1) * 10 + SCORE(2) * 1) AS mn_score')
+        !getQuery(search).contains('AND NOT')
+    }
+
     void "Oracle JSON entities use JSON_TEXTCONTAINS"() {
         given:
         def repository = buildRepository('test.DocRepository', """
@@ -513,6 +529,11 @@ class Doc {
     @SearchField
     @com.fasterxml.jackson.annotation.JsonProperty("summary")
     private String body;
+    @io.micronaut.data.annotation.Relation(io.micronaut.data.annotation.Relation.Kind.EMBEDDED)
+    @com.fasterxml.jackson.annotation.JsonProperty("meta")
+    private Info info;
+    public Info getInfo() { return info; }
+    public void setInfo(Info info) { this.info = info; }
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getTitle() { return title; }
@@ -521,10 +542,19 @@ class Doc {
     public void setBody(String body) { this.body = body; }
 }
 
+@io.micronaut.data.annotation.Embeddable
+class Info {
+    @com.fasterxml.jackson.annotation.JsonProperty("note")
+    private String text;
+    public String getText() { return text; }
+    public void setText(String text) { this.text = text; }
+}
+
 @JdbcRepository(dialect = Dialect.ORACLE)
 interface DocRepository extends CrudRepository<Doc, Long> {
     SearchResults<Doc> searchByTitleSearch(String q);
     SearchResults<Doc> searchByBodySearch(String q);
+    List<Doc> findByInfoTextSearch(String q);
 }
 """)
 
@@ -534,5 +564,8 @@ interface DocRepository extends CrudRepository<Doc, Long> {
 
         and: "a renamed property is searched under its serialized key"
         getQuery(repository.getRequiredMethod("searchByBodySearch", String)).contains('JSON_TEXTCONTAINS(doc_.DATA,\'$.summary\',?,1)')
+
+        and: "every step of an embedded path is searched under its serialized key"
+        getQuery(repository.getRequiredMethod("findByInfoTextSearch", String)).contains('JSON_TEXTCONTAINS(doc_.DATA,\'$.meta.note\',?,1)')
     }
 }
