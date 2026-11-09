@@ -31,6 +31,7 @@ import io.micronaut.data.mongodb.conf.RequiresSyncMongo;
 import io.micronaut.data.mongodb.operations.MongoCollectionNameProvider;
 import io.micronaut.data.mongodb.operations.MongoDatabaseNameProvider;
 import jakarta.annotation.PostConstruct;
+import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -83,13 +84,13 @@ public final class MongoCollectionsCreator extends AbstractMongoCollectionsCreat
                 }
 
                 @Override
-                public boolean hasTextIndex(MongoDatabase database, String collection) {
+                public org.bson.@Nullable Document findTextIndex(MongoDatabase database, String collection) {
                     for (org.bson.Document index : database.getCollection(collection).listIndexes()) {
                         if (isTextIndex(index)) {
-                            return true;
+                            return index;
                         }
                     }
-                    return false;
+                    return null;
                 }
 
                 @Override
