@@ -2096,15 +2096,15 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         /**
-         * @return The entity
-         */
-        /**
          * @return The {@code CONTAINS} labels handed out so far in this statement
          */
         public TextSearchDialect.Labels getTextSearchLabels() {
             return textSearchLabels;
         }
 
+        /**
+         * @return The entity
+         */
         public PersistentEntity getEntity() {
             return entity;
         }
