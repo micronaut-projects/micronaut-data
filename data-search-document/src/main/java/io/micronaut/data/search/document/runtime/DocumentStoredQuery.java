@@ -19,6 +19,7 @@ import io.micronaut.aop.InvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
@@ -41,11 +42,13 @@ import java.util.Objects;
 
 /**
  * A stored query whose JSON body is parsed once and whose parameter placeholders are replaced per
- * invocation.
+ * invocation. Bound values other than strings, numbers and booleans are converted with the
+ * {@link JsonMapper} that writes the documents, so a date, a temporal or an enum with a custom
+ * serialised name is compared in the form it is stored in.
  *
  * @param <E> The entity type
  * @param <R> The result type
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersStoredQuery<E, R> {
@@ -55,6 +58,7 @@ public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersSt
 
     private final Map<String, Object> body;
     private final boolean countProjection;
+    private final JsonMapper jsonMapper;
 
     /**
      * @param storedQuery The stored query
@@ -67,6 +71,7 @@ public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersSt
                                ConversionService conversionService,
                                JsonMapper jsonMapper) {
         super(storedQuery, persistentEntity, conversionService);
+        this.jsonMapper = jsonMapper;
         try {
             Map<String, Object> parsed = Objects.requireNonNull(jsonMapper.readValue(storedQuery.getQuery(), Argument.mapOf(String.class, Object.class)), "query body");
             this.countProjection = Boolean.TRUE.equals(parsed.remove(DocumentSearchQueryBuilder.COUNT_MARKER));
@@ -122,7 +127,8 @@ public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersSt
     @Nullable
     private Object replace(@Nullable Object node, List<Object> values, Map<String, Object> named) {
         if (node instanceof String string && named.containsKey(string)) {
-            return normalize(named.get(string));
+            // a named parameter is a bound value, converted like a placeholder after its vector or score is normalized
+            return toJsonValue(normalize(named.get(string)));
         }
         if (node instanceof Map<?, ?> map && !map.containsKey(DocumentSearchQueryBuilder.QUERY_PARAMETER_PLACEHOLDER)) {
             Map<String, Object> copy = new LinkedHashMap<>();
@@ -160,10 +166,15 @@ public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersSt
         return node;
     }
 
-    /** The bound value of a placeholder, with its wildcard or similarity hint applied. */
+    /**
+     * The value a placeholder stands for, a bound parameter or the literal it carries when the index is
+     * negative, with its wildcard or similarity hint applied.
+     */
     @Nullable
-    private static Object resolvePlaceholder(Map<?, ?> placeholder, int index, List<Object> values) {
-        Object value = normalize(index < 0 ? placeholder.get("value") : values.get(index));
+    private Object resolvePlaceholder(Map<?, ?> placeholder, int index, List<Object> values) {
+        // a literal comes from the parsed body and is JSON already; vectors and scores are normalized to
+        // numbers before the other bound values are converted with the JSON mapper
+        Object value = index < 0 ? normalize(placeholder.get("value")) : toJsonValue(normalize(values.get(index)));
         Object hint = placeholder.get(DocumentSearchQueryBuilder.WILDCARD_HINT);
         if (DocumentSearchQueryBuilder.COSINE_SIMILARITY_HINT.equals(hint)) {
             return value instanceof Number distance ? 1d - distance.doubleValue() : value;
@@ -219,6 +230,32 @@ public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersSt
             }
         }
         return copy;
+    }
+
+    /**
+     * Converts a bound value to the JSON form the {@link JsonMapper} writes it in within a document;
+     * an array or a collection, as bound to an In predicate, becomes a list of converted elements.
+     */
+    @Nullable
+    private Object toJsonValue(@Nullable Object value) {
+        if (value == null || value instanceof String || value instanceof Number || value instanceof Boolean) {
+            return value;
+        }
+        if (value.getClass().isArray()) {
+            return toJsonValue(SearchJson.arrayToList(value));
+        }
+        if (value instanceof Collection<?> collection) {
+            List<Object> converted = new ArrayList<>(collection.size());
+            for (Object item : collection) {
+                converted.add(toJsonValue(item));
+            }
+            return converted;
+        }
+        try {
+            return jsonMapper.readValue(jsonMapper.writeValueAsBytes(value), Argument.OBJECT_ARGUMENT);
+        } catch (IOException e) {
+            throw new DataAccessException("Cannot write the query parameter " + value + " as JSON: " + e.getMessage(), e);
+        }
     }
 
     private static Object wildcard(@Nullable Object value, String hint) {

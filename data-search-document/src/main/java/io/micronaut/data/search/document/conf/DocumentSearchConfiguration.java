@@ -22,7 +22,7 @@ import io.micronaut.data.runtime.config.SchemaGenerate;
 /**
  * Configuration of the document search stores.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @ConfigurationProperties(DocumentSearchConfiguration.PREFIX)
 public class DocumentSearchConfiguration {

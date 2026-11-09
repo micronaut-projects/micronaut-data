@@ -48,7 +48,7 @@ import java.util.Set;
  * Creates on startup the index of every entity a document search repository stores, so each index
  * has explicit keyword mappings rather than dynamic ones.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Context
 @Internal
