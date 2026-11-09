@@ -1,6 +1,8 @@
 package io.micronaut.data.search.elasticsearch
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.data.exceptions.DataAccessException
+import io.micronaut.data.runtime.search.SearchIndexOperations
 import io.micronaut.data.model.CursoredPageable
 import io.micronaut.data.model.Sort
 import spock.lang.AutoCleanup
@@ -48,6 +50,33 @@ class ElasticsearchBoundValuesSpec extends Specification {
     void "a named parameter of a @Query body binds as the documents store it"() {
         expect:
         meetings.startingBefore(START.plusDays(1))*.title() == ["Planning"]
+    }
+
+    void "a query against a missing index fails rather than returning nothing"() {
+        given:
+        def indexOperations = context.getBean(SearchIndexOperations)
+        indexOperations.drop(Meeting)
+
+        when:
+        meetings.findByPriority(Meeting.Priority.HIGH)
+
+        then:
+        thrown(DataAccessException)
+
+        when:
+        meetings.count()
+
+        then:
+        thrown(DataAccessException)
+
+        when:
+        meetings.deleteAll()
+
+        then:
+        thrown(DataAccessException)
+
+        cleanup:
+        indexOperations.create(Meeting)
     }
 
     void "an enum binds by its serialised name"() {

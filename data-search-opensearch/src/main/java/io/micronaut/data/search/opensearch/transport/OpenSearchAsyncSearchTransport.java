@@ -70,7 +70,7 @@ public final class OpenSearchAsyncSearchTransport implements AsyncSearchTranspor
     @Override
     public CompletionStage<Long> count(String index, String body) {
         Query query = OpenSearchRequests.query(mapper, OpenSearchRequests.parse(mapper, body));
-        return call(() -> client.count(c -> c.index(index).query(query).ignoreUnavailable(true))).thenApply(response -> response.count());
+        return call(() -> client.count(c -> c.index(index).query(query))).thenApply(response -> response.count());
     }
 
     @Override
@@ -156,7 +156,7 @@ public final class OpenSearchAsyncSearchTransport implements AsyncSearchTranspor
     @Override
     public CompletionStage<Long> deleteByQuery(String index, String body, DocumentSearchConfiguration.Refresh refresh) {
         Query query = OpenSearchRequests.query(mapper, OpenSearchRequests.parse(mapper, body));
-        return call(() -> client.deleteByQuery(d -> d.index(index).query(query).ignoreUnavailable(true).refresh(OpenSearchRequests.deleteByQueryRefresh(refresh))))
+        return call(() -> client.deleteByQuery(d -> d.index(index).query(query).refresh(OpenSearchRequests.deleteByQueryRefresh(refresh))))
             .thenApply(response -> response.deleted() == null ? 0L : response.deleted());
     }
 
