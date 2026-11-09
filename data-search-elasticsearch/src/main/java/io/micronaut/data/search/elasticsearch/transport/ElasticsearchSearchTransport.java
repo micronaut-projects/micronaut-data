@@ -96,7 +96,7 @@ public final class ElasticsearchSearchTransport implements SearchTransport {
         BulkResponse response;
         try {
             response = client.bulk(request);
-        } catch (IOException e) {
+        } catch (IOException | ElasticsearchException e) {
             throw new DataAccessException("Elasticsearch bulk failed: " + e.getMessage(), e);
         }
         return ElasticsearchAsyncSearchTransport.bulkIds(response);

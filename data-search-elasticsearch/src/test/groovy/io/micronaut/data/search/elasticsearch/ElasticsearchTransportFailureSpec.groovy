@@ -10,6 +10,7 @@ import co.elastic.clients.transport.ElasticsearchTransport
 import co.elastic.clients.transport.Endpoint
 import co.elastic.clients.transport.TransportOptions
 import io.micronaut.data.exceptions.DataAccessException
+import io.micronaut.data.search.document.runtime.SearchTransport
 import io.micronaut.data.search.elasticsearch.transport.ElasticsearchSearchTransport
 import spock.lang.Specification
 
@@ -51,6 +52,7 @@ class ElasticsearchTransportFailureSpec extends Specification {
         "search"          | { ElasticsearchSearchTransport t -> t.search("books", BODY) }
         "count"           | { ElasticsearchSearchTransport t -> t.count("books", BODY) }
         "index"           | { ElasticsearchSearchTransport t -> t.index("books", "1", [title: "Kotlin"], NONE) }
+        "bulk"            | { ElasticsearchSearchTransport t -> t.bulkIndex("books", [new SearchTransport.BulkDocument("1", [title: "Kotlin"])], NONE) }
         "get"             | { ElasticsearchSearchTransport t -> t.get("books", "1") }
         "delete"          | { ElasticsearchSearchTransport t -> t.delete("books", "1", NONE) }
         "delete by query" | { ElasticsearchSearchTransport t -> t.deleteByQuery("books", BODY, NONE) }
@@ -75,6 +77,7 @@ class ElasticsearchTransportFailureSpec extends Specification {
         operation | call
         "search"  | { ElasticsearchSearchTransport t -> t.search("books", BODY) }
         "get"     | { ElasticsearchSearchTransport t -> t.get("books", "1") }
+        "bulk"    | { ElasticsearchSearchTransport t -> t.bulkIndex("books", [new SearchTransport.BulkDocument("1", [title: "Kotlin"])], NONE) }
         "index"   | { ElasticsearchSearchTransport t -> t.create("books", "1", [title: "Kotlin"], NONE) }
     }
 
