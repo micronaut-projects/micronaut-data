@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.search.elasticsearch;
 
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.search.elasticsearch.annotation.ElasticsearchRepository;
 
@@ -35,4 +36,7 @@ public interface MeetingRepository extends CrudRepository<Meeting, String> {
     List<Meeting> findByPriority(Meeting.Priority priority);
 
     List<Meeting> findByPriorityInList(List<Meeting.Priority> priorities);
+
+    @Query("{\"query\": {\"range\": {\"startsAt\": {\"lt\": \":time\"}}}}")
+    List<Meeting> startingBefore(ZonedDateTime time);
 }
