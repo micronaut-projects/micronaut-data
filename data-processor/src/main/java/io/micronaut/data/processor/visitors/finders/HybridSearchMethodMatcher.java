@@ -36,19 +36,29 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Matches the derived hybrid finder {@code searchBy[Property]SearchAnd<Vector>Near(String, Vector[, Pageable])}
+ * Matches the derived hybrid finder {@code hybridSearchBy[Property]SearchAnd<Vector>Near(String, Vector[, Pageable])}
  * returning {@link SearchResults}. No store runs a text match and a nearest-neighbour ranking in one query,
  * so the method is executed by the {@code search(SearchQuery)} interceptors, which fuse the two rankings;
- * the processor records the search fields and the vector property on the method. A method with the name
- * but another shape, such as a {@code List} result or a {@code Near(Vector, distance)} parameter, is left to
- * the other matchers, so it keeps its meaning as a vector search filtered by a text match.
+ * the processor records the search fields and the vector property on the method.
  *
- * @since 5.4.0
+ * <p>The {@code hybridSearch} prefix sets the method apart from {@code searchBy[Property]SearchAnd<Vector>Near},
+ * which stays a vector search filtered by a text match whatever its shape. Every abstract method whose name starts
+ * with {@code hybridSearch} is claimed, and one that does not have the exact hybrid shape fails the compilation
+ * instead of falling back to another meaning.</p>
+ *
+ * @since 5.3.0
  */
 @Internal
 public final class HybridSearchMethodMatcher implements MethodMatcher {
 
-    private static final Pattern NAME = Pattern.compile("^searchBy(\\w*?)SearchAnd(\\w+)Near$");
+    /**
+     * The prefix of a derived hybrid finder.
+     */
+    public static final String PREFIX = "hybridSearch";
+
+    private static final Pattern NAME = Pattern.compile("^hybridSearchBy(\\w*?)SearchAnd(\\w+)Near$");
+    private static final String FORM = "A hybrid search method has the form "
+        + "SearchResults<E> hybridSearchBy[Property]SearchAnd<Vector>Near(String query, Vector vector[, Pageable pageable])";
     private static final String SEARCH_QUERY_INTERCEPTOR = "io.micronaut.data.runtime.intercept.criteria.SearchQueryInterceptor";
     private static final String SEARCH_QUERY_REACTIVE_INTERCEPTOR = "io.micronaut.data.runtime.intercept.criteria.reactive.SearchQueryReactiveInterceptor";
     private static final String SEARCH_QUERY_ASYNC_INTERCEPTOR = "io.micronaut.data.runtime.intercept.criteria.async.SearchQueryAsyncInterceptor";
@@ -63,41 +73,27 @@ public final class HybridSearchMethodMatcher implements MethodMatcher {
     @Nullable
     public MethodMatch match(MethodMatchContext matchContext) {
         MethodElement method = matchContext.getMethodElement();
+        if (!method.getName().startsWith(PREFIX)) {
+            return null;
+        }
         Matcher matcher = NAME.matcher(method.getName());
         if (!matcher.matches()) {
-            return null;
+            throw new ProcessingException(method, FORM + "; a limit such as Top5 or another predicate is not supported, pass a Pageable to limit the results.");
         }
         if (!matchContext.hasRootEntity()) {
             throw new ProcessingException(method, "Repository does not have a well-defined primary entity type");
         }
-        // only the exact hybrid shape is claimed: SearchResults of (String, Vector), with a search field and a
-        // vector property; anything else is a vector search with a text predicate for the other matchers
         ClassElement resultType = producedResultType(matchContext);
         if (resultType == null || !resultType.getName().equals(SearchResults.class.getName())) {
-            return null;
+            throw new ProcessingException(method, FORM + "; it must return SearchResults, or a reactive, future or suspend result of SearchResults.");
         }
         List<ParameterElement> parameters = matchContext.getParametersNotInRole();
         if (parameters.size() != 2 || !parameters.get(0).getType().isAssignable(String.class) || !parameters.get(1).getType().isAssignable(Vector.class)) {
-            return null;
+            throw new ProcessingException(method, FORM + "; it takes the search string and the query vector, and optionally a Pageable.");
         }
         SourcePersistentEntity entity = matchContext.getRootEntity();
-        String textProperty = matcher.group(1);
-        String vectorProperty = NameUtils.decapitalize(matcher.group(2));
-        SourcePersistentProperty vector = entity.getPropertyByName(vectorProperty);
-        if (vector == null || !vector.getType().isAssignable(Vector.class)) {
-            return null;
-        }
-        String[] fields;
-        if (textProperty.isEmpty()) {
-            fields = new String[0];
-        } else {
-            String property = NameUtils.decapitalize(textProperty);
-            SourcePersistentProperty field = entity.getPropertyByName(property);
-            if (field == null || !field.hasAnnotation(SearchField.class)) {
-                return null;
-            }
-            fields = new String[]{property};
-        }
+        String vectorProperty = vectorProperty(method, entity, NameUtils.decapitalize(matcher.group(2)));
+        String[] fields = searchFields(method, entity, matcher.group(1));
         String queryParameter = parameters.get(0).getName();
         method.annotate(HybridSearchMethod.class, builder -> builder.member("fields", fields).member("vectorProperty", vectorProperty).member("queryParameter", queryParameter));
         String interceptor = searchQueryInterceptor(matchContext);
@@ -106,6 +102,27 @@ public final class HybridSearchMethodMatcher implements MethodMatcher {
             resultType,
             FindersUtils.getInterceptorElement(matchContext, interceptor)
         );
+    }
+
+    private static String vectorProperty(MethodElement method, SourcePersistentEntity entity, String name) {
+        SourcePersistentProperty vector = entity.getPropertyByName(name);
+        if (vector == null || !vector.getType().isAssignable(Vector.class)) {
+            throw new ProcessingException(method, FORM + "; " + name + " is not a Vector property of " + entity.getSimpleName()
+                + ", and a hybrid search method cannot have other predicates.");
+        }
+        return name;
+    }
+
+    private static String[] searchFields(MethodElement method, SourcePersistentEntity entity, String textProperty) {
+        if (textProperty.isEmpty()) {
+            return new String[0];
+        }
+        String property = NameUtils.decapitalize(textProperty);
+        SourcePersistentProperty field = entity.getPropertyByName(property);
+        if (field == null || !field.hasAnnotation(SearchField.class)) {
+            throw new ProcessingException(method, FORM + "; " + property + " is not a @SearchField property of " + entity.getSimpleName() + ".");
+        }
+        return new String[]{property};
     }
 
     @Nullable

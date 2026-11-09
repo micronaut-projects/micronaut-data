@@ -89,13 +89,7 @@ public final class MongoSearchOperators {
             return matchNothing(paths);
         }
         if (mode == MatchMode.NATIVE) {
-            // the caller wrote queryString syntax, which takes one default field: each searched path gets
-            // its own queryString, and a document matching any of them matches
-            List<BsonValue> perPath = new ArrayList<>(paths.size());
-            for (String path : paths) {
-                perPath.add(new BsonDocument("queryString", new BsonDocument("defaultPath", new BsonString(path)).append(QUERY, new BsonString(query))));
-            }
-            return joinGroups(perPath, paths);
+            return nativeOperator(query, paths, boosts);
         }
         if (mode == MatchMode.PHRASE) {
             String phrase = query.replace("\"", "").trim();
@@ -109,6 +103,27 @@ public final class MongoSearchOperators {
             }
         }
         return joinGroups(rendered, paths);
+    }
+
+    /**
+     * The caller wrote {@code queryString} syntax, which takes one default field: each searched path gets
+     * its own {@code queryString}, boosted like the operators of the portable grammar, and a document
+     * matching any of them matches.
+     */
+    private static BsonDocument nativeOperator(String query, List<String> paths, Map<String, Number> boosts) {
+        List<BsonValue> perPath = new ArrayList<>(paths.size());
+        for (String path : paths) {
+            BsonDocument options = new BsonDocument("defaultPath", new BsonString(path)).append(QUERY, new BsonString(query));
+            appendBoost(options, boosts.getOrDefault(path, 1));
+            perPath.add(new BsonDocument("queryString", options));
+        }
+        return joinGroups(perPath, paths);
+    }
+
+    private static void appendBoost(BsonDocument options, Number boost) {
+        if (boost.doubleValue() != 1d) {
+            options.append("score", new BsonDocument("boost", new BsonDocument("value", new BsonDouble(boost.doubleValue()))));
+        }
     }
 
     /** One group stands alone; several are alternatives in a compound {@code should}. */
@@ -132,22 +147,20 @@ public final class MongoSearchOperators {
             }
             (term.negated() ? negative : positive).add(termOperator(term, mode, paths, boosts, maxEdits));
         }
-        if (positive.isEmpty() && negative.isEmpty()) {
+        if (positive.isEmpty()) {
+            // a negated term only narrows the terms beside it, so an alternative made only of negated
+            // terms matches nothing, as on the other stores
             return null;
         }
         if (positive.size() == 1 && negative.isEmpty()) {
             return positive.get(0).asDocument();
         }
-        return compound(positive, negative, mode, paths);
+        return compound(positive, negative, mode);
     }
 
     /** Combines a group's terms: all or any of the positive ones, and none of the negated ones. */
-    private static BsonDocument compound(BsonArray positive, BsonArray negative, MatchMode mode, List<String> paths) {
+    private static BsonDocument compound(BsonArray positive, BsonArray negative, MatchMode mode) {
         BsonDocument compound = new BsonDocument();
-        if (positive.isEmpty()) {
-            // A purely negative query still has to select something to exclude from
-            return new BsonDocument(COMPOUND, compound.append(MUST_NOT, negative).append(MUST, new BsonArray(List.of(exists(paths.get(0))))));
-        }
         if (mode == MatchMode.ALL) {
             compound.append(MUST, positive);
         } else {
@@ -197,9 +210,7 @@ public final class MongoSearchOperators {
                 options.append("fuzzy", new BsonDocument("maxEdits", new BsonInt32(maxEdits)));
             }
         }
-        if (boost.doubleValue() != 1d) {
-            options.append("score", new BsonDocument("boost", new BsonDocument("value", new BsonDouble(boost.doubleValue()))));
-        }
+        appendBoost(options, boost);
         return new BsonDocument(name, options);
     }
 
