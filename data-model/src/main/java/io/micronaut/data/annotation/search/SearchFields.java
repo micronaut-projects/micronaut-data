@@ -27,7 +27,7 @@ import java.lang.annotation.Target;
 /**
  * Container for repeated {@link SearchField} annotations.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
