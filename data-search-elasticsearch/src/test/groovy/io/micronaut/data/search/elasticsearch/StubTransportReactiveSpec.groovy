@@ -136,6 +136,59 @@ class StubTransportReactiveSpec extends Specification {
         transport.bodies.last().contains('"from":20,"size":10')
     }
 
+    void "k and num_candidates of a knn query stay within the 10,000 the stores accept"() {
+        given:
+        def articles = context.getBean(StubArticleRepository)
+        def transport = context.getBean(StubSearchTransport)
+        def vector = Vector.of([1f, 0f, 0f] as float[])
+        transport.bodies.clear()
+
+        when: "a deep page of a Near method"
+        articles.searchByEmbeddingNear(vector, new io.micronaut.data.model.vector.search.Score(0.5d), Pageable.from(50, 25))
+
+        then:
+        transport.bodies.last().contains('"k":1275,"num_candidates":10000')
+
+        when: "a page beyond the cap"
+        articles.searchByEmbeddingNear(vector, new io.micronaut.data.model.vector.search.Score(0.5d), Pageable.from(500, 25))
+
+        then:
+        transport.bodies.last().contains('"k":10000,"num_candidates":10000')
+
+        when: "a hybrid search with many candidates"
+        transport.bodies.clear()
+        articles.search(SearchQuery.builder("coffee").vector("embedding", vector).candidates(2000).build())
+
+        then:
+        transport.bodies.any { it.contains('"k":2000,"num_candidates":10000') }
+    }
+
+    void "an unpaged Near method returns the stores' default of 10 hits"() {
+        given:
+        def articles = context.getBean(StubArticleRepository)
+        def transport = context.getBean(StubSearchTransport)
+        transport.bodies.clear()
+
+        when:
+        articles.searchByEmbeddingNear(Vector.of([1f, 0f, 0f] as float[]), new io.micronaut.data.model.vector.search.Score(0.5d), Pageable.UNPAGED)
+
+        then: "k matches the size of a request without one"
+        transport.bodies.last().contains('"k":10,"num_candidates":100')
+        !transport.bodies.last().contains('"size"')
+    }
+
+    void "cursored paging of a Near method is rejected"() {
+        given:
+        def articles = context.getBean(StubArticleRepository)
+
+        when:
+        articles.searchByEmbeddingNear(Vector.of([1f, 0f, 0f] as float[]), new io.micronaut.data.model.vector.search.Score(0.5d), io.micronaut.data.model.CursoredPageable.from(10, io.micronaut.data.model.Sort.UNSORTED))
+
+        then:
+        def e = thrown(UnsupportedOperationException)
+        e.message.contains("Cursored paging is not supported for a vector search")
+    }
+
     void "a versioned delete is checked against the version the entity was read at"() {
         given:
         def versioned = context.getBean(StubVersionedBookRepository)
