@@ -46,6 +46,23 @@ class SearchQuerySpec extends Specification {
         maxEdits << [-1, 3]
     }
 
+    void "a minimum score that is negative, infinite or NaN is rejected"() {
+        when:
+        SearchQuery.builder("coffee").minScore(minScore)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains("The minimum score must be a finite number of 0 or more")
+
+        where:
+        minScore << [-0.1d, Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY]
+    }
+
+    void "a minimum score of zero is accepted"() {
+        expect:
+        SearchQuery.builder("coffee").minScore(0d).build().minScore == 0d
+    }
+
     void "fuzziness is dropped when another mode replaces fuzzy"() {
         when:
         def query = SearchQuery.builder("coffee").fuzzy(2).mode(MatchMode.ANY).build()

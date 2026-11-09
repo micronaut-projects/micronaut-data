@@ -38,7 +38,7 @@ import java.util.List;
  * and {@code countHits(String)}, implementing them as if they were named {@code searchBySearch} and
  * {@code countBySearch}: a text match over every {@code @SearchField} property ordered by relevance.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 public final class SearchRepositoryMethodMatcher implements MethodMatcher {
