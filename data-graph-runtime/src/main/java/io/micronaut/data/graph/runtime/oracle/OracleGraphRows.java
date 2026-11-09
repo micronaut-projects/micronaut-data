@@ -26,6 +26,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -211,7 +212,7 @@ public final class OracleGraphRows {
             Object match = groups.getOrDefault("p", Map.of()).get("M_");
             paths.computeIfAbsent(match == null ? paths.size() : match, k -> new ArrayList<>()).add(groups);
         }
-        List<GraphRecord> records = new ArrayList<>(paths.size());
+        List<GraphPathValue> values = new ArrayList<>(paths.size());
         int[] nextId = {0};
         for (Map.Entry<Object, List<Map<String, Map<String, @Nullable Object>>>> path : paths.entrySet()) {
             List<GraphNode> nodes = new ArrayList<>();
@@ -233,7 +234,13 @@ public final class OracleGraphRows {
                 edges.add(new GraphEdge(path.getKey() + "/" + i, type == null ? "" : type.toString(), start.id(), end.id(), Map.of()));
                 nodes.add(end);
             }
-            records.add(new GraphRecord(List.of("p"), List.of(new GraphPathValue(nodes, edges))));
+            values.add(new GraphPathValue(nodes, edges));
+        }
+        // Shortest first, as Cypher orders the paths by their length; a stable sort keeps the order of the matches
+        values.sort(Comparator.comparingInt(value -> value.relationships().size()));
+        List<GraphRecord> records = new ArrayList<>(values.size());
+        for (GraphPathValue value : values) {
+            records.add(new GraphRecord(List.of("p"), List.of(value)));
         }
         return records;
     }
