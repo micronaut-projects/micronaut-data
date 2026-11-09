@@ -146,7 +146,7 @@ public interface AdvancedPredicateVisitor<P> extends PredicateVisitor {
      * @param fields The field expressions
      * @param query The query expression
      * @param mode The match mode
-     * @since 5.4.0
+     * @since 5.3.0
      */
     default void visitTextMatch(List<Expression<?>> fields, Expression<String> query, MatchMode mode) {
         throw new UnsupportedOperationException("Full-text search is not supported by this implementation.");
