@@ -57,7 +57,7 @@ import java.util.UUID;
  * The request building, document mapping and entity events shared by the blocking and the
  * reactive document search operations.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 abstract class AbstractDocumentSearchRepositoryOperations extends AbstractRepositoryOperations {

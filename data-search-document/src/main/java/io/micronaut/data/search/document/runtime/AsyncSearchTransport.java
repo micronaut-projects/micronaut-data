@@ -15,20 +15,24 @@
  */
 package io.micronaut.data.search.document.runtime;
 
+import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.search.document.conf.DocumentSearchConfiguration;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
+import java.util.function.ToIntFunction;
 
 /**
  * The non-blocking counterpart of {@link SearchTransport}: the same requests, completing on the
  * client's own threads. A store that provides one, under the same bean name as its
  * {@link SearchTransport}, gets reactive and async repositories that never block; without it the
- * blocking transport is run on the IO executor.
+ * blocking transport is run on the IO executor. The returned stages complete on the client's I/O
+ * threads, so the reactive and async repositories emit their results there.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 public interface AsyncSearchTransport {
 
@@ -64,7 +68,9 @@ public interface AsyncSearchTransport {
     /**
      * Indexes a new document, failing when a document with the same id exists. The default replaces
      * like {@link #index(String, String, Map, DocumentSearchConfiguration.Refresh)}; the store
-     * transports override it with a create-only write.
+     * transports override it with a create-only write, which fails with the exception of
+     * {@link SearchTransport#createFailure(String, String, int, RuntimeException)}, so a duplicate id is
+     * reported as on the blocking transport.
      *
      * @param index The index name
      * @param id The document id, or {@code null} to let the store assign one
@@ -74,6 +80,32 @@ public interface AsyncSearchTransport {
      */
     default CompletionStage<String> create(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh) {
         return index(index, id, source, refresh);
+    }
+
+    /**
+     * The failure of an async create-only write, to complete its stage with: when the store answered
+     * with an HTTP status, the exception of {@link SearchTransport#createFailure(String, String, int, RuntimeException)},
+     * so a duplicate id (HTTP 409) is reported as on the blocking transport; any other failure as it is.
+     * The async clients report a store response either as their store exception or as the exception
+     * of their low-level HTTP client, so the transport supplies the status of both.
+     *
+     * @param index The index
+     * @param id The document id
+     * @param failure The failure of the request, possibly a {@link CompletionException}
+     * @param status The HTTP status of a failure, or {@code 0} when it is not a store response
+     * @return The exception to complete the stage with
+     */
+    static CompletionException createFailure(String index, @Nullable String id, Throwable failure, ToIntFunction<Throwable> status) {
+        Throwable cause = failure instanceof CompletionException && failure.getCause() != null ? failure.getCause() : failure;
+        int code = status.applyAsInt(cause);
+        if (code > 0) {
+            // the low-level clients report a response as a checked IOException
+            RuntimeException storeFailure = cause instanceof RuntimeException runtimeException
+                ? runtimeException
+                : new DataAccessException(String.valueOf(cause.getMessage()), cause);
+            return new CompletionException(SearchTransport.createFailure(index, id, code, storeFailure));
+        }
+        return failure instanceof CompletionException completionException ? completionException : new CompletionException(failure);
     }
 
     /**
