@@ -115,17 +115,28 @@ public final class ElasticsearchAsyncSearchTransport implements AsyncSearchTrans
     }
 
     /**
-     * Maps a version conflict (HTTP 409) to {@link OptimisticLockException}; other failures pass through.
+     * Maps a version conflict (HTTP 409) to {@link OptimisticLockException} and the other errors of the
+     * store and the I/O failures to {@link DataAccessException}; other runtime failures pass through.
      */
     static RuntimeException conflictOrFailure(Throwable error, @Nullable String id) {
+        return conflictOrFailure(error, id, "request");
+    }
+
+    /**
+     * Maps a version conflict (HTTP 409) to {@link OptimisticLockException} and the other errors of the
+     * store and the I/O failures to {@link DataAccessException} naming the operation; other runtime
+     * failures pass through.
+     */
+    static RuntimeException conflictOrFailure(Throwable error, @Nullable String id, String operation) {
         Throwable cause = error instanceof CompletionException && error.getCause() != null ? error.getCause() : error;
-        if (cause instanceof ElasticsearchException elasticsearchException && elasticsearchException.status() == 409) {
-            return new OptimisticLockException("Document " + id + " was modified concurrently: " + elasticsearchException.error().reason(), cause);
-        }
-        if (cause instanceof RuntimeException runtime) {
+        if (cause instanceof ElasticsearchException elasticsearchException) {
+            if (elasticsearchException.status() == 409) {
+                return new OptimisticLockException("Document " + id + " was modified concurrently: " + elasticsearchException.error().reason(), cause);
+            }
+        } else if (cause instanceof RuntimeException runtime) {
             return runtime;
         }
-        return new DataAccessException("Elasticsearch request failed: " + cause.getMessage(), cause);
+        return new DataAccessException("Elasticsearch " + operation + " failed: " + cause.getMessage(), cause);
     }
 
     static List<Object> sortValues(List<FieldValue> sort) {
