@@ -17,6 +17,7 @@ package io.micronaut.data.processor.sql
 
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
+import io.micronaut.data.model.query.builder.sql.SqlSchemaNames
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 
 class TextSearchIndexDdlSpec extends AbstractDataSpec {
@@ -40,7 +41,7 @@ class TextSearchIndexDdlSpec extends AbstractDataSpec {
         def statements = new SqlQueryBuilder(Dialect.ORACLE).buildCreateTableStatements(entity)
 
         then:
-        statements.last() == 'CREATE INDEX "BOOK_TEXT_IDX_TITLE" ON "BOOK" ("TITLE") INDEXTYPE IS CTXSYS.CONTEXT PARAMETERS (\'SYNC (ON COMMIT)\');'
+        statements.contains('CREATE INDEX "BOOK_TEXT_IDX_TITLE" ON "BOOK" ("TITLE") INDEXTYPE IS CTXSYS.CONTEXT PARAMETERS (\'SYNC (ON COMMIT)\');')
     }
 
     void "a @Searchable(name) that is not a plain identifier is rejected instead of changing the #dialect index DDL"() {
@@ -56,6 +57,62 @@ class TextSearchIndexDdlSpec extends AbstractDataSpec {
 
         where:
         [name, dialect] << [['idx\\"; DROP TABLE book; --', 'idx book', '1idx', 'idx-book'], [Dialect.POSTGRES, Dialect.ORACLE]].combinations()
+    }
+
+    void "a searchable JSON entity in a schema creates the schema before its table"() {
+        given:
+        def entity = buildEntity('test.JsonDoc', '''
+import io.micronaut.data.annotation.search.*;
+import io.micronaut.serde.annotation.Serdeable;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+@MappedEntity(value = "json_doc", schema = "docs")
+@Searchable
+@EntityRepresentation(type = EntityRepresentation.Type.COLUMN, columnType = EntityRepresentation.ColumnType.JSON, column = "DATA")
+@Serdeable
+class JsonDoc {
+    @Id
+    @JsonProperty("_id")
+    private Long id;
+
+    @SearchField
+    private String title;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+}
+''')
+        def builder = new SqlQueryBuilder(Dialect.ORACLE)
+
+        when:
+        def single = builder.buildCreateTableStatements(entity)
+
+        then: "the schema, an Oracle user, comes first, then the table and the unique index over the serialized id key"
+        single[0] == SqlSchemaNames.oracleCreateSchemaStatement('"DOCS"', true)
+        single[1] == 'CREATE TABLE "DOCS"."JSON_DOC" ("DATA" JSON NOT NULL);'
+        single[2] == 'CREATE UNIQUE INDEX "IDX_JSON_DOC_ID" ON "DOCS"."JSON_DOC" (JSON_VALUE("DATA",\'$._id\' ERROR ON ERROR NULL ON EMPTY));'
+        single[3].startsWith('CREATE SEARCH INDEX ')
+
+        when:
+        def several = builder.buildCreateTableStatements([entity] as io.micronaut.data.model.PersistentEntity[], Dialect.ORACLE)
+
+        then:
+        several[0] == single[0]
+        several[1] == single[1]
+        several[2] == single[2]
     }
 
     private def searchableEntity(String indexName) {

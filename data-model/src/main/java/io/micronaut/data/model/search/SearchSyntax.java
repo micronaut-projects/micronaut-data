@@ -20,7 +20,7 @@ import io.micronaut.core.annotation.Experimental;
 /**
  * The syntax of a {@link SearchQuery} string.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Experimental
 public enum SearchSyntax {
@@ -32,9 +32,8 @@ public enum SearchSyntax {
     /**
      * The store's own query syntax, passed through unparsed; see {@link MatchMode#NATIVE}.
      *
-     * <p>Only pass trusted input: the native syntax is not escaped, so a user could widen the query.
-     * On Elasticsearch and OpenSearch {@code field:value} reaches fields outside the search fields;
-     * leading wildcards are disabled there.</p>
+     * <p>Only pass trusted input: the native syntax is not escaped, so a user could widen the query;
+     * see {@link MatchMode#NATIVE} for what each store allows.</p>
      */
     NATIVE
 }

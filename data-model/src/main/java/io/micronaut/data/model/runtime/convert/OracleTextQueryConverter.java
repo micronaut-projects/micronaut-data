@@ -97,6 +97,50 @@ public abstract class OracleTextQueryConverter implements TextSearchQueryConvert
     }
 
     /**
+     * Checks that a native {@code CONTAINS} query closes every parenthesis and escape it opens. The query of a
+     * JSON entity is bound into {@code '(' || ? || ') INPATH (/path)'}, so an unbalanced query such as
+     * {@code x) INPATH (/other) OR (y} would move the search to another path; parentheses inside a
+     * {@code {...}} escape or after a {@code \} are literal and not counted.
+     *
+     * @param query The native query
+     * @return The query
+     * @throws IllegalArgumentException When a parenthesis, a brace escape or a backslash escape is left open
+     */
+    static String checkNativeStructure(String query) {
+        int depth = 0;
+        boolean braced = false;
+        int i = 0;
+        while (i < query.length()) {
+            char c = query.charAt(i);
+            if (c == '\\') {
+                // the next character is literal
+                i++;
+                if (i == query.length()) {
+                    throw unbalanced(query);
+                }
+            } else if (braced) {
+                braced = c != '}';
+            } else if (c == '{') {
+                braced = true;
+            } else if (c == '(' || c == ')') {
+                depth += c == '(' ? 1 : -1;
+                if (depth < 0) {
+                    throw unbalanced(query);
+                }
+            }
+            i++;
+        }
+        if (depth != 0 || braced) {
+            throw unbalanced(query);
+        }
+        return query;
+    }
+
+    private static IllegalArgumentException unbalanced(String query) {
+        return new IllegalArgumentException("A native Oracle Text query must close every parenthesis, brace escape and backslash escape it opens: " + query);
+    }
+
+    /**
      * Renders a search string as an Oracle Text query.
      *
      * @param query The search string
@@ -110,7 +154,7 @@ public abstract class OracleTextQueryConverter implements TextSearchQueryConvert
         }
         if (mode == MatchMode.NATIVE) {
             // the caller wrote CONTAINS query syntax
-            return query.isBlank() ? MATCH_NOTHING : query;
+            return query.isBlank() ? MATCH_NOTHING : checkNativeStructure(query);
         }
         if (mode == MatchMode.PHRASE) {
             if (part == Part.NEGATED) {

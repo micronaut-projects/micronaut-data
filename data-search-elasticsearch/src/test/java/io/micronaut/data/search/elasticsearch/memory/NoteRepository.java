@@ -15,12 +15,14 @@
  */
 package io.micronaut.data.search.elasticsearch.memory;
 
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.vector.search.SearchResults;
 import io.micronaut.data.repository.PageableRepository;
 import io.micronaut.data.repository.SearchRepository;
 import io.micronaut.data.search.elasticsearch.annotation.ElasticsearchRepository;
+import io.micronaut.transaction.annotation.Transactional;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -85,4 +87,19 @@ public interface NoteRepository extends PageableRepository<Note, String>, Search
     Note findFirstByPagesGreaterThan(int pages, io.micronaut.data.model.Sort sort);
 
     List<Note> findByTitleNotEqual(String title);
+
+    // a @Query body returning a number counts the documents its query matches
+    @Query("{\"query\": {\"match\": {\"title\": \":title\"}}}")
+    long countMatchingTitle(String title);
+
+    @Query("{\"query\": {\"match\": {\"title\": \":title\"}}}")
+    Long countMatchingTitleBoxed(String title);
+
+    // a backslash keeps a colon followed by digits literal instead of reading it as a parameter
+    @Query("{\"query\": {\"bool\": {\"must\": {\"match\": {\"title\": \":title\"}}, \"filter\": {\"match_phrase\": {\"body\": \"at 10\\:30\"}}}}}")
+    List<Note> findTitledAtHalfPastTen(String title);
+
+    // the stores have no transactions, so this fails at its first call
+    @Transactional
+    long countByBody(String body);
 }

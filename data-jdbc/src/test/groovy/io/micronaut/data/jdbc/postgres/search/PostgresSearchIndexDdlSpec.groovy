@@ -58,8 +58,36 @@ class PostgresSearchIndexDdlSpec extends Specification {
         expect:
         builder.searchIndexNames(entity) == ['"idx_search_book_search"', '"idx_search_book_title_trgm"']
         builder.buildCreateSearchIndexStatements(entity) == builder.buildCreateTableStatements(entity).toList().drop(1)
-        TextSearchDialect.forDialect(Dialect.POSTGRES).buildDropSearchIndex('"idx_search_book_search"') == 'DROP INDEX IF EXISTS "idx_search_book_search";'
+        TextSearchDialect.forDialect(Dialect.POSTGRES).buildDropSearchIndex('"idx_search_book_search"', null) == 'DROP INDEX IF EXISTS "idx_search_book_search";'
         TextSearchDialect.forDialect(Dialect.POSTGRES).catalogIndexName('"idx_search_book_search"') == 'idx_search_book_search'
         TextSearchDialect.forDialect(Dialect.POSTGRES).buildSyncSearchIndex(['"idx_search_book_search"']).isEmpty()
+    }
+
+    void "the index lookup and drop of an entity in its own schema are qualified with the schema"() {
+        given:
+        def builder = new SqlQueryBuilder(Dialect.POSTGRES)
+        def dialect = TextSearchDialect.forDialect(Dialect.POSTGRES)
+        def schema = builder.searchIndexSchema(new RuntimePersistentEntity<>(CatalogRecipe))
+
+        expect:
+        schema == '"search_catalog"'
+        builder.searchIndexSchema(new RuntimePersistentEntity<>(Book)) == null
+        builder.searchIndexSchema(new RuntimePersistentEntity<>(MixedCaseRecipe)) == null
+        dialect.buildDropSearchIndex('"idx_catalog_recipe_search"', schema) == 'DROP INDEX IF EXISTS "search_catalog"."idx_catalog_recipe_search";'
+        dialect.searchIndexExistsQuery(schema) == "SELECT count(*) FROM pg_indexes WHERE schemaname = 'search_catalog' AND indexname = ?"
+        dialect.searchIndexExistsQuery(null) == "SELECT count(*) FROM pg_indexes WHERE schemaname = current_schema() AND indexname = ?"
+        dialect.searchIndexExistsQuery("Odd'Schema") == "SELECT count(*) FROM pg_indexes WHERE schemaname = 'odd''schema' AND indexname = ?"
+    }
+
+    void "an unquoted index name is looked up in the lower case PostgreSQL folds it to"() {
+        given:
+        def builder = new SqlQueryBuilder(Dialect.POSTGRES)
+        def dialect = TextSearchDialect.forDialect(Dialect.POSTGRES)
+        def names = builder.searchIndexNames(new RuntimePersistentEntity<>(MixedCaseRecipe))
+
+        expect:
+        names == ['IdxMixedCaseRecipe']
+        dialect.catalogIndexName(names[0]) == 'idxmixedcaserecipe'
+        dialect.catalogIndexName('"IdxQuoted"') == 'IdxQuoted'
     }
 }

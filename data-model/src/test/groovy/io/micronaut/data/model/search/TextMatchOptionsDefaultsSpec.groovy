@@ -33,13 +33,13 @@ class TextMatchOptionsDefaultsSpec extends Specification {
         scored.is(score)
 
         when:
-        builder.textMatch(fields, query, MatchMode.ANY, new TextMatchOptions([title: 2d], 0))
+        builder.textMatch(fields, query, MatchMode.ANY, TextMatchOptions.builder().boost("title", 2d).build())
 
         then:
         thrown(UnsupportedOperationException)
 
         when:
-        builder.searchScore(fields, query, MatchMode.FUZZY, new TextMatchOptions([:], 2))
+        builder.searchScore(fields, query, MatchMode.FUZZY, TextMatchOptions.builder().fuzziness(2).build())
 
         then:
         thrown(UnsupportedOperationException)
@@ -59,7 +59,7 @@ class TextMatchOptionsDefaultsSpec extends Specification {
         1 * visitor.visitTextMatch(fields, query, MatchMode.ALL)
 
         when:
-        visitor.visitTextMatch(fields, query, MatchMode.ALL, new TextMatchOptions([title: 2d], 0))
+        visitor.visitTextMatch(fields, query, MatchMode.ALL, TextMatchOptions.builder().boost("title", 2d).build())
 
         then:
         thrown(UnsupportedOperationException)

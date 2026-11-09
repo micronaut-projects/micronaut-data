@@ -49,7 +49,7 @@ import javax.sql.DataSource;
  * {@link SearchIndexOperations} of a JDBC datasource: runs the full-text search index DDL the
  * {@link SqlQueryBuilder} renders for the datasource's dialect.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Experimental
 @EachBean(DataJdbcConfiguration.class)
@@ -88,7 +88,7 @@ public class JdbcSearchIndexOperations implements SearchIndexOperations, SearchC
     @Override
     public boolean exists(Class<?> entityType) {
         List<String> names = searchIndexNames(entityType);
-        if (textSearchDialect == null || names.isEmpty() || textSearchDialect.searchIndexExistsQuery() == null) {
+        if (textSearchDialect == null || names.isEmpty() || textSearchDialect.searchIndexExistsQuery(schema(entityType)) == null) {
             return false;
         }
         return existingIndexes(entityType, names).size() == names.size();
@@ -117,12 +117,13 @@ public class JdbcSearchIndexOperations implements SearchIndexOperations, SearchC
             return;
         }
         List<String> names = searchIndexNames(entityType);
+        String schema = schema(entityType);
         // only the indexes that exist are dropped, as Oracle has no DROP INDEX IF EXISTS before 23ai
-        Set<String> existing = textSearchDialect.searchIndexExistsQuery() == null ? new LinkedHashSet<>(names) : existingIndexes(entityType, names);
+        Set<String> existing = textSearchDialect.searchIndexExistsQuery(schema) == null ? new LinkedHashSet<>(names) : existingIndexes(entityType, names);
         List<String> statements = new ArrayList<>();
         for (String name : names) {
             if (existing.contains(name)) {
-                statements.add(textSearchDialect.buildDropSearchIndex(name));
+                statements.add(textSearchDialect.buildDropSearchIndex(name, schema));
             }
         }
         execute(entityType, statements);
@@ -137,7 +138,7 @@ public class JdbcSearchIndexOperations implements SearchIndexOperations, SearchC
         if (dialect == null || names.isEmpty()) {
             return existing;
         }
-        String query = dialect.searchIndexExistsQuery();
+        String query = dialect.searchIndexExistsQuery(schema(entityType));
         if (query == null) {
             return existing;
         }
@@ -168,6 +169,11 @@ public class JdbcSearchIndexOperations implements SearchIndexOperations, SearchC
 
     private List<String> searchIndexNames(Class<?> entityType) {
         return queryBuilder.searchIndexNames(entity(entityType));
+    }
+
+    @Nullable
+    private String schema(Class<?> entityType) {
+        return queryBuilder.searchIndexSchema(entity(entityType));
     }
 
     private PersistentEntity entity(Class<?> entityType) {
