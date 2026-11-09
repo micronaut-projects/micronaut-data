@@ -26,8 +26,10 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.search.SearchQuery;
 import io.micronaut.data.model.vector.search.SearchResults;
 import io.micronaut.data.operations.RepositoryOperations;
+import io.micronaut.data.operations.reactive.ReactiveCriteriaRepositoryOperations;
+import io.micronaut.data.runtime.intercept.criteria.AbstractPreparedQueryCriteriaRepositoryOperations;
 import io.micronaut.data.runtime.intercept.criteria.SearchQuerySupport;
-import jakarta.persistence.criteria.CriteriaQuery;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
 /**
@@ -35,7 +37,7 @@ import reactor.core.publisher.Mono;
  * interceptor, executed through the reactive criteria operations, with the hybrid rankings fused once
  * both have arrived.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 public class SearchQueryReactiveInterceptor extends AbstractReactiveSpecificationInterceptor<Object, Object> {
@@ -68,10 +70,32 @@ public class SearchQueryReactiveInterceptor extends AbstractReactiveSpecificatio
         Pageable window = SearchQuerySupport.hybridWindow(searchQuery, pageable);
         RuntimePersistentEntity<Object> persistentEntity = operations.getEntity(rootEntity);
         Mono<SearchResults<Object>> text = findOne(methodKey, context, SearchQuerySupport.textQuery(cb, rootEntity, searchQuery, window), window);
-        Mono<SearchResults<Object>> vector = Mono.defer(() -> findOne(methodKey, context, SearchQuerySupport.vectorQuery(cb, rootEntity, searchQuery), window))
-            .onErrorMap(e -> SearchQuerySupport.vectorFailure(e, operations));
+        Mono<SearchResults<Object>> vector = Mono.defer(() -> vectorSearch(methodKey, context, persistentEntity, searchQuery, window));
         // one ranking after the other: in a transaction both share one connection, which cannot run two statements at once
         return text.flatMap(t -> vector.map(v -> SearchQuerySupport.fuse(persistentEntity, t, v, searchQuery, pageable)));
+    }
+
+    /**
+     * Runs the nearest-neighbour query, rendered and checked by
+     * {@link SearchQuerySupport#renderVectorQuery} before it runs, so only a failure to render it is
+     * reported as an unsupported hybrid search; a failure while it runs is signalled unchanged.
+     */
+    private Mono<SearchResults<Object>> vectorSearch(RepositoryMethodKey methodKey,
+                                                     MethodInvocationContext<Object, Object> context,
+                                                     RuntimePersistentEntity<Object> persistentEntity,
+                                                     SearchQuery searchQuery,
+                                                     Pageable window) {
+        PersistentEntityCriteriaQuery<SearchResults> criteriaQuery = SearchQuerySupport.vectorQuery((AbstractCriteriaBuilder) criteriaBuilder, getRequiredRootEntity(context), searchQuery);
+        Pageable applied = applyPaginationAndSort(window, criteriaQuery, false);
+        ReactiveCriteriaRepositoryOperations criteriaOperations = getReactiveCriteriaOperations(methodKey, context, applied);
+        Publisher<SearchResults<Object>> found;
+        if (criteriaOperations instanceof AbstractPreparedQueryCriteriaRepositoryOperations preparedOperations) {
+            found = reactiveOperations.findOne(SearchQuerySupport.renderVectorQuery(preparedOperations, criteriaQuery, persistentEntity, searchQuery, operations));
+        } else {
+            SearchQuerySupport.requireVectorProperty(persistentEntity, searchQuery);
+            found = criteriaOperations.findOne(SearchQuerySupport.resultsQuery(criteriaQuery));
+        }
+        return Mono.from(found).defaultIfEmpty(SearchQuerySupport.orEmpty(null));
     }
 
     private Mono<SearchResults<Object>> findOne(RepositoryMethodKey methodKey,
@@ -79,9 +103,7 @@ public class SearchQueryReactiveInterceptor extends AbstractReactiveSpecificatio
                                                 PersistentEntityCriteriaQuery<SearchResults> criteriaQuery,
                                                 Pageable pageable) {
         Pageable applied = applyPaginationAndSort(pageable, criteriaQuery, false);
-        @SuppressWarnings("unchecked")
-        CriteriaQuery<SearchResults<Object>> query = (CriteriaQuery<SearchResults<Object>>) (CriteriaQuery<?>) criteriaQuery;
-        return Mono.from(getReactiveCriteriaOperations(methodKey, context, applied).findOne(query))
+        return Mono.from(getReactiveCriteriaOperations(methodKey, context, applied).findOne(SearchQuerySupport.resultsQuery(criteriaQuery)))
             .defaultIfEmpty(SearchQuerySupport.orEmpty(null));
     }
 }

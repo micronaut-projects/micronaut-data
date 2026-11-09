@@ -1060,6 +1060,27 @@ public final class MongoQueryBuilder implements QueryBuilder {
         );
     }
 
+    /**
+     * MongoDB {@code $text} matches whole stemmed words over the whole text index, scores without
+     * query-time boosts and returns no highlights. MongoDB Search ({@code $search}), used for an
+     * entity with a {@code @MongoSearchIndex}, supports everything but query-time boosts and a
+     * per-document language.
+     *
+     * @param entity     The entity
+     * @param capability The capability
+     * @return Whether the search of the entity supports the capability
+     */
+    @Override
+    public boolean supportsSearchCapability(PersistentEntity entity, SearchCapability capability) {
+        if (usesSearchIndex(entity)) {
+            return capability != SearchCapability.BOOST && capability != SearchCapability.LANGUAGE_OVERRIDE;
+        }
+        return switch (capability) {
+            case PREFIX, FUZZY, FIELD_SCOPE, BOOST, HIGHLIGHT -> false;
+            default -> true;
+        };
+    }
+
     @Override
     public String buildLimitAndOffset(long limit, long offset) {
         throw new UnsupportedOperationException();
@@ -1239,7 +1260,6 @@ public final class MongoQueryBuilder implements QueryBuilder {
         private final PersistentEntity persistentEntity;
         private final QueryState queryState;
         private Map<String, Object> query;
-        private boolean inDisjunction;
         // the number of OR and NOT predicates around the one being visited, where $text is not allowed
         private int textForbiddenDepth;
 
@@ -1391,14 +1411,11 @@ public final class MongoQueryBuilder implements QueryBuilder {
             }
             List<Object> ops = new ArrayList<>(predicates.size());
             query.put("$or", ops);
-            boolean wasInDisjunction = inDisjunction;
-            inDisjunction = true;
             textForbiddenDepth++;
             try {
                 visitDisjunctionPredicate(predicates, ops);
             } finally {
                 textForbiddenDepth--;
-                inDisjunction = wasInDisjunction;
             }
         }
 
@@ -1763,8 +1780,9 @@ public final class MongoQueryBuilder implements QueryBuilder {
             if (queryState.searchOperator != null) {
                 throw new UnsupportedOperationException("MongoDB $search supports one search predicate per query.");
             }
-            if (inDisjunction) {
-                throw new UnsupportedOperationException("MongoDB $search cannot be combined with OR, as the $search stage filters every document.");
+            if (textForbiddenDepth > 0) {
+                // the $search stage runs ahead of the $match, so it can neither be an alternative nor be negated
+                throw new UnsupportedOperationException("MongoDB $search cannot be combined with OR or negated, as the $search stage filters every document before the other conditions.");
             }
             List<String> paths = new ArrayList<>(fields.size());
             Map<String, Object> boosts = new LinkedHashMap<>();
