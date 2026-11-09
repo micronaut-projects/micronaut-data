@@ -90,7 +90,7 @@ public interface PredicateVisitor {
      * Visit {@link TextMatchPredicate}.
      *
      * @param textMatchPredicate The text match predicate
-     * @since 5.4.0
+     * @since 5.3.0
      */
     void visit(TextMatchPredicate textMatchPredicate);
 
