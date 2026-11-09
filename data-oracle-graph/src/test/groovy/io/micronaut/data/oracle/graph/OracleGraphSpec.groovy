@@ -346,12 +346,12 @@ class OracleGraphSpec extends Specification {
         !bankGraph.existsPathByTransfers(4L, 4L)
         !bankGraph.existsPathByTransfers(1L, 1L)
         bankGraph.countPathsByTransfers(1L, 1L) == 0
-        // SQL/PGQ matches walks, so the one-step cycle is walked once, twice and three times within the depth of 3
-        bankGraph.countPathsByTransfers(4L, 4L) == 3
+        // A path takes each edge once, as in Cypher, so the one-step cycle is counted once within the depth of 3
+        bankGraph.countPathsByTransfers(4L, 4L) == 1
 
         and: "a @PathLimit argument overrides the depth of the annotation"
         bankGraph.countPathsByTransfers(4L, 4L, 1) == 1
-        bankGraph.countPathsByTransfers(4L, 4L, 2) == 2
+        bankGraph.countPathsByTransfers(1L, 3L, 2) == 2
         bankGraph.countPathsByTransfers(1L, 3L, 1) == 1
 
         when: "a depth above micronaut.data.graph.max-path-depth is asked for"
@@ -360,6 +360,21 @@ class OracleGraphSpec extends Specification {
         then:
         def e = thrown(IllegalArgumentException)
         e.message.contains("max-path-depth")
+    }
+
+    void "return every path up to the depth, shortest first"() {
+        when:
+        def paths = bankGraph.findAllPathsByTransfers(1L, 3L)
+
+        then: "Alice pays Carol directly and through Bob"
+        paths.collect { it.nodes()*.name() } == [["Alice", "Carol"], ["Alice", "Bob", "Carol"]]
+        paths[1].relationships()*.type() == ["TRANSFERS", "TRANSFERS"]
+
+        and: "the one-step cycle is a path of its own, taken once"
+        bankGraph.findAllPathsByTransfers(4L, 4L).collect { it.nodes()*.name() } == [["Dave", "Dave"]]
+
+        and: "no path is an empty list"
+        bankGraph.findAllPathsByTransfers(3L, 1L).isEmpty()
     }
 
     void "read and match temporal properties"() {
