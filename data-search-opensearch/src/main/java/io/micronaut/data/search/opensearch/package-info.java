@@ -16,7 +16,7 @@
 /**
  * OpenSearch backend for Micronaut Data full-text search.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @org.jspecify.annotations.NullMarked
 package io.micronaut.data.search.opensearch;
