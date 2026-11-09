@@ -104,6 +104,14 @@ public @interface DataMethodQuery {
     String META_MEMBER_OPTIONAL_EMBEDDED_PROJECTION = "optionalEmbeddedProjection";
 
     /**
+     * Is the query a full-text search ordered by its relevance score unless its {@code Pageable} or
+     * {@code Sort} parameter is sorted.
+     *
+     * @since 5.3.0
+     */
+    String META_MEMBER_SCORE_ORDER = "scoreOrder";
+
+    /**
      * Does the query contains optimistic lock.
      */
     String META_MEMBER_OPTIMISTIC_LOCK = "optimisticLock";

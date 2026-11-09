@@ -86,6 +86,7 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     private final ExecutableMethod<?, ?> method;
     private final boolean isDto;
     private final boolean optionalEmbeddedProjection;
+    private final boolean scoreOrderedWhenUnsorted;
     private final boolean isOptimisticLock;
     private final boolean isNative;
     private final boolean isProcedure;
@@ -223,6 +224,7 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
         this.method = method;
         this.isDto = dataMethodQuery.isTrue(DataMethodQuery.META_MEMBER_DTO);
         this.optionalEmbeddedProjection = dataMethodQuery.isTrue(DataMethodQuery.META_MEMBER_OPTIONAL_EMBEDDED_PROJECTION);
+        this.scoreOrderedWhenUnsorted = dataMethodQuery.isTrue(DataMethodQuery.META_MEMBER_SCORE_ORDER);
         this.isOptimisticLock = dataMethodQuery.isTrue(DataMethodQuery.META_MEMBER_OPTIMISTIC_LOCK);
         this.operationType = dataMethodQuery.enumValue(DataMethodQuery.META_MEMBER_OPERATION_TYPE, DataMethodQuery.OperationType.class)
             .map(op -> OperationType.valueOf(op.name()))
@@ -423,6 +425,11 @@ public final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<
     @Override
     public boolean isOptionalEmbeddedProjection() {
         return optionalEmbeddedProjection;
+    }
+
+    @Override
+    public boolean isScoreOrderedWhenUnsorted() {
+        return scoreOrderedWhenUnsorted;
     }
 
     /**

@@ -37,7 +37,7 @@ import java.util.List;
  * parses to {@code [[bake, coffee, -cake], [tea]]}. How the terms of a group are combined (any term,
  * all terms) is up to the {@link MatchMode}.</p>
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Experimental
 public final class SearchQueryParser {
