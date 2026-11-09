@@ -62,6 +62,18 @@ public interface BankGraph extends GenericRepository<Account, Long> {
 
     long countByNameIsNotNull();
 
+    List<Account> findByTransfersIsEmpty();
+
+    long countByTransfersIsEmpty();
+
+    List<Account> findByNameStartsWithAndTransfersIsEmpty(String prefix);
+
+    List<String> findNameByTransfersAmountGreaterThan(BigDecimal amount);
+
+    List<Account> findByIdGreaterThanOrderByTransfersAmount(Long id);
+
+    List<Account> findByIdGreaterThanOrderByTransfersAmountDesc(Long id);
+
     @Join(value = "transfers", type = Join.Type.INNER)
     long countByNameContains(String part);
 
