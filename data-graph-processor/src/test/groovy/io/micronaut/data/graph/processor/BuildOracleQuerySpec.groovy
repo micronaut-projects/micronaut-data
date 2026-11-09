@@ -720,6 +720,150 @@ interface ReactiveRepository extends io.micronaut.data.repository.reactive.React
         definition != null
     }
 
+    void "test two relationships sharing an edge table fail the build"() {
+        when:
+        buildRepository('test.FollowerRepository', """
+@Node
+class Account {
+    @Id
+    private String handle;
+    @Relationship(type = "SUBSCRIBES")
+    private List<Channel> subscriptions = new ArrayList<>();
+    @Relationship(type = "SUBSCRIBES", direction = Direction.INCOMING)
+    private List<Channel> subscribers = new ArrayList<>();
+
+    public String getHandle() { return handle; }
+    public void setHandle(String handle) { this.handle = handle; }
+    public List<Channel> getSubscriptions() { return subscriptions; }
+    public void setSubscriptions(List<Channel> subscriptions) { this.subscriptions = subscriptions; }
+    public List<Channel> getSubscribers() { return subscribers; }
+    public void setSubscribers(List<Channel> subscribers) { this.subscribers = subscribers; }
+}
+
+@Node
+class Channel {
+    @Id
+    private String name;
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+}
+
+@TestOracleRepository
+@PropertyGraph("accounts")
+interface FollowerRepository extends GenericRepository<Account, String> {
+    List<Account> findByHandle(String handle);
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('Relationships [test.Account.subscriptions] and [test.Account.subscribers] both map to the edge table "ACCOUNT_SUBSCRIBES", which can only hold one relationship type between one pair of nodes: use a relationship entity for each of them')
+    }
+
+    static final String FILMS = '''
+@Node
+class Film {
+    @Id
+    private String title;
+    @Relationship(type = "STARRED_IN", direction = Direction.INCOMING)
+    private List<Credit> credits = new ArrayList<>();
+
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    public List<Credit> getCredits() { return credits; }
+    public void setCredits(List<Credit> credits) { this.credits = credits; }
+}
+
+@RelationshipProperties
+class Credit {
+    @RelationshipId
+    private String id;
+    private String role;
+    @TargetNode
+    private Star star;
+
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
+    public Star getStar() { return star; }
+    public void setStar(Star star) { this.star = star; }
+}
+'''
+
+    void "test a relationship entity on both sides of a relationship fails the build"() {
+        when:
+        buildRepository('test.FilmRepository', """
+$FILMS
+
+@RelationshipProperties
+class Appearance {
+    @RelationshipId
+    private String id;
+    @TargetNode
+    private Film film;
+
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public Film getFilm() { return film; }
+    public void setFilm(Film film) { this.film = film; }
+}
+
+@Node
+class Star {
+    @Id
+    private String name;
+    @Relationship(type = "STARRED_IN")
+    private List<Appearance> appearances = new ArrayList<>();
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public List<Appearance> getAppearances() { return appearances; }
+    public void setAppearances(List<Appearance> appearances) { this.appearances = appearances; }
+}
+
+@TestOracleRepository
+@PropertyGraph("films")
+interface FilmRepository extends GenericRepository<Film, String> {
+    List<Film> findByTitle(String title);
+}
+""")
+
+        then: "the conflict is found on a node reached through a relationship entity"
+        def e = thrown(RuntimeException)
+        e.message.contains('Relationships [test.Star.appearances] and [test.Film.credits] are the two sides of one relationship with the edge tables "APPEARANCE" and "CREDIT": declare the relationship entity on one side only')
+    }
+
+    void "test a relationship entity on one side of a relationship compiles"() {
+        when:
+        def repository = buildRepository('test.FilmRepository', """
+$FILMS
+
+@Node
+class Star {
+    @Id
+    private String name;
+    @Relationship(type = "STARRED_IN")
+    private List<Film> films = new ArrayList<>();
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public List<Film> getFilms() { return films; }
+    public void setFilms(List<Film> films) { this.films = films; }
+}
+
+@TestOracleRepository
+@PropertyGraph("films")
+interface FilmRepository extends GenericRepository<Film, String> {
+    List<Film> findByCreditsStarName(String name);
+}
+""")
+
+        then:
+        getQuery(findMethod(repository, 'findByCreditsStarName')).contains('STARRED_IN')
+    }
+
     private static ExecutableMethod<?, ?> findMethod(BeanDefinition<?> definition, String name) {
         def method = definition.executableMethods.find { it.methodName == name }
         assert method != null: "No method $name"
