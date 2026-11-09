@@ -35,9 +35,11 @@ import java.util.StringJoiner;
  * A single-field search binds the {@link Part#FULL full} query, with negated terms applied through the
  * {@code ~} operator. A search over several fields binds the {@link Part#POSITIVE positive} terms per
  * field and the {@link Part#NEGATED negated} terms once more, so a negated term excludes a row whichever
- * field it appears in.</p>
+ * field it appears in. When the search string has several {@code OR} alternatives, the negated terms only
+ * narrow their own alternative, so each field is matched with the full query instead and a negated term
+ * excludes a row only when it appears in the field that matched.</p>
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 public abstract class OracleTextQueryConverter implements TextSearchQueryConverter {
@@ -105,16 +107,23 @@ public abstract class OracleTextQueryConverter implements TextSearchQueryConvert
         if (query == null) {
             return MATCH_NOTHING;
         }
-        if (part == Part.NEGATED) {
-            return renderNegated(query);
-        }
         if (mode == MatchMode.PHRASE) {
+            if (part == Part.NEGATED) {
+                // a phrase has no negated terms: a - inside it is part of the phrase
+                return MATCH_NOTHING;
+            }
             String phrase = escape(query.replace("\"", ""));
             return phrase == null ? MATCH_NOTHING : phrase;
         }
+        List<List<SearchTerm>> groups = alternatives(query);
+        if (part == Part.NEGATED) {
+            return renderNegated(groups);
+        }
+        // with several alternatives the negated terms go into each field's query, beside the terms they narrow
+        boolean applyNegation = part == Part.FULL || groups.size() > 1;
         List<String> rendered = new ArrayList<>();
-        for (List<SearchTerm> group : SearchQueryParser.parse(query)) {
-            String groupQuery = renderGroup(group, mode, part == Part.FULL);
+        for (List<SearchTerm> group : groups) {
+            String groupQuery = renderGroup(group, mode, applyNegation);
             if (groupQuery != null) {
                 rendered.add(groupQuery);
             }
@@ -122,10 +131,30 @@ public abstract class OracleTextQueryConverter implements TextSearchQueryConvert
         return joinGroups(rendered);
     }
 
-    /** The negated terms of a query as one disjunction, for the exclusion of a multi-field search. */
-    private static String renderNegated(String query) {
+    /**
+     * The {@code OR} alternatives of a query that can match a row: those with a positive term. The test does
+     * not depend on the mode, so the positive and the negated converters of one search agree on the count.
+     */
+    private static List<List<SearchTerm>> alternatives(String query) {
+        List<List<SearchTerm>> groups = new ArrayList<>();
+        for (List<SearchTerm> group : SearchQueryParser.parse(query)) {
+            if (group.stream().anyMatch(term -> !term.negated() && escape(term.text()) != null)) {
+                groups.add(group);
+            }
+        }
+        return groups;
+    }
+
+    /**
+     * The negated terms of a single-alternative query as one disjunction, for the exclusion of a multi-field
+     * search; a query of several alternatives applies them per field in its positive part instead.
+     */
+    private static String renderNegated(List<List<SearchTerm>> groups) {
+        if (groups.size() != 1) {
+            return MATCH_NOTHING;
+        }
         StringJoiner negated = new StringJoiner(" | ");
-        for (SearchTerm term : SearchQueryParser.terms(query)) {
+        for (SearchTerm term : groups.get(0)) {
             String escaped = escape(term.text());
             if (term.negated() && escaped != null) {
                 negated.add(escaped);
@@ -175,19 +204,49 @@ public abstract class OracleTextQueryConverter implements TextSearchQueryConvert
 
     @Nullable
     private static String renderTerm(SearchTerm term, MatchMode mode) {
+        if (mode == MatchMode.PREFIX && term.phrase() && !term.negated()) {
+            return renderPrefixPhrase(term.text());
+        }
         if (term.phrase() || term.negated() || mode == MatchMode.ANY || mode == MatchMode.ALL) {
             return escape(term.text());
         }
-        // an underscore is Oracle Text's single-character wildcard, so it goes with the other symbols
-        String word = term.text().replaceAll("[^\\p{L}\\p{N}]", "");
-        if (word.isEmpty()) {
+        String word = word(term.text());
+        if (word == null) {
             return null;
         }
-        // a reserved word such as near or about is escaped in braces inside fuzzy(); braces do not combine with %
+        // a reserved word such as near or about is escaped in braces inside fuzzy()
         if (mode == MatchMode.PREFIX) {
-            return word.length() < MIN_PREFIX_LENGTH ? "{" + word + "}" : word + "%";
+            return prefix(word);
         }
         return "fuzzy({" + word + "}" + FUZZY_SUFFIX;
+    }
+
+    /**
+     * A phrase whose every word is a prefix, like PostgreSQL's prefix phrase, so the phrase being typed,
+     * {@code "micronaut da}, finds "micronaut data": Oracle Text expands wildcards inside a phrase.
+     */
+    @Nullable
+    private static String renderPrefixPhrase(String phrase) {
+        StringJoiner words = new StringJoiner(" ");
+        for (String part : phrase.trim().split("\\s+")) {
+            String word = word(part);
+            if (word != null) {
+                words.add(prefix(word));
+            }
+        }
+        return words.length() == 0 ? null : words.toString();
+    }
+
+    /** The letters and digits of a term; an underscore is Oracle Text's single-character wildcard, so it goes with the other symbols. */
+    @Nullable
+    private static String word(String text) {
+        String word = text.replaceAll("[^\\p{L}\\p{N}]", "");
+        return word.isEmpty() ? null : word;
+    }
+
+    /** A word expanded with {@code %}, or in braces when it is too short; braces do not combine with {@code %}. */
+    private static String prefix(String word) {
+        return word.length() < MIN_PREFIX_LENGTH ? "{" + word + "}" : word + "%";
     }
 
     /** A term in braces, matched literally; {@code null} when nothing but braces or spaces remains. */
