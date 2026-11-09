@@ -121,6 +121,11 @@ public interface DelegateStoredQuery<E, R> extends StoredQuery<E, R> {
     }
 
     @Override
+    default boolean isScoreOrderedWhenUnsorted() {
+        return getStoredQueryDelegate().isScoreOrderedWhenUnsorted();
+    }
+
+    @Override
     default boolean isCount() {
         return getStoredQueryDelegate().isCount();
     }

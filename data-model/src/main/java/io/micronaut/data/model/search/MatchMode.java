@@ -21,7 +21,7 @@ import org.jspecify.annotations.Nullable;
 /**
  * How the terms of a full-text query are matched against a field.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Experimental
 public enum MatchMode {
@@ -38,7 +38,8 @@ public enum MatchMode {
      */
     PHRASE,
     /**
-     * Every term is matched as a prefix, for search-as-you-type.
+     * Every term is matched as a prefix, for search-as-you-type. Each word of a quoted phrase is a
+     * prefix as well, so the phrase being typed, {@code "micronaut da}, already finds "micronaut data".
      */
     PREFIX,
     /**

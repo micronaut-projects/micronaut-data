@@ -43,6 +43,7 @@ import io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.VectorScoringDialectSupport;
+import io.micronaut.data.model.search.TextSearchSupport;
 import io.micronaut.data.model.vector.search.ScoringFunction;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
@@ -74,6 +75,9 @@ import static io.micronaut.data.runtime.query.internal.DefaultPreparedQuery.getP
  */
 @Internal
 public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPreparedQuery<E, R> implements SqlPreparedQuery<E, R>, DelegatePreparedQuery<E, R> {
+
+    // the relevance score a full-text SearchResults query projects, best match first
+    private static final String SCORE_ORDER_BY = AbstractSqlLikeQueryBuilder.ORDER_BY_CLAUSE + TextSearchSupport.SCORE_ALIAS + " DESC";
 
     @Nullable
     protected List<QueryParameterBinding> cursorQueryBindings;
@@ -178,6 +182,11 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
     @Override
     public boolean isExpandableQuery() {
         return sqlStoredQuery.isExpandableQuery();
+    }
+
+    @Override
+    public boolean isTextSearch() {
+        return sqlStoredQuery.isTextSearch();
     }
 
     @Override
@@ -362,7 +371,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
 
     @Override
     public void attachPageable(Pageable pageable, Limit limit, Sort sort) {
-        if (pageable.isUnpaged() && !pageable.isSorted() || bindPageableOrSort) {
+        if (pageable.isUnpaged() && !pageable.isSorted() && !sqlStoredQuery.isScoreOrderedWhenUnsorted() || bindPageableOrSort) {
             return;
         }
         StringBuilder builder = new StringBuilder();
@@ -411,6 +420,9 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         RuntimePersistentEntity<E> persistentEntity = getPersistentEntity();
         if (sort.isSorted()) {
             added.append(queryBuilder.buildOrderBy("", persistentEntity, sqlStoredQuery.getAnnotationMetadata(), sort, isNative(), tableAlias));
+        } else if (sqlStoredQuery.isScoreOrderedWhenUnsorted()) {
+            // a full-text search left its relevance order to the unsorted Pageable or Sort parameter
+            added.append(SCORE_ORDER_BY);
         } else if (isSqlServerWithoutOrderBy(query, sqlStoredQuery.getDialect())) {
             // SQL server requires order by
             sort = sortById(persistentEntity);
