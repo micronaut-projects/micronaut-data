@@ -25,7 +25,7 @@ import org.jspecify.annotations.Nullable;
 /**
  * Minimal JSON writer for the query bodies built at compile time, where no JSON library is guaranteed.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 public final class SearchJson {
