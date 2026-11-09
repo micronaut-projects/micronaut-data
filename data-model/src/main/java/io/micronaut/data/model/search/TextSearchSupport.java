@@ -37,7 +37,7 @@ import java.util.regex.Pattern;
 /**
  * Constants shared by the compile-time query builders and the runtime for full-text search.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 public final class TextSearchSupport {

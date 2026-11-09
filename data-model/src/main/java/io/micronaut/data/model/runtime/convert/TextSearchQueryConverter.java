@@ -22,7 +22,7 @@ import io.micronaut.core.annotation.Internal;
  * query bound through such a converter is a text search, so its score is a relevance rank and not a
  * vector distance.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 public interface TextSearchQueryConverter extends AttributeConverter<String, String> {
