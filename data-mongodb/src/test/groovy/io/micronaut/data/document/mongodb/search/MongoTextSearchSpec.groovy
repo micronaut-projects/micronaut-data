@@ -51,7 +51,7 @@ class MongoTextSearchSpec extends AbstractTextSearchSpec implements MongoTestPro
 
         then:
         all.results()*.entity()*.title == ["Tea Leaves", "Herbal Tea", "Gardening Notes"]
-        scores == scores.sort(false).reverse()
+        scores == scores.toSorted().reverse()
         first.results()*.entity()*.title == ["Tea Leaves", "Herbal Tea"]
         second.results()*.entity()*.title == ["Gardening Notes"]
     }
