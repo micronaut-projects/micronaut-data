@@ -42,7 +42,7 @@ import java.util.Objects;
  * {@code search(SearchQuery)} and {@code search(SearchQuery, Pageable)} build their query at runtime
  * through {@code SearchQueryInterceptor}.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 public final class SearchRepositoryMethodMatcher implements MethodMatcher {
