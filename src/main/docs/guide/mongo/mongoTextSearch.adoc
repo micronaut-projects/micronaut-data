@@ -14,21 +14,21 @@ snippet::example.Book[project-base="doc-examples/mongo-search-example", source="
 
 A property annotated with ann:data.annotation.search.Language[] becomes the index's `language_override`, so each document can carry its own language.
 
-When `micronaut.data.mongodb.create-collections` is enabled, Micronaut Data creates the text index together with the collection, named `<collection>_text` unless `@Searchable(name)` says otherwise. A collection can have only one text index, so all search fields of an entity go into it.
+When `micronaut.data.mongodb.create-collections` is enabled, Micronaut Data creates the text index together with the collection, named `<collection>_text` unless `@Searchable(name)` says otherwise. A collection can have only one text index, so all search fields of an entity go into it. An existing text index is kept as it is, whatever its name: when the search fields, their weights or the languages of the entity change, Micronaut Data logs a warning instead of rebuilding the index, and the new mapping applies once the index is dropped and created again.
 
 == Searching
 
 snippet::example.BookRepository[project-base="doc-examples/mongo-search-example", source="main", tags="repository"]
 
 <1> api:data.repository.SearchRepository[] adds `search` and `countHits`.
-<2> `$text` always searches the whole text index, so a property keyword such as `findByTitleSearch` matches any search field of the entity, not only the title.
+<2> `$text` always searches the whole text index, so a property keyword such as `findByTitleSearch` matches any search field of the entity, not only the title. A property keyword on a property that is not in the text index, one without `@SearchField` or one of a joined entity, is rejected at compile time.
 <3> A `search` method returning `SearchResults` adds the `textScore` as the score and sorts by it in an aggregation.
 <4> `SearchPhrase` quotes the whole string, which MongoDB matches as a phrase.
 <5> Search keywords combine with other predicates in the same `$match`.
 
 snippet::example.BookService[project-base="doc-examples/mongo-search-example", source="main", tags="search"]
 
-The search string is translated to MongoDB's `$search` syntax at bind time: any term matches by default, quoted phrases are required, `-` excludes a term, and `OR` groups are flattened because MongoDB already matches any term. `SearchAll` quotes every term, which makes MongoDB require all of them; it cannot be combined with `OR`, and a search string that does so fails with an `UnsupportedOperationException` that the application can turn into a client error. Because MongoDB requires every quoted phrase, a phrase in an any-term search is required too: `coffee "french press"` matches only documents containing the phrase.
+The search string is translated to MongoDB's `$search` syntax at bind time: any term matches by default, quoted phrases are required, `-` excludes a term, and `OR` groups are flattened because MongoDB already matches any term. `SearchAll` quotes every term, which makes MongoDB require all of them; because MongoDB matches a quoted term literally, `SearchAll` loses stemming, so `searchByTitleSearchAll("programming languages")` does not find "The Rust Programming Language" although `search("languages")` does. `SearchAll` cannot be combined with `OR`, and a search string that does so fails with an `UnsupportedOperationException` that the application can turn into a client error. Because MongoDB requires every quoted phrase, a phrase in an any-term search is required too: `coffee "french press"` matches only documents containing the phrase.
 
 The query sets `$language` to the entity's language, which is also the text index's `default_language`, so a document with its own language in the `language_override` field is still indexed with that language; only the search string is stemmed with the entity's.
 
@@ -75,6 +75,8 @@ Hybrid search with `SearchQuery.vector(...)` runs the `$search` and the `$vector
 |Feature |MongoDB `$text` |MongoDB Search (`$search`)
 
 |Field scoping (`findByTitleSearch` matching only `title`) |not supported, every search field is searched |supported
+|A property keyword on a property without `@SearchField` or of a joined entity |rejected at compile time, as the property is not in the text index |the property must be mapped by the search index
+|Stemming in `SearchAll` |not supported, every term is matched literally |follows the analyzer of the search index
 |Vector search and hybrid search |not supported |supported, `$vectorSearch` with cosine similarity
 |`SearchPrefix` and `SearchFuzzy` |not supported, rejected at compile time |supported
 |Highlighting and minimum score |not supported |supported
@@ -85,4 +87,4 @@ Hybrid search with `SearchQuery.vector(...)` runs the `$search` and the `$vector
 |Cursored paging |not supported |not supported
 |===
 
-A `Pageable` or `Sort` parameter replaces the relevance order, as on SQL stores.
+As on SQL stores, an unsorted `Pageable` or `Sort` parameter of a `SearchResults` method keeps the relevance order, best match first, with the document id breaking ties so consecutive pages neither repeat nor skip hits; a `Pageable` or `Sort` with orders replaces it.
