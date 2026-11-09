@@ -152,6 +152,22 @@ public interface TextSearchDialect {
     }
 
     /**
+     * Checks that a search index name is a plain SQL identifier, as it is written into the {@code CREATE INDEX}
+     * statement: a letter or underscore followed by letters, digits and underscores. A quote or a semicolon would
+     * otherwise change the generated statement.
+     *
+     * @param indexName The index name
+     * @return The index name
+     * @throws IllegalArgumentException When the name holds any other character
+     */
+    static String requireIndexName(String indexName) {
+        if (!indexName.matches("[A-Za-z_]\\w*")) {
+            throw new IllegalArgumentException("A search index name must be an identifier of letters, digits and underscores: " + indexName);
+        }
+        return indexName;
+    }
+
+    /**
      * @param field A field expression
      * @return The persistent property it refers to, or {@code null}
      */
