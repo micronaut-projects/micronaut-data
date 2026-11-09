@@ -29,8 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Map;
 
 /**
  * Constants shared by the compile-time query builders and the runtime for full-text search.
@@ -86,7 +85,7 @@ public final class TextSearchSupport {
      */
     public static final String HIGHLIGHT_END_TAG = "</em>";
 
-    private static final Pattern HIGHLIGHT_ALIAS = Pattern.compile("\\b" + HIGHLIGHT_ALIAS_PREFIX + "([A-Za-z0-9_]+)");
+    private static final String HIGHLIGHT_ALIAS_CLAUSE = " AS " + HIGHLIGHT_ALIAS_PREFIX;
 
     private static final List<MatchMode> KEYWORDS_LONGEST_FIRST = Arrays.stream(MatchMode.values())
         .sorted(Comparator.comparingInt((MatchMode m) -> m.keyword().length()).reversed())
@@ -112,12 +111,6 @@ public final class TextSearchSupport {
     }
 
     /**
-     * Resolves the search language of an entity.
-     *
-     * @param entity The entity
-     * @return The declared {@code @Searchable(language)}, or {@link #DEFAULT_LANGUAGE}
-     */
-    /**
      * The result column alias of the highlighted fragment of a property.
      *
      * @param propertyName The property name
@@ -128,22 +121,31 @@ public final class TextSearchSupport {
     }
 
     /**
-     * Finds the highlight aliases a rendered query projects, so the result mapper knows which
+     * Finds the highlighted fragments a rendered query projects, so the result mapper knows which
      * columns hold fragments and for which properties.
      *
+     * <p>Only the {@code @SearchField} properties of the entity are candidates, and a property counts as
+     * highlighted only when the query projects it under the exact alias the query builder renders,
+     * {@code AS mn_hl_<property>} ending at an identifier boundary. A column, alias or literal that merely
+     * starts with {@link #HIGHLIGHT_ALIAS_PREFIX} and names no search field is ignored.</p>
+     *
      * @param query The rendered query
+     * @param entity The queried entity
      * @return The property names, in projection order
      */
-    public static List<String> highlightedProperties(String query) {
-        List<String> properties = new ArrayList<>();
-        Matcher matcher = HIGHLIGHT_ALIAS.matcher(query);
-        while (matcher.find()) {
-            String property = matcher.group(1);
-            if (!properties.contains(property)) {
-                properties.add(property);
+    public static List<String> highlightedProperties(String query, PersistentEntity entity) {
+        if (!query.contains(HIGHLIGHT_ALIAS_CLAUSE)) {
+            return List.of();
+        }
+        List<Map.Entry<Integer, String>> found = new ArrayList<>();
+        for (PersistentProperty property : searchFields(entity)) {
+            int position = aliasPosition(query, highlightAlias(property.getName()));
+            if (position >= 0) {
+                found.add(Map.entry(position, property.getName()));
             }
         }
-        return properties;
+        found.sort(Map.Entry.comparingByKey());
+        return found.stream().map(Map.Entry::getValue).toList();
     }
 
     /**
@@ -170,6 +172,28 @@ public final class TextSearchSupport {
         return property.getAnnotationMetadata().booleanValue(SearchField.class, SearchField.MEMBER_HIGHLIGHTABLE).orElse(false);
     }
 
+    private static int aliasPosition(String query, String alias) {
+        String clause = " AS " + alias;
+        int from = 0;
+        while (true) {
+            int index = query.indexOf(clause, from);
+            if (index < 0) {
+                return -1;
+            }
+            int end = index + clause.length();
+            if (end == query.length() || !Character.isJavaIdentifierPart(query.charAt(end))) {
+                return index;
+            }
+            from = end;
+        }
+    }
+
+    /**
+     * Resolves the search language of an entity.
+     *
+     * @param entity The entity
+     * @return The declared {@code @Searchable(language)}, or {@link #DEFAULT_LANGUAGE}
+     */
     public static String resolveLanguage(PersistentEntity entity) {
         return entity.getAnnotationMetadata().stringValue(Searchable.class, Searchable.MEMBER_LANGUAGE)
             .filter(l -> !l.isEmpty())

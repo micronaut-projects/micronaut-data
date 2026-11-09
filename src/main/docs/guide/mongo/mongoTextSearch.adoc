@@ -67,11 +67,12 @@ The search string grammar is rendered into `compound` operators at bind time: ev
 |A property keyword on a property without `@SearchField` or of a joined entity |rejected at compile time, as the property is not in the text index |the property must be mapped by the search index
 |Stemming in `SearchAll` |not supported, every term is matched literally |follows the analyzer of the search index
 |`SearchPrefix` and `SearchFuzzy` |not supported, rejected at compile time |supported
-|Highlighting and minimum score |not supported |supported
+|Highlighting |not supported; `@SearchField(highlightable = true)` is ignored by derived `SearchResults` methods, and `SearchQuery.highlight(...)` throws `UnsupportedSearchFeatureException` |supported
+|Minimum score |not supported |supported
 |Query-time boosts (`SearchQuery.boost`) |not supported |not supported, the index weights boost the fields
 |Per-document language (`@Language`) |`language_override` |not supported, the analyzer is fixed per index
 |Search with joins |the `$text` match is moved ahead of the join lookups, as MongoDB requires it in the first stage |`$search` must be the first stage, so joined queries are rejected at compile time
-|Search predicate inside `OR` |rejected at compile time, as is `NOT`: MongoDB only allows `$text` as a top-level condition |rejected at compile time
+|Search predicate inside `OR` or `NOT` |rejected at compile time, as MongoDB only allows `$text` as a top-level condition |`OR` is rejected at compile time
 |Cursored paging |not supported |not supported
 |===
 

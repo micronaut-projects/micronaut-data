@@ -9,6 +9,7 @@ import io.micronaut.data.model.Sort
 import io.micronaut.data.runtime.query.internal.DefaultPagedQuery
 import io.micronaut.data.search.document.conf.DocumentSearchConfiguration
 import io.micronaut.data.search.document.query.SearchJson
+import io.micronaut.data.search.document.runtime.BulkIndexException
 import io.micronaut.data.search.document.runtime.DocumentSearchRepositoryOperations
 import io.micronaut.data.search.elasticsearch.Meeting
 import io.micronaut.data.search.elasticsearch.MeetingRepository
@@ -27,6 +28,7 @@ import java.time.ZonedDateTime
 @MicronautTest(transactional = false)
 @Property(name = "spec.name", value = "DocumentSearchOperationsSpec")
 @Property(name = "micronaut.data.search.index-prefix", value = "test_")
+@Property(name = "micronaut.data.search.bulk-size", value = "2")
 class DocumentSearchOperationsSpec extends Specification {
 
     @Inject
@@ -68,14 +70,17 @@ class DocumentSearchOperationsSpec extends Specification {
         transport.createdIndexes.containsKey("test_notes")
     }
 
-    void "saving generates String ids and the entities read back by id"() {
+    void "saving generates String ids, kept in the document source, and the entities read back by id"() {
         when:
         def saved = notes.saveAll([new Note("Coffee", "Roasting beans", 120), new Note("Bread", "Sourdough", 0)])
+        def single = notes.save(new Note("Tea", "Green tea", 40))
 
-        then:
-        saved*.id == ["generated-1", "generated-2"]
+        then: "the ids are generated before the write, so the source holds them for the cursored paging tiebreaker"
+        (saved + single)*.id.every { UUID.fromString(it) }
+        (saved + single)*.id.toSet().size() == 3
+        (saved + single).every { transport.indexes["test_notes"][it.id].id == it.id }
         transport.refreshes.every { it == DocumentSearchConfiguration.Refresh.WAIT_FOR }
-        operations.findOne(Note, "generated-1").title == "Coffee"
+        operations.findOne(Note, saved[0].id).title == "Coffee"
         operations.findOne(Note, "missing") == null
     }
 
@@ -103,6 +108,57 @@ class DocumentSearchOperationsSpec extends Specification {
         saved*.id().every { it != null }
         saved*.id().toSet().size() == 3
         transport.indexes["test_tags"].size() == 3
+    }
+
+    void "saveAll sends the batch in bulk requests of the configured size and keeps the order of the ids"() {
+        when:
+        def saved = notes.saveAll((1..5).collect { new Note("Note " + it, "Body", it) })
+
+        then:
+        transport.bulkSizes == [2, 2, 1]
+        saved*.title == (1..5).collect { "Note " + it }
+        transport.indexes["test_notes"].keySet().toList() == saved*.id
+    }
+
+    void "a partly failed saveAll gives the written entities their ids and sends no further request"() {
+        given:
+        notes.save(new Note("Tea", "Green tea", 40).tap { id = "tea" })
+        def coffee = new Note("Coffee", "Roasting beans", 120)
+        def cocoa = new Note("Cocoa", "Beans", 80)
+        def bread = new Note("Bread", "Sourdough", 60)
+        def duplicate = new Note("Other", "Black tea", 10).tap { id = "tea" }
+        def cake = new Note("Cake", "Sponge", 10)
+
+        when:
+        notes.saveAll([coffee, cocoa, bread, duplicate, cake])
+
+        then:
+        BulkIndexException e = thrown()
+        e.message.startsWith("Indexing document 1 of 2 failed, the 1 before it were written and the rest were not sent: ")
+        e.ids == [bread.id, null]
+        transport.bulkSizes == [2, 2]
+        transport.indexes["test_notes"].keySet() == ["tea", coffee.id, cocoa.id, bread.id] as Set
+        !transport.indexes["test_notes"].containsKey(cake.id)
+        transport.indexes["test_notes"]["tea"].title == "Tea"
+    }
+
+    void "a @Transactional repository method fails at its first call naming the missing TransactionOperations"() {
+        when:
+        notes.countByBody("Sourdough")
+
+        then:
+        Exception e = thrown()
+        e.message.contains("TransactionOperations")
+        transport.bodies.isEmpty()
+    }
+
+    void "the bulk size must be positive"() {
+        when:
+        new DocumentSearchConfiguration().bulkSize = 0
+
+        then:
+        IllegalArgumentException e = thrown()
+        e.message == "The bulk size must be at least 1, was 0"
     }
 
     void "saving an entity with the id of an existing document fails instead of replacing it"() {
@@ -154,7 +210,7 @@ class DocumentSearchOperationsSpec extends Specification {
 
         then:
         def e = thrown(DataAccessException)
-        e.message.contains("String ids only")
+        e.message.contains("String and UUID ids only")
 
         when:
         def counter = counters.save(new Counter(7L, 3))
@@ -303,7 +359,7 @@ class DocumentSearchOperationsSpec extends Specification {
         notes.deleteAll([saved[1]])
 
         then:
-        transport.indexes["test_notes"].keySet() == ["generated-3"] as Set
+        transport.indexes["test_notes"].keySet() == [saved[2].id] as Set
 
         when:
         notes.delete(new Note("No id", "None", 1))
