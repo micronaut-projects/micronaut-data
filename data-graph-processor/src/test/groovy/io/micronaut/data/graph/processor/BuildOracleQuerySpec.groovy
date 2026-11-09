@@ -628,7 +628,7 @@ interface FollowerRepository extends GenericRepository<Follower, String> {
     void "test path finders with a direction argument"() {
         expect:
         getQuery(findMethod(paths, 'existsPathByMentor', 3)) ==
-            'SELECT 1 AS "result" FROM GRAPH_TABLE (people MATCH (s IS Person) $__pathLeft[IS FOLLOWS]$__pathRight{1,5} (t IS Person) WHERE s.id = ? AND t.id = ? AND s.id <> t.id COLUMNS (s.id AS "c0")) FETCH NEXT 1 ROWS ONLY'
+            'SELECT 1 AS "result" FROM GRAPH_TABLE (people MATCH (s IS Person) $__pathLeft[e IS FOLLOWS]$__pathRight{1,5} (t IS Person) WHERE s.id = ? AND t.id = ? AND s.id <> t.id AND COUNT(DISTINCT JSON_SERIALIZE(EDGE_ID(e))) = COUNT(JSON_SERIALIZE(EDGE_ID(e))) COLUMNS (s.id AS "c0")) FETCH NEXT 1 ROWS ONLY'
         getQuery(findMethod(moviePaths, 'countRelationshipsByDirectors', 1)) ==
             'SELECT COUNT(*) AS "result" FROM MATCH (s:Movie) $__pathLeft[r:DIRECTED]$__pathRight (t:Person) ON movies'
     }
