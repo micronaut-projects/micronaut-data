@@ -102,11 +102,7 @@ public final class SearchQuerySupport {
         PersistentEntityRoot<Object> root = criteriaQuery.from(rootEntity);
         List<Expression<?>> fields = resolveFields(root, searchQuery);
         ParameterExpression<String> queryParameter = cb.parameter(String.class, null, searchQuery.getQuery());
-        for (String boosted : searchQuery.getBoosts().keySet()) {
-            // a boost of a property that is not searched would otherwise be ignored silently
-            requireSearchField(root, boosted);
-        }
-        TextMatchOptions options = new TextMatchOptions(searchQuery.getBoosts(), searchQuery.getFuzziness());
+        TextMatchOptions options = textMatchOptions(root, searchQuery);
         Expression<Double> score = cb.searchScore(fields, queryParameter, searchQuery.getMode(), options);
         Predicate match = cb.textMatch(fields, queryParameter, searchQuery.getMode(), options);
         if (searchQuery.getMinScore() != null && !searchQuery.isHybrid()) {
@@ -342,14 +338,40 @@ public final class SearchQuerySupport {
         return entity;
     }
 
+    private static Set<String> searchFieldNames(PersistentEntityRoot<Object> root) {
+        Set<String> names = new LinkedHashSet<>();
+        for (PersistentProperty property : TextSearchSupport.searchFields(root.getPersistentEntity())) {
+            names.add(property.getName());
+        }
+        return names;
+    }
+
     /** A field named by a SearchQuery, which must be one of the entity's search fields. */
     private static String requireSearchField(PersistentEntityRoot<Object> root, String field) {
-        List<String> searchFields = TextSearchSupport.searchFields(root.getPersistentEntity()).stream().map(PersistentProperty::getName).toList();
+        Set<String> searchFields = searchFieldNames(root);
         if (!searchFields.contains(field)) {
             throw new IllegalArgumentException("Property '" + field + "' of entity " + root.getPersistentEntity().getSimpleName()
                 + " is not a @SearchField; the search fields are " + searchFields);
         }
         return field;
+    }
+
+    /**
+     * The boosts and the edit distance of a SearchQuery; each boost must name one of the searched fields,
+     * as a boost of a property that is not searched would otherwise be ignored silently.
+     */
+    private static TextMatchOptions textMatchOptions(PersistentEntityRoot<Object> root, SearchQuery searchQuery) {
+        Set<String> searched = searchQuery.getFields().isEmpty()
+            ? searchFieldNames(root)
+            : searchQuery.getFields();
+        for (String boosted : searchQuery.getBoosts().keySet()) {
+            requireSearchField(root, boosted);
+            if (!searched.contains(boosted)) {
+                throw new IllegalArgumentException("Property '" + boosted + "' of entity " + root.getPersistentEntity().getSimpleName()
+                    + " is boosted but not searched; the searched fields are " + searched);
+            }
+        }
+        return TextMatchOptions.of(searchQuery);
     }
 
     private static List<Expression<?>> resolveFields(PersistentEntityRoot<Object> root, SearchQuery searchQuery) {

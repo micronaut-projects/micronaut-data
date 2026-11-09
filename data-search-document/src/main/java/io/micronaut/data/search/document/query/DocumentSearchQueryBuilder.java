@@ -698,7 +698,7 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
             for (Expression<?> field : fields) {
                 PersistentPropertyPath propertyPath = requireProperty(field).getPropertyPath();
                 // a query-time boost replaces the index-time weight of the field
-                Double boost = options.boostFor(propertyPath.getProperty().getName());
+                Double boost = options.boostFor(propertyPath.getPath());
                 SearchWeight weight = propertyPath.getProperty().getAnnotationMetadata().enumValue(SearchField.class, SearchField.MEMBER_WEIGHT, SearchWeight.class).orElse(null);
                 if (boost != null) {
                     fieldNames.add(fieldName(propertyPath) + "^" + boost);

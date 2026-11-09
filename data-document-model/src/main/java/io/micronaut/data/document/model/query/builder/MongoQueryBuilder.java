@@ -1786,7 +1786,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 PersistentPropertyPath propertyPath = requireProperty(field).getPropertyPath();
                 String path = getPropertyPersistName(propertyPath);
                 paths.add(path);
-                Double boost = options.boostFor(propertyPath.getProperty().getName());
+                Double boost = options.boostFor(propertyPath.getPath());
                 Number weight;
                 if (boost != null) {
                     weight = boost;

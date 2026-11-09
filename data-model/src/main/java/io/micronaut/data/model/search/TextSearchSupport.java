@@ -22,6 +22,7 @@ import io.micronaut.data.annotation.search.Searchable;
 import io.micronaut.data.model.query.builder.DelegatingQueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import jakarta.persistence.criteria.Expression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.PersistentProperty;
@@ -200,6 +201,36 @@ public final class TextSearchSupport {
         @SuppressWarnings("unchecked")
         Expression<String> query = (Expression<String>) expressions.get(end - 2);
         return new ScoreArguments(List.copyOf(expressions.subList(0, end - 2)), query, mode, options);
+    }
+
+    /**
+     * Checks the options of a text match against its fields and mode: every boost must name the property path
+     * of one of the matched fields, and an edit distance needs the {@link MatchMode#FUZZY} mode.
+     *
+     * @param fields The matched field expressions
+     * @param mode The match mode
+     * @param options The options
+     * @throws IllegalArgumentException When a boost names no matched field, or an edit distance is set with another mode
+     * @since 5.3.0
+     */
+    public static void validateOptions(List<? extends Expression<?>> fields, MatchMode mode, TextMatchOptions options) {
+        if (options.fuzziness() > 0 && mode != MatchMode.FUZZY) {
+            throw new IllegalArgumentException("An edit distance applies only to a FUZZY match, not to " + mode + ": " + options.fuzziness());
+        }
+        if (options.boosts().isEmpty()) {
+            return;
+        }
+        List<String> paths = new ArrayList<>(fields.size());
+        for (Expression<?> field : fields) {
+            if (field instanceof PersistentPropertyPath<?> propertyPath) {
+                paths.add(propertyPath.getPathAsString());
+            }
+        }
+        for (String boosted : options.boosts().keySet()) {
+            if (!paths.contains(boosted)) {
+                throw new IllegalArgumentException("The boosted property '" + boosted + "' is not one of the matched fields " + paths);
+            }
+        }
     }
 
     private static int aliasPosition(String query, String alias) {
