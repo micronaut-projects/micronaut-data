@@ -71,6 +71,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
 import io.micronaut.data.model.query.builder.sql.SqlQueryConfiguration;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.search.UnsupportedSearchFeatureException;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.model.criteria.impl.SourceParameterExpressionImpl;
@@ -531,6 +532,9 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             } catch (ProcessingException e) {
                 // Already reported against the right element
                 throw e;
+            } catch (UnsupportedSearchFeatureException e) {
+                // a search the store cannot run is a mistake in the method, not a failure of the processor
+                throw new ProcessingException(method, matchContext.getUnableToImplementMessage() + e.getMessage());
             } catch (Exception e) {
                 if (e instanceof ElementPostponedToNextRoundException || e.getClass().getSimpleName().equals("PostponeToNextRoundException")) {
                     // rethrow postponed and don't fail compilation
