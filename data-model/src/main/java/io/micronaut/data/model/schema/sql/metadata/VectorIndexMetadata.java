@@ -26,10 +26,27 @@ import org.jspecify.annotations.NonNull;
  * @param distanceType The distance metric
  * @param accuracy Target accuracy
  * @param sparse Whether sparse vector storage is requested
+ * @param binary Whether the vector is a binary vector, since 5.3.0
  */
 @Internal
 public record VectorIndexMetadata(@NonNull VectorIndexType vectorIndexType,
                                   VectorIndexType.@NonNull DistanceType distanceType,
                                   int accuracy,
-                                  boolean sparse) {
+                                  boolean sparse,
+                                  boolean binary) {
+
+    /**
+     * Creates metadata of a vector that isn't binary.
+     *
+     * @param vectorIndexType The index type
+     * @param distanceType The distance metric
+     * @param accuracy Target accuracy
+     * @param sparse Whether sparse vector storage is requested
+     */
+    public VectorIndexMetadata(@NonNull VectorIndexType vectorIndexType,
+                               VectorIndexType.@NonNull DistanceType distanceType,
+                               int accuracy,
+                               boolean sparse) {
+        this(vectorIndexType, distanceType, accuracy, sparse, false);
+    }
 }
