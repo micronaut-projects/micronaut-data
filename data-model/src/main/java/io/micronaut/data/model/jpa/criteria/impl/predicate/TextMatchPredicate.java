@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * A full-text match of a query string against one or more fields.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 public final class TextMatchPredicate extends AbstractPredicate {

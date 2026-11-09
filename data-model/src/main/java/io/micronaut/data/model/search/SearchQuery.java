@@ -32,7 +32,7 @@ import java.util.Set;
  * it to its native form and reports the options it cannot honour through
  * {@link UnsupportedSearchFeatureException}.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Experimental
 public final class SearchQuery {
@@ -390,12 +390,18 @@ public final class SearchQuery {
         }
 
         /**
-         * @param minScore The minimum relevance score. On a hybrid search it applies to the fused score,
+         * Sets the minimum relevance score a hit needs to be returned.
+         *
+         * @param minScore The minimum relevance score, a finite number of {@code 0} or more. On a hybrid search it applies to the fused score,
          * the sum of {@code weight / (rankConstant + rank)} over both rankings, which is at most
          * {@code (textWeight + vectorWeight) / (rankConstant + 1)}: about {@code 0.033} with the defaults
          * @return This builder
+         * @throws IllegalArgumentException When the score is negative, infinite or {@code NaN}
          */
         public Builder minScore(double minScore) {
+            if (!Double.isFinite(minScore) || minScore < 0) {
+                throw new IllegalArgumentException("The minimum score must be a finite number of 0 or more: " + minScore);
+            }
             this.minScore = minScore;
             return this;
         }
