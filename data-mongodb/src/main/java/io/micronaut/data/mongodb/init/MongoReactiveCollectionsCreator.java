@@ -33,6 +33,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import jakarta.annotation.PostConstruct;
+import org.jspecify.annotations.Nullable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -84,10 +85,11 @@ public final class MongoReactiveCollectionsCreator extends AbstractMongoCollecti
                 }
 
                 @Override
-                public boolean hasTextIndex(MongoDatabase database, String collection) {
-                    return Boolean.TRUE.equals(Flux.from(database.getCollection(collection).listIndexes())
-                        .any(AbstractMongoCollectionsCreator::isTextIndex)
-                        .block());
+                public org.bson.@Nullable Document findTextIndex(MongoDatabase database, String collection) {
+                    return Flux.from(database.getCollection(collection).listIndexes())
+                        .filter(AbstractMongoCollectionsCreator::isTextIndex)
+                        .next()
+                        .block();
                 }
 
                 @Override

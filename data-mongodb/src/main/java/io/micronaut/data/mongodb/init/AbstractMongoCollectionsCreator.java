@@ -80,6 +80,8 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
         "hungarian", "indonesian", "irish", "italian", "japanese", "korean", "kuromoji", "latvian", "lithuanian", "morfologik", "nori",
         "norwegian", "persian", "polish", "portuguese", "romanian", "russian", "smartcn", "sorani", "spanish", "swedish", "thai",
         "turkish", "ukrainian");
+    // the field MongoDB reads a document's language from when the text index names none
+    private static final String DEFAULT_LANGUAGE_OVERRIDE = "language";
 
     /**
      * Get MongoDB database factory.
@@ -140,12 +142,8 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                     createSearchIndex(databaseOperations, database, persistedName, searchIndex);
                 } else {
                     TextIndexDefinition textIndex = textIndexDefinition(entity, persistedName);
-                    // a collection holds at most one text index, whatever its name, so any existing one is kept as it is
-                    if (textIndex != null && !databaseOperations.hasTextIndex(database, persistedName)) {
-                        if (LOG.isInfoEnabled()) {
-                            LOG.info("Creating text index: {} on collection: {} in database: {}", textIndex.name(), persistedName, databaseOperations.getDatabaseName(database));
-                        }
-                        databaseOperations.createTextIndex(database, persistedName, textIndex);
+                    if (textIndex != null) {
+                        ensureTextIndex(databaseOperations, database, persistedName, textIndex);
                     }
                 }
                 for (PersistentProperty persistentProperty : entity.getPersistentProperties()) {
@@ -237,6 +235,30 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
     }
 
     /**
+     * Creates the text index of a searchable entity unless the collection has one. A collection holds at most
+     * one text index, whatever its name, so an existing one is kept as it is: rebuilding a text index is costly
+     * and the database refuses a second one, so a changed mapping is only reported, and applies once the
+     * existing index is dropped.
+     *
+     * @param databaseOperations The database operations
+     * @param database The database
+     * @param collection The collection
+     * @param textIndex The text index the entity declares
+     */
+    private void ensureTextIndex(DatabaseOperations<Dtbs> databaseOperations, Dtbs database, String collection, TextIndexDefinition textIndex) {
+        Document existing = databaseOperations.findTextIndex(database, collection);
+        if (existing == null) {
+            if (LOG.isInfoEnabled()) {
+                LOG.info("Creating text index: {} on collection: {} in database: {}", textIndex.name(), collection, databaseOperations.getDatabaseName(database));
+            }
+            databaseOperations.createTextIndex(database, collection, textIndex);
+        } else if (!textIndex.matches(existing) && LOG.isWarnEnabled()) {
+            LOG.warn("Text index: {} on collection: {} in database: {} does not match the @SearchField fields, weights or language of the entity and is kept as it is; drop it to have it created again",
+                existing.get("name"), collection, databaseOperations.getDatabaseName(database));
+        }
+    }
+
+    /**
      * Describes the text index of a {@link Searchable} entity.
      *
      * @param entity The entity
@@ -323,6 +345,24 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                                       @Nullable String languageOverride) {
 
         /**
+         * Whether an existing text index indexes the same fields with the same weights and languages.
+         *
+         * @param index A text index description from {@code listIndexes}
+         * @return True if the index matches this definition, whatever its name
+         */
+        public boolean matches(Document index) {
+            Map<String, Integer> indexWeights = new LinkedHashMap<>();
+            if (index.get("weights") instanceof Document weightsDocument) {
+                weightsDocument.forEach((field, weight) -> indexWeights.put(field, weight instanceof Number n ? n.intValue() : null));
+            }
+            String indexLanguage = index.get("default_language") instanceof String language ? language : TextSearchSupport.DEFAULT_LANGUAGE;
+            String indexOverride = index.get("language_override") instanceof String override ? override : DEFAULT_LANGUAGE_OVERRIDE;
+            return indexWeights.equals(weights)
+                && indexLanguage.equals(defaultLanguage)
+                && indexOverride.equals(languageOverride == null ? DEFAULT_LANGUAGE_OVERRIDE : languageOverride);
+        }
+
+        /**
          * @return The index keys
          */
         public Bson keys() {
@@ -401,13 +441,14 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
         void createCollection(Dtbs database, String collection);
 
         /**
-         * Whether the collection already has a text index, under any name.
+         * Finds the text index of the collection, under any name.
          *
          * @param database The database
          * @param collection The collection
-         * @return True if a text index exists
+         * @return The index description from {@code listIndexes}, or {@code null} when the collection has no text index
          */
-        boolean hasTextIndex(Dtbs database, String collection);
+        @Nullable
+        Document findTextIndex(Dtbs database, String collection);
 
         /**
          * Create the text index of a searchable entity.
