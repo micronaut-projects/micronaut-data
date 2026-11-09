@@ -56,6 +56,8 @@ interface PgqlRepository extends GenericRepository<Movie, String> {
 }
 """)
         sql = buildRepository('test.SqlRepository', """
+import io.micronaut.data.graph.model.*;
+
 $MOVIES
 
 @TestOracleRepository
@@ -81,6 +83,8 @@ interface SqlRepository extends GenericRepository<Movie, String> {
     List<String> findTitleByReleasedGreaterThan(int released);
     Integer findMaxReleased();
     List<MovieSummary> findByReleasedLessThan(Integer released);
+    @PathLimit(2)
+    List<GraphPath<Movie>> findAllPathsByRolesOrDirectors(String from, String to);
     @Query("SELECT COUNT(*) AS result FROM v\$session WHERE sid = \$sid AND path <> 'C:\\\\' -- see \$ticket")
     long sessions(long sid);
 }
@@ -99,6 +103,8 @@ interface PathRepository extends GenericRepository<Person, String> {
     long countPaths(String from, String to);
     @PathLimit(5)
     long countPathsByMentor(String from, String to, @PathLimit int depth);
+    @PathLimit(5)
+    List<GraphPath<Person>> findAllPathsByMentor(String from, String to);
     List<GraphRelationship<Person, Person>> findRelationshipsByMentor(String from, String to);
 }
 """)
@@ -309,15 +315,23 @@ interface NoIdRepository extends GenericRepository<Anonymous, String> {
     void "test SQL/PGQ path finders"() {
         expect: "the shortest kinds exclude the empty path from a node to itself, as the Cypher builder does"
         getQuery(findMethod(paths, 'existsPathByMentor')) ==
-            'SELECT 1 AS "result" FROM GRAPH_TABLE (people MATCH (s IS Person) -[IS FOLLOWS]->{1,5} (t IS Person) WHERE s.id = ? AND t.id = ? AND s.id <> t.id COLUMNS (s.id AS "c0")) FETCH NEXT 1 ROWS ONLY'
+            'SELECT 1 AS "result" FROM GRAPH_TABLE (people MATCH (s IS Person) -[e IS FOLLOWS]->{1,5} (t IS Person) WHERE s.id = ? AND t.id = ? AND s.id <> t.id AND COUNT(DISTINCT JSON_SERIALIZE(EDGE_ID(e))) = COUNT(JSON_SERIALIZE(EDGE_ID(e))) COLUMNS (s.id AS "c0")) FETCH NEXT 1 ROWS ONLY'
 
-        and: "all paths from a node to itself are its cycles"
+        and: "all paths from a node to itself are its cycles, each taking an edge once, as a Cypher path does"
         getQuery(findMethod(paths, 'countPaths')) ==
-            'SELECT COUNT(*) AS "result" FROM GRAPH_TABLE (people MATCH (s IS Person) -[]-{1,5} (t IS Person) WHERE s.id = ? AND t.id = ? COLUMNS (s.id AS "c0"))'
+            'SELECT COUNT(*) AS "result" FROM GRAPH_TABLE (people MATCH (s IS Person) -[e]-{1,5} (t IS Person) WHERE s.id = ? AND t.id = ? AND COUNT(DISTINCT JSON_SERIALIZE(EDGE_ID(e))) = COUNT(JSON_SERIALIZE(EDGE_ID(e))) COLUMNS (s.id AS "c0"))'
 
         and: "a @PathLimit argument is rendered by the runtime in place of the token, over the depth of the annotation"
         getQuery(findMethod(paths, 'countPathsByMentor')) ==
-            'SELECT COUNT(*) AS "result" FROM GRAPH_TABLE (people MATCH (s IS Person) -[IS FOLLOWS]->{1,$__pathLimit} (t IS Person) WHERE s.id = ? AND t.id = ? COLUMNS (s.id AS "c0"))'
+            'SELECT COUNT(*) AS "result" FROM GRAPH_TABLE (people MATCH (s IS Person) -[e IS FOLLOWS]->{1,$__pathLimit} (t IS Person) WHERE s.id = ? AND t.id = ? AND COUNT(DISTINCT JSON_SERIALIZE(EDGE_ID(e))) = COUNT(JSON_SERIALIZE(EDGE_ID(e))) COLUMNS (s.id AS "c0"))'
+
+        and: "the steps of every path are rows, numbered by their match and position"
+        def allPaths = getQuery(findMethod(paths, 'findAllPathsByMentor'))
+        allPaths.startsWith('SELECT * FROM GRAPH_TABLE (people MATCH (s IS Person) -[e IS FOLLOWS]->{1,5} (t IS Person) WHERE s.id = ? AND t.id = ? AND COUNT(DISTINCT JSON_SERIALIZE(EDGE_ID(e))) = COUNT(JSON_SERIALIZE(EDGE_ID(e))) ONE ROW PER STEP (v1, x, v2) COLUMNS (MATCHNUM() AS "p__M_", ELEMENT_NUMBER(x) AS "p__I_", ')
+        allPaths.endsWith(''''FOLLOWS' AS "x__TYPE_")) ORDER BY "p__M_", "p__I_"''')
+
+        and: "a path over several relationship types tests the label of each step"
+        getQuery(findMethod(sql, 'findAllPathsByRolesOrDirectors')).endsWith('''CASE WHEN x IS LABELED ACTED_IN THEN 'ACTED_IN' WHEN x IS LABELED DIRECTED THEN 'DIRECTED' END AS "x__TYPE_")) ORDER BY "p__M_", "p__I_"''')
     }
 
     void "test relationship finders bind the source and destination of the edge"() {
@@ -397,7 +411,8 @@ interface UnsupportedRepository extends GenericRepository<Movie, String> {
         'sort on a bound relationship' | ', language = PropertyGraph.QueryLanguage.SQL_PGQ' | 'List<Movie> findByDirectorsNameOrderByDirectorsBorn(String name);' | 'Sorting on a relationship is not supported for Oracle property graphs'
         'LIKE in PGQL'         | ''                                                    | 'List<Movie> findByTitleStartsWith(String prefix);'                 | 'PGQL has no LIKE'
         'fetch joins'          | ''                                                    | '@Join("directors") List<Movie> findByReleased(Integer released);' | 'not supported for Oracle property graphs'
-        'paths in SQL/PGQ'     | ', language = PropertyGraph.QueryLanguage.SQL_PGQ'    | '@PathLimit(3) Optional<GraphPath<Movie>> findShortestPath(String from, String to);' | 'Returning paths is not supported by the SQL/PGQ dialect'
+        'shortest paths in SQL/PGQ' | ', language = PropertyGraph.QueryLanguage.SQL_PGQ' | '@PathLimit(3) Optional<GraphPath<Movie>> findShortestPath(String from, String to);' | 'Shortest paths are not supported by the SQL/PGQ dialect'
+        'any-type paths in SQL/PGQ' | ', language = PropertyGraph.QueryLanguage.SQL_PGQ' | '@PathLimit(3) List<GraphPath<Movie>> findAllPaths(String from, String to);' | 'Paths over any relationship type are not supported by the SQL/PGQ dialect'
         'unbounded paths'      | ''                                                    | 'Optional<GraphPath<Movie>> findShortestPath(String from, String to);' | 'need a maximum depth'
     }
 
