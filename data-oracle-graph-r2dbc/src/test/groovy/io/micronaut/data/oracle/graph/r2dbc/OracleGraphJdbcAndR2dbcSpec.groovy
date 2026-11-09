@@ -15,8 +15,8 @@ import javax.sql.DataSource
 
 /**
  * Runs the JDBC and R2DBC Oracle graph modules in one application, on one database. The data source and the connection
- * factory have different names: two of the same name clash on the beans each is qualified by, such as its
- * ConnectionOperations.
+ * factory have different names: Micronaut Data JDBC and R2DBC beans of the same name clash,
+ * see https://github.com/micronaut-projects/micronaut-data/issues/4274.
  */
 class OracleGraphJdbcAndR2dbcSpec extends Specification {
 
