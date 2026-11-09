@@ -1195,6 +1195,24 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         return textSearchDialect.searchIndexNames(escape ? quote(searchIndexName(entity)) : searchIndexName(entity), searchColumns(entity, escape));
     }
 
+    /**
+     * The schema of the table of an entity, escaped as the DDL renders it, for the lookup and the drop of its
+     * full-text search indexes.
+     *
+     * @param entity The entity
+     * @return The escaped schema, or {@code null} when the entity declares none
+     * @since 5.3.0
+     */
+    @Experimental
+    @Nullable
+    public String searchIndexSchema(PersistentEntity entity) {
+        String schema = SqlQueryBuilderUtils.getSchemaName(entity);
+        if (StringUtils.isEmpty(schema)) {
+            return null;
+        }
+        return shouldEscape(entity) ? quote(schema, true) : schema;
+    }
+
     private String searchIndexName(PersistentEntity entity) {
         return entity.getAnnotationMetadata().stringValue(Searchable.class, "name")
             .filter(StringUtils::isNotEmpty)

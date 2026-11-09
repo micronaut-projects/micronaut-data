@@ -33,6 +33,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -311,10 +312,11 @@ public interface TextSearchDialect {
 
     /**
      * @param indexName An escaped index name
+     * @param schema The escaped schema of the entity's table, or {@code null} when it declares none
      * @return The statement dropping it
      * @since 5.3.0
      */
-    default String buildDropSearchIndex(String indexName) {
+    default String buildDropSearchIndex(String indexName, @Nullable String schema) {
         return "DROP INDEX " + indexName;
     }
 
@@ -330,12 +332,13 @@ public interface TextSearchDialect {
     }
 
     /**
-     * @return A query counting the indexes with the name bound as its one parameter, in the form the
-     * catalog stores it, or {@code null} when the dialect cannot tell
+     * @param schema The escaped schema of the entity's table, or {@code null} when it declares none
+     * @return A query counting the indexes with the name bound as its one parameter, in the form
+     * {@link #catalogIndexName} gives, among the indexes of the entity, or {@code null} when the dialect cannot tell
      * @since 5.3.0
      */
     @Nullable
-    default String searchIndexExistsQuery() {
+    default String searchIndexExistsQuery(@Nullable String schema) {
         return null;
     }
 
@@ -735,14 +738,22 @@ public interface TextSearchDialect {
         }
 
         @Override
-        public String buildDropSearchIndex(String indexName) {
-            return "DROP INDEX IF EXISTS " + indexName + ";";
+        public String buildDropSearchIndex(String indexName, @Nullable String schema) {
+            // an index lives in the schema of its table, which the search path may not reach
+            return "DROP INDEX IF EXISTS " + (schema == null ? indexName : schema + "." + indexName) + ";";
         }
 
         @Override
-        public String searchIndexExistsQuery() {
-            // index names are unique per schema, so the lookup stays in the schema the indexes are created in
-            return "SELECT count(*) FROM pg_indexes WHERE schemaname = current_schema() AND indexname = ?";
+        public String searchIndexExistsQuery(@Nullable String schema) {
+            // index names are unique per schema, and an index is created in the schema of its table
+            String schemaName = schema == null ? "current_schema()" : "'" + catalogIndexName(schema).replace("'", "''") + "'";
+            return "SELECT count(*) FROM pg_indexes WHERE schemaname = " + schemaName + " AND indexname = ?";
+        }
+
+        @Override
+        public String catalogIndexName(String indexName) {
+            // an unquoted identifier is stored in lower case
+            return indexName.startsWith("\"") ? indexName.replace("\"", "") : indexName.toLowerCase(Locale.ROOT);
         }
 
         @Override
@@ -997,7 +1008,8 @@ public interface TextSearchDialect {
         }
 
         @Override
-        public String searchIndexExistsQuery() {
+        public String searchIndexExistsQuery(@Nullable String schema) {
+            // the index name is not qualified, so the index is created in the current schema whatever the table's
             return "SELECT count(*) FROM user_indexes WHERE index_name = ?";
         }
 
