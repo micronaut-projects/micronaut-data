@@ -89,13 +89,7 @@ public final class MongoSearchOperators {
             return matchNothing(paths);
         }
         if (mode == MatchMode.NATIVE) {
-            // the caller wrote queryString syntax, which takes one default field: each searched path gets
-            // its own queryString, and a document matching any of them matches
-            List<BsonValue> perPath = new ArrayList<>(paths.size());
-            for (String path : paths) {
-                perPath.add(new BsonDocument("queryString", new BsonDocument("defaultPath", new BsonString(path)).append(QUERY, new BsonString(query))));
-            }
-            return joinGroups(perPath, paths);
+            return nativeOperator(query, paths, boosts);
         }
         if (mode == MatchMode.PHRASE) {
             String phrase = query.replace("\"", "").trim();
@@ -109,6 +103,27 @@ public final class MongoSearchOperators {
             }
         }
         return joinGroups(rendered, paths);
+    }
+
+    /**
+     * The caller wrote {@code queryString} syntax, which takes one default field: each searched path gets
+     * its own {@code queryString}, boosted like the operators of the portable grammar, and a document
+     * matching any of them matches.
+     */
+    private static BsonDocument nativeOperator(String query, List<String> paths, Map<String, Number> boosts) {
+        List<BsonValue> perPath = new ArrayList<>(paths.size());
+        for (String path : paths) {
+            BsonDocument options = new BsonDocument("defaultPath", new BsonString(path)).append(QUERY, new BsonString(query));
+            appendBoost(options, boosts.getOrDefault(path, 1));
+            perPath.add(new BsonDocument("queryString", options));
+        }
+        return joinGroups(perPath, paths);
+    }
+
+    private static void appendBoost(BsonDocument options, Number boost) {
+        if (boost.doubleValue() != 1d) {
+            options.append("score", new BsonDocument("boost", new BsonDocument("value", new BsonDouble(boost.doubleValue()))));
+        }
     }
 
     /** One group stands alone; several are alternatives in a compound {@code should}. */
@@ -195,9 +210,7 @@ public final class MongoSearchOperators {
                 options.append("fuzzy", new BsonDocument("maxEdits", new BsonInt32(maxEdits)));
             }
         }
-        if (boost.doubleValue() != 1d) {
-            options.append("score", new BsonDocument("boost", new BsonDocument("value", new BsonDouble(boost.doubleValue()))));
-        }
+        appendBoost(options, boost);
         return new BsonDocument(name, options);
     }
 

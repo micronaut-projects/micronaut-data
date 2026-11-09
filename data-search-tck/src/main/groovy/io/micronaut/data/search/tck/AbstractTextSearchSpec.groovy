@@ -431,6 +431,20 @@ abstract class AbstractTextSearchSpec extends Specification {
         boosted.results().size() == 2
     }
 
+    void "query-time boosts weigh a field's matches with the native syntax"() {
+        assumeTrue(capabilities().contains(SearchCapability.BOOST) && nativeProgrammingWithoutKotlinQuery() != null)
+
+        when: "a one-word native query, valid in every store's syntax, boosts the title far above the description"
+        def boosted = bookSearchRepository.search(SearchQuery.builder("programming").syntax(SearchSyntax.NATIVE).boost("title", 10).boost("description", 1).build())
+        def plain = bookSearchRepository.search(SearchQuery.builder("programming").syntax(SearchSyntax.NATIVE).boost("title", 1).boost("description", 1).build())
+
+        then:
+        def kotlinBoosted = boosted.results().find { it.entity().title == "Programming Kotlin" }
+        def kotlinPlain = plain.results().find { it.entity().title == "Programming Kotlin" }
+        kotlinBoosted.score().value() > kotlinPlain.score().value()
+        boosted.results().size() == 2
+    }
+
     void "fuzzy matching tolerates a typo"() {
         assumeTrue(capabilities().contains(SearchCapability.FUZZY))
 
