@@ -49,6 +49,7 @@ import io.micronaut.data.search.document.conf.DocumentSearchConfiguration;
 import io.micronaut.data.search.document.query.SearchJson;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.json.JsonMapper;
+import jakarta.annotation.PreDestroy;
 import jakarta.inject.Named;
 import org.jspecify.annotations.Nullable;
 
@@ -107,6 +108,15 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
         this.transport = transport;
         this.beanContext = beanContext;
         this.executorServiceResolver = new ExecutorServiceResolver(executorService);
+    }
+
+    /**
+     * Shuts down the thread pool created for the reactive and async repositories when no IO executor
+     * was configured; a configured executor is left to its owner.
+     */
+    @PreDestroy
+    public void close() {
+        executorServiceResolver.close();
     }
 
     @Override

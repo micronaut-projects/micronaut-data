@@ -3,6 +3,10 @@ package io.micronaut.data.search.elasticsearch
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Requires
 import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.runtime.AttributeConverterRegistry
+import io.micronaut.data.model.runtime.RuntimeEntityRegistry
+import io.micronaut.data.runtime.convert.DataConversionService
+import io.micronaut.data.runtime.date.DateTimeProvider
 import io.micronaut.data.runtime.query.internal.DefaultPagedQuery
 import io.micronaut.data.search.document.conf.DocumentSearchConfiguration
 import io.micronaut.data.search.document.runtime.AsyncSearchTransport
@@ -13,6 +17,7 @@ import io.micronaut.data.search.document.runtime.SearchTransport.SearchHit
 import io.micronaut.data.search.document.runtime.SearchTransport.SearchHits
 import io.micronaut.data.search.tck.entities.Book
 import io.micronaut.inject.qualifiers.Qualifiers
+import io.micronaut.json.JsonMapper
 import jakarta.inject.Named
 import jakarta.inject.Singleton
 import org.jspecify.annotations.Nullable
@@ -75,6 +80,36 @@ class StubTransportReactiveSpec extends Specification {
         operations.reactive().is(operations.reactive())
         operations.async().is(operations.async())
         operations.async().class.simpleName == "ReactorToAsyncOperationsAdaptor"
+    }
+
+    void "closing the operations shuts down the thread pool created when no IO executor is configured"() {
+        given:
+        def operations = new DefaultDocumentSearchRepositoryOperations("stub", context.getBean(StubSearchTransport),
+                context.getBean(JsonMapper), context.getBean(DocumentSearchConfiguration), context.getBean(DateTimeProvider),
+                context.getBean(RuntimeEntityRegistry), context.getBean(DataConversionService), context.getBean(AttributeConverterRegistry),
+                context, null)
+        def executor = operations.async().executor
+
+        expect:
+        !executor.isShutdown()
+
+        when:
+        operations.close()
+
+        then:
+        executor.isShutdown()
+    }
+
+    void "closing the operations leaves the configured IO executor running"() {
+        given:
+        def operations = context.getBean(DefaultDocumentSearchRepositoryOperations, Qualifiers.byName("stub"))
+        def executor = operations.async().executor
+
+        when:
+        operations.close()
+
+        then:
+        !executor.isShutdown()
     }
 
     void "the reactive operations find by id, page, and update and delete in batches"() {

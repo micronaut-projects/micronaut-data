@@ -12,6 +12,8 @@ For OpenSearch, add the OpenSearch module together with a https://micronaut-proj
 
 dependency:io.micronaut.data:micronaut-data-search-opensearch[]
 
+Use one of the two modules per application. Each registers its blocking and its async transport under the name `default`, which the repositories select, so with both on the classpath there are two `default` transports and injecting a repository fails with a `NonUniqueBeanException`.
+
 Entities are serialised with Micronaut Serialization, so compile them with the document annotation processor, which marks `@MappedEntity` classes serialisable, and add the search module to the processor path so the repository query builder is found:
 
 [source,groovy]
