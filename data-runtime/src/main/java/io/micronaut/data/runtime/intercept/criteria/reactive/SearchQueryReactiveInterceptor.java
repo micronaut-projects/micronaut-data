@@ -37,7 +37,7 @@ import reactor.core.publisher.Mono;
  * interceptor, executed through the reactive criteria operations, with the hybrid rankings fused once
  * both have arrived.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 public class SearchQueryReactiveInterceptor extends AbstractReactiveSpecificationInterceptor<Object, Object> {

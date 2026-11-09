@@ -54,7 +54,7 @@ import java.util.Set;
  * The criteria queries and the result handling of {@code search(SearchQuery)}, shared by the blocking,
  * reactive and async interceptors.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 public final class SearchQuerySupport {

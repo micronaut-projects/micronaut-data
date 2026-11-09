@@ -37,7 +37,7 @@ import java.util.concurrent.CompletionStage;
  * variant: the same criteria queries as the blocking interceptor, executed through the async criteria
  * operations.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 public class SearchQueryAsyncInterceptor extends AbstractAsyncSpecificationInterceptor<Object, Object> {
