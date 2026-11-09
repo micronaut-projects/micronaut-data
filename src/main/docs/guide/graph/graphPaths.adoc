@@ -29,7 +29,7 @@ snippet::example.PersonRepository[project-base="doc-examples/neo4j-example", sou
 
 ann:data.graph.annotation.PathLimit[] sets the maximum depth, either on the method or on an `int` parameter. The direction follows the relationship properties named after `By`. Without them, paths follow any relationship in either direction.
 
-On Oracle property graphs path finders only check for paths and count them, see <<graphOracle, Oracle Property Graphs>>.
+On Oracle property graphs path finders check for paths, count them and return every path up to the maximum depth, but not shortest paths, see <<graphOracle, Oracle Property Graphs>>.
 
 A variable-length path visits every path up to its depth, so a depth passed as an argument is capped: an argument above `micronaut.data.graph.max-path-depth` (10 by default) is rejected with an `IllegalArgumentException` before the query runs. Raise the limit in configuration when a repository needs deeper searches:
 

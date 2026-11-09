@@ -7,6 +7,7 @@ import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.graph.annotation.PropertyGraph;
+import io.micronaut.data.graph.model.GraphPath;
 import io.micronaut.data.graph.model.GraphRelationship;
 import io.micronaut.data.oracle.graph.annotation.OracleGraphRepository;
 import io.micronaut.data.repository.GenericRepository;
@@ -83,6 +84,9 @@ public interface BankGraph extends GenericRepository<Account, Long> {
      */
     @PathLimit(3)
     long countPathsByTransfers(Long from, Long to, @PathLimit int maxDepth);
+
+    @PathLimit(3)
+    List<GraphPath<Account>> findAllPathsByTransfers(Long from, Long to);
 
     List<Account> findByOpenedGreaterThan(LocalDateTime opened);
 
