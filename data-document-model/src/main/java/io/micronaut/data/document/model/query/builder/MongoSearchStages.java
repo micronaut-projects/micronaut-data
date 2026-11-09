@@ -220,8 +220,9 @@ final class MongoSearchStages {
      * @return The distance expression
      */
     static Map<String, Object> vectorDistance(io.micronaut.data.model.PersistentEntity entity) {
-        String similarity = entity.getAnnotationMetadata().stringValue(io.micronaut.data.document.mongo.MongoAnnotations.SEARCH_INDEX, "similarity").orElse("cosine");
-        return "euclidean".equals(similarity) ? EUCLIDEAN_DISTANCE : VECTOR_DISTANCE;
+        // the name of the MongoSearchIndex.Similarity constant
+        String similarity = entity.getAnnotationMetadata().stringValue(io.micronaut.data.document.mongo.MongoAnnotations.SEARCH_INDEX, "similarity").orElse("COSINE");
+        return "EUCLIDEAN".equals(similarity) ? EUCLIDEAN_DISTANCE : VECTOR_DISTANCE;
     }
 
     /**

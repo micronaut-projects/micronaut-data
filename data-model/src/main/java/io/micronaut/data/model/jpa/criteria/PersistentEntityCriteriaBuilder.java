@@ -303,9 +303,11 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
      * @param fields The field expressions (properties)
      * @param query The query string expression
      * @param mode The match mode
-     * @param options The boosts and fuzziness
+     * @param options The boosts, keyed by the property path of a matched field, and the edit distance of a
+     * {@link MatchMode#FUZZY} match
      * @return a new predicate
-     * @since 5.4.0
+     * @throws IllegalArgumentException When a boost names no matched field, or an edit distance is set with another mode
+     * @since 5.3.0
      */
     default Predicate textMatch(List<Expression<?>> fields, Expression<String> query, MatchMode mode, TextMatchOptions options) {
         if (!options.isDefault()) {
@@ -331,9 +333,11 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
      * @param fields The field expressions (properties)
      * @param query The query string expression
      * @param mode The match mode
-     * @param options The boosts and fuzziness
+     * @param options The boosts, keyed by the property path of a matched field, and the edit distance of a
+     * {@link MatchMode#FUZZY} match
      * @return the score expression
-     * @since 5.4.0
+     * @throws IllegalArgumentException When a boost names no matched field, or an edit distance is set with another mode
+     * @since 5.3.0
      */
     default Expression<Double> searchScore(List<Expression<?>> fields, Expression<String> query, MatchMode mode, TextMatchOptions options) {
         if (!options.isDefault()) {
@@ -349,7 +353,7 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
      * @param query The query string expression
      * @param mode The match mode
      * @return the highlight expression
-     * @since 5.4.0
+     * @since 5.3.0
      */
     Expression<String> searchHighlight(Expression<?> field, Expression<String> query, MatchMode mode);
 

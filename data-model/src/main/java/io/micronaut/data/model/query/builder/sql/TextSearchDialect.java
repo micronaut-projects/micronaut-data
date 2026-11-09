@@ -180,19 +180,15 @@ public interface TextSearchDialect {
     }
 
     /**
-     * @param field A field expression
-     * @return The declared {@link SearchField#weight()}, or {@code null} when the property has none
-     */
-    /**
      * @param field The field expression
      * @param options The options
-     * @return The query-time boost of the field, or {@code null}
+     * @return The query-time boost of the field, by its property path, or {@code null}
      */
     static @Nullable Double boostOf(Expression<?> field, TextMatchOptions options) {
         if (options.boosts().isEmpty() || !(field instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath)) {
             return null;
         }
-        return options.boostFor(propertyPath.getProperty().getName());
+        return options.boostFor(propertyPath.getPathAsString());
     }
 
     /**
@@ -249,6 +245,10 @@ public interface TextSearchDialect {
         return options.language() != null ? TextSearchSupport.requireLanguageName(options.language()) : resolveLanguage(fields);
     }
 
+    /**
+     * @param field A field expression
+     * @return The declared {@link SearchField#weight()}, or {@code null} when the property has none
+     */
     static @Nullable SearchWeight resolveWeight(Expression<?> field) {
         PersistentProperty property = asProperty(field);
         if (property == null) {

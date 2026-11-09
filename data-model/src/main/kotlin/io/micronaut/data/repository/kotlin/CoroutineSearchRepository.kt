@@ -26,7 +26,7 @@ import io.micronaut.data.repository.GenericRepository
  *
  * @param E The entity type
  * @param ID The ID type
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Experimental
 interface CoroutineSearchRepository<E : Any, ID : Any> : GenericRepository<E, ID> {
