@@ -121,7 +121,7 @@ ${methods}
         given:
         def repository = articleRepository("""
     SearchResults<Article> searchByEmbeddingNear(io.micronaut.data.model.vector.Vector vector, Score maxDistance);
-""", 'name = "articles_search", similarity = "euclidean"')
+""", 'name = "articles_search", similarity = MongoSearchIndex.Similarity.EUCLIDEAN')
         def distance = '{$subtract:[{$divide:[1,{$meta:\'vectorSearchScore\'}]},1]}'
 
         expect:

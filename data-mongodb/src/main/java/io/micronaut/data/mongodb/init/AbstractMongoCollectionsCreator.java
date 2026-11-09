@@ -140,19 +140,7 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                     }
                     databaseOperations.createCollection(database, persistedName);
                 }
-                SearchIndexDefinition searchIndex = searchIndexDefinition(entity);
-                if (searchIndex != null) {
-                    createSearchIndex(databaseOperations, database, persistedName, searchIndex);
-                    VectorIndexDefinition vectorIndex = vectorIndexDefinition(entity);
-                    if (vectorIndex != null) {
-                        createVectorIndex(databaseOperations, database, persistedName, vectorIndex);
-                    }
-                } else {
-                    TextIndexDefinition textIndex = textIndexDefinition(entity, persistedName);
-                    if (textIndex != null) {
-                        ensureTextIndex(databaseOperations, database, persistedName, textIndex);
-                    }
-                }
+                createIndexes(databaseOperations, database, persistedName, entity);
                 for (PersistentProperty persistentProperty : entity.getPersistentProperties()) {
                     if (persistentProperty instanceof Association association) {
                         Optional<Association> inverseSide = association.getInverseSide().map(Function.identity());
@@ -175,6 +163,26 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
 
     }
 
+    /**
+     * Creates the full-text index of the entity, a MongoDB Search index or a text index, and, for an entity
+     * with a {@code @MongoSearchIndex}, its vector search index, which does not need any search field.
+     */
+    private void createIndexes(DatabaseOperations<Dtbs> databaseOperations, Dtbs database, String collection, PersistentEntity entity) {
+        SearchIndexDefinition searchIndex = searchIndexDefinition(entity);
+        if (searchIndex != null) {
+            createSearchIndex(databaseOperations, database, collection, searchIndex);
+        } else {
+            TextIndexDefinition textIndex = textIndexDefinition(entity, collection);
+            if (textIndex != null) {
+                ensureTextIndex(databaseOperations, database, collection, textIndex);
+            }
+        }
+        VectorIndexDefinition vectorIndex = vectorIndexDefinition(entity);
+        if (vectorIndex != null) {
+            createVectorIndex(databaseOperations, database, collection, vectorIndex);
+        }
+    }
+
     private void createSearchIndex(DatabaseOperations<Dtbs> databaseOperations, Dtbs database, String collection, SearchIndexDefinition searchIndex) {
         try {
             if (databaseOperations.listSearchIndexNames(database, collection).contains(searchIndex.name())) {
@@ -194,9 +202,19 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
         }
     }
 
+    /**
+     * Creates the vector search index unless the collection has a search index of that name. An existing index is
+     * kept as it is, like the text index: a changed dimension or similarity is only reported, and applies once the
+     * index is dropped.
+     */
     private void createVectorIndex(DatabaseOperations<Dtbs> databaseOperations, Dtbs database, String collection, VectorIndexDefinition vectorIndex) {
         try {
-            if (databaseOperations.listSearchIndexNames(database, collection).contains(vectorIndex.name())) {
+            Document existing = databaseOperations.findSearchIndex(database, collection, vectorIndex.name());
+            if (existing != null) {
+                if (!vectorIndex.matches(existing) && LOG.isWarnEnabled()) {
+                    LOG.warn("Vector search index: {} on collection: {} in database: {} does not match the vector properties, dimensions or similarity of the entity and is kept as it is; drop it to have it created again",
+                        vectorIndex.name(), collection, databaseOperations.getDatabaseName(database));
+                }
                 return;
             }
             if (LOG.isInfoEnabled()) {
@@ -204,6 +222,10 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
             }
             databaseOperations.createVectorIndex(database, collection, vectorIndex);
         } catch (MongoCommandException e) {
+            if (!SEARCH_UNAVAILABLE_CODES.contains(e.getErrorCode())) {
+                // an invalid definition, such as a dimension Atlas rejects, must not leave the application without its index
+                throw e;
+            }
             LOG.warn("Cannot create vector search index: {} on collection: {}; MongoDB Search is not available on this deployment: {}", vectorIndex.name(), collection, e.getErrorMessage());
         }
     }
@@ -222,9 +244,9 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
         if (!annotationMetadata.hasAnnotation(MongoSearchIndex.class)) {
             return null;
         }
-        String similarity = annotationMetadata.stringValue(MongoSearchIndex.class, MongoSearchIndex.MEMBER_SIMILARITY)
-            .filter(s -> !s.isEmpty())
-            .orElse("cosine");
+        String similarity = annotationMetadata.enumValue(MongoSearchIndex.class, MongoSearchIndex.MEMBER_SIMILARITY, MongoSearchIndex.Similarity.class)
+            .orElse(MongoSearchIndex.Similarity.COSINE)
+            .indexValue();
         Map<String, Integer> dimensions = new LinkedHashMap<>();
         for (PersistentProperty property : entity.getPersistentProperties()) {
             if (property.isAssignable(Vector.class)) {
@@ -386,6 +408,30 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                     .append("similarity", similarity));
             }
             return new Document("fields", fields);
+        }
+
+        /**
+         * Whether an existing vector search index has the fields, dimensions and similarity of this definition.
+         *
+         * @param index The index description from {@code $listSearchIndexes}
+         * @return True if the existing index indexes the same vector fields the same way
+         */
+        public boolean matches(Document index) {
+            Object latest = index.get("latestDefinition");
+            if (!(latest instanceof Document latestDefinition)) {
+                return false;
+            }
+            Map<String, Integer> existingDimensions = new LinkedHashMap<>();
+            for (Object field : latestDefinition.getList("fields", Object.class, List.of())) {
+                if (!(field instanceof Document fieldDocument) || !"vector".equals(fieldDocument.get("type"))) {
+                    continue;
+                }
+                if (!similarity.equals(fieldDocument.get("similarity")) || !(fieldDocument.get("numDimensions") instanceof Number numDimensions)) {
+                    return false;
+                }
+                existingDimensions.put(fieldDocument.getString("path"), numDimensions.intValue());
+            }
+            return existingDimensions.equals(dimensions);
         }
 
         /**
@@ -558,6 +604,17 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
          * @return The search index names
          */
         Set<String> listSearchIndexNames(Dtbs database, String collection);
+
+        /**
+         * Finds a search index of a collection by name.
+         *
+         * @param database The database
+         * @param collection The collection
+         * @param name The index name
+         * @return The index description from {@code $listSearchIndexes}, with its {@code latestDefinition}, or {@code null}
+         */
+        @Nullable
+        Document findSearchIndex(Dtbs database, String collection, String name);
 
         /**
          * Create the search index of a searchable entity.

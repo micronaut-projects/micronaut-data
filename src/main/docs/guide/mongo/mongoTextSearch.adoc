@@ -65,7 +65,7 @@ NOTE: A `SearchResults` query, with `$text`, `$search` or `$vectorSearch`, adds 
 [[mongoVectorSearch]]
 === Vector and hybrid search
 
-An entity with a `@MongoSearchIndex` also gets a vector search index, named by `@MongoSearchIndex(vectorIndex)` (`vector` unless set), with one `vector` field per api:data.model.vector.Vector[] property. The dimension comes from the property's `@Column(length)` and the similarity from `@MongoSearchIndex(similarity)`, `cosine` unless set; a vector property without a dimension is not indexed and a warning is logged.
+An entity with a `@MongoSearchIndex` also gets a vector search index, named by `@MongoSearchIndex(vectorIndex)` (`vector` unless set), with one `vector` field per api:data.model.vector.Vector[] property, whether or not the entity has search fields. The dimension comes from the property's `@Column(length)` and the similarity from `@MongoSearchIndex(similarity)`, `COSINE` unless set (`EUCLIDEAN` and `DOT_PRODUCT` are the others); a vector property without a dimension is not indexed and a warning is logged. A definition MongoDB rejects, such as a dimension above its limit, fails the startup. An existing vector index of that name is kept as it is: when the vector properties, their dimensions or the similarity change, Micronaut Data logs a warning instead of rebuilding the index, and the new mapping applies once the index is dropped and created again.
 
 The vector search API of the <<sqlVectorType, SQL stores>> then runs on the index: a derived finder such as `searchByEmbeddingNear(Vector, Score)` or `findTop5ByEmbeddingNear(Vector, Double)` renders a `$vectorSearch` stage as the first stage of the aggregation, with the query vector, `limit` set from the method's limit or the page requested at runtime and `numCandidates` ten times that, followed by a `$match` on the maximum distance and the other predicates. The relevance score of a api:data.model.vector.search.SearchResults[] is the distance derived from the `vectorSearchScore` according to `@MongoSearchIndex(similarity)` (`2 - 2 * score` for `cosine` and `dotProduct`, `1 / score - 1` for `euclidean`), so results are comparable with the other stores.
 
@@ -79,7 +79,7 @@ Hybrid search with `SearchQuery.vector(...)` runs the `$search` and the `$vector
 |Field scoping (`findByTitleSearch` matching only `title`) |not supported, every search field is searched |supported
 |A property keyword on a property without `@SearchField` or of a joined entity |rejected at compile time, as the property is not in the text index |the property must be mapped by the search index
 |Stemming in `SearchAll` |not supported, every term is matched literally |follows the analyzer of the search index
-|Vector search and hybrid search |not supported |supported, `$vectorSearch` with cosine similarity
+|Vector search and hybrid search |not supported |supported, `$vectorSearch` with the similarity of the vector index
 |`SearchPrefix` and `SearchFuzzy` |not supported, rejected at compile time |supported
 |Highlighting |not supported; `@SearchField(highlightable = true)` is ignored by derived `SearchResults` methods, and `SearchQuery.highlight(...)` throws `UnsupportedSearchFeatureException` |supported
 |Minimum score |not supported |supported
