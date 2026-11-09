@@ -54,7 +54,7 @@ snippet::example.BookRepository[project-base="doc-examples/jdbc-search-example",
 |`SearchFuzzy` |terms with typos |`pg_trgm` word similarity (`mn_term.t <% column`), see the notes below
 |===
 
-On Oracle the same keywords render `CONTAINS` queries: `{a} | {b}`, `{a} & {b}`, `{a b}`, `a% & b%` and `fuzzy(a,60,100)` respectively, so `SearchFuzzy` is available there.
+On Oracle the same keywords render `CONTAINS` queries: `{a} | {b}`, `{a} & {b}`, `{a b}`, `a% & b%` and `fuzzy(a,60,100)` respectively, so `SearchFuzzy` is available there. A quoted phrase in a `SearchPrefix` search renders `a% b%`, a phrase whose every word is a prefix, as on PostgreSQL.
 
 Methods that return `List`, `Page` or a DTO filter by the search without projecting a score, so they are not ordered by relevance. On a `SearchResults` method a `Sort` or `Pageable` with orders replaces the relevance order, and an unsorted one keeps it.
 
@@ -129,9 +129,12 @@ The criteria builder exposes the same predicate through `PersistentEntityCriteri
 
 - Each search field gets its own Oracle Text `CONTEXT` index, created by schema generation as `CREATE INDEX idx_<table>_search_<column> ON <table> (<column>) INDEXTYPE IS CTXSYS.CONTEXT PARAMETERS ('SYNC (ON COMMIT)')`. The index is synchronised on commit, so rows are searchable as soon as the transaction that wrote them commits.
 - A single-field search renders `CONTAINS(<column>, ?, 1) > 0` and ranks with `SCORE(1)`. A search over every search field matches any field with the positive terms and then excludes rows where any field matches a negated term; the score is the sum of the per-field scores multiplied by their numeric weights (`HIGH` 10, `MEDIUM` 5, `LOW` 2, `LOWEST` 1).
+- When a search over several fields has `OR` alternatives, a negated term narrows only its own alternative, as on PostgreSQL, so it is applied within each field instead: `bread -coffee OR recipes` returns a row with `recipes` and `coffee`, but also a row with `bread` in the title and `coffee` only in the description. A phrase search has no negated terms, so `SearchPhrase` keeps a `-` inside the phrase as part of it.
+- In a `SearchPrefix` search a negated term is matched as a whole word, not as a prefix as on PostgreSQL.
+- Each text match in a statement gets its own `CONTAINS` labels, including two criteria `textMatch` predicates on the same fields; a `searchScore` reads the labels of the first text match on the same fields with the same parameter.
 - `SearchAll` requires every term within one field. Terms are escaped in braces, so reserved words such as `and` or `or` are matched literally.
 - The default lexer matches words literally; there is no stemming unless the index is created with a lexer that enables it. A `@Language` column is ignored.
-- Entities stored as a JSON column (`@EntityRepresentation(columnType = JSON)`) get one JSON search index over the column, created by schema generation as `CREATE SEARCH INDEX idx_<table>_search ON <table> (<column>) FOR JSON PARAMETERS ('SYNC (ON COMMIT)')`, and are searched with `CONTAINS(<column>, '(' || ? || ') INPATH (/<property>)', n) > 0`, which ranks with `SCORE(n)` like a relational entity. A JSON search index cannot be created on a JSON-relational duality view, so `@JsonView` entities are not searchable.
+- Entities stored as a JSON column (`@EntityRepresentation(columnType = JSON)`) get one JSON search index over the column, created by schema generation as `CREATE SEARCH INDEX idx_<table>_search ON <table> (<column>) FOR JSON PARAMETERS ('SYNC (ON COMMIT)')`, and are searched with `CONTAINS(<column>, '(' || ? || ') INPATH (/<property>)', n) > 0`, which ranks with `SCORE(n)` like a relational entity. A JSON search index cannot be created on a JSON-relational duality view, so `@JsonView` entities are not searchable. The path uses the key each property declares with `@JsonProperty` or `@SerdeConfig(property)`, on embedded properties too; a naming strategy of the serializer, such as `@JsonNaming`, is not applied, and `@MappedProperty`, which names columns, does not change the key.
 - Highlights render `CTX_DOC.POLICY_SNIPPET('MN_SEARCH_POLICY', <column>, ?, starttag => '<em>', endtag => '</em>')` over the column text, or over `JSON_VALUE` for a JSON entity. The `MN_SEARCH_POLICY` Oracle Text policy is created by schema generation with the default lexer; create it in your migrations with `CTX_DDL.CREATE_POLICY('MN_SEARCH_POLICY')`, which needs the `CTXAPP` role.
 
 == Capability matrix

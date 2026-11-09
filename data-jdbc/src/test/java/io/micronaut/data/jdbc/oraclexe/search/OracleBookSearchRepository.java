@@ -17,8 +17,14 @@ package io.micronaut.data.jdbc.oraclexe.search;
 
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
+import io.micronaut.data.search.tck.entities.Book;
 import io.micronaut.data.search.tck.repositories.BookPrefixSearchRepository;
 
+import java.util.List;
+
 @JdbcRepository(dialect = Dialect.ORACLE)
-public interface OracleBookSearchRepository extends BookPrefixSearchRepository {
+public interface OracleBookSearchRepository extends BookPrefixSearchRepository, JpaSpecificationExecutor<Book> {
+
+    List<Book> findBySearchPhrase(String query);
 }
