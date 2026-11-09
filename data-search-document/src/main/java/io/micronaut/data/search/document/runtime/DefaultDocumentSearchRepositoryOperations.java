@@ -70,7 +70,7 @@ import java.util.stream.Stream;
  * and async repositories use the {@link AsyncSearchTransport} of the same name when the store
  * provides one, and run this blocking transport on the IO executor otherwise.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 @EachBean(SearchTransport.class)
