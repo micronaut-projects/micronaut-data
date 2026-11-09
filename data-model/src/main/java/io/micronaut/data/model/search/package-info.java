@@ -16,7 +16,7 @@
 /**
  * Portable full-text search model: match modes, the search grammar and the programmatic query.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @org.jspecify.annotations.NullMarked
 package io.micronaut.data.model.search;

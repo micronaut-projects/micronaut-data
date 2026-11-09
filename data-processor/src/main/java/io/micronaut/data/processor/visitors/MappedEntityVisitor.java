@@ -30,6 +30,8 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.TypeDef;
+import io.micronaut.data.annotation.search.SearchField;
+import io.micronaut.data.annotation.search.Searchable;
 import io.micronaut.data.annotation.sql.JoinColumn;
 import io.micronaut.data.annotation.sql.JoinColumns;
 import io.micronaut.data.model.Association;
@@ -167,9 +169,37 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         }
 
         GeneratedETagUtils.synthesizeColumnTransformer(entity, properties);
+        if (visitsOwnElements) {
+            validateSearchFields(entity, properties);
+        }
 
         if (entity.hasAnnotation(JSON_VIEW_ANNOTATION) || entity.hasAnnotation(JSON_SUB_VIEW_ANNOTATION)) {
             validateJsonView(entity, context);
+        }
+    }
+
+    /**
+     * Rejects a {@link SearchField} the search stores cannot index, so the mistake is reported at compile time
+     * rather than as a database type error at the first search: every search field is indexed as analysed text,
+     * so it must be a text property of a {@link Searchable} entity.
+     *
+     * @param entity     The entity or embeddable
+     * @param properties Its persistent properties, with their mapping defaults computed
+     */
+    private static void validateSearchFields(SourcePersistentEntity entity, List<SourcePersistentProperty> properties) {
+        for (SourcePersistentProperty property : properties) {
+            if (!property.hasAnnotation(SearchField.class)) {
+                continue;
+            }
+            if (!entity.hasAnnotation(Searchable.class)) {
+                throw new ProcessingException(property.getPropertyElement(), "@SearchField property [" + property.getName() + "] of ["
+                    + entity.getName() + "] is never searched: annotate the entity with @Searchable, or remove @SearchField");
+            }
+            if (property instanceof Association || property.getDataType() != DataType.STRING) {
+                throw new ProcessingException(property.getPropertyElement(), "@SearchField property [" + property.getName() + "] of ["
+                    + entity.getName() + "] must be a text property, such as a String, because search fields are indexed as text, but its type is "
+                    + property.getTypeName());
+            }
         }
     }
 

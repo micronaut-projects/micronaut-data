@@ -23,7 +23,7 @@ import org.jspecify.annotations.Nullable;
 /**
  * A {@link QueryParameterBinding} that delegates every call, for subclasses that override one.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 public abstract class DelegatingQueryParameterBinding implements QueryParameterBinding {

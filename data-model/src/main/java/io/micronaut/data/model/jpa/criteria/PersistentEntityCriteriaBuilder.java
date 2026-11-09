@@ -282,7 +282,7 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
      * @param query The query string expression
      * @param mode The match mode
      * @return a new predicate
-     * @since 5.4.0
+     * @since 5.3.0
      */
     Predicate textMatch(Expression<?> field, Expression<String> query, MatchMode mode);
 
@@ -293,7 +293,7 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
      * @param query The query string expression
      * @param mode The match mode
      * @return a new predicate
-     * @since 5.4.0
+     * @since 5.3.0
      */
     Predicate textMatch(List<Expression<?>> fields, Expression<String> query, MatchMode mode);
 
@@ -321,7 +321,7 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
      * @param query The query string expression
      * @param mode The match mode
      * @return the score expression
-     * @since 5.4.0
+     * @since 5.3.0
      */
     Expression<Double> searchScore(List<Expression<?>> fields, Expression<String> query, MatchMode mode);
 
