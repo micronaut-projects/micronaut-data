@@ -144,6 +144,30 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
     }
 
     /**
+     * Fires the pre-persist event of each entity of a batch and builds the documents to index.
+     *
+     * @param values The entities
+     * @param entity The entity type
+     * @param <T> The entity type
+     * @return The batch
+     */
+    protected final <T> PersistBatch<T> persistBatch(Iterable<T> values, RuntimePersistentEntity<T> entity) {
+        PersistBatch<T> batch = new PersistBatch<>(entity);
+        for (T value : values) {
+            T current = prePersist(value, entity);
+            if (current == null) {
+                batch.results.add(value);
+            } else {
+                batch.positions.add(batch.results.size());
+                batch.results.add(current);
+                batch.toIndex.add(current);
+                batch.documents.add(new SearchTransport.BulkDocument(documentId(current, entity), toDocument(current, entity)));
+            }
+        }
+        return batch;
+    }
+
+    /**
      * Fires the pre-update event.
      *
      * @return The entity to index, or {@code null} when a listener vetoed the update
@@ -398,6 +422,70 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
         @Override
         public void bindMany(io.micronaut.data.model.runtime.QueryParameterBinding binding, java.util.Collection<Object> values) {
             // values are collected by the stored query
+        }
+    }
+
+    /**
+     * The entities of a batch insert after the pre-persist event, sent in bulk requests of at most
+     * the configured bulk size. Each written entity gets its id and the post-persist event as soon as
+     * its request returns, also when the store rejected other documents of the request.
+     *
+     * @param <T> The entity type
+     */
+    protected final class PersistBatch<T> {
+
+        // the results keep the input order, with vetoed entities in place
+        private final List<T> results = new ArrayList<>();
+        private final List<T> toIndex = new ArrayList<>();
+        // the position of each indexed entity in the results, as equal entities cannot be told apart by indexOf
+        private final List<Integer> positions = new ArrayList<>();
+        private final List<SearchTransport.BulkDocument> documents = new ArrayList<>();
+        private final RuntimePersistentEntity<T> entity;
+
+        private PersistBatch(RuntimePersistentEntity<T> entity) {
+            this.entity = entity;
+        }
+
+        /**
+         * @return The entities in input order, the persisted ones after their post-persist event
+         */
+        public List<T> results() {
+            return results;
+        }
+
+        /**
+         * @return The index the entities go to
+         */
+        public String index() {
+            return indexName(entity);
+        }
+
+        /**
+         * @return The documents to index, split into requests of at most the configured bulk size
+         */
+        public List<List<SearchTransport.BulkDocument>> requests() {
+            int size = configuration.getBulkSize();
+            List<List<SearchTransport.BulkDocument>> requests = new ArrayList<>((documents.size() + size - 1) / size);
+            for (int from = 0; from < documents.size(); from += size) {
+                requests.add(documents.subList(from, Math.min(from + size, documents.size())));
+            }
+            return requests;
+        }
+
+        /**
+         * Stores the ids of the written documents of one request and fires their post-persist event.
+         *
+         * @param request The position of the request in {@link #requests()}
+         * @param ids The id of each document of the request, {@code null} for one that was not written
+         */
+        public void written(int request, List<@Nullable String> ids) {
+            int offset = request * configuration.getBulkSize();
+            for (int i = 0; i < ids.size(); i++) {
+                String id = ids.get(i);
+                if (id != null) {
+                    results.set(positions.get(offset + i), postPersist(toIndex.get(offset + i), entity, id));
+                }
+            }
         }
     }
 }

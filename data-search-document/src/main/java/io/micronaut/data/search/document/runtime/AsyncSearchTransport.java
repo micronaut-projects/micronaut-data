@@ -71,22 +71,30 @@ public interface AsyncSearchTransport {
     /**
      * Indexes several new documents in one request, each a create-only write like
      * {@link #create(String, String, Map, DocumentSearchConfiguration.Refresh)}. The default sends one
-     * request per document, in sequence.
+     * request per document, in sequence, and stops at the first failure.
      *
      * @param index The index name
      * @param documents The documents, in order
      * @param refresh The refresh policy
-     * @return The document ids, in the same order
+     * @return The document ids, in the same order, failing with a {@link BulkIndexException} when the
+     * store rejected some of the documents and wrote the others
      */
     default CompletionStage<List<String>> bulkIndex(String index, List<SearchTransport.BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
-        CompletionStage<List<String>> ids = CompletableFuture.completedFuture(new ArrayList<>(documents.size()));
+        List<String> ids = new ArrayList<>(documents.size());
+        CompletionStage<List<String>> written = CompletableFuture.completedFuture(ids);
         for (SearchTransport.BulkDocument document : documents) {
-            ids = ids.thenCompose(list -> create(index, document.id(), document.source(), refresh).thenApply(id -> {
+            written = written.thenCompose(list -> create(index, document.id(), document.source(), refresh).thenApply(id -> {
                 list.add(id);
                 return list;
             }));
         }
-        return ids;
+        return written.handle((list, failure) -> {
+            if (failure != null) {
+                Throwable cause = failure instanceof CompletionException && failure.getCause() != null ? failure.getCause() : failure;
+                throw new CompletionException(BulkResponses.stopped(ids, documents.size(), cause));
+            }
+            return list;
+        });
     }
 
     /**

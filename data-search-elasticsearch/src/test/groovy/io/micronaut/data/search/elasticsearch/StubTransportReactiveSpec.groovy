@@ -2,6 +2,7 @@ package io.micronaut.data.search.elasticsearch
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Requires
+import io.micronaut.data.event.listeners.PostPersistEventListener
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.runtime.AttributeConverterRegistry
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
@@ -10,6 +11,7 @@ import io.micronaut.data.runtime.date.DateTimeProvider
 import io.micronaut.data.runtime.query.internal.DefaultPagedQuery
 import io.micronaut.data.search.document.conf.DocumentSearchConfiguration
 import io.micronaut.data.search.document.runtime.AsyncSearchTransport
+import io.micronaut.data.search.document.runtime.BulkIndexException
 import io.micronaut.data.search.document.runtime.DefaultDocumentSearchReactiveRepositoryOperations
 import io.micronaut.data.search.document.runtime.DefaultDocumentSearchRepositoryOperations
 import io.micronaut.data.search.document.runtime.SearchTransport
@@ -36,7 +38,7 @@ class StubTransportReactiveSpec extends Specification {
 
     @AutoCleanup
     @Shared
-    ApplicationContext context = ApplicationContext.run(["spec.name": "StubTransportReactiveSpec"])
+    ApplicationContext context = ApplicationContext.run(["spec.name": "StubTransportReactiveSpec", "micronaut.data.search.bulk-size": "2"])
 
     @Shared
     StubBookRepository repository = context.getBean(StubBookRepository)
@@ -67,6 +69,47 @@ class StubTransportReactiveSpec extends Specification {
         saved.every { it.id != null }
         repository.count().block() == 2L
         context.getBean(StubSearchTransport).calls.count { it == "async:bulkIndex" } == 1
+
+        cleanup:
+        repository.deleteAll().block()
+    }
+
+    void "saveAll sends bulk requests of the configured size in sequence"() {
+        given:
+        def transport = context.getBean(StubSearchTransport)
+        def before = transport.calls.count { it == "async:bulkIndex" }
+
+        when:
+        def saved = repository.saveAll((1..5).collect { new Book("Book " + it, "Body", "Author", it) }).collectList().block()
+
+        then:
+        saved*.title == (1..5).collect { "Book " + it }
+        transport.calls.count { it == "async:bulkIndex" } - before == 3
+        repository.count().block() == 5L
+
+        cleanup:
+        repository.deleteAll().block()
+    }
+
+    void "a partly failed reactive saveAll fires the post-persist event of the written entities and sends no further request"() {
+        given:
+        def recorder = context.getBean(PostPersistRecorder)
+        recorder.titles.clear()
+        def transport = context.getBean(StubSearchTransport)
+        def before = transport.calls.count { it == "async:bulkIndex" }
+
+        when:
+        repository.saveAll(["Written 1", "Written 2", "Written 3", "Rejected", "Not sent"].collect { new Book(it, "Body", "Author", 1) })
+                .collectList().block()
+
+        then:
+        BulkIndexException e = thrown()
+        e.ids.size() == 2
+        e.ids[0] != null
+        e.ids[1] == null
+        recorder.titles == ["Written 1", "Written 2", "Written 3"]
+        transport.calls.count { it == "async:bulkIndex" } - before == 2
+        repository.count().block() == 3L
 
         cleanup:
         repository.deleteAll().block()
@@ -319,7 +362,14 @@ class StubTransportReactiveSpec extends Specification {
 
         @Override
         CompletionStage<List<String>> bulkIndex(String index, List<SearchTransport.BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
-            return done("bulkIndex", documents.collect { store.put(index, it.id(), it.source()) })
+            // a document titled "Rejected" is rejected, the others are written, as a store does with a bulk request
+            List<String> ids = documents.collect { it.source().title == "Rejected" ? null : store.put(index, it.id(), it.source()) }
+            return done("bulkIndex", ids).thenApply { written ->
+                if (written.contains(null)) {
+                    throw new BulkIndexException("Stub bulk request rejected a document", written)
+                }
+                return written
+            }
         }
 
         @Override
@@ -340,6 +390,18 @@ class StubTransportReactiveSpec extends Specification {
         @Override
         CompletionStage<Long> deleteByQuery(String index, String body, DocumentSearchConfiguration.Refresh refresh) {
             return done("deleteByQuery", store.clear(index))
+        }
+    }
+
+    @Singleton
+    @Requires(property = "spec.name", value = "StubTransportReactiveSpec")
+    static class PostPersistRecorder implements PostPersistEventListener<Book> {
+
+        final List<String> titles = []
+
+        @Override
+        void postPersist(Book entity) {
+            titles.add(entity.title)
         }
     }
 }

@@ -16,7 +16,6 @@
 package io.micronaut.data.search.document.runtime;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.exceptions.DataAccessException;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -26,7 +25,7 @@ import java.util.function.Function;
 /**
  * Reads the outcome of a bulk request the same way for every client library.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 public final class BulkResponses {
@@ -36,7 +35,8 @@ public final class BulkResponses {
 
     /**
      * Collects the ids of the indexed documents, failing when the store rejected any item. A bulk
-     * request is not atomic: the error names every rejected item and how many others were written.
+     * request is not atomic: the {@link BulkIndexException} names every rejected item and how many
+     * others were written, and carries the ids of the written ones.
      *
      * @param store The store name, for the error message
      * @param items The response items, in request order
@@ -46,20 +46,39 @@ public final class BulkResponses {
      * @return The ids, in request order
      */
     public static <I> List<String> ids(String store, List<I> items, Function<I, @Nullable String> error, Function<I, String> id) {
-        List<String> ids = new ArrayList<>(items.size());
+        List<@Nullable String> ids = new ArrayList<>(items.size());
         List<String> failures = new ArrayList<>();
         for (int i = 0; i < items.size(); i++) {
             I item = items.get(i);
             String reason = error.apply(item);
             if (reason != null) {
                 failures.add("item " + i + " (id " + id.apply(item) + "): " + reason);
+                ids.add(null);
+            } else {
+                ids.add(id.apply(item));
             }
-            ids.add(id.apply(item));
         }
         if (!failures.isEmpty()) {
-            throw new DataAccessException(store + " bulk request rejected " + failures.size() + " of " + items.size()
-                + " documents, the other " + (items.size() - failures.size()) + " were written: " + String.join("; ", failures));
+            throw new BulkIndexException(store + " bulk request rejected " + failures.size() + " of " + items.size()
+                + " documents, the other " + (items.size() - failures.size()) + " were written: " + String.join("; ", failures), ids);
         }
-        return ids;
+        return (List<String>) (List<?>) ids;
+    }
+
+    /**
+     * The failure of a bulk index sent as one write per document, which stops at the first failure.
+     *
+     * @param written The ids of the documents written before the failure
+     * @param total The number of documents of the request
+     * @param cause The failure
+     * @return The exception
+     */
+    static BulkIndexException stopped(List<String> written, int total, Throwable cause) {
+        List<@Nullable String> ids = new ArrayList<>(written);
+        while (ids.size() < total) {
+            ids.add(null);
+        }
+        return new BulkIndexException("Indexing document " + written.size() + " of " + total + " failed, the "
+            + written.size() + " before it were written and the rest were not sent: " + cause.getMessage(), ids, cause);
     }
 }

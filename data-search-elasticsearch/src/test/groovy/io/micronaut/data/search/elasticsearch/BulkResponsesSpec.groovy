@@ -1,6 +1,6 @@
 package io.micronaut.data.search.elasticsearch
 
-import io.micronaut.data.exceptions.DataAccessException
+import io.micronaut.data.search.document.runtime.BulkIndexException
 import io.micronaut.data.search.document.runtime.BulkResponses
 import spock.lang.Specification
 
@@ -17,7 +17,8 @@ class BulkResponsesSpec extends Specification {
                 { it.error as String }, { it.id as String })
 
         then:
-        def e = thrown(DataAccessException)
+        def e = thrown(BulkIndexException)
         e.message == "Store bulk request rejected 2 of 4 documents, the other 2 were written: item 1 (id b): version conflict; item 3 (id d): mapping"
+        e.ids == ["a", null, "c", null]
     }
 }

@@ -41,7 +41,6 @@ import io.micronaut.json.JsonMapper;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
@@ -198,33 +197,15 @@ public final class DefaultDocumentSearchReactiveRepositoryOperations extends Abs
     public <T> Flux<T> persistAll(InsertBatchOperation<T> operation) {
         return Flux.defer(() -> {
             // built per subscription, so listeners run on subscribe and a retry starts from fresh state
-            RuntimePersistentEntity<T> entity = runtimeEntityRegistry.getEntity(operation.getRootEntity());
-            // the results keep the input order, with vetoed entities in place
-            List<T> results = new ArrayList<>();
-            List<T> toIndex = new ArrayList<>();
-            List<Integer> positions = new ArrayList<>();
-            List<SearchTransport.BulkDocument> documents = new ArrayList<>();
-            for (T value : operation) {
-                T current = prePersist(value, entity);
-                if (current == null) {
-                    results.add(value);
-                } else {
-                    positions.add(results.size());
-                    results.add(current);
-                    toIndex.add(current);
-                    documents.add(new SearchTransport.BulkDocument(documentId(current, entity), toDocument(current, entity)));
-                }
-            }
-            if (documents.isEmpty()) {
-                return Flux.fromIterable(results);
-            }
-            return call(() -> transport.bulkIndex(indexName(entity), documents, configuration.getRefresh()))
-                .flatMapIterable(ids -> {
-                    for (int i = 0; i < toIndex.size(); i++) {
-                        results.set(positions.get(i), postPersist(toIndex.get(i), entity, ids.get(i)));
-                    }
-                    return results;
-                });
+            PersistBatch<T> batch = persistBatch(operation, runtimeEntityRegistry.getEntity(operation.getRootEntity()));
+            List<List<SearchTransport.BulkDocument>> requests = batch.requests();
+            // the requests go in sequence, each written entity getting its id and events when its request returns
+            return Flux.range(0, requests.size())
+                .concatMap(i -> call(() -> transport.bulkIndex(batch.index(), requests.get(i), configuration.getRefresh()))
+                    .doOnNext(ids -> batch.written(i, ids))
+                    // a bulk request is not atomic: the written entities still get their ids and events
+                    .doOnError(BulkIndexException.class, e -> batch.written(i, e.getIds())))
+                .thenMany(Flux.defer(() -> Flux.fromIterable(batch.results())));
         });
     }
 
