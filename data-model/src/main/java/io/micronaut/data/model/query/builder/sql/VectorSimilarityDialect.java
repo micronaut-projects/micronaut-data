@@ -49,6 +49,7 @@ interface VectorSimilarityDialect {
     String MYSQL_DISTANCE_PREFIX = "DISTANCE(";
     String MYSQL_EUCLIDEAN_SUFFIX = ",'EUCLIDEAN')";
     String POSTGRES_COSINE_DISTANCE_OPERATOR = " <=> ";
+    String POSTGRES_HAMMING_DISTANCE_OPERATOR = " <~> ";
 
     String ORACLE_VECTOR_DISTANCE_PREFIX = "VECTOR_DISTANCE(";
     String ORACLE_TO_VECTOR = "TO_VECTOR(";
@@ -81,6 +82,11 @@ interface VectorSimilarityDialect {
             case MYSQL -> MySqlVectorSimilarityDialect.INSTANCE;
             default -> null;
         };
+    }
+
+    private static boolean isBinaryVector(Expression<?> left) {
+        return left instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPathExpression
+            && propertyPathExpression.getPropertyPath().getProperty().isAssignable(BinaryVector.class);
     }
 
     @Nullable
@@ -149,7 +155,8 @@ interface VectorSimilarityDialect {
                                       Expression<?> right,
                                       Consumer<Expression<?>> appendExpression) {
             appendExpression.accept(left);
-            query.append(POSTGRES_COSINE_DISTANCE_OPERATOR);
+            // pgvector compares bit vectors with Hamming or Jaccard distance only
+            query.append(isBinaryVector(left) ? POSTGRES_HAMMING_DISTANCE_OPERATOR : POSTGRES_COSINE_DISTANCE_OPERATOR);
             appendExpression.accept(right);
         }
     }
