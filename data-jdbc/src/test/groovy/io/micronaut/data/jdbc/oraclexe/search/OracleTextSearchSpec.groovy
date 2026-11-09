@@ -11,7 +11,6 @@ import io.micronaut.data.model.search.SearchCapability
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.search.tck.entities.Book
 import io.micronaut.data.search.tck.AbstractTextSearchSpec
-import io.micronaut.data.search.tck.entities.Book
 import io.micronaut.data.search.tck.repositories.BookSearchRepository
 
 import javax.sql.DataSource
