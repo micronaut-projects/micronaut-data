@@ -1,7 +1,9 @@
 package io.micronaut.data.document.processor
 
 import io.micronaut.data.intercept.annotation.DataMethod
+import io.micronaut.data.intercept.annotation.DataMethodQuery
 import io.micronaut.data.intercept.annotation.DataMethodQueryParameter
+import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.runtime.convert.MongoTextSearchConverter
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.ExecutableMethod
@@ -157,5 +159,81 @@ interface PostRepository extends CrudRepository<Post, String> {
         then:
         def e = thrown(RuntimeException)
         e.message.contains("PREFIX is not supported by MongoDB")
+    }
+
+    void "a property keyword on a property outside the text index is rejected at compile time"() {
+        when:
+        articleRepository("""
+    List<Article> findByAuthorSearch(String q);
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("MongoDB \$text can only search the @SearchField properties of test.Article, which form its text index, but [author] is not one of them")
+    }
+
+    void "a property keyword on a joined property is rejected at compile time"() {
+        when:
+        buildRepository('test.EssayRepository', """
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.search.SearchField;
+import io.micronaut.data.annotation.search.Searchable;
+import io.micronaut.data.mongodb.annotation.MongoRepository;
+
+@MappedEntity
+@Searchable
+class Editor {
+    @Id
+    @GeneratedValue
+    private String id;
+    @SearchField
+    private String name;
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+}
+
+@MappedEntity
+@Searchable
+class Essay {
+    @Id
+    @GeneratedValue
+    private String id;
+    @SearchField
+    private String title;
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    private Editor editor;
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    public Editor getEditor() { return editor; }
+    public void setEditor(Editor editor) { this.editor = editor; }
+}
+
+@MongoRepository
+interface EssayRepository extends CrudRepository<Essay, String> {
+    @Join("editor")
+    List<Essay> findByEditorNameSearch(String q);
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("but [editor.name] is not one of them")
+    }
+
+    void "a SearchResults finder with a pageable leaves the relevance order to the runtime"() {
+        given:
+        def repository = articleRepository("")
+        def method = repository.getRequiredMethod("search", String, Pageable)
+        def query = TestUtils.getQuery(method)
+
+        expect:
+        query.startsWith('[{$match:{$text:{$search:{$mn_qp:0},$language:\'german\'}}},{$addFields:{mn_score:{$meta:\'textScore\'}}}')
+        !query.contains('$sort')
+        method.getAnnotation(DataMethod).isTrue(DataMethodQuery.META_MEMBER_SCORE_ORDER)
     }
 }
