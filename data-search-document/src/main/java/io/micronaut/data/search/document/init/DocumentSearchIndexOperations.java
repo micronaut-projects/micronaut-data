@@ -17,10 +17,12 @@ package io.micronaut.data.search.document.init;
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Experimental;
+import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.runtime.search.SearchIndexOperations;
 import io.micronaut.data.search.document.runtime.DocumentSearchRepositoryOperations;
+import io.micronaut.data.search.document.runtime.SearchTransport;
 import jakarta.inject.Singleton;
 
 import java.util.List;
@@ -59,8 +61,23 @@ public final class DocumentSearchIndexOperations implements SearchIndexOperation
         RuntimePersistentEntity<?> entity = runtimeEntityRegistry.getEntity(entityType);
         for (DocumentSearchRepositoryOperations ops : operations) {
             String index = ops.getIndexName(entityType);
-            if (!ops.getTransport().indexExists(index)) {
-                ops.getTransport().createIndex(index, SearchIndexDefinitions.mappingFor(entity, ops.getTransport()));
+            SearchTransport transport = ops.getTransport();
+            if (!transport.indexExists(index)) {
+                createIndex(transport, index, SearchIndexDefinitions.mappingFor(entity, transport));
+            }
+        }
+    }
+
+    /**
+     * Creates an index that did not exist, leaving alone one that a concurrent create, or the startup index
+     * creator, made in the meantime: the store then rejects the create as an index that exists.
+     */
+    private static void createIndex(SearchTransport transport, String index, String mapping) {
+        try {
+            transport.createIndex(index, mapping);
+        } catch (DataAccessException e) {
+            if (!transport.indexExists(index)) {
+                throw e;
             }
         }
     }
