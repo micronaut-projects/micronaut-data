@@ -21,6 +21,7 @@ import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.builder.sql.VectorScoringDialectSupport;
+import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.vector.Vector;
@@ -34,6 +35,7 @@ import io.micronaut.data.model.search.TextSearchSupport;
 import io.micronaut.data.model.search.UnsupportedSearchFeatureException;
 import io.micronaut.data.model.vector.search.SearchResult;
 import io.micronaut.data.model.vector.search.SearchResults;
+import io.micronaut.data.operations.CriteriaRepositoryOperations;
 import io.micronaut.data.operations.RepositoryOperations;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.ParameterExpression;
@@ -112,7 +114,9 @@ public class SearchQueryInterceptor extends AbstractSpecificationInterceptor<Obj
     }
 
     /**
-     * Runs the nearest-neighbour query of the vector property, closest first.
+     * Runs the nearest-neighbour query of the vector property, closest first. The query is rendered
+     * before the vector property is checked, so a store without vector search reports that first, and
+     * before it runs, so a property that holds no vector never reaches the database.
      */
     private SearchResults<Object> vectorSearch(RepositoryMethodKey methodKey,
                                                MethodInvocationContext<Object, Object> context,
@@ -121,32 +125,63 @@ public class SearchQueryInterceptor extends AbstractSpecificationInterceptor<Obj
         AbstractCriteriaBuilder cb = (AbstractCriteriaBuilder) criteriaBuilder;
         PersistentEntityCriteriaQuery<SearchResults> criteriaQuery = cb.createQuery(SearchResults.class);
         PersistentEntityRoot<Object> root = criteriaQuery.from(getRequiredRootEntity(context));
+        String vectorProperty = Objects.requireNonNull(searchQuery.getVectorProperty());
         Expression<Double> score = cb.function(
             VectorScoringDialectSupport.SCORE_FUNCTION,
             Double.class,
-            root.get(Objects.requireNonNull(searchQuery.getVectorProperty())),
+            root.get(vectorProperty),
             cb.parameter(Vector.class, null, searchQuery.getVector())
         );
         criteriaQuery.multiselect(root, score.alias(TextSearchSupport.SCORE_ALIAS));
         // rows without an embedding have no distance and must not take candidate places
-        criteriaQuery.where(cb.isNotNull(root.get(searchQuery.getVectorProperty())));
+        criteriaQuery.where(cb.isNotNull(root.get(vectorProperty)));
         criteriaQuery.orderBy(cb.asc(score));
         pageable = applyPaginationAndSort(pageable, criteriaQuery, false);
+        CriteriaRepositoryOperations criteriaOperations = getCriteriaRepositoryOperations(methodKey, context, pageable);
         SearchResults<Object> results;
-        try {
-            results = getCriteriaRepositoryOperations(methodKey, context, pageable).findOne(criteriaQuery);
-        } catch (UnsupportedOperationException | IllegalStateException e) {
-            UnsupportedSearchFeatureException unsupported = new UnsupportedSearchFeatureException(SearchCapability.HYBRID, operations.getClass().getSimpleName());
-            unsupported.initCause(e);
-            throw unsupported;
+        if (criteriaOperations instanceof PreparedQueryCriteriaRepositoryOperations preparedOperations) {
+            PreparedQuery<Object, SearchResults> preparedQuery = renderVectorQuery(preparedOperations, criteriaQuery);
+            requireVectorProperty(root, vectorProperty);
+            results = operations.findOne(preparedQuery);
+        } else {
+            requireVectorProperty(root, vectorProperty);
+            results = criteriaOperations.findOne(criteriaQuery);
         }
         return results == null ? SearchResults.of(List.of()) : results;
     }
 
     /**
+     * Renders the nearest-neighbour query. The text query of the same entity has already rendered, so
+     * an {@link UnsupportedOperationException} or {@link IllegalStateException} here comes from the vector
+     * score the store cannot render, and is reported as an unsupported hybrid search with the failure as
+     * its cause. A failure while the query runs or its rows are read is not relabelled.
+     */
+    private PreparedQuery<Object, SearchResults> renderVectorQuery(PreparedQueryCriteriaRepositoryOperations preparedOperations,
+                                                                   PersistentEntityCriteriaQuery<SearchResults> criteriaQuery) {
+        try {
+            return preparedOperations.createFindOne(criteriaQuery);
+        } catch (UnsupportedOperationException | IllegalStateException e) {
+            UnsupportedSearchFeatureException unsupported = new UnsupportedSearchFeatureException(SearchCapability.HYBRID, operations.getClass().getSimpleName());
+            unsupported.initCause(e);
+            throw unsupported;
+        }
+    }
+
+    /** The vector property named by a hybrid SearchQuery, which must hold a {@link Vector}. */
+    private static void requireVectorProperty(PersistentEntityRoot<Object> root, String property) {
+        PersistentProperty persistentProperty = root.getPersistentEntity().getPropertyByName(property);
+        if (persistentProperty == null || !persistentProperty.isAssignable(Vector.class)) {
+            throw new IllegalArgumentException("Property '" + property + "' of entity " + root.getPersistentEntity().getSimpleName()
+                + " is not a Vector property; a hybrid search ranks by the similarity of a vector property");
+        }
+    }
+
+    /**
      * Merges the text hits and the vector hits with reciprocal rank fusion: each hit scores
      * {@code weight / (k + rank)} per ranking it appears in, and the sums order the result. The
-     * page is cut from the fused list, so both rankings fetch {@code candidates} hits at least.
+     * page is cut from the fused list, so both rankings fetch {@code candidates} hits at least. The
+     * total hits are the size of the fused list, the distinct hits of both candidate windows left after
+     * {@code minScore}, not the number of rows matching the text or having a vector.
      */
     private SearchResults<Object> hybridSearch(RepositoryMethodKey methodKey,
                                                MethodInvocationContext<Object, Object> context,
