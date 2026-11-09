@@ -26,7 +26,7 @@ import java.util.Map;
  * implement it on top of their own Java client; query bodies are passed as JSON so no client type
  * appears in the shared runtime.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 public interface SearchTransport {
 

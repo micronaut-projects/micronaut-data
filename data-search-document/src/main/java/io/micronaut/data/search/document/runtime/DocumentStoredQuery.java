@@ -43,7 +43,7 @@ import java.util.Objects;
  *
  * @param <E> The entity type
  * @param <R> The result type
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersStoredQuery<E, R> {

@@ -44,7 +44,7 @@ import java.util.Map;
 /**
  * {@link SearchTransport} over the Elasticsearch Java client provided by {@code micronaut-elasticsearch}.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 @Singleton

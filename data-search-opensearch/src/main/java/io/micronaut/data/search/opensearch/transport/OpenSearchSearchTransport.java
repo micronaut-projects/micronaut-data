@@ -48,7 +48,7 @@ import java.util.Map;
  * {@link SearchTransport} over the OpenSearch Java client provided by {@code micronaut-opensearch}.
  * The JSON bodies are parsed with the client's own mapper into typed requests.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @Internal
 @Singleton
