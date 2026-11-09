@@ -23,7 +23,11 @@ public interface BankGraph extends GenericRepository<Account, Long> {
 
     Account save(Account account);
 
+    List<Account> saveAll(Iterable<Account> accounts);
+
     Account update(Account account);
+
+    List<Account> updateAll(Iterable<Account> accounts);
 
     Account insertReturning(Account account);
 

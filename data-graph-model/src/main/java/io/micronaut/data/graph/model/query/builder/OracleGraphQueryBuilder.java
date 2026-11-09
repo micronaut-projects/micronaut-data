@@ -239,8 +239,11 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     }
 
     /**
-     * Fails a write of the row of a node with a single relationship set: the write would lose the relationship, which
-     * is a row of an edge table. A relationship read from the graph is never set, as queries return node columns only.
+     * Fails a write of the row of a node that holds relationships: a single relationship that is set, or a collection,
+     * map, iterable or array of relationships that is not empty, including a
+     * {@link DynamicRelationships} map. The write would lose them, as each relationship is a row of an edge table.
+     * A null or empty relationship property is allowed: a relationship read from the graph is never filled, as queries
+     * return node columns only, so a node read from the graph can be written again.
      *
      * @param entity The entity
      * @param instance The node
@@ -249,11 +252,40 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     @SuppressWarnings("unchecked")
     public static <T> void checkVertexWrite(RuntimePersistentEntity<T> entity, Object instance) {
         for (RuntimePersistentProperty<T> property : entity.getPersistentProperties()) {
-            if (GraphEntities.isSingleRelationship(property) && property.getProperty().get((T) instance) != null) {
+            boolean relationship = property instanceof Association association && GraphEntities.isRelationship(association);
+            boolean dynamic = property.getAnnotationMetadata().hasAnnotation(DynamicRelationships.class);
+            if (!relationship && !dynamic) {
+                continue;
+            }
+            Object value = property.getProperty().get((T) instance);
+            if (value == null) {
+                continue;
+            }
+            if (GraphEntities.isSingleRelationship(property)) {
                 throw new DataAccessException("Cannot write [" + entity.getName() + "] with its relationship [" + property.getName() + "] set, it would be lost: "
                     + "write the relationship to its edge table with a JDBC repository and clear the property");
             }
+            if (!isEmptyRelationships(value)) {
+                throw new DataAccessException("Cannot write [" + entity.getName() + "] with its relationships [" + property.getName() + "] not empty, they would be lost: "
+                    + "write the relationships to their edge table with a JDBC repository and leave the collection empty");
+            }
         }
+    }
+
+    private static boolean isEmptyRelationships(Object value) {
+        if (value instanceof Collection<?> collection) {
+            return collection.isEmpty();
+        }
+        if (value instanceof Map<?, ?> map) {
+            return map.isEmpty();
+        }
+        if (value instanceof Iterable<?> iterable) {
+            return !iterable.iterator().hasNext();
+        }
+        if (value.getClass().isArray()) {
+            return java.lang.reflect.Array.getLength(value) == 0;
+        }
+        return false;
     }
 
     @Override
