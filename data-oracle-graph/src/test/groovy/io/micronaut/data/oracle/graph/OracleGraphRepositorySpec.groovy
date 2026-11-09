@@ -90,9 +90,23 @@ class OracleGraphRepositorySpec extends AbstractGraphRepositorySpec {
         false
     }
 
+    /**
+     * A save with the directors or roles set fails, so the movie is saved with them cleared and restored, and the
+     * people and edges are written with SQL.
+     */
     @Override
     protected Movie saveMovie(Movie movie) {
-        def saved = movieRepository.save(movie)
+        def directors = movie.directors
+        def roles = movie.roles
+        movie.directors = []
+        movie.roles = []
+        def saved
+        try {
+            saved = movieRepository.save(movie)
+        } finally {
+            movie.directors = directors
+            movie.roles = roles
+        }
         movie.directors.each { director ->
             savePersonOnce(director)
             sql('INSERT INTO "MOVIE_DIRECTED" ("MOVIEID", "DIRECTORSID") SELECT ?, "ID" FROM "PERSON" WHERE "NAME" = ?',

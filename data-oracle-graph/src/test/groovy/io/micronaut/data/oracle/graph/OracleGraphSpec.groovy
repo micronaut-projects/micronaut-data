@@ -177,6 +177,57 @@ class OracleGraphSpec extends Specification {
         "updateReturningName" | { graph, customer -> graph.updateReturningName(new Customer(1L, "Changed", customer)) }
     }
 
+    @Unroll
+    void "a write of a node with relationships in a collection fails rather than losing the edges: #description"() {
+        given:
+        def edges = [new Transfer(10L, 25.00G, bankGraph.findById(2L).get())]
+
+        when:
+        write.call(bankGraph, edges)
+
+        then:
+        def e = thrown(DataAccessException)
+        e.message.contains("relationships [transfers]")
+        e.message.contains("edge table")
+        e.message.contains("leave the collection empty")
+
+        and: "no row was written"
+        bankGraph.countByNameIsNotNull() == 4
+        bankGraph.findById(1L).get().name() == "Alice"
+        bankGraph.findById(5L).empty
+        bankGraph.findById(6L).empty
+        count("transfers") == 4
+
+        where:
+        description | write
+        "save"      | { graph, transfers -> graph.save(new Account(5L, "Erin", transfers)) }
+        "saveAll"   | { graph, transfers -> graph.saveAll([new Account(6L, "Fred", []), new Account(5L, "Erin", transfers)]) }
+        "update"    | { graph, transfers -> graph.update(new Account(1L, "Changed", transfers)) }
+        "updateAll" | { graph, transfers -> graph.updateAll([new Account(1L, "Changed", transfers)]) }
+    }
+
+    void "a node read from the graph or with an empty relationship collection is written"() {
+        when: "a node read from the graph comes back with its relationships empty"
+        def alice = bankGraph.findById(1L).get()
+
+        then:
+        !alice.transfers()
+
+        when:
+        bankGraph.update(new Account(alice.id(), "Alice Smith", alice.opened(), alice.transfers()))
+        bankGraph.saveAll([new Account(5L, "Erin", []), new Account(6L, "Fred", null)])
+        bankGraph.updateAll([new Account(5L, "Erin Smith", [])])
+
+        then:
+        bankGraph.findById(1L).get().name() == "Alice Smith"
+        bankGraph.findById(5L).get().name() == "Erin Smith"
+        bankGraph.findById(6L).get().name() == "Fred"
+
+        cleanup:
+        sql("UPDATE accounts SET name = 'Alice' WHERE id = 1")
+        sql("DELETE FROM accounts WHERE id IN (5, 6)")
+    }
+
     void "write with returning methods runs as SQL on the vertex table"() {
         when:
         def inserted = bankGraph.insertReturning(new Account(5L, "Erin", []))
@@ -227,6 +278,17 @@ class OracleGraphSpec extends Specification {
     private void sql(String statement) {
         DelegatingDataSource.unwrapDataSource(dataSource).connection.withCloseable { connection ->
             connection.createStatement().withCloseable { it.execute(statement) }
+        }
+    }
+
+    private long count(String table) {
+        DelegatingDataSource.unwrapDataSource(dataSource).connection.withCloseable { connection ->
+            connection.createStatement().withCloseable { statement ->
+                statement.executeQuery("SELECT COUNT(*) FROM " + table).withCloseable { rs ->
+                    rs.next()
+                    rs.getLong(1)
+                }
+            }
         }
     }
 
