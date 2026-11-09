@@ -9,7 +9,7 @@ class SearchLanguageMappingSpec extends Specification {
 
     void "a document store takes a custom analyzer name as the entity language"() {
         given:
-        def entity = new RuntimePersistentEntity<FoldedNote>(FoldedNote)
+        def entity = new RuntimePersistentEntity<MappingOnlyEntities.FoldedNote>(MappingOnlyEntities.FoldedNote)
 
         expect: "only the SQL dialects restrict the name, as they render it inside the statement"
         TextSearchSupport.resolveLanguage(entity) == "my-folding"
