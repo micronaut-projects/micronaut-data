@@ -17,7 +17,7 @@
  * Shared core for document search stores such as Elasticsearch and OpenSearch: the JSON query
  * builder, the transport SPI and the repository operations.
  *
- * @since 5.4.0
+ * @since 5.3.0
  */
 @org.jspecify.annotations.NullMarked
 package io.micronaut.data.search.document;
