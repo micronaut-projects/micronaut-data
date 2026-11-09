@@ -55,7 +55,7 @@ class TextSearchCriteriaSpec extends Specification {
                 ' ORDER BY ts_rank_cd((setweight(to_tsvector(\'english\',coalesce(search_article_."title",\'\')),\'A\') || to_tsvector(\'english\',coalesce(search_article_."body",\'\'))),to_tsquery(\'english\',?)) DESC'
         result.parameterBindings.size() == 4
         result.parameterBindings.every { it.converterClassName == PostgresTsQueryConverter.Any.name }
-        TextSearchSupport.highlightedProperties(result.query) == ["title"]
+        TextSearchSupport.highlightedProperties(result.query, new RuntimePersistentEntity<Object>(SearchArticle)) == ["title"]
     }
 
     void "Oracle highlights with CTX_DOC.POLICY_SNIPPET over the field"() {
@@ -85,9 +85,25 @@ class TextSearchCriteriaSpec extends Specification {
         thrown(UnsupportedOperationException)
     }
 
-    void "the highlight alias helper finds every projected property once"() {
+    void "the highlight alias helper finds every projected search field once, in projection order"() {
+        given:
+        def entity = new RuntimePersistentEntity<Object>(SearchArticle)
+
         expect:
-        TextSearchSupport.highlightedProperties("SELECT a AS mn_hl_title, b AS mn_hl_body, c AS mn_hl_title FROM t") == ["title", "body"]
-        TextSearchSupport.highlightedProperties("SELECT 1").isEmpty()
+        TextSearchSupport.highlightedProperties("SELECT a AS mn_hl_body, b AS mn_hl_title, c AS mn_hl_body FROM t", entity) == ["body", "title"]
+        TextSearchSupport.highlightedProperties("SELECT 1", entity).isEmpty()
+    }
+
+    void "the highlight alias helper ignores names that only start with the highlight prefix"() {
+        given:
+        def entity = new RuntimePersistentEntity<Object>(SearchArticle)
+
+        expect: "an alias of no search field, a column, a longer alias and a literal are not highlights"
+        TextSearchSupport.highlightedProperties(
+                "SELECT x AS mn_hl_unknown, t.mn_hl_body, y AS mn_hl_titles FROM t WHERE z = 'mn_hl_body' OR w = 'mn_hl_title'", entity).isEmpty()
+
+        and: "the projected fragment is still found next to them"
+        TextSearchSupport.highlightedProperties(
+                "SELECT x AS mn_hl_unknown, y AS mn_hl_titles, f AS mn_hl_title FROM t WHERE z = 'mn_hl_body'", entity) == ["title"]
     }
 }

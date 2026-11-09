@@ -25,8 +25,9 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.search.SearchQuery;
 import io.micronaut.data.model.vector.search.SearchResults;
 import io.micronaut.data.operations.RepositoryOperations;
+import io.micronaut.data.operations.async.AsyncCriteriaRepositoryOperations;
+import io.micronaut.data.runtime.intercept.criteria.AbstractPreparedQueryCriteriaRepositoryOperations;
 import io.micronaut.data.runtime.intercept.criteria.SearchQuerySupport;
-import jakarta.persistence.criteria.CriteriaQuery;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -73,22 +74,31 @@ public class SearchQueryAsyncInterceptor extends AbstractAsyncSpecificationInter
         RuntimePersistentEntity<Object> persistentEntity = operations.getEntity(rootEntity);
         CompletableFuture<SearchResults<Object>> text = findOne(methodKey, context, SearchQuerySupport.textQuery(cb, rootEntity, searchQuery, window), window);
         // one ranking after the other: in a transaction both share one connection, which cannot run two statements at once
-        return text.thenCompose(t -> vectorSearch(methodKey, context, searchQuery, window)
+        return text.thenCompose(t -> vectorSearch(methodKey, context, persistentEntity, searchQuery, window)
             .thenApply(v -> SearchQuerySupport.fuse(persistentEntity, t, v, searchQuery, pageable)));
     }
 
+    /**
+     * Runs the nearest-neighbour query, rendered and checked by
+     * {@link SearchQuerySupport#renderVectorQuery} before it runs, so only a failure to render it is
+     * reported as an unsupported hybrid search; a failure while it runs completes the future unchanged.
+     */
     private CompletableFuture<SearchResults<Object>> vectorSearch(RepositoryMethodKey methodKey,
                                                                   MethodInvocationContext<Object, Object> context,
+                                                                  RuntimePersistentEntity<Object> persistentEntity,
                                                                   SearchQuery searchQuery,
                                                                   Pageable window) {
-        try {
-            return findOne(methodKey, context, SearchQuerySupport.vectorQuery((AbstractCriteriaBuilder) criteriaBuilder, getRequiredRootEntity(context), searchQuery), window)
-                .exceptionally(e -> {
-                    throw SearchQuerySupport.vectorFailure(e instanceof java.util.concurrent.CompletionException && e.getCause() != null ? e.getCause() : e, operations);
-                });
-        } catch (RuntimeException e) {
-            return CompletableFuture.failedFuture(SearchQuerySupport.vectorFailure(e, operations));
+        PersistentEntityCriteriaQuery<SearchResults> criteriaQuery = SearchQuerySupport.vectorQuery((AbstractCriteriaBuilder) criteriaBuilder, getRequiredRootEntity(context), searchQuery);
+        Pageable applied = applyPaginationAndSort(window, criteriaQuery, false);
+        AsyncCriteriaRepositoryOperations criteriaOperations = getAsyncCriteriaRepositoryOperations(methodKey, context, applied);
+        CompletionStage<SearchResults<Object>> found;
+        if (criteriaOperations instanceof AbstractPreparedQueryCriteriaRepositoryOperations preparedOperations) {
+            found = asyncOperations.findOne(SearchQuerySupport.renderVectorQuery(preparedOperations, criteriaQuery, persistentEntity, searchQuery, operations));
+        } else {
+            SearchQuerySupport.requireVectorProperty(persistentEntity, searchQuery);
+            found = criteriaOperations.findOne(SearchQuerySupport.resultsQuery(criteriaQuery));
         }
+        return found.toCompletableFuture().thenApply(SearchQuerySupport::orEmpty);
     }
 
     private CompletableFuture<SearchResults<Object>> findOne(RepositoryMethodKey methodKey,
@@ -96,9 +106,7 @@ public class SearchQueryAsyncInterceptor extends AbstractAsyncSpecificationInter
                                                              PersistentEntityCriteriaQuery<SearchResults> criteriaQuery,
                                                              Pageable pageable) {
         Pageable applied = applyPaginationAndSort(pageable, criteriaQuery, false);
-        @SuppressWarnings("unchecked")
-        CriteriaQuery<SearchResults<Object>> query = (CriteriaQuery<SearchResults<Object>>) (CriteriaQuery<?>) criteriaQuery;
-        CompletionStage<SearchResults<Object>> stage = getAsyncCriteriaRepositoryOperations(methodKey, context, applied).findOne(query);
+        CompletionStage<SearchResults<Object>> stage = getAsyncCriteriaRepositoryOperations(methodKey, context, applied).findOne(SearchQuerySupport.resultsQuery(criteriaQuery));
         return stage.toCompletableFuture().thenApply(SearchQuerySupport::orEmpty);
     }
 }

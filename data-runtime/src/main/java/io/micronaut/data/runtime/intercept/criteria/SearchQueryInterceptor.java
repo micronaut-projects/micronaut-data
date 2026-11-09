@@ -21,8 +21,10 @@ import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractCriteriaBuilder;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.search.SearchQuery;
 import io.micronaut.data.model.vector.search.SearchResults;
+import io.micronaut.data.operations.CriteriaRepositoryOperations;
 import io.micronaut.data.operations.RepositoryOperations;
 import org.jspecify.annotations.Nullable;
 
@@ -58,14 +60,31 @@ public class SearchQueryInterceptor extends AbstractSpecificationInterceptor<Obj
             return SearchQuerySupport.applyMinScore(findOne(methodKey, context, SearchQuerySupport.textQuery(cb, rootEntity, searchQuery, pageable), pageable), searchQuery);
         }
         Pageable window = SearchQuerySupport.hybridWindow(searchQuery, pageable);
+        RuntimePersistentEntity<Object> persistentEntity = operations.getEntity(rootEntity);
         SearchResults<Object> textResults = findOne(methodKey, context, SearchQuerySupport.textQuery(cb, rootEntity, searchQuery, window), window);
-        SearchResults<Object> vectorResults;
-        try {
-            vectorResults = findOne(methodKey, context, SearchQuerySupport.vectorQuery(cb, rootEntity, searchQuery), window);
-        } catch (RuntimeException e) {
-            throw SearchQuerySupport.vectorFailure(e, operations);
+        SearchResults<Object> vectorResults = vectorSearch(methodKey, context, persistentEntity, searchQuery, window);
+        return SearchQuerySupport.fuse(persistentEntity, textResults, vectorResults, searchQuery, pageable);
+    }
+
+    /**
+     * Runs the nearest-neighbour query, rendered and checked by
+     * {@link SearchQuerySupport#renderVectorQuery} before it runs, so only a failure to render it is
+     * reported as an unsupported hybrid search.
+     */
+    @Nullable
+    private SearchResults<Object> vectorSearch(RepositoryMethodKey methodKey,
+                                               MethodInvocationContext<Object, Object> context,
+                                               RuntimePersistentEntity<Object> persistentEntity,
+                                               SearchQuery searchQuery,
+                                               Pageable window) {
+        PersistentEntityCriteriaQuery<SearchResults> criteriaQuery = SearchQuerySupport.vectorQuery((AbstractCriteriaBuilder) criteriaBuilder, getRequiredRootEntity(context), searchQuery);
+        Pageable applied = applyPaginationAndSort(window, criteriaQuery, false);
+        CriteriaRepositoryOperations criteriaOperations = getCriteriaRepositoryOperations(methodKey, context, applied);
+        if (criteriaOperations instanceof AbstractPreparedQueryCriteriaRepositoryOperations preparedOperations) {
+            return operations.findOne(SearchQuerySupport.renderVectorQuery(preparedOperations, criteriaQuery, persistentEntity, searchQuery, operations));
         }
-        return SearchQuerySupport.fuse(operations.getEntity(rootEntity), textResults, vectorResults, searchQuery, pageable);
+        SearchQuerySupport.requireVectorProperty(persistentEntity, searchQuery);
+        return criteriaOperations.findOne(SearchQuerySupport.resultsQuery(criteriaQuery));
     }
 
     @Nullable

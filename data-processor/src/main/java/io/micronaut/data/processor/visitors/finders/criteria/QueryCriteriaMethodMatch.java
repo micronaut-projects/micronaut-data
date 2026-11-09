@@ -49,6 +49,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.VectorScoringDialectSupport;
 import io.micronaut.data.model.search.MatchMode;
+import io.micronaut.data.model.search.SearchCapability;
 import io.micronaut.data.model.search.TextSearchSupport;
 import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.model.vector.search.SearchResults;
@@ -711,9 +712,10 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             List<Selection<?>> selections = new ArrayList<>();
             selections.add(root);
             selections.add(cb.searchScore(textSearch.fields(), textSearch.query(), textSearch.mode()).alias(TextSearchSupport.SCORE_ALIAS));
-            // highlightable search fields are projected by default
+            // highlightable search fields are projected by default, where the store can highlight
+            boolean highlight = matchContext.getQueryBuilder().supportsSearchCapability(matchContext.getRootEntity(), SearchCapability.HIGHLIGHT);
             for (Expression<?> field : textSearch.fields()) {
-                if (field instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath
+                if (highlight && field instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath
                     && TextSearchSupport.isHighlightable(propertyPath.getProperty())) {
                     selections.add(cb.searchHighlight(field, textSearch.query(), textSearch.mode())
                         .alias(TextSearchSupport.highlightAlias(propertyPath.getProperty().getName())));

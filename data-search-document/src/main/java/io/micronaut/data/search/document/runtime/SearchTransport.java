@@ -63,17 +63,22 @@ public interface SearchTransport {
     /**
      * Indexes several new documents in one request, each a create-only write like
      * {@link #create(String, String, Map, DocumentSearchConfiguration.Refresh)}. The default sends one
-     * request per document.
+     * request per document and stops at the first failure.
      *
      * @param index The index name
      * @param documents The documents, in order
      * @param refresh The refresh policy
      * @return The document ids, in the same order
+     * @throws BulkIndexException When the store rejected some of the documents and wrote the others
      */
     default List<String> bulkIndex(String index, List<BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
         List<String> ids = new java.util.ArrayList<>(documents.size());
         for (BulkDocument document : documents) {
-            ids.add(create(index, document.id(), document.source(), refresh));
+            try {
+                ids.add(create(index, document.id(), document.source(), refresh));
+            } catch (RuntimeException e) {
+                throw BulkResponses.stopped(ids, documents.size(), e);
+            }
         }
         return ids;
     }
@@ -157,14 +162,6 @@ public interface SearchTransport {
     void createIndex(String index, String body);
 
     /**
-     * One search hit.
-     *
-     * @param id The document id
-     * @param score The relevance score, or {@code null} when the search was not scored
-     * @param source The document
-     * @param highlights The highlighted fragments by field, empty when none were requested
-     */
-    /**
      * A document of a bulk request.
      *
      * @param id The document id, or {@code null} to let the store assign one
@@ -173,6 +170,14 @@ public interface SearchTransport {
     record BulkDocument(@Nullable String id, Map<String, Object> source) {
     }
 
+    /**
+     * One search hit.
+     *
+     * @param id The document id
+     * @param score The relevance score, or {@code null} when the search was not scored
+     * @param source The document
+     * @param highlights The highlighted fragments by field, empty when none were requested
+     */
     record SearchHit(String id, @Nullable Double score, Map<String, Object> source, Map<String, List<String>> highlights) {
 
         public SearchHit {
