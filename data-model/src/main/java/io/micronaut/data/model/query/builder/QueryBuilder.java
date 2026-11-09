@@ -24,6 +24,7 @@ import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.DefaultOrder;
 import io.micronaut.data.model.query.JoinPath;
+import io.micronaut.data.model.search.SearchCapability;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
@@ -104,6 +105,21 @@ public interface QueryBuilder {
      * @return The encoded query
      */
     String buildLimitAndOffset(long limit, long offset);
+
+    /**
+     * Whether the queries this builder renders for an entity support a full-text search capability.
+     * The annotation processor leaves out what a query adds by default, such as the highlights of a
+     * derived {@code SearchResults} method, when the capability is not supported; a query that asks
+     * for it explicitly still fails to build.
+     *
+     * @param entity     The entity
+     * @param capability The capability
+     * @return Whether the capability is supported, {@code true} by default
+     * @since 5.3.0
+     */
+    default boolean supportsSearchCapability(PersistentEntity entity, SearchCapability capability) {
+        return true;
+    }
 
     /**
      * The select query definition.

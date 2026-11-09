@@ -45,7 +45,13 @@ class MongoSearchOperatorsSpec extends Specification {
         expect:
         render("", MatchMode.ANY).contains("mustNot")
         render(null, MatchMode.ANY).contains("mustNot")
-        render("-cake", MatchMode.ANY) == '{"compound": {"mustNot": [{"text": {"query": "cake", "path": ["title", "body"]}}], "must": [{"exists": {"path": "title"}}]}}'
         render("", MatchMode.ANY) == '{"compound": {"must": [{"exists": {"path": "title"}}], "mustNot": [{"exists": {"path": "title"}}]}}'
+    }
+
+    void "an alternative made only of negated terms matches nothing"() {
+        expect:
+        render("-cake", MatchMode.ANY) == render("", MatchMode.ANY)
+        render("-cake -tea", MatchMode.ALL) == render("", MatchMode.ALL)
+        render("coffee OR -cake", MatchMode.ANY) == '{"text": {"query": "coffee", "path": ["title", "body"]}}'
     }
 }

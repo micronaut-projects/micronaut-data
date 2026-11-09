@@ -1,5 +1,6 @@
 package io.micronaut.data.model.search
 
+import io.micronaut.data.model.vector.Vector
 import spock.lang.Specification
 
 class SearchQuerySpec extends Specification {
@@ -33,6 +34,29 @@ class SearchQuerySpec extends Specification {
         SearchQuery.builder("coffe").fuzzy(1).build().fuzziness == 1
         SearchQuery.of("coffee").mode == MatchMode.ANY
         SearchQuery.of("coffee").fields.empty
+    }
+
+    void "fuzzy without an edit distance uses the store default"() {
+        when:
+        def query = SearchQuery.builder("coffe").fuzzy().build()
+
+        then:
+        query.mode == MatchMode.FUZZY
+        query.fuzziness == 0
+    }
+
+    void "an edit distance of 0 matches the terms without edits"() {
+        when:
+        def query = SearchQuery.builder("coffee").fuzzy(0).build()
+
+        then:
+        query.mode == MatchMode.ANY
+        query.fuzziness == 0
+        query == SearchQuery.of("coffee")
+
+        and: "the last of fuzzy and mode decides the mode"
+        SearchQuery.builder("coffe").fuzzy(0).fuzzy(2).build().mode == MatchMode.FUZZY
+        SearchQuery.builder("coffe").fuzzy(0).fuzzy(2).build().fuzziness == 2
     }
 
     void "a fuzzy edit distance outside 0 to 2 is rejected"() {
@@ -117,6 +141,25 @@ class SearchQuerySpec extends Specification {
 
         where:
         weight << [-1d, Double.NaN, Double.POSITIVE_INFINITY]
+    }
+
+    void "a hybrid query needs one positive weight"() {
+        when:
+        SearchQuery.builder("a").vector("embedding", Vector.of([1f, 0f] as float[])).textWeight(0).vectorWeight(0).build()
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains("positive textWeight or vectorWeight")
+    }
+
+    void "a zero weight is accepted when the other one is positive or the query is not hybrid"() {
+        given:
+        def vector = Vector.of([1f, 0f] as float[])
+
+        expect:
+        SearchQuery.builder("a").vector("embedding", vector).textWeight(0).build().textWeight == 0d
+        SearchQuery.builder("a").vector("embedding", vector).vectorWeight(0).build().vectorWeight == 0d
+        !SearchQuery.builder("a").textWeight(0).vectorWeight(0).build().hybrid
     }
 
     void "toString leaves the search string out"() {
