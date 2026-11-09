@@ -112,6 +112,17 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         true
     }
 
+    /**
+     * Saves a movie with its roles and directors. Implementations whose repositories write node rows only
+     * override this method to write the people and the relationships another way.
+     *
+     * @param movie The movie
+     * @return The saved movie
+     */
+    protected Movie saveMovie(Movie movie) {
+        movieRepository.save(movie)
+    }
+
     void setup() {
         cleanupGraph()
     }
@@ -132,9 +143,9 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         reloaded.directors = [lana]
         def speed = new Movie("Speed", "Get ready for rush hour", 1994)
         speed.roles = [new Role(["Jack Traven"], keanu)]
-        movieRepository.save(matrix)
-        movieRepository.save(reloaded)
-        movieRepository.save(speed)
+        saveMovie(matrix)
+        saveMovie(reloaded)
+        saveMovie(speed)
     }
 
     void "save and find a node by its assigned identifier"() {
