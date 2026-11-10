@@ -1,8 +1,10 @@
 package io.micronaut.data.oracle.graph
 
 import io.micronaut.context.annotation.Property
+import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
 import io.micronaut.data.graph.tck.AbstractGraphRepositorySpec
 import io.micronaut.data.graph.tck.entities.Movie
+import io.micronaut.data.graph.tck.entities.Person
 import io.micronaut.data.graph.tck.repositories.ColleagueRepository
 import io.micronaut.data.graph.tck.repositories.FriendRepository
 import io.micronaut.data.oracle.graph.tck.OracleMovieRepository
@@ -14,17 +16,20 @@ import jakarta.inject.Inject
 
 import javax.sql.DataSource
 import java.sql.Connection
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Runs the graph TCK on Oracle Database 23ai, over the tables and property graph that schema generation creates for
- * the TCK entities. Oracle
- * repositories write node rows only, and query with SQL/PGQ, so the features that need relationship writes or Cypher
- * are skipped.
+ * the TCK entities. Oracle repositories write node rows only and query with SQL/PGQ: the relationships the specs
+ * need are written to the generated edge tables with SQL, so the finders that traverse them run, while the features
+ * that need relationship writes through save, fetch joins, path results or Cypher are skipped.
  */
 @MicronautTest(transactional = false)
 @Property(name = "datasources.default.schema-generate", value = "CREATE_DROP")
 @Property(name = "datasources.default.packages", value = "io.micronaut.data.graph.tck.entities")
 class OracleGraphRepositorySpec extends AbstractGraphRepositorySpec {
+
+    private static final AtomicLong ROLE_IDS = new AtomicLong(1)
 
     @Inject
     OracleMovieSpecificationRepository movieSpecificationRepository
@@ -56,14 +61,38 @@ class OracleGraphRepositorySpec extends AbstractGraphRepositorySpec {
         false
     }
 
+    /**
+     * Relationship finders query edges that {@link #saveMovie} and {@link #savePerson} write with SQL, as the
+     * repositories do not write edges.
+     */
     @Override
-    boolean supportsCypher() {
+    boolean supportsRelationshipFinders() {
+        true
+    }
+
+    @Override
+    boolean supportsRelationshipReads() {
+        false
+    }
+
+    @Override
+    boolean supportsPaths() {
+        false
+    }
+
+    @Override
+    boolean supportsExplicitQueries() {
+        false
+    }
+
+    @Override
+    boolean supportsRepeatedInstancesInBatches() {
         false
     }
 
     /**
-     * A save with the directors or roles set fails, as they would be lost, so the movie is saved with them cleared
-     * and restored. The relationships are not written, so the edge tables stay empty.
+     * A save with the directors or roles set fails, so the movie is saved with them cleared and restored, and the
+     * people and edges are written with SQL.
      */
     @Override
     protected Movie saveMovie(Movie movie) {
@@ -71,18 +100,82 @@ class OracleGraphRepositorySpec extends AbstractGraphRepositorySpec {
         def roles = movie.roles
         movie.directors = []
         movie.roles = []
+        def saved
         try {
-            return movieRepository.save(movie)
+            saved = movieRepository.save(movie)
         } finally {
             movie.directors = directors
             movie.roles = roles
         }
+        movie.directors.each { director ->
+            savePersonOnce(director)
+            sql('INSERT INTO "MOVIE_DIRECTED" ("MOVIEID", "DIRECTORSID") SELECT ?, "ID" FROM "PERSON" WHERE "NAME" = ?',
+                movie.title, director.name)
+        }
+        movie.roles.each { role ->
+            savePersonOnce(role.person)
+            sql('INSERT INTO "ROLE" ("ID", "ROLES", "PERSONID", "MOVIEID") SELECT ?, ?, "ID", ? FROM "PERSON" WHERE "NAME" = ?',
+                ROLE_IDS.getAndIncrement(), json(role.roles), movie.title, role.person.name)
+        }
+        saved
+    }
+
+    @Override
+    protected Person savePerson(Person person) {
+        def saved = savePersonOnce(person)
+        if (person.mentor != null) {
+            savePerson(person.mentor)
+            sql('INSERT INTO "PERSON_MENTORED_BY" ("PERSONID", "MENTORID") SELECT a."ID", b."ID" FROM "PERSON" a, "PERSON" b WHERE a."NAME" = ? AND b."NAME" = ?',
+                person.name, person.mentor.name)
+        }
+        saved
     }
 
     @Override
     void cleanupGraph() {
-        // Oracle repositories write node rows only, so the generated edge tables stay empty
+        // The generated edge tables have no foreign keys and the repositories delete node rows only
+        sql('DELETE FROM "ROLE"')
+        sql('DELETE FROM "MOVIE_DIRECTED"')
+        sql('DELETE FROM "PERSON_MENTORED_BY"')
         movieRepository.deleteAll()
         personRepository.deleteAll()
+    }
+
+    void "save a node with a single relationship to its vertex table"() {
+        when:
+        def saved = personRepository.save(new Person("Trinity", 1967))
+
+        then:
+        personRepository.findById(saved.id).get().name == "Trinity"
+    }
+
+    /**
+     * The same person appears in several movies of the fixtures: the row is written once. A save with the mentor set
+     * fails, so it is saved with the mentor cleared, and {@link #savePerson} writes the edge with SQL.
+     */
+    private Person savePersonOnce(Person person) {
+        personRepository.findByName(person.name).orElseGet {
+            def mentor = person.mentor
+            person.mentor = null
+            def saved = personRepository.save(person)
+            person.mentor = mentor
+            saved
+        }
+    }
+
+    /**
+     * A JSON array of the role names, for the JSON column of the ACTED_IN edge table.
+     */
+    private static String json(List<String> values) {
+        values == null ? null : '[' + values.collect { '"' + it.replace('"', '\\"') + '"' }.join(',') + ']'
+    }
+
+    private void sql(String statement, Object... parameters) {
+        DelegatingDataSource.unwrapDataSource(dataSource).connection.withCloseable { connection ->
+            connection.prepareStatement(statement).withCloseable { ps ->
+                parameters.eachWithIndex { parameter, i -> ps.setObject(i + 1, parameter) }
+                ps.executeUpdate()
+            }
+        }
     }
 }
