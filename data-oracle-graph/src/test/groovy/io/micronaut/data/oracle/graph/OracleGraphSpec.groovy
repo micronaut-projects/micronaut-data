@@ -435,9 +435,28 @@ class OracleGraphSpec extends Specification {
         2L    | 1L
     }
 
-    void "the relationship queries the builder rejects still work as explicit queries"() {
-        expect: "NOT EXISTS is allowed outside GRAPH_TABLE, where a query with @Query can use it"
+    void "test the absence of a relationship outside GRAPH_TABLE"() {
+        expect: "Carol is the only account without an outgoing transfer"
+        bankGraph.findByTransfersIsEmpty()*.name() == ["Carol"]
+        bankGraph.countByTransfersIsEmpty() == 1
+        bankGraph.findByNameStartsWithAndTransfersIsEmpty("C")*.name() == ["Carol"]
+        bankGraph.findByNameStartsWithAndTransfersIsEmpty("A").isEmpty()
+
+        and: "an explicit query can do the same with NOT EXISTS"
         bankGraph.findWithoutTransfers()*.name() == ["Carol"]
+    }
+
+    void "a filter on a relationship returns each node once"() {
+        expect: "Alice has two transfers over 40"
+        bankGraph.findNameByTransfersAmountGreaterThan(40).sort() == ["Alice", "Bob"]
+    }
+
+    void "sort on a relationship keeps the nodes without it"() {
+        expect: "ascending by the lowest transfer, Carol has none and comes last"
+        bankGraph.findByIdGreaterThanOrderByTransfersAmount(0)*.name() == ["Dave", "Alice", "Bob", "Carol"]
+
+        and: "descending by the highest transfer, Carol comes first"
+        bankGraph.findByIdGreaterThanOrderByTransfersAmountDesc(0)*.name() == ["Carol", "Bob", "Alice", "Dave"]
     }
 
     void "run a query with named parameters"() {

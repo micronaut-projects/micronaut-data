@@ -33,8 +33,10 @@ import io.micronaut.data.graph.model.criteria.GraphPredicateVisitor;
 import io.micronaut.data.graph.model.criteria.RelatedPredicate;
 import io.micronaut.data.graph.model.query.PathQueryDefinition;
 import io.micronaut.data.model.Association;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.jpa.criteria.ExpressionType;
 import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.IPredicate;
 import io.micronaut.data.model.jpa.criteria.ISelection;
@@ -46,6 +48,7 @@ import io.micronaut.data.model.jpa.criteria.impl.IParameterExpression;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.CastExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.ClassExpressionType;
 import io.micronaut.data.model.jpa.criteria.impl.expression.CurrentTemporalExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
@@ -70,6 +73,8 @@ import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.query.impl.AdvancedPredicateVisitor;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.model.schema.sql.SqlColumnMapping;
+import io.micronaut.data.model.schema.sql.SqlDbType;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;
@@ -156,6 +161,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     private static final String COUNT_AS = "COUNT(*) AS ";
     private static final String LOWER = "LOWER(";
     private static final String AND = " AND ";
+    private static final String CAST_PGQL = "CAST is not supported by PGQL on Oracle property graphs: use @PropertyGraph(language = SQL_PGQ)";
     private static final String READ_ONLY = "Oracle property graphs are views over tables: nodes are written to their vertex tables with SQL, "
         + "and relationships to their edge tables with a JDBC repository";
 
@@ -393,6 +399,38 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             }
         }
         Query query = new Query(entity);
+        SelectionRenderer selectionRenderer = new SelectionRenderer(query);
+        if (sqlPgq()) {
+            // The selection and the sort come first, so that a filter on relationships the selection does not return can
+            // become a subquery: it then keeps each node once, where the patterns of the graph table give a row per match
+            appendSelection(query, selectionRenderer, definition);
+            appendOrderBy(query, definition.order());
+            Query filter = query.subquery("f");
+            appendFilter(filter, definition);
+            if (filter.patterns.isEmpty()) {
+                query.inline(filter);
+            } else if (query.patterns.isEmpty()) {
+                query.semiJoin(filter);
+            } else {
+                // The relationships returned are the ones the filter matches
+                appendFilter(query, definition);
+            }
+        } else {
+            appendFilter(query, definition);
+            appendSelection(query, selectionRenderer, definition);
+            appendOrderBy(query, definition.order());
+        }
+        boolean distinct = definition.isDistinct() || (selectionRenderer.entity && !query.patterns.isEmpty());
+        String text = query.render(distinct);
+        if (definition.offset() > 0 || definition.limit() > 0) {
+            text += buildLimitAndOffset(definition.limit(), Math.max(definition.offset(), 0));
+        } else if (selectionRenderer.literal) {
+            text += buildLimitAndOffset(1, 0);
+        }
+        return QueryResult.of(text, List.of(text), query.bindings, Map.of());
+    }
+
+    private void appendFilter(Query query, SelectQueryDefinition definition) {
         appendPredicate(query, definition.predicate());
         for (JoinPath joinPath : definition.getJoinPaths()) {
             if (joinPath.getJoinType() == Join.Type.INNER) {
@@ -403,25 +441,18 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         if (definition.root() instanceof PersistentEntityRoot<?> root) {
             requireDeclaredInnerJoins(query, root.getPersistentJoins());
         }
+    }
+
+    private static void appendSelection(Query query, SelectionRenderer selectionRenderer, SelectQueryDefinition definition) {
         Selection<?> selection = definition.selection();
-        SelectionRenderer selectionRenderer = new SelectionRenderer(query);
         if (selection instanceof ISelection<?> iSelection) {
             iSelection.visitSelection(selectionRenderer);
         } else {
             selectionRenderer.entity = true;
         }
         if (selectionRenderer.entity) {
-            query.entityColumns(ROOT, entity);
+            query.entityColumns(ROOT, query.entity);
         }
-        appendOrderBy(query, definition.order());
-        boolean distinct = definition.isDistinct() || (selectionRenderer.entity && !query.patterns.isEmpty());
-        String text = query.render(distinct);
-        if (definition.offset() > 0 || definition.limit() > 0) {
-            text += buildLimitAndOffset(definition.limit(), Math.max(definition.offset(), 0));
-        } else if (selectionRenderer.literal) {
-            text += buildLimitAndOffset(1, 0);
-        }
-        return QueryResult.of(text, List.of(text), query.bindings, Map.of());
     }
 
     /**
@@ -452,9 +483,17 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             return;
         }
         StringBuilder orderBy = new StringBuilder();
+        int sorts = 0;
         for (Order order : orders) {
             if (!orderBy.isEmpty()) {
                 orderBy.append(", ");
+            }
+            boolean ignoreCase = order instanceof DefaultOrder<?> defaultOrder && defaultOrder.isIgnoreCase();
+            String direction = order.isAscending() ? " ASC" : " DESC";
+            if (sqlPgq() && order.getExpression() instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> path
+                && isRelationship(path.getPropertyPath())) {
+                orderBy.append(relationshipSort(query, path, order.isAscending(), ignoreCase, sorts++)).append(direction);
+                continue;
             }
             StringBuilder expression = new StringBuilder();
             new ExpressionRenderer(query, expression) {
@@ -465,20 +504,38 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
                 }
             }.appendExpression(order.getExpression());
             String ref = query.ref(expression.toString());
-            boolean ignoreCase = order instanceof DefaultOrder<?> defaultOrder && defaultOrder.isIgnoreCase();
-            orderBy.append(ignoreCase ? LOWER + ref + ")" : ref).append(order.isAscending() ? " ASC" : " DESC");
+            orderBy.append(ignoreCase ? LOWER + ref + ")" : ref).append(direction);
         }
         query.orderBy = orderBy.toString();
     }
 
     /**
+     * Sorts on a relationship with a subquery outside GRAPH_TABLE, which keeps the nodes without the relationship, as
+     * the patterns of GRAPH_TABLE are required. A node with several relationships sorts by the lowest value ascending
+     * and the highest descending.
+     */
+    private String relationshipSort(Query query, io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> path,
+                                    boolean ascending, boolean ignoreCase, int index) {
+        Query sort = query.subquery("o" + index + "_");
+        String value = sort.ref(sort.resolve(path.getPropertyPath()));
+        String id = sort.rootId();
+        sort.select.add((ascending ? "MIN(" : "MAX(") + (ignoreCase ? LOWER + value + ")" : value) + ")");
+        sort.outer.add(id + " = " + query.rootId());
+        return "(" + sort.render(false) + ")";
+    }
+
+    private static boolean isRelationship(io.micronaut.data.model.PersistentPropertyPath path) {
+        boolean association = path.getProperty() instanceof Association target && !target.isEmbedded();
+        return association || !path.getAssociations().isEmpty();
+    }
+
+    /**
      * Every pattern of a query is required, as neither dialect has {@code OPTIONAL MATCH}, so sorting on a relationship
-     * would drop the nodes without it.
+     * would drop the nodes without it. SQL/PGQ sorts on a relationship property with a subquery instead.
      */
     private static void requireNodeSort(io.micronaut.data.model.PersistentPropertyPath path) {
-        boolean association = path.getProperty() instanceof Association target && !target.isEmbedded();
-        if (association || !path.getAssociations().isEmpty()) {
-            throw new UnsupportedOperationException("Sorting on a relationship is not supported for Oracle property graphs, which have no OPTIONAL MATCH, so nodes without the relationship would be dropped: " + path.getPath());
+        if (isRelationship(path)) {
+            throw new UnsupportedOperationException("Sorting on a relationship is only supported for Oracle property graphs on a property of the relationship with SQL/PGQ, as PGQL has no OPTIONAL MATCH and would drop the nodes without the relationship: " + path.getPath());
         }
     }
 
@@ -820,6 +877,24 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         return "";
     }
 
+    /**
+     * The Oracle type of a CAST, as Micronaut Data JDBC writes it.
+     */
+    private static String castType(@Nullable ExpressionType<?> type) {
+        if (!(type instanceof ClassExpressionType<?> classType)) {
+            throw new IllegalArgumentException("CAST needs a Java type: " + type);
+        }
+        DataType dataType = DataType.forType(ReflectionUtils.getWrapperType(classType.getJavaType()));
+        if (dataType == DataType.OBJECT) {
+            throw new IllegalArgumentException("CAST has no Oracle type for " + classType.getJavaType().getName());
+        }
+        if (dataType == DataType.STRING) {
+            // Oracle needs the length of a string
+            return "VARCHAR2(4000)";
+        }
+        return new SqlColumnMapping("cast", dataType, SqlDbType.BLOB).getSqlType(Dialect.ORACLE);
+    }
+
     private static String alias(String name) {
         return "\"" + name.replace("\"", "\"\"") + "\"";
     }
@@ -850,13 +925,79 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         final List<String> select = new ArrayList<>();
         final Map<String, String> columns = new LinkedHashMap<>();
         final List<QueryParameterBinding> bindings = new ArrayList<>();
+        /**
+         * The SQL/PGQ conditions on the columns of the graph table, which can use subqueries.
+         */
+        final List<String> outer = new ArrayList<>();
+        /**
+         * The relationships of the root node that must be absent.
+         */
+        final List<Association> absent = new ArrayList<>();
+        /**
+         * Starts the names of the columns added by {@link #ref(String)}, which differ between a query and its subqueries.
+         */
+        final String prefix;
         @Nullable String pattern;
         @Nullable String rowsPer;
         @Nullable String orderBy;
         int position;
 
         Query(PersistentEntity entity) {
+            this(entity, "c", 0);
+        }
+
+        Query(PersistentEntity entity, String prefix, int position) {
             this.entity = entity;
+            this.prefix = prefix;
+            this.position = position;
+        }
+
+        /**
+         * Starts a subquery whose parameters follow the parameters of this query.
+         */
+        Query subquery(String subqueryPrefix) {
+            return new Query(entity, subqueryPrefix, position);
+        }
+
+        /**
+         * Takes the conditions and parameters of a filter that matched no relationship.
+         */
+        void inline(Query filter) {
+            where.append(filter.where);
+            absent.addAll(filter.absent);
+            bindings.addAll(filter.bindings);
+            position = filter.position;
+        }
+
+        /**
+         * Keeps the nodes a filter with relationship patterns matches, so each node is returned once, however many of
+         * its relationships match.
+         */
+        void semiJoin(Query filter) {
+            filter.select.add(filter.rootId());
+            absent.addAll(filter.absent);
+            filter.absent.clear();
+            outer.add(rootId() + " IN (" + filter.render(false) + ")");
+            bindings.addAll(filter.bindings);
+            position = filter.position;
+        }
+
+        String rootId() {
+            return ref(property(ROOT, identity(entity)));
+        }
+
+        /**
+         * Keeps the nodes without the relationships tested for absence, which GRAPH_TABLE cannot test as it has no
+         * subqueries.
+         */
+        private void appendAbsent() {
+            for (Association association : absent) {
+                Query relationship = subquery("r" + outer.size() + "_");
+                relationship.resolveVariable(List.of(association));
+                relationship.select.add(relationship.rootId());
+                outer.add(rootId() + " NOT IN (" + relationship.render(false) + ")");
+            }
+            absent.clear();
         }
 
         void and(String condition) {
@@ -944,7 +1085,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
                     return entry.getKey();
                 }
             }
-            String name = alias("c" + columns.size());
+            String name = alias(prefix + columns.size());
             columns.put(name, expression);
             return name;
         }
@@ -955,7 +1096,11 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
                 sb.append("DISTINCT ");
             }
             if (sqlPgq()) {
+                appendAbsent();
                 renderGraphTable(sb);
+                if (!outer.isEmpty()) {
+                    sb.append(" WHERE ").append(String.join(AND, outer));
+                }
             } else {
                 renderPgql(sb);
             }
@@ -1233,7 +1378,12 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
 
         @Override
         public void visit(CastExpression<?> castExpression) {
-            throw new UnsupportedOperationException("CAST is not supported for Oracle property graphs");
+            if (!sqlPgq()) {
+                throw new UnsupportedOperationException(CAST_PGQL);
+            }
+            out.append("CAST(");
+            appendExpression(castExpression.getExpression(), bound);
+            out.append(" AS ").append(castType(castExpression.getExpressionType())).append(')');
         }
 
         @Override
@@ -1260,6 +1410,10 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
      */
     private final class PredicateRenderer extends ExpressionRenderer implements AdvancedPredicateVisitor<io.micronaut.data.model.PersistentPropertyPath>, GraphPredicateVisitor {
         private boolean negated;
+        /**
+         * Counts the OR and NOT around a condition, which then need not hold for every result.
+         */
+        private int alternatives;
 
         PredicateRenderer(Query query, StringBuilder out) {
             super(query, out);
@@ -1283,20 +1437,33 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             }
         }
 
+        /**
+         * Leaves out the conditions tested outside GRAPH_TABLE, which render nothing, and the junction if all are.
+         */
         private void junction(Collection<? extends IExpression<Boolean>> predicates, String operator, String empty) {
             if (predicates.isEmpty()) {
                 out.append(empty);
                 return;
             }
+            int start = out.length();
             out.append('(');
-            Iterator<? extends IExpression<Boolean>> iterator = predicates.iterator();
-            while (iterator.hasNext()) {
-                visitBoolean(iterator.next());
-                if (iterator.hasNext()) {
+            int first = out.length();
+            for (IExpression<Boolean> predicate : predicates) {
+                int before = out.length();
+                if (before > first) {
                     out.append(operator);
                 }
+                int mark = out.length();
+                visitBoolean(predicate);
+                if (out.length() == mark) {
+                    out.setLength(before);
+                }
             }
-            out.append(')');
+            if (out.length() == first) {
+                out.setLength(start);
+            } else {
+                out.append(')');
+            }
         }
 
         @Override
@@ -1306,16 +1473,33 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
 
         @Override
         public void visit(DisjunctionPredicate disjunction) {
+            alternatives++;
             junction(disjunction.getPredicates(), " OR ", "1 = 0");
+            alternatives--;
         }
 
         @Override
         public void visit(NegatedPredicate negate) {
+            int start = out.length();
             out.append("NOT (");
+            int mark = out.length();
+            // A negated test is still a condition every result meets, a negated junction is not
+            IExpression<Boolean> inner = negate.getNegated();
+            boolean junction = inner instanceof ConjunctionPredicate || inner instanceof DisjunctionPredicate || inner instanceof NegatedPredicate;
             negated = !negated;
-            visitBoolean(negate.getNegated());
+            if (junction) {
+                alternatives++;
+            }
+            visitBoolean(inner);
+            if (junction) {
+                alternatives--;
+            }
             negated = !negated;
-            out.append(')');
+            if (out.length() == mark) {
+                out.setLength(start);
+            } else {
+                out.append(')');
+            }
         }
 
         @Override
@@ -1460,32 +1644,51 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
 
         /**
          * A relationship is matched by a required pattern, so its identifier is never null and a test for its absence
-         * could never match. An existence test is not possible either, as GRAPH_TABLE does not allow subqueries.
+         * could never match in GRAPH_TABLE, which has no subqueries. SQL/PGQ tests the absence of a relationship of the
+         * root node outside GRAPH_TABLE, when the test is a condition every result meets.
+         *
+         * @return Whether the test was added outside GRAPH_TABLE, so nothing is rendered in the pattern scope
          */
-        private void rejectAbsentRelationship(Expression<?> expression, boolean absent) {
+        private boolean absentRelationship(Expression<?> expression, boolean absent) {
             io.micronaut.data.model.PersistentPropertyPath path = propertyPathOf(expression);
             if (!absent || path == null) {
-                return;
+                return false;
             }
             PersistentProperty property = path.getProperty();
-            boolean association = property instanceof Association target && !target.isEmbedded();
-            PersistentProperty ownerIdentity = property.getOwner().getIdentity();
-            boolean identifier = !path.getAssociations().isEmpty() && ownerIdentity != null && ownerIdentity.getName().equals(property.getName());
-            if (association || identifier) {
-                throw new UnsupportedOperationException("Testing that a relationship is absent is not supported for Oracle property graphs, as a subquery is not allowed in GRAPH_TABLE: write a query with NOT EXISTS outside GRAPH_TABLE using @Query instead: " + path.getPath());
+            List<Association> associations = new ArrayList<>(path.getAssociations());
+            if (property instanceof Association target && !target.isEmbedded()) {
+                associations.add(target);
+            } else {
+                PersistentProperty ownerIdentity = property.getOwner().getIdentity();
+                boolean identifier = !associations.isEmpty() && ownerIdentity != null && ownerIdentity.getName().equals(property.getName());
+                if (!identifier) {
+                    return false;
+                }
             }
+            if (!sqlPgq()) {
+                throw new UnsupportedOperationException("Testing that a relationship is absent is not supported by PGQL on Oracle property graphs, as a subquery is not allowed in a graph pattern: use @PropertyGraph(language = SQL_PGQ): " + path.getPath());
+            }
+            if (associations.size() > 1 || alternatives > 0) {
+                throw new UnsupportedOperationException("Testing that a relationship is absent is only supported for Oracle property graphs on a relationship of the queried node, in a condition every result meets, not inside OR or NOT: " + path.getPath());
+            }
+            query.absent.add(associations.get(0));
+            return true;
         }
 
         @Override
         public void visitIsNull(Expression<?> expression) {
-            rejectAbsentRelationship(expression, !negated);
+            if (absentRelationship(expression, !negated)) {
+                return;
+            }
             appendExpression(expression);
             out.append(" IS NULL");
         }
 
         @Override
         public void visitIsNotNull(Expression<?> expression) {
-            rejectAbsentRelationship(expression, negated);
+            if (absentRelationship(expression, negated)) {
+                return;
+            }
             appendExpression(expression);
             out.append(" IS NOT NULL");
         }
@@ -1504,14 +1707,18 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
 
         @Override
         public void visitIsEmpty(Expression<?> expression) {
-            rejectAbsentRelationship(expression, !negated);
+            if (absentRelationship(expression, !negated)) {
+                return;
+            }
             appendExpression(expression);
             out.append(" IS NULL");
         }
 
         @Override
         public void visitIsNotEmpty(Expression<?> expression) {
-            rejectAbsentRelationship(expression, negated);
+            if (absentRelationship(expression, negated)) {
+                return;
+            }
             appendExpression(expression);
             out.append(" IS NOT NULL");
         }
@@ -1640,12 +1847,18 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
 
         @Override
         public void visit(CastExpression<?> castExpression) {
-            throw new UnsupportedOperationException("CAST is not supported for Oracle property graphs");
+            if (!sqlPgq()) {
+                throw new UnsupportedOperationException(CAST_PGQL);
+            }
+            item(castExpression, RESULT, null);
         }
 
         @Override
         public void visit(CurrentTemporalExpression<?> currentTemporalExpression) {
-            throw new UnsupportedOperationException("Selecting the current time is not supported for Oracle property graphs");
+            if (!sqlPgq()) {
+                throw new UnsupportedOperationException("Selecting the current time is not supported by PGQL on Oracle property graphs: use @PropertyGraph(language = SQL_PGQ)");
+            }
+            item(currentTemporalExpression, RESULT, null);
         }
     }
     private record VertexInsert(PersistentEntity persistentEntity, boolean returning) implements InsertQueryDefinition {

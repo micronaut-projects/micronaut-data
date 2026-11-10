@@ -22,6 +22,15 @@ The query language is one of:
 
 Path finders need a maximum depth set with ann:data.graph.annotation.PathLimit[], either on the method or on an `int` parameter, whose argument is capped by `micronaut.data.graph.max-path-depth` as described in <<graphPaths, Paths and Shortest Paths>>. Relationship finders need a single relationship type. An undirected relationship finder returns each relationship with the nodes it starts and ends at as stored in its edge table, whichever argument matched which end, as Neo4j does.
 
+`GRAPH_TABLE` has no subqueries and no optional patterns, so SQL/PGQ repositories put what needs them in the SQL around it:
+
+* A criterion or inner join on a relationship becomes a subquery that selects the matching nodes, unless the query also returns properties of the relationship. Each node is returned once, and counts, sums and projections count it once, however many of its relationships match.
+* A test that a relationship of the queried node is absent, such as `findByTransfersIsEmpty` or `findByMentorIsNull`, keeps the nodes outside a subquery over the relationship, when every result must meet it. Inside `or` or `not`, or on a relationship of a related node, it fails at build time.
+* Sorting on a property of a relationship, such as `findByIdGreaterThanOrderByTransfersAmount`, keeps the nodes without the relationship, last in ascending order and first in descending order. A node with several relationships sorts by the lowest value in ascending order and the highest in descending order.
+* `CAST` and the current date and time can be selected.
+
+PGQL repositories fail at build time for absence tests, sorting on a relationship and `CAST`.
+
 == Writing nodes
 
 A property graph over tables is a view, so its repositories write nodes to their vertex tables with SQL, as Micronaut Data JDBC does. The value of ann:data.graph.annotation.Node[] names the vertex table, and `labels` the label the graph gives it, as in the `Account` entity of the <<graphOracleQuickStart, quick start>>.
