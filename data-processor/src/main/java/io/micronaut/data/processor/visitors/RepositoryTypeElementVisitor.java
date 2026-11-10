@@ -139,6 +139,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     private static final String JDBC_REPO_ANNOTATION = "io.micronaut.data.jdbc.annotation.JdbcRepository";
     private static final String R2DBC_REPO_ANNOTATION = "io.micronaut.data.r2dbc.annotation.R2dbcRepository";
     private static final String DIALECT_ATTR = "dialect";
+    // PostponeToNextRoundException is part of inject-java, which is not on the classpath of this processor
+    private static final Set<String> POSTPONE_EXCEPTION_NAMES = Set.of("PostponeToNextRoundException");
     private static final boolean IS_DOCUMENT_ANNOTATION_PROCESSOR = ClassUtils.isPresent("io.micronaut.data.document.processor.mapper.MappedEntityMapper", RepositoryTypeElementVisitor.class.getClassLoader());
     private static final Map<String, String> COMMON_TYPE_ROLES;
     private static final List<Map.Entry<String, String>> COMMON_ANNOTATION_ROLES;
@@ -543,7 +545,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             return new ProcessingException(method, matchContext.getUnableToImplementMessage() + e.getMessage());
         }
         if (e instanceof RuntimeException runtimeException
-            && (e instanceof ElementPostponedToNextRoundException || e.getClass().getSimpleName().equals("PostponeToNextRoundException"))) {
+            && (e instanceof ElementPostponedToNextRoundException || POSTPONE_EXCEPTION_NAMES.contains(e.getClass().getSimpleName()))) {
             // rethrow postponed and don't fail compilation
             // this is not ideal since PostponeToNextRoundException is part of inject-java
             return runtimeException;
