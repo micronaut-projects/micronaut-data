@@ -492,9 +492,7 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
                 Object withTarget = savedTarget != target ? AbstractGraphRepositoryOperations.withProperty(targetProperty, item, savedTarget) : item;
                 RuntimePersistentProperty<Object> relationshipIdentity = associated.hasIdentity() ? associated.getIdentity() : null;
                 boolean nativeId = relationshipIdentity != null && GraphEntities.isNativeId(relationshipIdentity);
-                Object relationship = relationshipIdentity != null && !nativeId && mapper.writeIdentity(associated, withTarget) == null
-                    ? operations.populateRelationshipId(associated, relationshipIdentity, withTarget)
-                    : withTarget;
+                Object relationship = withRelationshipId(associated, relationshipIdentity, nativeId, withTarget);
                 Map<String, Object> properties = mapper.writeProperties(associated, relationship);
                 Object toId = mapper.writeIdentity(targetEntity, savedTarget);
                 Object savedId = mapper.writeIdentity(associated, relationship);
@@ -509,15 +507,36 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
                 AbstractGraphRepositoryOperations.LinkMode mode = relationshipIdentity != null ? AbstractGraphRepositoryOperations.LinkMode.CREATE : AbstractGraphRepositoryOperations.LinkMode.MERGE;
                 return unlinked
                     .then(updated.switchIfEmpty(Mono.defer(() -> runLink(association, targetEntity, fromId, toId, properties, relationshipIdentity, mode, null))))
-                    .map(relationshipId -> {
-                        if (relationshipIdentity != null && nativeId) {
-                            BeanProperty<Object, Object> idProperty = relationshipIdentity.getProperty();
-                            return AbstractGraphRepositoryOperations.withProperty(idProperty, relationship, mapper.readValue(relationshipIdentity, relationshipId));
-                        }
-                        return relationship;
-                    })
+                    .map(relationshipId -> withNativeId(relationshipIdentity, nativeId, relationship, relationshipId))
                     .defaultIfEmpty(relationship);
             });
+        }
+
+        /**
+         * The relationship with an assigned identifier populated when it has none yet.
+         */
+        private Object withRelationshipId(RuntimePersistentEntity<Object> associated,
+                                          @Nullable RuntimePersistentProperty<Object> relationshipIdentity,
+                                          boolean nativeId,
+                                          Object relationship) {
+            if (relationshipIdentity != null && !nativeId && mapper.writeIdentity(associated, relationship) == null) {
+                return operations.populateRelationshipId(associated, relationshipIdentity, relationship);
+            }
+            return relationship;
+        }
+
+        /**
+         * The relationship with the identifier the database generated, when the identifier is native.
+         */
+        private Object withNativeId(@Nullable RuntimePersistentProperty<Object> relationshipIdentity,
+                                    boolean nativeId,
+                                    Object relationship,
+                                    Object relationshipId) {
+            if (relationshipIdentity != null && nativeId) {
+                BeanProperty<Object, Object> idProperty = relationshipIdentity.getProperty();
+                return AbstractGraphRepositoryOperations.withProperty(idProperty, relationship, mapper.readValue(relationshipIdentity, relationshipId));
+            }
+            return relationship;
         }
 
         private Mono<Void> unlinkOthers(RuntimeAssociation<T> association, RuntimePersistentEntity<?> target, @Nullable Object fromId, @Nullable Object toId) {

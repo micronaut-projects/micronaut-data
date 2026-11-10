@@ -487,8 +487,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         if (elements && sqlPgq() && definition.kind() != PathQueryDefinition.Kind.ALL) {
             throw new IllegalArgumentException("Shortest paths are not supported by the SQL/PGQ dialect, which has no shortest path search: return every path up to the depth with findAllPaths");
         }
-        // SQL/PGQ iterates the steps with variables of their own, so the edge of the pattern takes another name
-        String edgeVariable = sqlPgq() ? PATH_EDGE : elements ? EDGE : "";
+        String edgeVariable = pathEdgeVariable(elements);
         String pattern = directed(node(START, entity), edge(edgeVariable, types, "") + quantifier, node(END, entity), definition.direction());
         query.pattern = sqlPgq() ? pattern : pathPrefix(definition.kind(), elements) + pattern;
         if (elements) {
@@ -499,6 +498,26 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             query.ref(property(START, identity(entity)));
         }
         endpoints(query, definition, entity);
+        excludeRepeats(query, definition, entity);
+        String text = query.render(false);
+        if (definition.result() == PathQueryDefinition.Result.EXISTS) {
+            text += buildLimitAndOffset(1, 0);
+        }
+        return QueryResult.of(text, List.of(text), query.bindings, Map.of());
+    }
+
+    /**
+     * The variable of the path edge: SQL/PGQ iterates the steps with variables of their own, so the edge of the
+     * pattern takes another name, and PGQL names it only when the steps are returned.
+     */
+    private String pathEdgeVariable(boolean elements) {
+        if (sqlPgq()) {
+            return PATH_EDGE;
+        }
+        return elements ? EDGE : "";
+    }
+
+    private void excludeRepeats(Query query, PathQueryDefinition definition, PersistentEntity entity) {
         if (definition.start() != null && definition.end() != null && definition.kind() != PathQueryDefinition.Kind.ALL) {
             // A shortest path from a node to itself is the empty path, so the shortest kinds exclude it as the Cypher
             // builder does with s <> e: existsPath(a, a) is false, while the ALL kind of countPaths(a, a) counts the
@@ -512,11 +531,6 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             String edgeId = "JSON_SERIALIZE(EDGE_ID(" + PATH_EDGE + "))";
             query.and("COUNT(DISTINCT " + edgeId + ") = COUNT(" + edgeId + ")");
         }
-        String text = query.render(false);
-        if (definition.result() == PathQueryDefinition.Result.EXISTS) {
-            text += buildLimitAndOffset(1, 0);
-        }
-        return QueryResult.of(text, List.of(text), query.bindings, Map.of());
     }
 
     private static String pathPrefix(PathQueryDefinition.Kind kind, boolean elements) {
@@ -1517,72 +1531,55 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     private record VertexInsert(PersistentEntity persistentEntity, boolean returning) implements InsertQueryDefinition {
     }
 
-    private record VertexUpdate(UpdateQueryDefinition definition,
-                                PersistentEntity persistentEntity,
-                                Map<String, Object> propertiesToUpdate,
-                                boolean isGeneratedEntityUpdate) implements GeneratedEntityUpdateQueryDefinition {
+    /**
+     * A write of the vertex table that keeps the criteria of the write it replaces.
+     */
+    private interface VertexWrite extends BaseQueryDefinition {
+
+        BaseQueryDefinition definition();
 
         @Override
-        public @Nullable Selection<?> returningSelection() {
-            return definition.returningSelection();
+        default @Nullable Predicate predicate() {
+            return definition().predicate();
         }
 
         @Override
-        public @Nullable Predicate predicate() {
-            return definition.predicate();
+        default Collection<JoinPath> getJoinPaths() {
+            return definition().getJoinPaths();
         }
 
         @Override
-        public Collection<JoinPath> getJoinPaths() {
-            return definition.getJoinPaths();
+        default Optional<JoinPath> getJoinPath(String path) {
+            return definition().getJoinPath(path);
         }
 
         @Override
-        public Optional<JoinPath> getJoinPath(String path) {
-            return definition.getJoinPath(path);
+        default int limit() {
+            return definition().limit();
         }
 
         @Override
-        public int limit() {
-            return definition.limit();
-        }
-
-        @Override
-        public int offset() {
-            return definition.offset();
+        default int offset() {
+            return definition().offset();
         }
     }
 
-    private record VertexDelete(DeleteQueryDefinition definition, PersistentEntity persistentEntity) implements DeleteQueryDefinition {
+    private record VertexUpdate(UpdateQueryDefinition definition,
+                                PersistentEntity persistentEntity,
+                                Map<String, Object> propertiesToUpdate,
+                                boolean isGeneratedEntityUpdate) implements GeneratedEntityUpdateQueryDefinition, VertexWrite {
 
         @Override
         public @Nullable Selection<?> returningSelection() {
             return definition.returningSelection();
         }
+    }
+
+    private record VertexDelete(DeleteQueryDefinition definition, PersistentEntity persistentEntity) implements DeleteQueryDefinition, VertexWrite {
 
         @Override
-        public @Nullable Predicate predicate() {
-            return definition.predicate();
-        }
-
-        @Override
-        public Collection<JoinPath> getJoinPaths() {
-            return definition.getJoinPaths();
-        }
-
-        @Override
-        public Optional<JoinPath> getJoinPath(String path) {
-            return definition.getJoinPath(path);
-        }
-
-        @Override
-        public int limit() {
-            return definition.limit();
-        }
-
-        @Override
-        public int offset() {
-            return definition.offset();
+        public @Nullable Selection<?> returningSelection() {
+            return definition.returningSelection();
         }
     }
 }
