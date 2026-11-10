@@ -94,7 +94,7 @@ public final class GraphRawQueryMethodMatcher implements MethodMatcher {
         if (query == null) {
             return null;
         }
-        // Languages without $name parameters, such as PGQL where :name is a label, receive positional ? parameters
+        // Languages without $name parameters, such as SQL/PGQ, receive positional ? parameters
         boolean positional = !graphQueryBuilder.usesDollarParameters();
         return context -> buildMatchInfo(context, query, positional);
     }
@@ -113,7 +113,7 @@ public final class GraphRawQueryMethodMatcher implements MethodMatcher {
             entityParameter = null;
             entitiesParameter = null;
         } else if (!positional) {
-            // SQL and PGQL statements report their row count through JDBC
+            // SQL statements report their row count through JDBC
             query = countingQuery(matchContext, query);
         }
 
@@ -282,7 +282,7 @@ public final class GraphRawQueryMethodMatcher implements MethodMatcher {
      * Replaces the content of string literals and comments with spaces, keeping offsets.
      *
      * @param query The query
-     * @param sql   Whether the query is SQL or PGQL, where {@code --} opens a comment and a quote is
+     * @param sql   Whether the query is SQL, where {@code --} opens a comment and a quote is
      *              doubled rather than escaped with a backslash
      * @return The masked query
      */
