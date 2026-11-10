@@ -75,7 +75,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 /**
- * Repository operations for Oracle property graphs. Queries compiled to PGQL or SQL/PGQ run as JDBC prepared
+ * Repository operations for Oracle property graphs. Queries compiled to SQL/PGQ run as JDBC prepared
  * statements on the connection of the current transaction, or on a connection opened for the operation.
  *
  * @author graemerocher
@@ -87,7 +87,6 @@ final class DefaultOracleGraphRepositoryOperations extends AbstractGraphReposito
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultOracleGraphRepositoryOperations.class);
     private static final String DECLARE_METHOD = "Declare a query method on the Oracle graph repository instead";
-    private static final String PGQL_URL_PREFIX = "jdbc:oracle:pgql:";
     /**
      * {@code oracle.jdbc.OracleTypes.TIMESTAMPTZ}, the type of a TIMESTAMP WITH TIME ZONE column.
      */
@@ -151,7 +150,6 @@ final class DefaultOracleGraphRepositoryOperations extends AbstractGraphReposito
     }
 
     private static GraphResult run(Connection connection, String query, Map<String, Object> parameters) {
-        requirePgqlDriver(connection, query);
         OracleGraphRows.Expanded expanded = OracleGraphRows.expand(query, parameters);
         if (LOG.isTraceEnabled()) {
             // Parameter values may hold personal data, so they are logged at TRACE only
@@ -199,27 +197,6 @@ final class DefaultOracleGraphRepositoryOperations extends AbstractGraphReposito
     }
 
     /**
-     * Fails a PGQL query on a connection that does not use the PGQL JDBC driver, which would otherwise read the labels
-     * of the query, such as {@code :Account}, as named bind parameters.
-     */
-    static void requirePgqlDriver(Connection connection, String query) {
-        if (!OracleGraphSql.isPgql(query)) {
-            return;
-        }
-        String url;
-        try {
-            url = connection.getMetaData().getURL();
-        } catch (SQLException e) {
-            return;
-        }
-        if (url != null && !url.startsWith(PGQL_URL_PREFIX)) {
-            throw new DataAccessException("The query [" + query + "] is PGQL, which needs a data source that uses the PGQL JDBC driver, "
-                + "with a URL that starts with " + PGQL_URL_PREFIX + ". Use @OracleGraphRepository(language = SQL_PGQ) to query the graph on "
-                + "this data source: " + url);
-        }
-    }
-
-    /**
      * Reads a column of a row. Temporal columns are read as JDBC temporal values rather than through
      * {@link ResultSet#getObject(int)}, which the Oracle driver answers with its own {@code oracle.sql.TIMESTAMP}
      * types that the conversion service cannot convert to the temporal type of the entity property.
@@ -235,11 +212,6 @@ final class DefaultOracleGraphRepositoryOperations extends AbstractGraphReposito
     @Override
     protected void appendSortAndLimit(StringBuilder query, RuntimePersistentEntity<?> entity, Sort sort, Limit limit) {
         OracleGraphSql.appendSortAndLimit(query, entity, sort, limit);
-    }
-
-    @Override
-    protected String limitClause(StringBuilder query, Limit limit) {
-        return OracleGraphSql.limitClause(query, limit);
     }
 
     @Override

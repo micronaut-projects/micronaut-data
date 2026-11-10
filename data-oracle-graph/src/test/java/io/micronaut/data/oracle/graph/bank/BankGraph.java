@@ -3,21 +3,22 @@ package io.micronaut.data.oracle.graph.bank;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.graph.annotation.PathLimit;
+import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
-import io.micronaut.data.graph.annotation.PropertyGraph;
 import io.micronaut.data.graph.model.GraphPath;
 import io.micronaut.data.graph.model.GraphRelationship;
 import io.micronaut.data.oracle.graph.annotation.OracleGraphRepository;
 import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-@OracleGraphRepository(graph = "bank_graph", language = PropertyGraph.QueryLanguage.SQL_PGQ)
+@OracleGraphRepository(graph = "bank_graph")
 public interface BankGraph extends GenericRepository<Account, Long> {
 
     Optional<Account> findById(Long id);
@@ -45,6 +46,8 @@ public interface BankGraph extends GenericRepository<Account, Long> {
     Page<Account> findByNameStartsWith(String prefix, Pageable pageable);
 
     List<Account> findByIdGreaterThan(Long id, Sort sort);
+
+    List<Account> findAll(PredicateSpecification<Account> spec, Limit limit);
 
     List<Account> findByIdGreaterThanOrderByName(Long id, Sort sort);
 
