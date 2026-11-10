@@ -7307,6 +7307,10 @@ when sorting by this attribute.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jq/JQParser.Select_clauseContext.html#DISTINCT()" class="member-name-link">DISTINCT()</a> - Method in class io.micronaut.data.jq.<a href="io/micronaut/data/jq/JQParser.Select_clauseContext.html" title="class in io.micronaut.data.jq">JQParser.Select_clauseContext</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlTableMapping.html#distribution()" class="member-name-link">distribution()</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/data/model/schema/sql/SqlTableMapping.html#param-distribution"><code>distribution</code></a> record component.</div>
+</dd>
 <dt><a href="io/micronaut/data/tck/jdbc/entities/geo/HotelJson_.html#district" class="member-name-link">district</a> - Static variable in class io.micronaut.data.tck.jdbc.entities.geo.<a href="io/micronaut/data/tck/jdbc/entities/geo/HotelJson_.html" title="class in io.micronaut.data.tck.jdbc.entities.geo">HotelJson_</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/jdbc/entities/geo/HotelWkt_.html#district" class="member-name-link">district</a> - Static variable in class io.micronaut.data.tck.jdbc.entities.geo.<a href="io/micronaut/data/tck/jdbc/entities/geo/HotelWkt_.html" title="class in io.micronaut.data.tck.jdbc.entities.geo">HotelWkt_</a></dt>
@@ -7624,6 +7628,16 @@ before the connection state is restored.</div>
 </dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/query/DummyPreparedQuery.html#%3Cinit%3E(io.micronaut.data.model.runtime.StoredQuery)" class="member-name-link">DummyPreparedQuery(StoredQuery)</a> - Constructor for class io.micronaut.data.runtime.operations.internal.query.<a href="io/micronaut/data/runtime/operations/internal/query/DummyPreparedQuery.html" title="class in io.micronaut.data.runtime.operations.internal.query">DummyPreparedQuery</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/annotation/Duplicated.html" class="type-name-link" title="annotation interface in io.micronaut.data.annotation">Duplicated</a> - Annotation Interface in <a href="io/micronaut/data/annotation/package-summary.html">io.micronaut.data.annotation</a></dt>
+<dd>
+<div class="block">Generates the table of an entity as an Oracle duplicated table, which is replicated to every shard of an Oracle
+Globally Distributed Database, for reference data that queries of sharded tables join locally
+(<code>CREATE DUPLICATED TABLE</code>).</div>
+</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.Type.html#DUPLICATED" class="member-name-link">DUPLICATED</a> - Enum constant in enum class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.Type.html" title="enum class in io.micronaut.data.model.schema.sql">SqlTableDistribution.Type</a></dt>
+<dd>
+<div class="block">Replicated to every shard.</div>
+</dd>
 <dt><a href="io/micronaut/data/tck/entities/JsonData_.html#duration" class="member-name-link">duration</a> - Static variable in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/JsonData_.html" title="class in io.micronaut.data.tck.entities">JsonData_</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/jdbc/entities/IntervalEntity_.html#duration" class="member-name-link">duration</a> - Static variable in class io.micronaut.data.tck.jdbc.entities.<a href="io/micronaut/data/tck/jdbc/entities/IntervalEntity_.html" title="class in io.micronaut.data.tck.jdbc.entities">IntervalEntity_</a></dt>
@@ -8847,6 +8861,14 @@ together with the entity in the same query, overriding the fetch type declared o
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.html" title="class in io.micronaut.data.model.schema.sql">SqlTableDistribution</a></dt>
+<dd>
+<div class="block">Indicates whether some other object is "equal to" this one.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.ParentTable.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.ParentTable.html" title="class in io.micronaut.data.model.schema.sql">SqlTableDistribution.ParentTable</a></dt>
+<dd>
+<div class="block">Indicates whether some other object is "equal to" this one.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/schema/sql/SqlTableMapping.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a></dt>
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
@@ -9087,6 +9109,10 @@ together with the entity in the same query, overriding the fetch type declared o
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/annotation/MappedEntity.html#escape()" class="member-name-link">escape()</a> - Element in annotation interface io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/MappedEntity.html" title="annotation interface in io.micronaut.data.annotation">MappedEntity</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.ParentTable.html#escape()" class="member-name-link">escape()</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.ParentTable.html" title="class in io.micronaut.data.model.schema.sql">SqlTableDistribution.ParentTable</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/data/model/schema/sql/SqlTableDistribution.ParentTable.html#param-escape"><code>escape</code></a> record component.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/schema/sql/SqlTableMapping.html#escape()" class="member-name-link">escape()</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a></dt>
 <dd>
 <div class="block">Returns the value of the <a href="./io/micronaut/data/model/schema/sql/SqlTableMapping.html#param-escape"><code>escape</code></a> record component.</div>
@@ -17631,6 +17657,14 @@ without dialect-specific quoting applied.</div>
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.html" title="class in io.micronaut.data.model.schema.sql">SqlTableDistribution</a></dt>
+<dd>
+<div class="block">Returns a hash code value for this object.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.ParentTable.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.ParentTable.html" title="class in io.micronaut.data.model.schema.sql">SqlTableDistribution.ParentTable</a></dt>
+<dd>
+<div class="block">Returns a hash code value for this object.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/schema/sql/SqlTableMapping.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a></dt>
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
@@ -21938,6 +21972,8 @@ of the available methods.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/jdbc/entities/upsert/EmbeddedConflictEntity_.html#key" class="member-name-link">key</a> - Static variable in class io.micronaut.data.tck.jdbc.entities.upsert.<a href="io/micronaut/data/tck/jdbc/entities/upsert/EmbeddedConflictEntity_.html" title="class in io.micronaut.data.tck.jdbc.entities.upsert">EmbeddedConflictEntity_</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/annotation/Sharded.html#key()" class="member-name-link">key()</a> - Element in annotation interface io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/Sharded.html" title="annotation interface in io.micronaut.data.annotation">Sharded</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.Placeholder.html#key()" class="member-name-link">key()</a> - Method in record class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.Placeholder.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder.Placeholder</a></dt>
 <dd>
 <div class="block">Returns the value of the <a href="./io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.Placeholder.html#param-key"><code>key</code></a> record component.</div>
@@ -21946,6 +21982,10 @@ of the available methods.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/jdbc/entities/upsert/EmbeddedConflictEntity_.html#KEY" class="member-name-link">KEY</a> - Static variable in class io.micronaut.data.tck.jdbc.entities.upsert.<a href="io/micronaut/data/tck/jdbc/entities/upsert/EmbeddedConflictEntity_.html" title="class in io.micronaut.data.tck.jdbc.entities.upsert">EmbeddedConflictEntity_</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.html#keyColumns()" class="member-name-link">keyColumns()</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.html" title="class in io.micronaut.data.model.schema.sql">SqlTableDistribution</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/data/model/schema/sql/SqlTableDistribution.html#param-keyColumns"><code>keyColumns</code></a> record component.</div>
+</dd>
 <dt><a href="io/micronaut/data/tck/repositories/FoodRepository.Specifications.html#keyEquals(java.lang.String)" class="member-name-link">keyEquals(String)</a> - Static method in class io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/FoodRepository.Specifications.html" title="class in io.micronaut.data.tck.repositories">FoodRepository.Specifications</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html#keys(M)" class="member-name-link">keys(M)</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractCriteriaBuilder</a></dt>
@@ -24102,6 +24142,10 @@ that delegates to <a href="io/micronaut/data/connection/ConnectionOperations.htm
 <dd>
 <div class="block">Returns the value of the <a href="./io/micronaut/data/model/schema/sql/SqlIndexMapping.html#param-name"><code>name</code></a> record component.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.ParentTable.html#name()" class="member-name-link">name()</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.ParentTable.html" title="class in io.micronaut.data.model.schema.sql">SqlTableDistribution.ParentTable</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/data/model/schema/sql/SqlTableDistribution.ParentTable.html#param-name"><code>name</code></a> record component.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/schema/sql/SqlTableMapping.html#name()" class="member-name-link">name()</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a></dt>
 <dd>
 <div class="block">Returns the value of the <a href="./io/micronaut/data/model/schema/sql/SqlTableMapping.html#param-name"><code>name</code></a> record component.</div>
@@ -25500,6 +25544,10 @@ blocking a transaction with a higher priority.</div>
 <dd>
 <div class="block">Utils for reading <a href="io/micronaut/data/annotation/OrderBy.html" title="annotation interface in io.micronaut.data.annotation"><code>OrderBy</code></a> annotation values.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/SqlSchemaUtils.html#orderForDrop(io.micronaut.data.model.PersistentEntity%5B%5D)" class="member-name-link">orderForDrop(PersistentEntity[])</a> - Static method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlSchemaUtils.html" title="class in io.micronaut.data.model.query.builder.sql">SqlSchemaUtils</a></dt>
+<dd>
+<div class="block">Orders entities for dropping their tables, with the child tables of a table family before its root tables.</div>
+</dd>
 <dt><a href="io/micronaut/data/tck/entities/OrderPk_.html#orderNo" class="member-name-link">orderNo</a> - Static variable in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/OrderPk_.html" title="class in io.micronaut.data.tck.entities">OrderPk_</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/OrderPk.html#orderNo()" class="member-name-link">orderNo()</a> - Method in record class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/OrderPk.html" title="class in io.micronaut.data.tck.entities">OrderPk</a></dt>
@@ -25783,6 +25831,12 @@ a direction.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/jdbc/entities/Catalog_.html#parent" class="member-name-link">parent</a> - Static variable in class io.micronaut.data.tck.jdbc.entities.<a href="io/micronaut/data/tck/jdbc/entities/Catalog_.html" title="class in io.micronaut.data.tck.jdbc.entities">Catalog_</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/annotation/Sharded.html#parent()" class="member-name-link">parent()</a> - Element in annotation interface io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/Sharded.html" title="annotation interface in io.micronaut.data.annotation">Sharded</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.html#parent()" class="member-name-link">parent()</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.html" title="class in io.micronaut.data.model.schema.sql">SqlTableDistribution</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/data/model/schema/sql/SqlTableDistribution.html#param-parent"><code>parent</code></a> record component.</div>
+</dd>
 <dt><a href="io/micronaut/data/tck/entities/Parent.html" class="type-name-link" title="class in io.micronaut.data.tck.entities">Parent</a> - Class in <a href="io/micronaut/data/tck/entities/package-summary.html">io.micronaut.data.tck.entities</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/Parent.html#%3Cinit%3E()" class="member-name-link">Parent()</a> - Constructor for class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Parent.html" title="class in io.micronaut.data.tck.entities">Parent</a></dt>
@@ -25795,6 +25849,10 @@ a direction.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/Parent_.html#%3Cinit%3E()" class="member-name-link">Parent_()</a> - Constructor for class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Parent_.html" title="class in io.micronaut.data.tck.entities">Parent_</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.ParentTable.html#%3Cinit%3E(java.lang.String,java.lang.String,boolean)" class="member-name-link">ParentTable(String, String, boolean)</a> - Constructor for record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.ParentTable.html" title="class in io.micronaut.data.model.schema.sql">SqlTableDistribution.ParentTable</a></dt>
+<dd>
+<div class="block">Creates an instance of a <code>ParentTable</code> record class.</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/config/SqlDialectOptionsConfiguration.html#parseMajorMinor(java.lang.String)" class="member-name-link">parseMajorMinor(String)</a> - Static method in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/SqlDialectOptionsConfiguration.html" title="class in io.micronaut.data.runtime.config">SqlDialectOptionsConfiguration</a></dt>
 <dd>
 <div class="block">Extracts the <code>major.minor</code> version from a database version text, such as
@@ -29976,6 +30034,10 @@ savepoints in a generic fashion.</div>
 </dd>
 <dt><a href="io/micronaut/data/annotation/sql/JoinTable.html#schema()" class="member-name-link">schema()</a> - Element in annotation interface io.micronaut.data.annotation.sql.<a href="io/micronaut/data/annotation/sql/JoinTable.html" title="annotation interface in io.micronaut.data.annotation.sql">JoinTable</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.ParentTable.html#schema()" class="member-name-link">schema()</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.ParentTable.html" title="class in io.micronaut.data.model.schema.sql">SqlTableDistribution.ParentTable</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/data/model/schema/sql/SqlTableDistribution.ParentTable.html#param-schema"><code>schema</code></a> record component.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/schema/sql/SqlTableMapping.html#schema()" class="member-name-link">schema()</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a></dt>
 <dd>
 <div class="block">Returns the value of the <a href="./io/micronaut/data/model/schema/sql/SqlTableMapping.html#param-schema"><code>schema</code></a> record component.</div>
@@ -32171,6 +32233,16 @@ with a non-generated identity already exists.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/annotation/VectorStorage.html#shape()" class="member-name-link">shape()</a> - Element in annotation interface io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/VectorStorage.html" title="annotation interface in io.micronaut.data.annotation">VectorStorage</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/annotation/Sharded.html" class="type-name-link" title="annotation interface in io.micronaut.data.annotation">Sharded</a> - Annotation Interface in <a href="io/micronaut/data/annotation/package-summary.html">io.micronaut.data.annotation</a></dt>
+<dd>
+<div class="block">Generates the table of an entity as an Oracle sharded table, partitioned across the shards of an Oracle Globally
+Distributed Database by consistent hash of its sharding key (<code>CREATE SHARDED TABLE ... PARTITION BY CONSISTENT
+HASH ... PARTITIONS AUTO</code>).</div>
+</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.Type.html#SHARDED" class="member-name-link">SHARDED</a> - Enum constant in enum class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.Type.html" title="enum class in io.micronaut.data.model.schema.sql">SqlTableDistribution.Type</a></dt>
+<dd>
+<div class="block">Partitioned across the shards by consistent hash of the sharding key.</div>
+</dd>
 <dt><a href="io/micronaut/data/tck/entities/ShelfBook_.html#shelf" class="member-name-link">shelf</a> - Static variable in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/ShelfBook_.html" title="class in io.micronaut.data.tck.entities">ShelfBook_</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/Shelf.html" class="type-name-link" title="class in io.micronaut.data.tck.entities">Shelf</a> - Class in <a href="io/micronaut/data/tck/entities/package-summary.html">io.micronaut.data.tck.entities</a></dt>
@@ -33123,6 +33195,22 @@ and materialize an instance using column naming conventions mapped by the entity
 <dd>
 <div class="block">SQL version of <a href="io/micronaut/data/runtime/operations/internal/query/BindableParametersStoredQuery.html" title="interface in io.micronaut.data.runtime.operations.internal.query"><code>BindableParametersStoredQuery</code></a> carrying extra SQL related data.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.html" class="type-name-link" title="class in io.micronaut.data.model.schema.sql">SqlTableDistribution</a> - Record Class in <a href="io/micronaut/data/model/schema/sql/package-summary.html">io.micronaut.data.model.schema.sql</a></dt>
+<dd>
+<div class="block">How a table is distributed across the shards of an Oracle Globally Distributed Database.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.html#%3Cinit%3E(io.micronaut.data.model.schema.sql.SqlTableDistribution.Type,java.util.List,io.micronaut.data.model.schema.sql.SqlTableDistribution.ParentTable,java.lang.String)" class="member-name-link">SqlTableDistribution(SqlTableDistribution.Type, List, SqlTableDistribution.ParentTable, String)</a> - Constructor for record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.html" title="class in io.micronaut.data.model.schema.sql">SqlTableDistribution</a></dt>
+<dd>
+<div class="block">Creates an instance of a <code>SqlTableDistribution</code> record class.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.ParentTable.html" class="type-name-link" title="class in io.micronaut.data.model.schema.sql">SqlTableDistribution.ParentTable</a> - Record Class in <a href="io/micronaut/data/model/schema/sql/package-summary.html">io.micronaut.data.model.schema.sql</a></dt>
+<dd>
+<div class="block">The root table of a table family.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.Type.html" class="type-name-link" title="enum class in io.micronaut.data.model.schema.sql">SqlTableDistribution.Type</a> - Enum Class in <a href="io/micronaut/data/model/schema/sql/package-summary.html">io.micronaut.data.model.schema.sql</a></dt>
+<dd>
+<div class="block">The distribution type.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/schema/sql/SqlTableMapping.html" class="type-name-link" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a> - Record Class in <a href="io/micronaut/data/model/schema/sql/package-summary.html">io.micronaut.data.model.schema.sql</a></dt>
 <dd>
 <div class="block">The SQL table mapping information extracted from the <a href="io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model"><code>PersistentEntity</code></a>.</div>
@@ -33132,6 +33220,8 @@ and materialize an instance using column naming conventions mapped by the entity
 <dt><a href="io/micronaut/data/model/schema/sql/SqlTableMapping.html#%3Cinit%3E(java.lang.String,java.lang.String,boolean,io.micronaut.data.model.schema.sql.SqlTableMapping.TableType,java.util.List,java.util.List,java.util.List)" class="member-name-link">SqlTableMapping(String, String, boolean, SqlTableMapping.TableType, List, List, List)</a> - Constructor for record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/schema/sql/SqlTableMapping.html#%3Cinit%3E(java.lang.String,java.lang.String,boolean,io.micronaut.data.model.schema.sql.SqlTableMapping.TableType,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List)" class="member-name-link">SqlTableMapping(String, String, boolean, SqlTableMapping.TableType, List, List, List, List, List)</a> - Constructor for record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlTableMapping.html#%3Cinit%3E(java.lang.String,java.lang.String,boolean,io.micronaut.data.model.schema.sql.SqlTableMapping.TableType,java.util.List,java.util.List,java.util.List,java.util.List,java.util.List,io.micronaut.data.model.schema.sql.SqlTableDistribution)" class="member-name-link">SqlTableMapping(String, String, boolean, SqlTableMapping.TableType, List, List, List, List, List, SqlTableDistribution)</a> - Constructor for record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>SqlTableMapping</code> record class.</div>
 </dd>
@@ -33678,6 +33768,14 @@ it.</div>
 <dt><a href="io/micronaut/data/processor/mappers/jpa/jakarta/TableAnnotationMapper.html#%3Cinit%3E()" class="member-name-link">TableAnnotationMapper()</a> - Constructor for class io.micronaut.data.processor.mappers.jpa.jakarta.<a href="io/micronaut/data/processor/mappers/jpa/jakarta/TableAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa.jakarta">TableAnnotationMapper</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/mappers/jpa/jx/TableAnnotationMapper.html#%3Cinit%3E()" class="member-name-link">TableAnnotationMapper()</a> - Constructor for class io.micronaut.data.processor.mappers.jpa.jx.<a href="io/micronaut/data/processor/mappers/jpa/jx/TableAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa.jx">TableAnnotationMapper</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/annotation/Duplicated.html#tablespace()" class="member-name-link">tablespace()</a> - Element in annotation interface io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/Duplicated.html" title="annotation interface in io.micronaut.data.annotation">Duplicated</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.html#tablespace()" class="member-name-link">tablespace()</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.html" title="class in io.micronaut.data.model.schema.sql">SqlTableDistribution</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/data/model/schema/sql/SqlTableDistribution.html#param-tablespace"><code>tablespace</code></a> record component.</div>
+</dd>
+<dt><a href="io/micronaut/data/annotation/Sharded.html#tablespaceSet()" class="member-name-link">tablespaceSet()</a> - Element in annotation interface io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/Sharded.html" title="annotation interface in io.micronaut.data.annotation">Sharded</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/annotation/EntityRepresentation.Type.html#TABULAR" class="member-name-link">TABULAR</a> - Enum constant in enum class io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/EntityRepresentation.Type.html" title="enum class in io.micronaut.data.annotation">EntityRepresentation.Type</a></dt>
 <dd>
@@ -34620,6 +34718,14 @@ or none if timeouts are not supported.</div>
 <div class="block">Returns a string representation of this record class.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/schema/sql/SqlSequenceMapping.html#toString()" class="member-name-link">toString()</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlSequenceMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlSequenceMapping</a></dt>
+<dd>
+<div class="block">Returns a string representation of this record class.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.ParentTable.html#toString()" class="member-name-link">toString()</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.ParentTable.html" title="class in io.micronaut.data.model.schema.sql">SqlTableDistribution.ParentTable</a></dt>
+<dd>
+<div class="block">Returns a string representation of this record class.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.html#toString()" class="member-name-link">toString()</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.html" title="class in io.micronaut.data.model.schema.sql">SqlTableDistribution</a></dt>
 <dd>
 <div class="block">Returns a string representation of this record class.</div>
 </dd>
@@ -35651,6 +35757,10 @@ a Micronaut transaction API.</div>
 <dt><a href="io/micronaut/data/model/schema/sql/metadata/SqlColumnMetadata.html#type()" class="member-name-link">type()</a> - Method in record class io.micronaut.data.model.schema.sql.metadata.<a href="io/micronaut/data/model/schema/sql/metadata/SqlColumnMetadata.html" title="class in io.micronaut.data.model.schema.sql.metadata">SqlColumnMetadata</a></dt>
 <dd>
 <div class="block">Returns the value of the <a href="./io/micronaut/data/model/schema/sql/metadata/SqlColumnMetadata.html#param-type"><code>type</code></a> record component.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.html#type()" class="member-name-link">type()</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.html" title="class in io.micronaut.data.model.schema.sql">SqlTableDistribution</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/data/model/schema/sql/SqlTableDistribution.html#param-type"><code>type</code></a> record component.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/schema/sql/SqlTableMapping.html#type()" class="member-name-link">type()</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlTableMapping</a></dt>
 <dd>
@@ -36703,6 +36813,10 @@ the normal update lifecycle is invoked.</div>
 <dd>
 <div class="block">Validates a table definition based on <a href="io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model"><code>PersistentEntity</code></a> mapping against its actual corresponding metadata from the database.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/SqlSchemaUtils.html#validateTableDistribution(io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.PersistentEntity)" class="member-name-link">validateTableDistribution(PersistentEntity, PersistentEntity)</a> - Static method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlSchemaUtils.html" title="class in io.micronaut.data.model.query.builder.sql">SqlSchemaUtils</a></dt>
+<dd>
+<div class="block">Validates the <a href="io/micronaut/data/annotation/Sharded.html" title="annotation interface in io.micronaut.data.annotation"><code>Sharded</code></a> and <a href="io/micronaut/data/annotation/Duplicated.html" title="annotation interface in io.micronaut.data.annotation"><code>Duplicated</code></a> annotations of an entity.</div>
+</dd>
 <dt><a href="io/micronaut/transaction/support/AbstractPropagatedStatusTransactionOperations.html#validateTransactionDefinition(io.micronaut.transaction.TransactionDefinition)" class="member-name-link">validateTransactionDefinition(TransactionDefinition)</a> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractPropagatedStatusTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractPropagatedStatusTransactionOperations</a></dt>
 <dd>
 <div class="block">Validate a transaction definition before transactional work begins.</div>
@@ -37060,6 +37174,10 @@ followed by the second, and so forth.</div>
 <dd>
 <div class="block">Returns the enum constant of this class with the specified name.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.Type.html#valueOf(java.lang.String)" class="member-name-link">valueOf(String)</a> - Static method in enum class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.Type.html" title="enum class in io.micronaut.data.model.schema.sql">SqlTableDistribution.Type</a></dt>
+<dd>
+<div class="block">Returns the enum constant of this class with the specified name.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/schema/sql/SqlTableMapping.TableType.html#valueOf(java.lang.String)" class="member-name-link">valueOf(String)</a> - Static method in enum class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlTableMapping.TableType.html" title="enum class in io.micronaut.data.model.schema.sql">SqlTableMapping.TableType</a></dt>
 <dd>
 <div class="block">Returns the enum constant of this class with the specified name.</div>
@@ -37343,6 +37461,11 @@ the order they are declared.</div>
 the order they are declared.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/schema/sql/SqlDbType.html#values()" class="member-name-link">values()</a> - Static method in enum class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlDbType.html" title="enum class in io.micronaut.data.model.schema.sql">SqlDbType</a></dt>
+<dd>
+<div class="block">Returns an array containing the constants of this enum class, in
+the order they are declared.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.Type.html#values()" class="member-name-link">values()</a> - Static method in enum class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.Type.html" title="enum class in io.micronaut.data.model.schema.sql">SqlTableDistribution.Type</a></dt>
 <dd>
 <div class="block">Returns an array containing the constants of this enum class, in
 the order they are declared.</div>

@@ -249,15 +249,17 @@
         
         <div class="toc-item" style="margin-left:20px" id="toc-item-sqlReservable"><a href="#sqlReservable"><strong>4.5.13</strong><span>Oracle Reservable Columns</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-sqlJsonView"><a href="#sqlJsonView"><strong>4.5.14</strong><span>JSON View</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-sqlShardedTables"><a href="#sqlShardedTables"><strong>4.5.14</strong><span>Oracle Sharded and Duplicated Tables</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-sqlOracleBoolean"><a href="#sqlOracleBoolean"><strong>4.5.15</strong><span>Oracle BOOLEAN Support</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-sqlJsonView"><a href="#sqlJsonView"><strong>4.5.15</strong><span>JSON View</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-sqlVectorType"><a href="#sqlVectorType"><strong>4.5.16</strong><span>SQL Vector Type Mapping</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-sqlOracleBoolean"><a href="#sqlOracleBoolean"><strong>4.5.16</strong><span>Oracle BOOLEAN Support</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-javaRecords"><a href="#javaRecords"><strong>4.5.17</strong><span>Support for Java Records</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-sqlVectorType"><a href="#sqlVectorType"><strong>4.5.17</strong><span>SQL Vector Type Mapping</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-kotlinData"><a href="#kotlinData"><strong>4.5.18</strong><span>Support for Kotlin immutable data classes</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-javaRecords"><a href="#javaRecords"><strong>4.5.18</strong><span>Support for Java Records</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-kotlinData"><a href="#kotlinData"><strong>4.5.19</strong><span>Support for Kotlin immutable data classes</span></a></div>
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-dbcDataTypes"><a href="#dbcDataTypes"><strong>4.6</strong><span>Data Types</span></a></div>
         
@@ -16322,7 +16324,225 @@ Method or entity validation that fails before SQL execution continues to throw <
 </div>
 </div>
 
-<h2 id="sqlJsonView"><a class="anchor" href="#sqlJsonView"></a>4.5.14 JSON View</h2>
+<h2 id="sqlShardedTables"><a class="anchor" href="#sqlShardedTables"></a>4.5.14 Oracle Sharded and Duplicated Tables</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/5.3.x/src/main/docs/guide/dbc/sqlMapping/sqlShardedTables.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Micronaut Data JDBC and R2DBC can generate the schema of an <a href="https://docs.oracle.com/en/database/oracle/oracle-database/26/shard/">Oracle Globally Distributed Database</a> with <a href="../api/io/micronaut/data/annotation/Sharded.html">@Sharded</a> and <a href="../api/io/micronaut/data/annotation/Duplicated.html">@Duplicated</a>. A sharded table is partitioned across the shards by consistent hash of its sharding key (system-managed sharding), while a duplicated table is replicated to every shard, so that queries of sharded tables join it locally.</p>
+</div>
+<div class="paragraph">
+<p>Annotate the root table of a table family with <a href="../api/io/micronaut/data/annotation/Sharded.html">@Sharded</a>:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Sharded(tablespaceSet = "TS_SUBSCRIBERS") // <b class="conum">(1)</b>
+@MappedEntity
+public record Subscriber(
+    @Id
+    String subscriberId, // <b class="conum">(2)</b>
+    String name
+) {}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@Sharded(tablespaceSet="TS_SUBSCRIBERS")  # <b class="conum">(1)</b>
+@MappedEntity
+@dataclass
+class Subscriber:
+    subscriberId: Annotated[str, Id]  # <b class="conum">(2)</b>
+    name: str</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@Sharded(tablespaceSet = "TS_SUBSCRIBERS") // <b class="conum">(1)</b>
+@MappedEntity
+data class Subscriber(
+    @field:Id
+    val subscriberId: String, // <b class="conum">(2)</b>
+    val name: String
+)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">@Sharded(tablespaceSet = "TS_SUBSCRIBERS") // <b class="conum">(1)</b>
+@MappedEntity
+class Subscriber {
+    @Id
+    String subscriberId // <b class="conum">(2)</b>
+    String name
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td><code>tablespaceSet</code> names the tablespace set that stores the partitions. It is required, since Oracle has no default tablespace set for sharded tables</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The sharding key defaults to the primary key. Oracle requires the sharding key to be part of the primary key, so the <code>key</code> member, which lists the properties of the key, is only needed when the primary key has more columns</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>A child table names the root table of its family with <code>parent</code>, so that its rows are stored in the shard of the parent rows with the same sharding key:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Sharded(parent = Subscriber.class, tablespaceSet = "TS_SUBSCRIBERS") // <b class="conum">(1)</b>
+@MappedEntity
+public record Subscription(
+    @EmbeddedId
+    SubscriptionId id, // <b class="conum">(2)</b>
+    String plan
+) {}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@Sharded(parent=Subscriber, tablespaceSet="TS_SUBSCRIBERS")  # <b class="conum">(1)</b>
+@MappedEntity
+@dataclass
+class Subscription:
+    id: Annotated[SubscriptionId, EmbeddedId]  # <b class="conum">(2)</b>
+    plan: str</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@Sharded(parent = Subscriber::class, tablespaceSet = "TS_SUBSCRIBERS") // <b class="conum">(1)</b>
+@MappedEntity
+data class Subscription(
+    @field:EmbeddedId
+    val id: SubscriptionId, // <b class="conum">(2)</b>
+    val plan: String
+)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">@Sharded(parent = Subscriber, tablespaceSet = "TS_SUBSCRIBERS") // <b class="conum">(1)</b>
+@MappedEntity
+class Subscription {
+    @EmbeddedId
+    SubscriptionId id // <b class="conum">(2)</b>
+    String plan
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The sharding key of a child table defaults to the one of its parent, here <code>SUBSCRIBER_ID</code></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The primary key of the child table contains the sharding key</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Reference data that every shard needs is a duplicated table:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Duplicated(tablespace = "PLANS_TSP")
+@MappedEntity
+public record Plan(@Id String code, String name) {}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@Duplicated(tablespace="PLANS_TSP")
+@MappedEntity
+@dataclass
+class Plan:
+    code: Annotated[str, Id]
+    name: str</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@Duplicated(tablespace = "PLANS_TSP")
+@MappedEntity
+data class Plan(@field:Id val code: String, val name: String)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">@Duplicated(tablespace = "PLANS_TSP")
+@MappedEntity
+class Plan {
+    @Id
+    String code
+    String name
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>With the Oracle dialect, the following tables are generated:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">CREATE SHARDED TABLE "SUBSCRIBER" ("SUBSCRIBER_ID" VARCHAR(255) NOT NULL, "NAME" VARCHAR(255) NOT NULL, PRIMARY KEY("SUBSCRIBER_ID"))
+    PARTITION BY CONSISTENT HASH ("SUBSCRIBER_ID") PARTITIONS AUTO TABLESPACE SET TS_SUBSCRIBERS
+
+CREATE SHARDED TABLE "SUBSCRIPTION" ("SUBSCRIBER_ID" VARCHAR(255) NOT NULL, "SUBSCRIPTION_NO" NUMBER(19) NOT NULL, "PLAN" VARCHAR(255) NOT NULL, PRIMARY KEY("SUBSCRIBER_ID","SUBSCRIPTION_NO"))
+    PARENT "SUBSCRIBER" PARTITION BY CONSISTENT HASH ("SUBSCRIBER_ID") PARTITIONS AUTO TABLESPACE SET TS_SUBSCRIBERS
+
+CREATE DUPLICATED TABLE "PLAN" ("CODE" VARCHAR(255) NOT NULL, "NAME" VARCHAR(255) NOT NULL, PRIMARY KEY("CODE")) TABLESPACE PLANS_TSP</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The statements must run on the shard catalog, in a session with shard DDL enabled (<code>ALTER SESSION ENABLE SHARD DDL</code>), which then creates the tables on the shards. A child table is related to its parent by equi-partitioning (<code>PARENT</code>) rather than by a foreign key, since Micronaut Data does not generate foreign keys. Other dialects ignore both annotations and generate plain tables, so that tests can run on H2 or Oracle Free, which cannot host sharded tables. Micronaut Data does not detect whether the database is sharded. Root tables are created before their child tables, and child tables are dropped first.</p>
+</div>
+<div class="paragraph">
+<p>Indexes of a sharded table are generated as local indexes (<code>CREATE INDEX &#8230;&#8203; LOCAL</code>), since Oracle rejects global indexes on sharded tables.</p>
+</div>
+<div class="paragraph">
+<p>The build or the schema generation fails if a mapping cannot work on a sharded database:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The sharding key must be part of the primary key, and the parent must be a sharded root table</p>
+</li>
+<li>
+<p>The primary key of a sharded table cannot use an identity column, which Oracle does not allow</p>
+</li>
+<li>
+<p>The sharding key cannot use <code>@GeneratedValue</code>. The application needs the key to connect to the shard before the insert, so it must assign the value itself</p>
+</li>
+<li>
+<p>A unique index must contain the sharding key</p>
+</li>
+<li>
+<p>A sharded or duplicated entity cannot have an association that needs a join table</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>A generated primary key column outside the sharding key, such as an order number of a table sharded by customer, uses a sharded sequence (<code>CREATE SEQUENCE &#8230;&#8203; SHARD</code>), so that its values stay unique when a chunk moves to another shard. For <code>Long</code> and <code>Integer</code> properties, its <code>MAXVALUE</code> is limited to 18 and 9 digits, so that the values fit the column. The shard offset is part of those digits and <code>NEXTVAL</code> fails once a value needs more, so an <code>Integer</code> id only has between about 100,000 and a million values per shard, depending on the Oracle release. Use <code>Long</code> for generated ids of sharded tables. A sequence you create with the <code>definition</code> member of <code>@GeneratedValue</code> is used as written.</p>
+</div>
+<div class="paragraph">
+<p>A duplicated table can have an identity column, but rows can then only be inserted through the shard catalog, because Oracle rejects inserts from a shard (<code>ORA-05156</code>).</p>
+</div>
+<div class="paragraph">
+<p>To route the connections of an application to the shard of a sharding key, see the sharding module of <a href="https://micronaut-projects.github.io/micronaut-oracledb/latest/guide/">Micronaut Oracle Database</a>.</p>
+</div>
+
+<h2 id="sqlJsonView"><a class="anchor" href="#sqlJsonView"></a>4.5.15 JSON View</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/5.3.x/src/main/docs/guide/dbc/sqlMapping/sqlJsonView.adoc"'>
@@ -16994,7 +17214,7 @@ Using <code>@Version</code> is not supported in Json Duality View mapped classes
 </div>
 </div>
 
-<h2 id="sqlOracleBoolean"><a class="anchor" href="#sqlOracleBoolean"></a>4.5.15 Oracle BOOLEAN Support</h2>
+<h2 id="sqlOracleBoolean"><a class="anchor" href="#sqlOracleBoolean"></a>4.5.16 Oracle BOOLEAN Support</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/5.3.x/src/main/docs/guide/dbc/sqlMapping/sqlOracleBoolean.adoc"'>
@@ -17449,7 +17669,7 @@ Mixed Oracle schemas where some boolean columns use native <code>BOOLEAN</code> 
 </table>
 </div>
 
-<h2 id="sqlVectorType"><a class="anchor" href="#sqlVectorType"></a>4.5.16 SQL Vector Type Mapping</h2>
+<h2 id="sqlVectorType"><a class="anchor" href="#sqlVectorType"></a>4.5.17 SQL Vector Type Mapping</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/5.3.x/src/main/docs/guide/dbc/sqlMapping/sqlVectorType.adoc"'>
@@ -18755,7 +18975,7 @@ FETCH APPROX FIRST 5 ROWS ONLY WITH TARGET ACCURACY 90</code></pre>
 </div>
 </div>
 
-<h2 id="javaRecords"><a class="anchor" href="#javaRecords"></a>4.5.17 Support for Java Records</h2>
+<h2 id="javaRecords"><a class="anchor" href="#javaRecords"></a>4.5.18 Support for Java Records</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/5.3.x/src/main/docs/guide/dbc/javaRecords.adoc"'>
@@ -18849,7 +19069,7 @@ book = self.bookRepository.save(book)</code></pre>
 <p>It is important to note that the returned instance is not the same as the instance passed to the <code>save</code> method. When a write operation is performed Micronaut Data will use a copy-constructor approach to populate the database identifier and return a new instance from the <code>save</code> method.</p>
 </div>
 
-<h2 id="kotlinData"><a class="anchor" href="#kotlinData"></a>4.5.18 Support for Kotlin immutable data classes</h2>
+<h2 id="kotlinData"><a class="anchor" href="#kotlinData"></a>4.5.19 Support for Kotlin immutable data classes</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/5.3.x/src/main/docs/guide/dbc/kotlinData.adoc"'>

@@ -74,6 +74,8 @@ loadScripts(document, 'script');</script>
 <ol class="toc-list">
 <li><a href="#getSqlTableMappings(io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.query.builder.sql.Dialect)" tabindex="0">getSqlTableMappings(PersistentEntity, Dialect)</a></li>
 <li><a href="#getSqlTableMappings(java.util.List,io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.query.builder.sql.Dialect)" tabindex="0">getSqlTableMappings(List, PersistentEntity, Dialect)</a></li>
+<li><a href="#validateTableDistribution(io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.PersistentEntity)" tabindex="0">validateTableDistribution(PersistentEntity, PersistentEntity)</a></li>
+<li><a href="#orderForDrop(io.micronaut.data.model.PersistentEntity%5B%5D)" tabindex="0">orderForDrop(PersistentEntity[])</a></li>
 </ol>
 </li>
 </ol>
@@ -168,6 +170,17 @@ loadScripts(document, 'script');</script>
  <a href="Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Returns list of <a href="../../../schema/sql/SqlTableMapping.html" title="class in io.micronaut.data.model.schema.sql"><code>SqlTableMapping</code></a> for persistent entity.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>[]</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#orderForDrop(io.micronaut.data.model.PersistentEntity%5B%5D)" class="member-name-link">orderForDrop</a><wbr>(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>[]&nbsp;entities)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">Orders entities for dropping their tables, with the child tables of a table family before its root tables.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#validateTableDistribution(io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.PersistentEntity)" class="member-name-link">validateTableDistribution</a><wbr>(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity,
+ @Nullable <a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;parent)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">Validates the <a href="../../../../annotation/Sharded.html" title="annotation interface in io.micronaut.data.annotation"><code>Sharded</code></a> and <a href="../../../../annotation/Duplicated.html" title="annotation interface in io.micronaut.data.annotation"><code>Duplicated</code></a> annotations of an entity.</div>
 </div>
 </div>
 </div>
@@ -394,6 +407,42 @@ and potentially joined tables.</div>
 <dd>The SQL table definitions for the given entity</dd>
 <dt>Since:</dt>
 <dd>5.0.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="validateTableDistribution(io.micronaut.data.model.PersistentEntity,io.micronaut.data.model.PersistentEntity)">
+<h3>validateTableDistribution</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">validateTableDistribution</span><wbr><span class="parameters">(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity,
+ @Nullable <a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;parent)</span></div>
+<div class="block">Validates the <a href="../../../../annotation/Sharded.html" title="annotation interface in io.micronaut.data.annotation"><code>Sharded</code></a> and <a href="../../../../annotation/Duplicated.html" title="annotation interface in io.micronaut.data.annotation"><code>Duplicated</code></a> annotations of an entity.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>entity</code> - The entity</dd>
+<dd><code>parent</code> - The entity named by <a href="../../../../annotation/Sharded.html#parent()"><code>Sharded.parent()</code></a>, if any</dd>
+<dt>Throws:</dt>
+<dd><code><a href="../../../../exceptions/MappingException.html" title="class in io.micronaut.data.exceptions">MappingException</a></code> - if the annotations cannot generate a valid table</dd>
+<dt>Since:</dt>
+<dd>5.3</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="orderForDrop(io.micronaut.data.model.PersistentEntity[])">
+<h3>orderForDrop</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>[]</span>&nbsp;<span class="element-name">orderForDrop</span><wbr><span class="parameters">(<a href="../../../PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>[]&nbsp;entities)</span></div>
+<div class="block">Orders entities for dropping their tables, with the child tables of a table family before its root tables.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>entities</code> - The entities</dd>
+<dt>Returns:</dt>
+<dd>The entities in the order to drop their tables</dd>
+<dt>Since:</dt>
+<dd>5.3</dd>
 </dl>
 </div>
 </section>
