@@ -345,14 +345,7 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
         <T> Flux<T> saveAll(RuntimePersistentEntity<T> entity, Iterable<T> instances, boolean insert) {
             List<T> list = new ArrayList<>();
             instances.forEach(list::add);
-            // An instance passed twice is written once, as save() does for an instance it meets again
-            Set<T> seen = Collections.newSetFromMap(new IdentityHashMap<>());
-            List<T> distinct = new ArrayList<>(list.size());
-            for (T instance : list) {
-                if (seen.add(instance)) {
-                    distinct.add(instance);
-                }
-            }
+            List<T> distinct = distinct(list);
             if (distinct.size() < 2 || !operations.queryBuilder.supportsBatchNodeWrites() || operations.repeatsIdentifier(entity, distinct)) {
                 return Flux.fromIterable(list).concatMap(instance -> save(entity, instance, insert));
             }
@@ -368,18 +361,38 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
                 } else {
                     operation.update();
                 }
-                return operation.getEntities().collectList().flatMapMany(written -> {
-                    Map<T, T> results = new IdentityHashMap<>();
-                    for (int i = 0; i < distinct.size(); i++) {
-                        results.put(distinct.get(i), written.get(i));
-                    }
-                    List<T> ordered = new ArrayList<>(list.size());
-                    for (T instance : list) {
-                        ordered.add(results.get(instance));
-                    }
-                    return Flux.fromIterable(ordered);
-                });
+                return operation.getEntities().collectList().flatMapMany(written -> Flux.fromIterable(inOrder(list, distinct, written)));
             });
+        }
+
+        /**
+         * The instances without repeats: an instance passed twice is written once, as save() does for an instance it
+         * meets again.
+         */
+        private static <T> List<T> distinct(List<T> list) {
+            Set<T> seen = Collections.newSetFromMap(new IdentityHashMap<>());
+            List<T> distinct = new ArrayList<>(list.size());
+            for (T instance : list) {
+                if (seen.add(instance)) {
+                    distinct.add(instance);
+                }
+            }
+            return distinct;
+        }
+
+        /**
+         * The written instances in the order of the instances passed, repeats included.
+         */
+        private static <T> List<T> inOrder(List<T> list, List<T> distinct, List<T> written) {
+            Map<T, T> results = new IdentityHashMap<>();
+            for (int i = 0; i < distinct.size(); i++) {
+                results.put(distinct.get(i), written.get(i));
+            }
+            List<T> ordered = new ArrayList<>(list.size());
+            for (T instance : list) {
+                ordered.add(results.get(instance));
+            }
+            return ordered;
         }
 
         /**
