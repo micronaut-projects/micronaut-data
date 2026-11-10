@@ -490,6 +490,10 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             return buildRelationshipsQuery(definition, entity, types);
         }
         requireMaxDepth(definition);
+        if (definition.hasDifferentEndEntity()) {
+            throw new IllegalArgumentException("Oracle property graph path finders match paths between nodes of the repository entity, the end node cannot be a ["
+                + definition.endNodeEntity().getName() + "]");
+        }
         if (!sqlPgq()) {
             requireSupportedPgqlPath(definition);
         }
@@ -503,7 +507,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         }
         // SQL/PGQ iterates the steps with variables of their own, so the edge of the pattern takes another name
         String edgeVariable = sqlPgq() ? PATH_EDGE : elements ? EDGE : "";
-        String pattern = directed(node(START, entity), edge(edgeVariable, types, "") + quantifier, node(END, entity), definition.direction());
+        String pattern = pathPattern(definition, definition.direction(), node(START, entity), edge(edgeVariable, types, "") + quantifier, node(END, entity));
         query.pattern = sqlPgq() ? pattern : pathPrefix(definition.kind(), elements) + pattern;
         if (elements) {
             appendStepColumns(query, definition, entity);
@@ -575,34 +579,20 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     }
 
     private QueryResult buildRelationshipsQuery(PathQueryDefinition definition, PersistentEntity entity, String types) {
-        if (definition.relationships().size() != 1) {
-            throw new IllegalArgumentException("Relationship finders on Oracle property graphs need exactly one relationship type, for example findRelationshipsByFriends");
-        }
-        // An undirected relationship is matched in either direction once both of its ends are known
-        boolean bothEnds = definition.start() != null && definition.end() != null;
-        Direction direction = definition.direction() == Direction.UNDIRECTED && !bothEnds ? Direction.OUTGOING : definition.direction();
-        // The rows read the source and destination of the edge from s and t, so an incoming edge binds them the other way
-        String startVariable = direction == Direction.INCOMING ? END : START;
-        String endVariable = direction == Direction.INCOMING ? START : END;
+        requireSupportedRelationships(definition);
+        Direction direction = relationshipDirection(definition);
+        // The rows read the source and destination of the edge from s and t, so an incoming edge binds them the other
+        // way; the direction argument is not known here, so a bound direction asks the edge instead
+        boolean incoming = direction == Direction.INCOMING && !definition.directionBound() && definition.result() == PathQueryDefinition.Result.ELEMENTS;
+        String startVariable = incoming ? END : START;
+        String endVariable = incoming ? START : END;
         Query query = new Query(entity);
-        query.pattern = directed(node(startVariable, entity), edge("r", types, ""), node(endVariable, entity), direction);
+        query.pattern = pathPattern(definition, direction, node(startVariable, entity), edge("r", types, ""), node(endVariable, definition.endNodeEntity()));
         endpoints(query, definition, startVariable, endVariable);
         switch (definition.result()) {
             case COUNT -> query.select.add(COUNT_AS + alias(RESULT));
             case EXISTS -> query.select.add("1 AS " + alias(RESULT));
-            default -> {
-                query.entityColumns(START, entity);
-                query.entityColumns(END, entity);
-                PersistentEntity associated = definition.relationships().get(0).getAssociatedEntity();
-                if (associated != null && GraphEntities.isRelationshipEntity(associated)) {
-                    query.edgeColumns("r", associated);
-                }
-                query.column(literal(GraphEntities.relationshipType(definition.relationships().get(0))), "r" + SEPARATOR + TYPE_COLUMN);
-                if (direction == Direction.UNDIRECTED) {
-                    // s is the first argument here, which may be either end of the edge
-                    query.column("CASE WHEN " + START + " IS SOURCE OF r THEN 1 ELSE 0 END", "r" + SEPARATOR + FORWARD_COLUMN);
-                }
-            }
+            default -> appendRelationshipColumns(query, definition, direction, incoming);
         }
         if (query.select.isEmpty() || definition.result() != PathQueryDefinition.Result.ELEMENTS) {
             query.ref(property(START, identity(entity)));
@@ -612,6 +602,44 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             text += buildLimitAndOffset(1, 0);
         }
         return QueryResult.of(text, List.of(text), query.bindings, Map.of());
+    }
+
+    private static void requireSupportedRelationships(PathQueryDefinition definition) {
+        if (definition.relationships().size() != 1) {
+            throw new IllegalArgumentException("Relationship finders on Oracle property graphs need exactly one relationship type, for example findRelationshipsByFriends");
+        }
+        if (definition.relationshipEntity()) {
+            throw new IllegalArgumentException("Relationship finders on Oracle property graphs return GraphRelationship, not the relationship entity ["
+                + definition.relationships().get(0).getAssociatedEntity().getName() + "]");
+        }
+    }
+
+    /**
+     * An undirected relationship is matched in either direction once both of its ends are known, or between nodes of
+     * different entities, where the labels already keep a relationship from matching twice.
+     */
+    private static Direction relationshipDirection(PathQueryDefinition definition) {
+        boolean bothEnds = definition.start() != null && definition.end() != null;
+        if (definition.direction() == Direction.UNDIRECTED && !bothEnds && !definition.hasDifferentEndEntity()) {
+            return Direction.OUTGOING;
+        }
+        return definition.direction();
+    }
+
+    private void appendRelationshipColumns(Query query, PathQueryDefinition definition, Direction direction, boolean incoming) {
+        PersistentEntity entity = definition.entity();
+        PersistentEntity endEntity = definition.endNodeEntity();
+        query.entityColumns(START, incoming ? endEntity : entity);
+        query.entityColumns(END, incoming ? entity : endEntity);
+        PersistentEntity associated = definition.relationships().get(0).getAssociatedEntity();
+        if (associated != null && GraphEntities.isRelationshipEntity(associated)) {
+            query.edgeColumns("r", associated);
+        }
+        query.column(literal(GraphEntities.relationshipType(definition.relationships().get(0))), "r" + SEPARATOR + TYPE_COLUMN);
+        if (direction == Direction.UNDIRECTED || definition.directionBound()) {
+            // s is the first argument here, which may be either end of the edge
+            query.column("CASE WHEN " + START + " IS SOURCE OF r THEN 1 ELSE 0 END", "r" + SEPARATOR + FORWARD_COLUMN);
+        }
     }
 
     /**
@@ -642,16 +670,27 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     }
 
     private void endpoints(Query query, PathQueryDefinition definition, String startVariable, String endVariable) {
-        PersistentProperty property = definition.endpointMatchProperty();
-        io.micronaut.data.model.PersistentPropertyPath path = io.micronaut.data.model.PersistentPropertyPath.of(List.of(), property);
         if (definition.start() != null) {
+            PersistentProperty property = definition.endpointMatchProperty();
             query.and(property(startVariable, property) + " = ?");
-            query.push(definition.start(), path);
+            query.push(definition.start(), io.micronaut.data.model.PersistentPropertyPath.of(List.of(), property));
         }
         if (definition.end() != null) {
+            PersistentProperty property = definition.endEndpointMatchProperty();
             query.and(property(endVariable, property) + " = ?");
-            query.push(definition.end(), path);
+            query.push(definition.end(), io.micronaut.data.model.PersistentPropertyPath.of(List.of(), property));
         }
+    }
+
+    /**
+     * Renders the pattern of a path query, leaving the direction to the runtime when it is a method argument.
+     */
+    private static String pathPattern(PathQueryDefinition definition, Direction direction, String from, String edge, String to) {
+        if (!definition.directionBound()) {
+            return directed(from, edge, to, direction);
+        }
+        int quantifier = edge.indexOf(']') + 1;
+        return from + " " + PathQueryDefinition.PATH_LEFT_TOKEN + edge.substring(0, quantifier) + PathQueryDefinition.PATH_RIGHT_TOKEN + edge.substring(quantifier) + " " + to;
     }
 
     private String node(String variable, PersistentEntity entity) {

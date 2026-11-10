@@ -1,5 +1,6 @@
 package example
 
+import io.micronaut.data.graph.annotation.Direction
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 
@@ -67,6 +68,20 @@ class PersonRepositorySpec extends AbstractNeo4jSpec {
 
         then:
         labels == ["Actor"] as Set
+    }
+
+    void "path direction"() {
+        when:
+        // tag::pathDirection[]
+        def follows = personRepository.hasPathByFollows(fred, joe, Direction.OUTGOING)
+        def followedBy = personRepository.hasPathByFollows(joe, fred, Direction.INCOMING)
+        // end::pathDirection[]
+
+        then:
+        follows
+        followedBy
+        !personRepository.hasPathByFollows(joe, fred, Direction.OUTGOING)
+        personRepository.hasPathByFollows(joe, fred, Direction.UNDIRECTED)
     }
 
     void "link a node without saving it"() {

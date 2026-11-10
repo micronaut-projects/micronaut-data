@@ -4,6 +4,7 @@ import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.exceptions.EntityExistsException
 import io.micronaut.data.exceptions.OptimisticLockException
+import io.micronaut.data.graph.annotation.Direction
 import io.micronaut.data.graph.tck.entities.Article
 import io.micronaut.data.graph.tck.entities.Colleague
 import io.micronaut.data.graph.tck.entities.Mentorship
@@ -1178,6 +1179,166 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         and: "an incoming path follows the relationships backwards"
         personRepository.hasPathByMentorBetweenName("Barbara Liskov", "Ada Lovelace")
         !personRepository.hasPathByMentorBetweenName("Ada Lovelace", "Barbara Liskov")
+    }
+
+    @Requires({ instance.supportsRelationshipFinders() })
+    void "path finders take the direction as an argument"() {
+        given:
+        def barbara = new Person("Barbara Liskov", 1939)
+        def grace = new Person("Grace Hopper", 1906)
+        grace.mentor = barbara
+        def ada = new Person("Ada Lovelace", 1815)
+        ada.mentor = grace
+        savePerson(ada)
+
+        expect: "the argument overrides the direction of MENTORED_BY"
+        personRepository.countPathsByMentorBetweenName("Ada Lovelace", "Barbara Liskov", Direction.OUTGOING) == 1
+        personRepository.countPathsByMentorBetweenName("Ada Lovelace", "Barbara Liskov", Direction.INCOMING) == 0
+        personRepository.countPathsByMentorBetweenName("Barbara Liskov", "Ada Lovelace", Direction.INCOMING) == 1
+        personRepository.countPathsByMentorBetweenName("Barbara Liskov", "Ada Lovelace", Direction.OUTGOING) == 0
+    }
+
+    @Requires({ instance.supportsRelationshipFinders() })
+    void "relationship finders end at another entity"() {
+        given:
+        saveMovies()
+
+        expect:
+        movieRepository.countRelationshipsByDirectors() == 2
+        movieRepository.existsRelationshipByDirectorsBetweenTitleAndName("The Matrix", "Lana Wachowski")
+        !movieRepository.existsRelationshipByDirectorsBetweenTitleAndName("The Matrix", "Keanu Reeves")
+        !movieRepository.existsRelationshipByDirectorsBetweenTitleAndName("Speed", "Lana Wachowski")
+    }
+
+    @Requires({ instance.supportsRelationshipFinders() })
+    void "finders match the end node by its identity while the start node is matched by a property"() {
+        given:
+        saveMovies()
+        def lana = personRepository.findByName("Lana Wachowski").get()
+        def keanu = personRepository.findByName("Keanu Reeves").get()
+        def grace = new Person("Grace Hopper", 1906)
+        def ada = new Person("Ada Lovelace", 1815)
+        ada.mentor = grace
+        savePerson(ada)
+
+        expect:
+        movieRepository.existsRelationshipByDirectorsBetweenReleasedAndId(1999, lana.id)
+        !movieRepository.existsRelationshipByDirectorsBetweenReleasedAndId(1999, keanu.id)
+        !movieRepository.existsRelationshipByDirectorsBetweenReleasedAndId(1994, lana.id)
+        personRepository.existsPathByMentorBetweenNameAndId("Ada Lovelace", personRepository.findByName("Grace Hopper").get().id)
+        !personRepository.existsPathByMentorBetweenNameAndId("Ada Lovelace", lana.id)
+    }
+
+    @Requires({ instance.supportsRelationshipFinders() })
+    void "a direction argument leaves the ends of a relationship where the relationship has them"() {
+        given:
+        saveMovies()
+        def grace = new Person("Grace Hopper", 1906)
+        def ada = new Person("Ada Lovelace", 1815)
+        ada.mentor = grace
+        savePerson(ada)
+
+        when: "DIRECTED points from the person to the movie"
+        def directed = [Direction.INCOMING, Direction.UNDIRECTED].collect {
+            movieRepository.findRelationshipsByDirectorsBetweenTitleAndName("The Matrix", "Lana Wachowski", it)
+        }
+
+        then:
+        directed*.size() == [1, 1]
+        directed*.first()*.from()*.name == ["Lana Wachowski", "Lana Wachowski"]
+        directed*.first()*.to()*.title == ["The Matrix", "The Matrix"]
+        movieRepository.findRelationshipsByDirectorsBetweenTitleAndName("The Matrix", "Lana Wachowski", Direction.OUTGOING).isEmpty()
+
+        when: "MENTORED_BY points from the mentee to the mentor, whichever end is named first"
+        def mentored = [
+            personRepository.findRelationshipsByMentorBetweenName("Ada Lovelace", "Grace Hopper", Direction.OUTGOING),
+            personRepository.findRelationshipsByMentorBetweenName("Grace Hopper", "Ada Lovelace", Direction.INCOMING),
+            personRepository.findRelationshipsByMentorBetweenName("Grace Hopper", "Ada Lovelace", Direction.UNDIRECTED)
+        ]
+
+        then:
+        mentored*.size() == [1, 1, 1]
+        mentored*.first()*.from()*.name == ["Ada Lovelace", "Ada Lovelace", "Ada Lovelace"]
+        mentored*.first()*.to()*.name == ["Grace Hopper", "Grace Hopper", "Grace Hopper"]
+        personRepository.findRelationshipsByMentorBetweenName("Grace Hopper", "Ada Lovelace", Direction.OUTGOING).isEmpty()
+
+        and: "an undirected argument between different entities finds the relationships either way"
+        movieRepository.countRelationshipsByDirectors(Direction.UNDIRECTED) == 2
+        movieRepository.countRelationshipsByDirectors(Direction.INCOMING) == 2
+        movieRepository.countRelationshipsByDirectors(Direction.OUTGOING) == 0
+    }
+
+    @Requires({ instance.supportsRelationshipWrites() && instance.supportsPaths() })
+    void "path and relationship finders take the direction as an argument"() {
+        given:
+        saveFriends()
+
+        expect:
+        friendRepository.existsPathByFriends("Fred", "Joe", Direction.OUTGOING)
+        !friendRepository.existsPathByFriends("Joe", "Fred", Direction.OUTGOING)
+        friendRepository.existsPathByFriends("Joe", "Fred", Direction.INCOMING)
+        friendRepository.existsPathByFriends("Joe", "Fred", Direction.UNDIRECTED)
+
+        and: "an undirected argument without endpoints counts each relationship once"
+        friendRepository.countRelationshipsByFriends(Direction.OUTGOING) == 4
+        friendRepository.countRelationshipsByFriends(Direction.INCOMING) == 4
+        friendRepository.countRelationshipsByFriends(Direction.UNDIRECTED) == 4
+    }
+
+    @Requires({ instance.supportsRelationshipWrites() && instance.supportsPaths() })
+    void "relationship finders return relationship entities"() {
+        given:
+        saveMovies()
+        def keanu = personRepository.findByName("Keanu Reeves").get()
+
+        when:
+        def roles = movieRepository.findRelationshipsByRoles("The Matrix", keanu.id)
+
+        then:
+        roles.size() == 1
+        roles[0] instanceof Role
+        roles[0].id != null
+        roles[0].roles == ["Neo"]
+        roles[0].person.name == "Keanu Reeves"
+        movieRepository.findRelationshipsByRoles("Speed", keanu.id)*.roles == [["Jack Traven"]]
+        movieRepository.findRelationshipsByRoles("Speed", UUID.randomUUID()).isEmpty()
+    }
+
+    @Requires({ instance.supportsRelationshipWrites() && instance.supportsPaths() })
+    void "path and relationship finders end at another entity"() {
+        given:
+        saveMovies()
+        def keanu = personRepository.findByName("Keanu Reeves").get()
+        def lana = personRepository.findByName("Lana Wachowski").get()
+
+        when:
+        def directed = movieRepository.findRelationshipsByDirectors("The Matrix", lana.id)
+
+        then:
+        directed.size() == 1
+        directed[0].type() == "DIRECTED"
+        directed[0].from() instanceof Person
+        directed[0].from().name == "Lana Wachowski"
+        directed[0].to() instanceof Movie
+        directed[0].to().title == "The Matrix"
+
+        when:
+        def paths = movieRepository.findAllPathsToPerson("The Matrix", keanu.id)
+
+        then: "the direct path, and the paths through the other movies Keanu acted in and Lana directed"
+        paths.size() > 1
+        paths[0].length() == 1
+        paths[0].start() instanceof Movie
+        paths[0].end() instanceof Person
+        paths[0].end().name == "Keanu Reeves"
+
+        when:
+        def path = movieRepository.findShortestPathToPersonBetweenTitleAndName("Speed", "Carrie-Anne Moss")
+
+        then: "Speed, Keanu, The Matrix, Carrie-Anne"
+        path.present
+        path.get().length() == 3
+        path.get().nodes().collect { it instanceof Movie ? it.title : it.name } == ["Speed", "Keanu Reeves", "The Matrix", "Carrie-Anne Moss"]
     }
 
     @Requires({ instance.supportsRelationshipWrites() && instance.supportsPaths() })

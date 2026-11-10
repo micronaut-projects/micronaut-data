@@ -6,6 +6,7 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import jakarta.inject.Inject
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -100,6 +101,41 @@ class MovieRepositorySpec : AbstractNeo4jTest() {
         // end::nestedFetch[]
 
         assertEquals("Lana Wachowski", followed.name)
+    }
+
+    @Test
+    fun testPathsToPeople() {
+        val keanu = personRepository.findByName("Keanu Reeves")!!
+        val lana = personRepository.findByName("Lana Wachowski")!!
+
+        // tag::crossType[]
+        val directed = movieRepository.findRelationshipsByDirectors("The Matrix", lana.id!!).first()
+        val director = directed.from().name // <1>
+
+        val path = movieRepository.findShortestPathToPersonBetweenTitleAndName("Speed", "Carrie-Anne Moss")!!
+        val end = path.end() // <2>
+        // end::crossType[]
+
+        assertEquals("Lana Wachowski", director)
+        assertEquals("The Matrix", directed.to().title)
+        assertEquals(3, path.length())
+        assertEquals("Carrie-Anne Moss", (end as Person).name)
+        assertTrue(path.start() is Movie)
+        assertEquals(1, movieRepository.findAllPathsToPerson("The Matrix", keanu.id!!).first().length())
+    }
+
+    @Test
+    fun testRelationshipEntities() {
+        val keanu = personRepository.findByName("Keanu Reeves")!!
+
+        // tag::relationshipEntities[]
+        val role = movieRepository.findRelationshipsByRoles("The Matrix", keanu.id!!).first()
+        val characters = role.roles // <1>
+        val actor = role.person // <2>
+        // end::relationshipEntities[]
+
+        assertEquals(listOf("Neo"), characters)
+        assertEquals("Keanu Reeves", actor.name)
     }
 
     @Test

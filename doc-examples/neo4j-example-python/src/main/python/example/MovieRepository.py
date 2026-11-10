@@ -1,11 +1,16 @@
 # tag::repository[]
+from java.util import UUID
 from micronaut.data.annotation import Join, Query
+from micronaut.data.graph.annotation import PathLimit
+from micronaut.data.graph.model import GraphPath, GraphRelationship
 from micronaut.data.model import Page, Pageable
 from micronaut.data.neo4j.annotation import Neo4jRepository
 from micronaut.data.repository import CrudRepository
 
 from example.Movie import Movie
 from example.MovieSummary import MovieSummary
+from example.Person import Person
+from example.Role import Role
 
 
 @Neo4jRepository  # <1>
@@ -45,6 +50,20 @@ class MovieRepository(CrudRepository[Movie, str]):  # <2>
 
     def findByReleasedBetween(self, start: int, end: int) -> list[MovieSummary]: ...
     # end::projection[]
+
+    # tag::crossType[]
+    def findRelationshipsByDirectors(self, title: str, director: UUID) -> list[GraphRelationship[Person, Movie]]: ...  # <1>
+
+    @PathLimit(3)
+    def findAllPathsToPerson(self, title: str, person: UUID) -> list[GraphPath[object]]: ...  # <2>
+
+    @PathLimit(4)
+    def findShortestPathToPersonBetweenTitleAndName(self, title: str, name: str) -> GraphPath[object] | None: ...  # <3>
+    # end::crossType[]
+
+    # tag::relationshipEntities[]
+    def findRelationshipsByRoles(self, title: str, person: UUID) -> list[Role]: ...  # <1>
+    # end::relationshipEntities[]
 
     # tag::query[]
     @Query("MATCH (m:Movie)<-[:ACTED_IN]-(p:Person) WHERE p.name = $name RETURN m ORDER BY m.released")

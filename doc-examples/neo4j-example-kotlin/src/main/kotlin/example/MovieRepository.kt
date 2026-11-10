@@ -2,10 +2,14 @@ package example
 
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.annotation.Query
+import io.micronaut.data.graph.annotation.PathLimit
+import io.micronaut.data.graph.model.GraphPath
+import io.micronaut.data.graph.model.GraphRelationship
 import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.neo4j.annotation.Neo4jRepository
 import io.micronaut.data.repository.CrudRepository
+import java.util.UUID
 
 // tag::repository[]
 @Neo4jRepository // <1>
@@ -45,6 +49,20 @@ interface MovieRepository : CrudRepository<Movie, String> { // <2>
 
     fun findByReleasedBetween(from: Int, to: Int): List<MovieSummary>
     // end::projection[]
+
+    // tag::crossType[]
+    fun findRelationshipsByDirectors(title: String, director: UUID): List<GraphRelationship<Person, Movie>> // <1>
+
+    @PathLimit(3)
+    fun findAllPathsToPerson(title: String, person: UUID): List<GraphPath<Any>> // <2>
+
+    @PathLimit(4)
+    fun findShortestPathToPersonBetweenTitleAndName(title: String, name: String): GraphPath<Any>? // <3>
+    // end::crossType[]
+
+    // tag::relationshipEntities[]
+    fun findRelationshipsByRoles(title: String, person: UUID): List<Role> // <1>
+    // end::relationshipEntities[]
 
     // tag::query[]
     @Query("MATCH (m:Movie)<-[:ACTED_IN]-(p:Person) WHERE p.name = \$name RETURN m ORDER BY m.released")
