@@ -36,6 +36,8 @@ interface MovieRepository extends CrudRepository<Movie, String> {
     boolean existsByTitle(String title);
     List<Movie> findByDirectorsName(String name);
     List<Movie> findByDirectorsNameOrderByDirectorsBorn(String name);
+    List<Movie> findByDirectorsIsEmpty();
+    List<Movie> findByRolesIsNotEmpty();
     @Join("directors")
     List<Movie> findByReleasedOrderByDirectorsNameDesc(Integer released);
     List<Movie> findByRolesPersonName(String name);
@@ -127,6 +129,8 @@ interface PersonRepository extends CrudRepository<Person, String> {
         'existsByTitle'                            | 1     | 'MATCH (n:Movie) WHERE n.title = $p0 RETURN true AS result LIMIT 1'
         'findByDirectorsName'                      | 1     | 'MATCH (n:Movie), (n)<-[:DIRECTED]-(a0:Person:Actor) WHERE a0.name = $p0 WITH DISTINCT n RETURN n'
         'findByDirectorsNameOrderByDirectorsBorn'  | 1     | 'MATCH (n:Movie), (n)<-[:DIRECTED]-(a0:Person:Actor) WHERE a0.name = $p0 WITH n, min(a0.born) AS o0 RETURN n ORDER BY o0 ASC'
+        'findByDirectorsIsEmpty'                   | 0     | 'MATCH (n:Movie) WHERE NOT (n)<-[:DIRECTED]-() RETURN n'
+        'findByRolesIsNotEmpty'                    | 0     | 'MATCH (n:Movie) WHERE (n)<-[:ACTED_IN]-() RETURN n'
         'findByReleasedOrderByDirectorsNameDesc'   | 1     | 'MATCH (n:Movie) WHERE n.released = $p0 OPTIONAL MATCH (n)<-[:DIRECTED]-(a0:Person:Actor) WITH n, max(a0.name) AS o0 OPTIONAL MATCH (n)<-[:DIRECTED]-(j0:Person:Actor) WITH n, o0, collect(j0) AS j_directors RETURN n, j_directors ORDER BY o0 DESC'
         'findByRolesPersonName'                    | 1     | 'MATCH (n:Movie), (n)<-[ar0:ACTED_IN]-(a0:Person:Actor) WHERE a0.name = $p0 WITH DISTINCT n RETURN n'
         'findByRoles'                              | 1     | 'MATCH (n:Movie), (n)<-[ar0:ACTED_IN]-(a0:Person:Actor) WHERE elementId(ar0) = $p0 WITH DISTINCT n RETURN n'
@@ -573,9 +577,9 @@ interface LikeRepository extends CrudRepository<Movie, String> {
         e.message.contains('LIKE is not supported by graph repositories')
     }
 
-    void "test joins deeper than one relationship are rejected"() {
+    void "test joins deeper than one relationship fetch nested nodes"() {
         when:
-        buildRepository('test.DeepRepository', """
+        def repository = buildRepository('test.DeepRepository', """
 $MOVIES
 
 @TestGraphRepository
@@ -586,8 +590,61 @@ interface DeepRepository extends CrudRepository<Movie, String> {
 """)
 
         then:
-        def e = thrown(RuntimeException)
-        e.message.contains('can only join direct relationships')
+        getQuery(findMethod(repository, 'findByReleased', 1)) == 'MATCH (n:Movie) WHERE n.released = $p0 OPTIONAL MATCH (n)<-[:DIRECTED]-(j0:Person:Actor) OPTIONAL MATCH (j0)-[:FOLLOWS]->(j0_0n:Person:Actor) WITH n, j0, collect(DISTINCT j0_0n) AS j0_0 WITH n, collect(DISTINCT CASE WHEN j0 IS NULL THEN NULL ELSE {node: j0, nested: {mentor: j0_0}} END) AS j_directors RETURN n, j_directors'
+    }
+
+    void "test nested joins that share a relationship fetch every branch"() {
+        when:
+        def repository = buildRepository('test.BranchRepository', """
+@Node
+class Film {
+    @Id
+    private String title;
+    @Relationship(type = "DIRECTED", direction = Direction.INCOMING)
+    private List<Director> directors = new ArrayList<>();
+
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    public List<Director> getDirectors() { return directors; }
+    public void setDirectors(List<Director> directors) { this.directors = directors; }
+}
+
+@Node
+class Director {
+    @Id
+    private String name;
+    @Relationship("FOLLOWS")
+    private Director mentor;
+    @Relationship("WON")
+    private List<Award> awards = new ArrayList<>();
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public Director getMentor() { return mentor; }
+    public void setMentor(Director mentor) { this.mentor = mentor; }
+    public List<Award> getAwards() { return awards; }
+    public void setAwards(List<Award> awards) { this.awards = awards; }
+}
+
+@Node
+class Award {
+    @Id
+    private String name;
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+}
+
+@TestGraphRepository
+interface BranchRepository extends CrudRepository<Film, String> {
+    @Join("directors.mentor")
+    @Join("directors.awards")
+    List<Film> findByTitle(String title);
+}
+""")
+
+        then:
+        getQuery(findMethod(repository, 'findByTitle', 1)) == 'MATCH (n:Film) WHERE n.title = $p0 OPTIONAL MATCH (n)<-[:DIRECTED]-(j0:Director) OPTIONAL MATCH (j0)-[:WON]->(j0_0n:Award) WITH n, j0, collect(DISTINCT j0_0n) AS j0_0 OPTIONAL MATCH (j0)-[:FOLLOWS]->(j0_1n:Director) WITH n, j0, j0_0, collect(DISTINCT j0_1n) AS j0_1 WITH n, collect(DISTINCT CASE WHEN j0 IS NULL THEN NULL ELSE {node: j0, nested: {awards: j0_0, mentor: j0_1}} END) AS j_directors RETURN n, j_directors'
     }
 
     private static ExecutableMethod<?, ?> findMethod(BeanDefinition<?> definition, String name, int arity) {

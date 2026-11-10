@@ -24,7 +24,7 @@ class BuildOracleQuerySpec extends AbstractGraphDataSpec {
 $MOVIES
 
 @TestOracleRepository
-@PropertyGraph("movies")
+@PropertyGraph(value = "movies", language = PropertyGraph.QueryLanguage.PGQL)
 interface PgqlRepository extends GenericRepository<Movie, String> {
     Optional<Movie> findById(String id);
     List<Movie> findByReleasedGreaterThanOrderByReleased(int year);
@@ -305,7 +305,7 @@ class Cast {
 }
 
 @TestOracleRepository
-@PropertyGraph("movies")
+@PropertyGraph(value = "movies", language = PropertyGraph.QueryLanguage.PGQL)
 interface CastRepository extends GenericRepository<Cast, String> {
     List<Cast> findByCameosIsNotNull();
 }
@@ -457,7 +457,7 @@ class Follower {
 }
 
 @TestOracleRepository
-@PropertyGraph("people")
+@PropertyGraph(value = "people", language = PropertyGraph.QueryLanguage.PGQL)
 interface FollowerRepository extends GenericRepository<Follower, String> {
     List<GraphRelationship<Follower, Follower>> findRelationshipsByFollowers(String from, String to);
     List<GraphRelationship<Follower, Follower>> findRelationshipsByKnown(String from, String to);
@@ -498,26 +498,27 @@ interface UnsupportedRepository extends GenericRepository<Movie, String> {
 
         where:
         description            | language                                              | method                                                              | message
-        'PGQL paths'           | ''                                                    | '@PathLimit(3) Optional<GraphPath<Movie>> findShortestPath(String from, String to);' | 'PGQL path queries cannot bind parameters'
-        'PGQL path counts'     | ''                                                    | '@PathLimit(3) long countPaths(String from, String to);'            | 'PGQL path queries cannot bind parameters'
-        'PGQL all shortest'    | ''                                                    | '@PathLimit(3) List<GraphPath<Movie>> findAllShortestPaths(String from, String to);' | 'ALL SHORTEST is not supported by PGQL'
-        'IsEmpty on a relationship' | ''                                               | 'List<Movie> findByDirectorsIsEmpty();'                             | 'Expected a string expression'
+        'PGQL paths'           | ', language = PropertyGraph.QueryLanguage.PGQL'        | '@PathLimit(3) Optional<GraphPath<Movie>> findShortestPath(String from, String to);' | 'PGQL path queries cannot bind parameters'
+        'PGQL path counts'     | ', language = PropertyGraph.QueryLanguage.PGQL'        | '@PathLimit(3) long countPaths(String from, String to);'            | 'PGQL path queries cannot bind parameters'
+        'PGQL all shortest'    | ', language = PropertyGraph.QueryLanguage.PGQL'        | '@PathLimit(3) List<GraphPath<Movie>> findAllShortestPaths(String from, String to);' | 'ALL SHORTEST is not supported by PGQL'
+        'IsEmpty on a relationship' | ''                                               | 'List<Movie> findByDirectorsIsEmpty();'                             | 'using @Query instead'
+        'IsEmpty on a relationship in PGQL' | ', language = PropertyGraph.QueryLanguage.PGQL' | 'List<Movie> findByDirectorsIsEmpty();'                        | 'using @Query instead'
         'IsEmpty on a relationship identifier' | ''                                    | 'List<Movie> findByDirectorsIdIsEmpty();'                           | 'Testing that a relationship is absent is not supported for Oracle property graphs'
         'IsNull on a relationship' | ''                                                | 'List<Movie> findByDirectorsIsNull();'                              | 'Testing that a relationship is absent is not supported for Oracle property graphs'
         'IsNull on a relationship entity' | ', language = PropertyGraph.QueryLanguage.SQL_PGQ' | 'List<Movie> findByRolesIsNull();'                       | 'Testing that a relationship is absent is not supported for Oracle property graphs'
         'IsNull on a nested to-one relationship' | ''                                  | 'List<Movie> findByDirectorsMentorIsNull();'                        | 'Testing that a relationship is absent is not supported for Oracle property graphs'
         'sort on a relationship' | ''                                                  | 'List<Movie> findByReleasedOrderByDirectorsBorn(Integer released);' | 'Sorting on a relationship is not supported for Oracle property graphs'
         'sort on a bound relationship' | ', language = PropertyGraph.QueryLanguage.SQL_PGQ' | 'List<Movie> findByDirectorsNameOrderByDirectorsBorn(String name);' | 'Sorting on a relationship is not supported for Oracle property graphs'
-        'LIKE in PGQL'         | ''                                                    | 'List<Movie> findByTitleStartsWith(String prefix);'                 | 'PGQL has no LIKE'
+        'LIKE in PGQL'         | ', language = PropertyGraph.QueryLanguage.PGQL'                                                    | 'List<Movie> findByTitleStartsWith(String prefix);'                 | 'PGQL has no LIKE'
         'fetch joins'          | ''                                                    | '@Join("directors") List<Movie> findByReleased(Integer released);' | 'not supported for Oracle property graphs'
         'shortest paths in SQL/PGQ' | ', language = PropertyGraph.QueryLanguage.SQL_PGQ' | '@PathLimit(3) Optional<GraphPath<Movie>> findShortestPath(String from, String to);' | 'Shortest paths are not supported by the SQL/PGQ dialect'
         'any-type paths in SQL/PGQ' | ', language = PropertyGraph.QueryLanguage.SQL_PGQ' | '@PathLimit(3) List<GraphPath<Movie>> findAllPaths(String from, String to);' | 'Paths over any relationship type are not supported by the SQL/PGQ dialect'
         'unbounded paths'      | ''                                                    | 'Optional<GraphPath<Movie>> findShortestPath(String from, String to);' | 'need a maximum depth'
     }
 
-    void "test schemaless properties are rejected"() {
+    void "test schemaless properties are read from a JSON column"() {
         when:
-        buildRepository('test.PetRepository', """
+        def repository = buildRepository('test.PetRepository', """
 import io.micronaut.data.graph.annotation.DynamicAttributes;
 import java.util.Map;
 
@@ -535,15 +536,14 @@ class Pet {
 }
 
 @TestOracleRepository
-@PropertyGraph("pets")
+@PropertyGraph(value = "pets", language = PropertyGraph.QueryLanguage.SQL_PGQ)
 interface PetRepository extends GenericRepository<Pet, String> {
     List<Pet> findByName(String name);
 }
 """)
 
         then:
-        def e = thrown(RuntimeException)
-        e.message.contains('Schemaless properties and dynamic labels are not supported by Oracle property graphs')
+        getQuery(findMethod(repository, 'findByName')) == '''SELECT * FROM GRAPH_TABLE (pets MATCH (n IS Pet) WHERE (n.name = ?) COLUMNS (n.name AS "n__ID_", n.name AS "n__name", 'Pet' AS "n__LABEL_", n.attributes AS "n__DYN_"))'''
     }
 
     void "test IsNull on a to-one relationship is rejected"() {

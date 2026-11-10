@@ -16,6 +16,7 @@ dependencies {
 
     compileOnly(mnSql.jakarta.persistence.api)
 
+    testImplementation mnSerde.micronaut.serde.jackson
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor projects.micronautDataProcessor
     testImplementation(mnSql.jakarta.persistence.api)

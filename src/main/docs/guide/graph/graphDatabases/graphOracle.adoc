@@ -17,8 +17,8 @@ snippet::example.TransferView[project-base="doc-examples/oracle-graph-example", 
 
 The query language is one of:
 
-`PGQL`:: The default. Queries are compiled to https://pgql-lang.org[PGQL] and need a data source that uses the PGQL JDBC driver from `com.oracle.database.graph:opg-pgql-jdbc`. Path finders fail at build time: they bind their endpoints as parameters, and Oracle documents that a PGQL path query with bind variables fails on a property graph in the database.
-`SQL_PGQ`:: Queries are compiled to SQL/PGQ `GRAPH_TABLE` queries, which run on any Oracle Database 23ai data source. Path finders check for paths and count them, with `existsPath` and `countPaths`, and `findAllPaths` returns every path up to the maximum depth, shortest first, on a release whose `GRAPH_TABLE` supports `ONE ROW PER STEP`, such as Oracle AI Database 26ai. Shortest path finders fail at build time, as `GRAPH_TABLE` has no shortest path search. A path takes each relationship once, as in Cypher, and a path over several relationship types names them after `By`, as SQL/PGQ cannot read the label of an edge. `StartsWith`, `EndsWith` and `Contains` are supported through `LIKE`.
+`SQL_PGQ`:: The default. Queries are compiled to SQL/PGQ `GRAPH_TABLE` queries, which run on any Oracle Database 23ai data source. Path finders check for paths and count them, with `existsPath` and `countPaths`, and `findAllPaths` returns every path up to the maximum depth, shortest first, on a release whose `GRAPH_TABLE` supports `ONE ROW PER STEP`, such as Oracle AI Database 26ai. Shortest path finders fail at build time, as `GRAPH_TABLE` has no shortest path search. A path takes each relationship once, as in Cypher, and a path over several relationship types names them after `By`, as SQL/PGQ cannot read the label of an edge. `StartsWith`, `EndsWith` and `Contains` are supported through `LIKE`.
+`PGQL`:: Queries are compiled to https://pgql-lang.org[PGQL], which only runs on a data source that uses the PGQL JDBC driver from `com.oracle.database.graph:opg-pgql-jdbc`, with a URL that starts with `jdbc:oracle:pgql:`. Running a PGQL query on another data source fails with a `DataAccessException`. Path finders fail at build time: they bind their endpoints as parameters, and Oracle documents that a PGQL path query with bind variables fails on a property graph in the database.
 
 Path finders need a maximum depth set with ann:data.graph.annotation.PathLimit[], either on the method or on an `int` parameter, whose argument is capped by `micronaut.data.graph.max-path-depth` as described in <<graphPaths, Paths and Shortest Paths>>. Relationship finders need a single relationship type. An undirected relationship finder returns each relationship with the nodes it starts and ends at as stored in its edge table, whichever argument matched which end, as Neo4j does.
 
@@ -74,7 +74,10 @@ CREATE OR REPLACE PROPERTY GRAPH bank_graph
     SOURCE KEY ("ACCOUNTID") REFERENCES "ACCOUNTS" ("ID")
     DESTINATION KEY ("TOID") REFERENCES "ACCOUNTS" ("ID")
     LABEL TRANSFERS PROPERTIES ("ID", "AMOUNT"))
+  OPTIONS (ALLOW MIXED PROPERTY TYPES)
 ----
+
+The generated graphs allow mixed property types, so tables may map a property name, such as `ID`, to different column types. `ALLOW MIXED PROPERTY TYPES` needs Oracle Database 23.4 or later: when the data source configures an older dialect version, with `datasources.default.dialect-options.version`, schema generation fails at startup with a message that says so rather than leaving the graph uncreated.
 
 `CREATE_DROP` drops the property graphs before the tables, with `IF EXISTS`; a drop that fails, for example because another table has a foreign key to a vertex table, is logged as a warning. With `CREATE`, existing tables are kept and each property graph is replaced, so it follows changes to the entities. Graph repositories save nodes only, so rows of edge tables are written with SQL or a ann:data.jdbc.annotation.JdbcRepository[] over an entity of the edge table, which also supplies the identifier of a relationship entity. `VALIDATE` does not check the tables of graph entities.
 
@@ -109,7 +112,7 @@ snippet::example.BankGraphSpec[project-base="doc-examples/oracle-graph-r2dbc-exa
 <2> Then stream the accounts that sent a transfer of more than 1000.
 <3> Block only to read the result in the test.
 
-Graph queries and node writes run in the same reactive connection, and join the transaction of a reactive `@Transactional` method. The build fails on a method that does not return a reactive or asynchronous type, inherited methods included. The module can sit beside `micronaut-data-oracle-graph` in one application as long as the data source and the connection factory have different names, as Micronaut Data JDBC and R2DBC beans of the same name clash, see https://github.com/micronaut-projects/micronaut-data/issues/4274[#4274].
+Graph queries and node writes run in the same reactive connection, and join the transaction of a reactive `@Transactional` method. As with any R2DBC repository, a transaction whose subscription is cancelled commits what it wrote so far. The build fails on a method that does not return a reactive or asynchronous type, inherited methods included. The module can sit beside `micronaut-data-oracle-graph` in one application as long as the data source and the connection factory have different names, as Micronaut Data JDBC and R2DBC beans of the same name clash, see https://github.com/micronaut-projects/micronaut-data/issues/4274[#4274].
 
 [[graphOracleR2dbcSchema]]
 === Generating the schema with R2DBC

@@ -22,8 +22,12 @@ import io.micronaut.data.graph.runtime.GraphEdge;
 import io.micronaut.data.graph.runtime.GraphNode;
 import io.micronaut.data.graph.runtime.GraphPathValue;
 import io.micronaut.data.graph.runtime.GraphRecord;
+import io.micronaut.data.graph.runtime.age.Agtype;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -32,6 +36,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 /**
@@ -45,6 +51,11 @@ import java.util.regex.Pattern;
 public final class OracleGraphRows {
 
     private static final String SEPARATOR = OracleGraphQueryBuilder.SEPARATOR;
+    private static final Logger LOG = LoggerFactory.getLogger(OracleGraphRows.class);
+    /**
+     * The schemaless properties hidden by a column, by label, that a warning has been logged for.
+     */
+    private static final Set<String> HIDDEN_ATTRIBUTES = ConcurrentHashMap.newKeySet();
     private static final Pattern NOT_IN = Pattern.compile("(?i)\\bNOT\\s+IN\\s*\\(\\s*$");
 
     private OracleGraphRows() {
@@ -124,6 +135,16 @@ public final class OracleGraphRows {
             }
             flattened.addAll(collection);
         }
+    }
+
+    /**
+     * Whether a column holds the schemaless properties of a node, which drivers read as JSON text.
+     *
+     * @param column The column label
+     * @return Whether to read the column as a string
+     */
+    public static boolean isJsonText(String column) {
+        return column.endsWith(SEPARATOR + OracleGraphQueryBuilder.DYNAMIC_ATTRIBUTES_COLUMN);
     }
 
     /**
@@ -262,11 +283,46 @@ public final class OracleGraphRows {
         Object label = fields.get(OracleGraphQueryBuilder.LABEL_COLUMN);
         Map<String, Object> properties = new LinkedHashMap<>();
         fields.forEach((name, value) -> {
-            if (!name.equals(OracleGraphQueryBuilder.ID_COLUMN) && !name.equals(OracleGraphQueryBuilder.LABEL_COLUMN)) {
+            if (!name.equals(OracleGraphQueryBuilder.ID_COLUMN) && !name.equals(OracleGraphQueryBuilder.LABEL_COLUMN)
+                && !name.equals(OracleGraphQueryBuilder.DYNAMIC_ATTRIBUTES_COLUMN)) {
                 properties.put(name, value);
             }
         });
+        dynamicAttributes(fields.get(OracleGraphQueryBuilder.DYNAMIC_ATTRIBUTES_COLUMN)).forEach((name, value) -> {
+            if (!properties.containsKey(name)) {
+                properties.put(name, value);
+            } else if (HIDDEN_ATTRIBUTES.add(label + "." + name) && LOG.isWarnEnabled()) {
+                // Writes reject such a key, so it was written another way, or the column was added later: the
+                // declared column wins, also when it is null
+                LOG.warn("Schemaless property [{}] of a [{}] vertex has the name of a column and is ignored", name, label);
+            }
+        });
         return new GraphNode(id == null ? rowIndex : id, label == null ? List.of() : List.of(label.toString()), properties);
+    }
+
+    /**
+     * Reads the JSON object of the schemaless properties of a node. The driver returns the JSON column as text or as
+     * an {@code oracle.sql.json.OracleJsonObject}, whose string form is its JSON text.
+     */
+    private static Map<String, Object> dynamicAttributes(@Nullable Object json) {
+        if (json == null) {
+            return Map.of();
+        }
+        String text = json instanceof byte[] bytes ? new String(bytes, StandardCharsets.UTF_8) : json.toString();
+        int length = text.length();
+        // agtype text is a superset of JSON
+        if (Agtype.parse(text) instanceof Map<?, ?> map) {
+            Map<String, Object> attributes = new LinkedHashMap<>();
+            map.forEach((key, value) -> {
+                // A property set to null was removed
+                if (value != null) {
+                    attributes.put(key.toString(), value);
+                }
+            });
+            return attributes;
+        }
+        // The column holds row data, which may be personal, so only its length is reported
+        throw new IllegalStateException("Expected a JSON object of schemaless properties, found a value of " + length + " characters");
     }
 
     private static Map<String, Map<String, @Nullable Object>> group(List<String> columns, List<@Nullable Object> row) {

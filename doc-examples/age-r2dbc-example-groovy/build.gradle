@@ -1,0 +1,37 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
+plugins {
+    id "groovy"
+    id "io.micronaut.build.internal.data-example"
+    id "io.micronaut.test-resources"
+}
+
+application {
+    mainClass = "example.Application"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+    testRuntime "spock"
+    testResources {
+        enabled = true
+        inferClasspath = false
+        additionalModules.add(KnownModules.R2DBC_POSTGRESQL)
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
+}
+
+dependencies {
+    compileOnly projects.micronautDataProcessor // Override app plugin version
+    compileOnly projects.micronautDataGraphProcessor
+
+    implementation projects.micronautDataPostgresAgeR2dbc
+    implementation(mnSql.jakarta.persistence.api)
+
+    runtimeOnly mnR2dbc.r2dbc.postgresql
+    runtimeOnly mnLogging.logback.classic
+
+    testResourcesService mnR2dbc.r2dbc.postgresql
+}

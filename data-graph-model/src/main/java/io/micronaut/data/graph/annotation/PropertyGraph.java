@@ -39,16 +39,17 @@ public @interface PropertyGraph {
     String value() default "";
 
     /**
-     * @return The query language
+     * @return The query language, SQL/PGQ by default
      */
-    QueryLanguage language() default QueryLanguage.PGQL;
+    QueryLanguage language() default QueryLanguage.SQL_PGQ;
 
     /**
      * Query languages of property graphs defined over tables.
      */
     enum QueryLanguage {
         /**
-         * PGQL, run through the PGQL JDBC driver.
+         * PGQL, which only runs on a data source that uses the PGQL JDBC driver, whose URL starts with
+         * {@code jdbc:oracle:pgql:}.
          *
          * <p>Path finders are rejected at compile time, as they bind their endpoints as parameters and Oracle documents
          * that a PGQL path query with bind variables fails on a property graph in the database. Use {@link #SQL_PGQ}

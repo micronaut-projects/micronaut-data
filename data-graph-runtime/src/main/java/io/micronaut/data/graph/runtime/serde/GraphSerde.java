@@ -222,20 +222,48 @@ public final class GraphSerde {
         boolean relationshipEntity = GraphEntities.isRelationshipEntity(associated);
         List<Object> views = new ArrayList<>(items.size());
         for (Object item : items) {
-            if (item == null) {
-                continue;
-            }
-            if (relationshipEntity && item instanceof Map<?, ?> pair
-                && pair.get(CypherQueryBuilder.REL_KEY) instanceof GraphEdge edge) {
-                views.add(edgeView(associated, edge, pair.get(CypherQueryBuilder.NODE_KEY) instanceof GraphNode target ? target : null, schemaless));
-            } else if (item instanceof GraphNode node) {
-                views.add(nodeView(associated, node, null, schemaless));
+            Object view = fetchedItem(associated, relationshipEntity, item, schemaless);
+            if (view != null) {
+                views.add(view);
             }
         }
         if (association.getKind().isSingleEnded()) {
             return views.isEmpty() ? null : views.get(0);
         }
         return views;
+    }
+
+    /**
+     * The object view of one fetched value: a relationship with its target node, a node with its own fetched
+     * relationships, or a node.
+     */
+    private @Nullable Object fetchedItem(RuntimePersistentEntity<?> associated, boolean relationshipEntity, @Nullable Object item, Schemaless schemaless) {
+        if (relationshipEntity && item instanceof Map<?, ?> pair && pair.get(CypherQueryBuilder.REL_KEY) instanceof GraphEdge edge) {
+            return edgeView(associated, edge, pair.get(CypherQueryBuilder.NODE_KEY) instanceof GraphNode target ? target : null, schemaless);
+        }
+        if (item instanceof Map<?, ?> tree && tree.get(CypherQueryBuilder.NODE_KEY) instanceof GraphNode node) {
+            return nestedView(associated, node, tree, schemaless);
+        }
+        if (item instanceof GraphNode node) {
+            return nodeView(associated, node, null, schemaless);
+        }
+        return null;
+    }
+
+    /**
+     * The object view of a node fetched with the relationships of its own: the nodes of each nested relationship are
+     * held by a map of their own, under the name of the relationship.
+     */
+    private Map<String, @Nullable Object> nestedView(RuntimePersistentEntity<?> entity, GraphNode node, Map<?, ?> tree, Schemaless schemaless) {
+        Map<String, @Nullable Object> view = nodeView(entity, node, null, schemaless);
+        if (tree.get(CypherQueryBuilder.NESTED_KEY) instanceof Map<?, ?> nested) {
+            for (RuntimePersistentProperty<?> property : entity.getPersistentProperties()) {
+                if (property instanceof RuntimeAssociation<?> association && nested.containsKey(association.getName())) {
+                    view.put(association.getName(), fetched(association, nested.get(association.getName()), schemaless));
+                }
+            }
+        }
+        return view;
     }
 
     /**

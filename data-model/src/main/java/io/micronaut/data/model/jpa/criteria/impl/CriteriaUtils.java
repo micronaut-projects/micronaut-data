@@ -97,6 +97,17 @@ public final class CriteriaUtils {
         throw new IllegalStateException("Expected a numeric expression! Got: " + expression.getExpressionType().getName());
     }
 
+    /**
+     * Whether an expression is a collection, an array or a map.
+     *
+     * @param exp The expression
+     * @return True for a collection, an array or a map
+     * @since 5.3.0
+     */
+    public static boolean isCollectionExpression(Expression<?> exp) {
+        return requireIExpression(exp).getExpressionType().isCollection();
+    }
+
     public static IExpression<String> requireStringExpression(Expression<?> exp) {
         IExpression expression = requireIExpression(exp);
         if (expression instanceof ParameterExpression || expression.getExpressionType().isTextual()) {

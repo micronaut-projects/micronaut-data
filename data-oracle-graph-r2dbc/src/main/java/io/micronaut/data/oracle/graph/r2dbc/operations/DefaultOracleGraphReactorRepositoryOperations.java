@@ -122,12 +122,14 @@ final class DefaultOracleGraphReactorRepositoryOperations extends AbstractReacti
         return Mono.error(new UnsupportedOperationException(DECLARE_METHOD));
     }
 
-    // Writes run as SQL on the vertex tables through Micronaut Data R2DBC, in the same connection and transaction
+    // Writes run as SQL on the vertex tables through Micronaut Data R2DBC, in the same connection and transaction.
+    // Schemaless properties go to a JSON column, so a key that names a declared column is rejected up front
 
     @Override
     public <T> Mono<T> persist(InsertOperation<T> operation) {
         return Mono.defer(() -> {
             OracleGraphQueryBuilder.checkVertexWrite(operations.getEntity(operation.getRootEntity()), operation.getEntity());
+            checkDynamicAttributes(operation.getRootEntity(), List.of(operation.getEntity()));
             return r2dbcOperations.persist(operation);
         });
     }
@@ -136,6 +138,7 @@ final class DefaultOracleGraphReactorRepositoryOperations extends AbstractReacti
     public <T> Flux<T> persistAll(InsertBatchOperation<T> operation) {
         return Flux.defer(() -> {
             checkVertexWrites(operation.getRootEntity(), operation);
+            checkDynamicAttributes(operation.getRootEntity(), operation);
             return r2dbcOperations.persistAll(operation);
         });
     }
@@ -144,6 +147,7 @@ final class DefaultOracleGraphReactorRepositoryOperations extends AbstractReacti
     public <T> Mono<T> update(UpdateOperation<T> operation) {
         return Mono.defer(() -> {
             OracleGraphQueryBuilder.checkVertexWrite(operations.getEntity(operation.getRootEntity()), operation.getEntity());
+            checkDynamicAttributes(operation.getRootEntity(), List.of(operation.getEntity()));
             return r2dbcOperations.update(operation);
         });
     }
@@ -152,6 +156,7 @@ final class DefaultOracleGraphReactorRepositoryOperations extends AbstractReacti
     public <T> Flux<T> updateAll(UpdateBatchOperation<T> operation) {
         return Flux.defer(() -> {
             checkVertexWrites(operation.getRootEntity(), operation);
+            checkDynamicAttributes(operation.getRootEntity(), operation);
             return r2dbcOperations.updateAll(operation);
         });
     }
@@ -264,8 +269,9 @@ final class DefaultOracleGraphReactorRepositoryOperations extends AbstractReacti
             List<@Nullable Object> rowValues = new ArrayList<>();
             List<? extends ColumnMetadata> columnMetadatas = metadata.getColumnMetadatas();
             for (int i = 0; i < columnMetadatas.size(); i++) {
-                columns.add(columnMetadatas.get(i).getName());
-                rowValues.add(normalize(row.get(i)));
+                String column = columnMetadatas.get(i).getName();
+                columns.add(column);
+                rowValues.add(OracleGraphRows.isJsonText(column) ? row.get(i, String.class) : normalize(row.get(i)));
             }
             if (columns.contains(OracleGraphQueryBuilder.PATH_MATCH_COLUMN)) {
                 throw new IllegalStateException("Paths are returned by PGQL queries, which are not available over R2DBC");

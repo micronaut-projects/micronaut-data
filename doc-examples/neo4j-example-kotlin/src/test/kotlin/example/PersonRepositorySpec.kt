@@ -72,4 +72,10 @@ class PersonRepositorySpec : AbstractNeo4jTest() {
 
         assertEquals(setOf("Actor"), labels)
     }
+
+    @Test
+    fun testPathOptions() {
+        assertEquals("Joe", personRepository.findShortestPathByFollowsBetweenName("Fred", "Joe", 3)!!.end().name)
+        assertTrue(personRepository.existsPathByFollowsBetweenName("Joe", "Fred"))
+    }
 }

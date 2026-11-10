@@ -115,6 +115,10 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      */
     public static final String NODE_KEY = "node";
     /**
+     * The key of the nested relationships, by property name, in a node collected with the relationships of its own.
+     */
+    public static final String NESTED_KEY = "nested";
+    /**
      * The parameter name prefix.
      */
     public static final String PARAMETER_PREFIX = "p";
@@ -175,6 +179,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      */
     public static final String ROW_PROPERTIES = "properties";
     private static final String WITH = " WITH ";
+    private static final String OPTIONAL_MATCH = " OPTIONAL MATCH ";
     private static final String WITH_DISTINCT = " WITH DISTINCT ";
     private static final String DISTINCT = "DISTINCT ";
     private static final String TO_LOWER = "toLower(";
@@ -621,17 +626,18 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      * A versioned write locks the nodes like {@link #buildUpdateVersionedNodeQuery(PersistentEntity, List)}, then
      * collects them and writes them only when every row still has its version, so that it writes all nodes or none.
      *
-     * @param entity    The entity
-     * @param idPresent Whether the nodes have identifiers
-     * @param versioned Whether the nodes are only updated while they still have the version they were read with
+     * @param entity        The entity
+     * @param propertyNames The stored names of the properties every node of the batch writes
+     * @param idPresent     Whether the nodes have identifiers
+     * @param versioned     Whether the nodes are only updated while they still have the version they were read with
      * @return The query
      */
     @Override
-    public String buildWriteNodesQuery(PersistentEntity entity, boolean idPresent, boolean versioned) {
+    public String buildWriteNodesQuery(PersistentEntity entity, List<String> propertyNames, boolean idPresent, boolean versioned) {
         PersistentProperty identity = entity.hasIdentity() ? entity.getIdentity() : null;
         StringBuilder query = new StringBuilder(UNWIND_ROWS);
         appendNodesClause(query, entity, identity, idPresent, versioned);
-        return appendSetRowProperties(query, identity);
+        return appendSetRowProperties(query, identity, propertyNames);
     }
 
     /**
@@ -640,10 +646,10 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      * {@link #buildInsertNodeQuery(PersistentEntity, List)}: the query writes all nodes or none.
      */
     @Override
-    public String buildInsertNodesQuery(PersistentEntity entity) {
+    public String buildInsertNodesQuery(PersistentEntity entity, List<String> propertyNames) {
         PersistentProperty identity = entity.hasIdentity() ? entity.getIdentity() : null;
         if (identity == null || GraphEntities.isNativeId(identity)) {
-            return buildWriteNodesQuery(entity, false, false);
+            return buildWriteNodesQuery(entity, propertyNames, false, false);
         }
         String labels = labelExpression(entity);
         StringBuilder query = new StringBuilder("OPTIONAL MATCH (").append(EXISTING).append(labels).append(CLOSE_WHERE)
@@ -652,13 +658,13 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             .append(WITH).append(COUNT_OPEN).append(EXISTING).append(") AS found WHERE found = 0 ").append(UNWIND_ROWS)
             .append(CREATE_OPEN).append(ROOT).append(labels).append(" {")
             .append(GraphEntities.escapeName(GraphEntities.propertyName(identity))).append(": ").append(ROW).append('.').append(ID_PARAMETER).append("})");
-        return appendSetRowProperties(query, identity);
+        return appendSetRowProperties(query, identity, propertyNames);
     }
 
-    private String appendSetRowProperties(StringBuilder query, @Nullable PersistentProperty identity) {
+    private String appendSetRowProperties(StringBuilder query, @Nullable PersistentProperty identity, List<String> propertyNames) {
         String idColumn = identity == null ? "null" : identityExpression(identity, ROOT);
-        return query.append(SET).append(ROOT).append(" += ").append(ROW).append('.').append(ROW_PROPERTIES)
-            .append(RETURN).append(ROW).append('.').append(ROW_POSITION).append(" AS ").append(ROW_POSITION).append(", ")
+        appendBatchProperties(query, ROW, propertyNames);
+        return query.append(RETURN).append(ROW).append('.').append(ROW_POSITION).append(" AS ").append(ROW_POSITION).append(", ")
             .append(idColumn).append(" AS ").append(ID_PARAMETER).toString();
     }
 
@@ -692,6 +698,17 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             query.append("MERGE (").append(ROOT).append(labels).append(" {")
                 .append(GraphEntities.escapeName(GraphEntities.propertyName(identity))).append(": ").append(row).append('.').append(ID_PARAMETER).append("})");
         }
+    }
+
+    /**
+     * Appends the {@code SET} of the properties of the nodes of a batched write from the map of each row.
+     *
+     * @param query         The query
+     * @param row           The variable of the row
+     * @param propertyNames The stored names of the properties every node of the batch writes
+     */
+    protected void appendBatchProperties(StringBuilder query, String row, List<String> propertyNames) {
+        query.append(SET).append(ROOT).append(" += ").append(row).append('.').append(ROW_PROPERTIES);
     }
 
     /**
@@ -904,17 +921,17 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     @Override
     public QueryResult buildPathQuery(PathQueryDefinition definition) {
         PersistentEntity entity = definition.entity();
-        if (!entity.hasIdentity() && (definition.start() != null || definition.end() != null)) {
+        if (definition.endpointProperty() == null && !entity.hasIdentity() && (definition.start() != null || definition.end() != null)) {
             throw new IllegalArgumentException("Entity [" + entity.getName() + "] has no identity to match path endpoints by");
         }
         QueryState state = new QueryState(entity, List.of());
         String label = labelExpression(entity);
         List<String> conditions = new ArrayList<>();
         if (definition.start() != null) {
-            conditions.add(endpointCondition(state, entity, PATH_START, definition.start()));
+            conditions.add(endpointCondition(state, definition, PATH_START, definition.start()));
         }
         if (definition.end() != null) {
-            conditions.add(endpointCondition(state, entity, PATH_END, definition.end()));
+            conditions.add(endpointCondition(state, definition, PATH_END, definition.end()));
         }
         String types = relationshipTypes(definition.relationships());
         StringBuilder query = new StringBuilder("MATCH ");
@@ -1021,13 +1038,16 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         }
     }
 
-    private String endpointCondition(QueryState state, PersistentEntity entity, String variable, BindingParameter parameter) {
-        PersistentProperty identity = entity.getIdentity();
-        io.micronaut.data.model.PersistentPropertyPath idPath = io.micronaut.data.model.PersistentPropertyPath.of(List.of(), identity);
+    private String endpointCondition(QueryState state, PathQueryDefinition definition, String variable, BindingParameter parameter) {
+        PersistentProperty property = definition.endpointMatchProperty();
+        io.micronaut.data.model.PersistentPropertyPath path = io.micronaut.data.model.PersistentPropertyPath.of(List.of(), property);
         int index = state.pushParameter(parameter, BindingParameter.BindingContext.create()
-            .incomingMethodParameterProperty(idPath)
-            .outgoingQueryParameterProperty(idPath));
-        return identityExpression(identity, variable) + " = " + parameterPlaceholder(index);
+            .incomingMethodParameterProperty(path)
+            .outgoingQueryParameterProperty(path));
+        String expression = definition.endpointProperty() == null
+            ? identityExpression(property, variable)
+            : variable + "." + GraphEntities.escapeName(GraphEntities.propertyName(property));
+        return expression + " = " + parameterPlaceholder(index);
     }
 
     private static void appendWhere(StringBuilder query, List<String> conditions) {
@@ -1130,7 +1150,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             query.append(WHERE).append(where);
         }
         for (Pattern pattern : patterns.subList(required, patterns.size())) {
-            query.append(" OPTIONAL MATCH ").append(pattern.text);
+            query.append(OPTIONAL_MATCH).append(pattern.text);
         }
     }
 
@@ -1167,12 +1187,84 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
 
     private List<String> appendFetchJoins(StringBuilder query, QueryState state, List<String> carried) {
         List<String> columns = new ArrayList<>();
+        // Trees are keyed by relationship name at every level, so joins such as directors.mentor and
+        // directors.awards share one tree for directors
+        Map<String, JoinTree> nested = new LinkedHashMap<>();
+        List<JoinPath> direct = new ArrayList<>();
         for (JoinPath joinPath : state.joinPaths) {
-            if (joinPath.getJoinType().isFetch()) {
+            if (!joinPath.getJoinType().isFetch()) {
+                continue;
+            }
+            Association[] associationPath = joinPath.getAssociationPath();
+            boolean relationshipEntity = GraphEntities.isRelationshipEntity(associationPath[0].getAssociatedEntity());
+            if (associationPath.length > 1 && !relationshipEntity) {
+                // A path through node relationships, such as directors.mentor, is fetched as a tree
+                Association first = associationPath[0];
+                JoinTree tree = nested.computeIfAbsent(first.getName(), name -> new JoinTree(first));
+                for (int i = 1; i < associationPath.length; i++) {
+                    tree = tree.child(associationPath[i]);
+                }
+            } else {
+                direct.add(joinPath);
+            }
+        }
+        for (JoinPath joinPath : direct) {
+            // A relationship fetched as a tree already includes its nodes
+            Association[] associationPath = joinPath.getAssociationPath();
+            if (associationPath.length > 1 || !nested.containsKey(associationPath[0].getName())) {
                 appendFetchJoin(query, joinPath, columns, carried);
             }
         }
+        nested.values().forEach(tree -> appendNestedFetchJoin(query, tree, columns, carried));
         return columns;
+    }
+
+    /**
+     * Fetches a relationship and the relationships of its nodes: each node of the relationship is collected as a map
+     * holding the node under {@code node} and the collected nodes of each nested relationship under its name.
+     */
+    private void appendNestedFetchJoin(StringBuilder query, JoinTree tree, List<String> columns, List<String> carried) {
+        String column = JOIN_COLUMN_PREFIX + tree.association.getName();
+        if (columns.contains(column)) {
+            return;
+        }
+        List<String> scope = new ArrayList<>();
+        scope.add(ROOT);
+        scope.addAll(carried);
+        scope.addAll(columns);
+        String collect = appendJoinTree(query, ROOT, tree, scope, "j" + columns.size());
+        query.append(WITH).append(String.join(", ", scope)).append(", ").append(collect).append(" AS ").append(column);
+        columns.add(column);
+    }
+
+    private String appendJoinTree(StringBuilder query, String from, JoinTree tree, List<String> carried, String variable) {
+        Association association = tree.association;
+        if (!GraphEntities.isRelationship(association)) {
+            throw new IllegalArgumentException("Association [" + association.getName() + "] is not a @Relationship and cannot be joined");
+        }
+        if (GraphEntities.isRelationshipEntity(association.getAssociatedEntity())) {
+            throw new IllegalArgumentException("Graph repositories can only join relationships with properties at the start of a join path, found: " + association.getName());
+        }
+        PersistentEntity target = GraphEntities.targetNodeEntity(association);
+        query.append(OPTIONAL_MATCH)
+            .append(GraphEntities.relationshipPattern(association, from, null, "(" + variable + labelExpression(target) + ")"));
+        // The collects are DISTINCT: a node reached through parallel relationships, or the rows a sibling branch
+        // multiplied, would otherwise be collected more than once
+        if (tree.children.isEmpty()) {
+            return "collect(DISTINCT " + variable + ")";
+        }
+        List<String> scope = new ArrayList<>(carried);
+        scope.add(variable);
+        StringBuilder map = new StringBuilder("{").append(NODE_KEY).append(": ").append(variable).append(", ").append(NESTED_KEY).append(": {");
+        int index = 0;
+        for (JoinTree child : tree.children.values()) {
+            String childColumn = variable + "_" + index++;
+            String childCollect = appendJoinTree(query, variable, child, scope, childColumn + "n");
+            query.append(WITH).append(String.join(", ", scope)).append(", ").append(childCollect).append(" AS ").append(childColumn);
+            scope.add(childColumn);
+            map.append(index == 1 ? "" : ", ").append(GraphEntities.escapeName(child.association.getName())).append(": ").append(childColumn);
+        }
+        return "collect(DISTINCT CASE WHEN " + variable + " IS NULL THEN NULL ELSE " + map.append("}}") + " END)";
     }
 
     private void appendFetchJoin(StringBuilder query, JoinPath joinPath, List<String> columns, List<String> carried) {
@@ -1180,7 +1272,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         Association association = associationPath[0];
         boolean relationshipEntity = GraphEntities.isRelationshipEntity(association.getAssociatedEntity());
         if (associationPath.length > 2 || (associationPath.length == 2 && !(relationshipEntity && isTargetNode(associationPath[1])))) {
-            throw new IllegalArgumentException("Graph repositories can only join direct relationships, found join path: " + joinPath.getPath());
+            throw new IllegalArgumentException("Graph repositories can only join a relationship with properties and its target node, found join path: " + joinPath.getPath());
         }
         if (!GraphEntities.isRelationship(association)) {
             throw new IllegalArgumentException("Association [" + association.getName() + "] is not a @Relationship and cannot be joined");
@@ -1191,7 +1283,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             String nodeVariable = "j" + index;
             PersistentEntity target = GraphEntities.targetNodeEntity(association);
             String nodePattern = "(" + nodeVariable + labelExpression(target) + ")";
-            query.append(joinPath.getJoinType() == Join.Type.INNER_FETCH ? " MATCH " : " OPTIONAL MATCH ");
+            query.append(joinPath.getJoinType() == Join.Type.INNER_FETCH ? " MATCH " : OPTIONAL_MATCH);
             String collect;
             if (relationshipEntity) {
                 String relVariable = "r" + index;
@@ -2006,6 +2098,22 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
 
         private void appendAlias(String defaultAlias) {
             out.append(" AS ").append(GraphEntities.escapeName(alias != null ? alias : defaultAlias));
+        }
+    }
+
+    /**
+     * A relationship to fetch and the relationships of its nodes to fetch with it.
+     */
+    private static final class JoinTree {
+        private final Association association;
+        private final Map<String, JoinTree> children = new LinkedHashMap<>();
+
+        private JoinTree(Association association) {
+            this.association = association;
+        }
+
+        private JoinTree child(Association child) {
+            return children.computeIfAbsent(child.getName(), name -> new JoinTree(child));
         }
     }
 

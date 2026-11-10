@@ -80,6 +80,21 @@ class MovieRepositorySpec extends AbstractNeo4jSpec {
         matrix.directors*.name == ["Lana Wachowski"]
     }
 
+    void "fetch nested relationships"() {
+        given:
+        def lilly = personRepository.save(new Person(name: "Lilly Wachowski", born: 1967, follows: [new Person(name: "Lana Wachowski", born: 1965)]))
+        movieRepository.save(new Movie(title: "Bound", description: "In the end, it's all about the money", released: 1996, directors: [lilly]))
+
+        when:
+        // tag::nestedFetch[]
+        def fetched = movieRepository.findByReleased(1996)[0]
+        def followed = fetched.directors[0].follows[0] // <1>
+        // end::nestedFetch[]
+
+        then:
+        followed.name == "Lana Wachowski"
+    }
+
     void "projections and explicit queries"() {
         when:
         movieRepository.vote("Speed")

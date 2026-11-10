@@ -15,7 +15,8 @@
  */
 package io.micronaut.data.neo4j.operations;
 
-import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.annotation.Parameter;
+import io.micronaut.context.annotation.EachBean;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.connection.ConnectionDefinition;
@@ -24,10 +25,9 @@ import io.micronaut.data.graph.runtime.GraphRecord;
 import io.micronaut.data.graph.runtime.GraphResult;
 import io.micronaut.data.graph.runtime.ReactiveGraphSession;
 import io.micronaut.data.graph.runtime.operations.AbstractReactiveGraphRepositoryOperations;
+import io.micronaut.data.neo4j.session.Neo4jDriverRegistration;
 import io.micronaut.data.neo4j.session.Neo4jReactiveConnection;
 import io.micronaut.data.neo4j.session.Neo4jReactorConnectionOperations;
-import jakarta.inject.Singleton;
-import org.neo4j.driver.Driver;
 import org.neo4j.driver.exceptions.Neo4jException;
 import org.neo4j.driver.summary.SummaryCounters;
 import org.slf4j.Logger;
@@ -45,8 +45,7 @@ import java.util.function.Function;
  * @author graemerocher
  * @since 5.3.0
  */
-@Singleton
-@Requires(beans = Driver.class)
+@EachBean(Neo4jDriverRegistration.class)
 @Internal
 final class DefaultNeo4jReactorRepositoryOperations extends AbstractReactiveGraphRepositoryOperations implements Neo4jReactorRepositoryOperations {
 
@@ -54,8 +53,8 @@ final class DefaultNeo4jReactorRepositoryOperations extends AbstractReactiveGrap
 
     private final Neo4jReactorConnectionOperations connectionOperations;
 
-    DefaultNeo4jReactorRepositoryOperations(DefaultNeo4jRepositoryOperations operations,
-                                            Neo4jReactorConnectionOperations connectionOperations) {
+    DefaultNeo4jReactorRepositoryOperations(@Parameter DefaultNeo4jRepositoryOperations operations,
+                                            @Parameter Neo4jReactorConnectionOperations connectionOperations) {
         super(operations);
         this.connectionOperations = connectionOperations;
     }
