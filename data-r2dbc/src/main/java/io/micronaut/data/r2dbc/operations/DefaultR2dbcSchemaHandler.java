@@ -46,7 +46,7 @@ final class DefaultR2dbcSchemaHandler implements R2dbcSchemaHandler {
             return Mono.error(new DataAccessException("Invalid schema name: " + e.getMessage(), e));
         }
         if (dialect == Dialect.ORACLE) {
-            return executeQuery(connection, "CREATE DATABASE " + schemaName + ";");
+            return executeQuery(connection, SchemaNameUtils.oracleCreateSchemaStatement(name));
         } else {
             return executeQuery(connection, "CREATE SCHEMA " + schemaName + ";");
         }

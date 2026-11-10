@@ -42,5 +42,9 @@ class DocumentEmbeddingRepositoryTest {
 
         val scored = repository.searchByEmbeddingNear(vec, Score(2.0), ScoringFunction.COSINE)
         assertTrue(scored.results().isNotEmpty())
+
+        val approximate = repository.searchTop5ByEmbeddingNear(vec, 2.0)
+        assertEquals(3, approximate.results().size)
+        assertEquals(saved.id, approximate.results()[0].entity().id)
     }
 }

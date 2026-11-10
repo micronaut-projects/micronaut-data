@@ -171,6 +171,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     private static final String CURRENT_DATE = "CURRENT_DATE";
     private static final String CURRENT_TIME = "CURRENT_TIME";
     private static final String CURRENT_TIMESTAMP = "CURRENT_TIMESTAMP";
+    private static final String OFFSET = "OFFSET ";
+    private static final String FETCH_NEXT = "FETCH NEXT ";
+    private static final String ROWS_ONLY = " ROWS ONLY";
     private static final String DISTINCT_AGGREGATE_SUFFIX = "_DISTINCT";
     private static final String EQUAL_TO_TRUE_SUFFIX = ") = 'TRUE'";
     private static final Pattern NATIVE_QUERY_SORT_PROPERTY_PATTERN = Pattern.compile("[A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)*");
@@ -1860,6 +1863,21 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param builder The builder
      */
     protected void appendLimitAndOffset(Dialect dialect, long limit, long offset, StringBuilder builder) {
+        appendLimitAndOffset(dialect, limit, offset, -1, builder);
+    }
+
+    /**
+     * Append limit and offset, optionally as an approximate row limit for vector search.
+     *
+     * @param dialect             The dialect
+     * @param limit               The limit
+     * @param offset              The offset
+     * @param approximateAccuracy The target accuracy of an approximate row limit, {@code 0} for the
+     *                            index default, or a negative value for an exact row limit
+     * @param builder             The builder
+     * @since 5.3.0
+     */
+    protected void appendLimitAndOffset(Dialect dialect, long limit, long offset, int approximateAccuracy, StringBuilder builder) {
         boolean hasLimit = limit > 0;
         boolean hasOffset = offset > 0;
         if (!hasLimit && !hasOffset) {
@@ -1867,28 +1885,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
         builder.append(' ');
         switch (dialect) {
-            case SQL_SERVER -> {
-                // SQL server requires OFFSET always
-                if (hasOffset) {
-                    builder.append("OFFSET ").append(offset).append(" ROWS ");
-                } else {
-                    builder.append("OFFSET 0 ROWS ");
-                }
-                if (hasLimit) {
-                    builder.append("FETCH NEXT ").append(limit).append(" ROWS ONLY");
-                }
-            }
-            case ORACLE -> {
-                if (hasOffset) {
-                    builder.append("OFFSET ").append(offset).append(" ROWS");
-                }
-                if (hasLimit) {
-                    if (hasOffset) {
-                        builder.append(" ");
-                    }
-                    builder.append("FETCH NEXT ").append(limit).append(" ROWS ONLY");
-                }
-            }
+            case SQL_SERVER -> appendSqlServerLimitAndOffset(limit, offset, builder);
+            case ORACLE -> appendOracleLimitAndOffset(limit, offset, approximateAccuracy, builder);
             default -> {
                 if (hasLimit) {
                     builder.append("LIMIT ").append(limit);
@@ -1897,9 +1895,38 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     if (hasLimit) {
                         builder.append(" ");
                     }
-                    builder.append("OFFSET ").append(offset);
+                    builder.append(OFFSET).append(offset);
                 }
             }
+        }
+    }
+
+    private static void appendSqlServerLimitAndOffset(long limit, long offset, StringBuilder builder) {
+        // SQL server requires OFFSET always
+        builder.append(OFFSET).append(Math.max(offset, 0)).append(" ROWS ");
+        if (limit > 0) {
+            builder.append(FETCH_NEXT).append(limit).append(ROWS_ONLY);
+        }
+    }
+
+    private static void appendOracleLimitAndOffset(long limit, long offset, int approximateAccuracy, StringBuilder builder) {
+        boolean hasOffset = offset > 0;
+        if (hasOffset) {
+            builder.append(OFFSET).append(offset).append(" ROWS");
+        }
+        if (limit <= 0) {
+            return;
+        }
+        if (hasOffset) {
+            builder.append(' ').append(FETCH_NEXT).append(limit).append(ROWS_ONLY);
+        } else if (approximateAccuracy >= 0) {
+            // an approximate row limit can't follow an offset
+            builder.append("FETCH APPROX FIRST ").append(limit).append(ROWS_ONLY);
+            if (approximateAccuracy > 0) {
+                builder.append(" WITH TARGET ACCURACY ").append(approximateAccuracy);
+            }
+        } else {
+            builder.append(FETCH_NEXT).append(limit).append(ROWS_ONLY);
         }
     }
 
@@ -3094,7 +3121,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 if (dialect == null) {
                     throw new IllegalStateException("Vector similarity queries are not supported for dialect: " + getDialect());
                 }
-                dialect.appendVectorScore(query, expressions.get(0), expressions.get(1), this::appendExpression);
+                Expression<?> left = expressions.get(0);
+                Expression<?> right = expressions.get(1);
+                // the query vector is bound to the left property, so that it's written with the converter of the column
+                dialect.appendVectorScore(query, left, right, expression -> appendExpression(expression, expression == right ? left : null));
                 return;
             }
             String aggregateFunction = getDistinctAggregateFunction(functionName);
@@ -3299,6 +3329,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         protected String columnAlias;
         private boolean isCompound;
         private boolean isNestedExpression;
+        @Nullable
+        private PersistentPropertyPath parameterBoundProperty;
 
         public SqlSelectionVisitor(QueryState queryState, AnnotationMetadata annotationMetadata, boolean distinct) {
             this.queryState = queryState;
@@ -3502,7 +3534,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         @Override
         public void visit(IParameterExpression<?> parameterExpression) {
-            queryState.pushParameter(parameterExpression, newBindingContext(null));
+            queryState.pushParameter(parameterExpression, newBindingContext(null, parameterBoundProperty));
             appendColumnAliasIfNecessary();
         }
 
@@ -3914,7 +3946,17 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             if (dialect == null) {
                 throw new IllegalStateException("Vector similarity queries are not supported for dialect: " + getDialect());
             }
-            dialect.appendVectorScore(query, left, right, this::appendExpression);
+            // the query vector is bound to the left property, so that it's written with the converter of the column
+            PersistentPropertyPath leftProperty = left instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath
+                ? propertyPath.getPropertyPath() : null;
+            dialect.appendVectorScore(query, left, right, expression -> {
+                parameterBoundProperty = expression == right ? leftProperty : null;
+                try {
+                    appendExpression(expression);
+                } finally {
+                    parameterBoundProperty = null;
+                }
+            });
         }
 
         private void appendExpression(Expression<?> expression) {

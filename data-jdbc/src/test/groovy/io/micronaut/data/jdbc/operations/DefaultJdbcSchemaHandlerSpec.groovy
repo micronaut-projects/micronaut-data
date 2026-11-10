@@ -1,5 +1,6 @@
 package io.micronaut.data.jdbc.operations
 
+import io.micronaut.data.runtime.multitenancy.internal.SchemaNameUtils
 import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.model.query.builder.sql.Dialect
 import spock.lang.Specification
@@ -66,7 +67,7 @@ class DefaultJdbcSchemaHandlerSpec extends Specification {
         Dialect.MYSQL    | 'CREATE SCHEMA `tenant-a`;'
         Dialect.POSTGRES | 'CREATE SCHEMA "tenant-a";'
         Dialect.SQL_SERVER | 'CREATE SCHEMA [tenant-a];'
-        Dialect.ORACLE   | 'CREATE DATABASE "TENANT-A";'
+        Dialect.ORACLE   | SchemaNameUtils.oracleCreateSchemaStatement('tenant-a')
         Dialect.SQLITE   | 'CREATE SCHEMA "tenant-a";'
         Dialect.ANSI     | 'CREATE SCHEMA "tenant-a";'
     }

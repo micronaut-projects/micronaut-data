@@ -22,13 +22,16 @@ import io.micronaut.context.annotation.Requires;
 import org.jspecify.annotations.NonNull;
 import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.data.connection.ConnectionOperations;
+import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.ConnectionSynchronization;
 import io.micronaut.data.connection.SynchronousConnectionManager;
+import io.micronaut.data.connection.support.DefaultConnectionStatus;
 import io.micronaut.data.connection.support.JdbcConnectionUtils;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import io.micronaut.transaction.exceptions.InvalidIsolationLevelException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
+import io.micronaut.transaction.exceptions.TransactionUsageException;
 import io.micronaut.transaction.impl.DefaultTransactionStatus;
 import io.micronaut.transaction.jdbc.DataSourceTransactionManager;
 import io.micronaut.transaction.support.AbstractDefaultTransactionOperations;
@@ -82,6 +85,15 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
     HibernateTransactionManager(@Parameter ConnectionOperations<Session> connectionOperations,
                                 @Parameter SynchronousConnectionManager<Session> synchronousConnectionManager) {
         super(connectionOperations, synchronousConnectionManager);
+    }
+
+    @Override
+    protected DefaultTransactionStatus<Session> createOwnerTransactionStatus(ConnectionStatus<Session> connectionStatus,
+                                                                             TransactionDefinition definition,
+                                                                             DefaultConnectionStatus.SuppliedConnection suppliedConnection) {
+        // Hibernate writes need a Hibernate transaction, which would commit or roll back the owner's transaction
+        throw new TransactionUsageException("A Hibernate transaction cannot join the owner's transaction of a supplied connection (ownerControlsTransaction is true)."
+            + " Use JDBC repositories on the supplied connection, or pass false so that the Hibernate transaction controls it");
     }
 
     @Override

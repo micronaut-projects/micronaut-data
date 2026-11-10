@@ -28,12 +28,15 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils;
 import io.micronaut.data.model.runtime.convert.DefinitionProvider;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.r2dbc.operations.R2dbcSchemaHandler;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.config.SchemaGenerate;
+import io.micronaut.data.runtime.config.SqlDialectOptionsConfiguration;
 import io.r2dbc.spi.Connection;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
@@ -58,6 +61,7 @@ import java.util.stream.Collectors;
 @Internal
 public class R2dbcSchemaGenerator {
     private static final Logger LOG = LoggerFactory.getLogger(R2dbcSchemaGenerator.class);
+    private static final int DDL_LITERAL_LENGTH = 4000;
     private final List<DataR2dbcConfiguration> configurations;
     private final R2dbcSchemaHandler schemaHandler;
     private final List<DefinitionProvider> definitionProviders;
@@ -108,9 +112,10 @@ public class R2dbcSchemaGenerator {
                         .sorted(Comparator.comparing(i -> i.hasAnnotation(JsonView.class)))
                         .map(e -> runtimeEntityRegistry.getEntity(e.getBeanType())).toArray(PersistentEntity[]::new);
                 if (ArrayUtils.isNotEmpty(entities)) {
-                    SqlQueryBuilder builder = new SqlQueryBuilder(configuration.getDialect(), configuration.getDialectOptions().getVersion());
                     Mono.from(configuration.getConnectionFactory().create()).flatMap(connection -> {
                         Dialect dialect = configuration.getDialect();
+                        String dialectVersion = configuration.getDialectOptions().resolveVersion(() -> detectVersion(connection, configuration.getName()));
+                        SqlQueryBuilder builder = new SqlQueryBuilder(dialect, dialectVersion);
                         if (configuration.getSchemaGenerateNames() != null && !configuration.getSchemaGenerateNames().isEmpty()) {
                             Mono<Void> result = Mono.empty();
                             for (String schemaName : configuration.getSchemaGenerateNames()) {
@@ -118,19 +123,38 @@ public class R2dbcSchemaGenerator {
                                     .then(Mono.from(schemaHandler.useSchema(connection, dialect, schemaName)))
                                     .then(generate(connection, configuration, entities, builder));
                             }
-                            return result.then(Mono.from(connection.close()));
+                            return restoringOracleSchema(connection, dialect, result).then(Mono.from(connection.close()));
                         }
                         Mono<Void> result = Mono.empty();
                         if (configuration.getSchemaGenerateName() != null) {
                             result = Mono.from(schemaHandler.createSchema(connection, dialect, configuration.getSchemaGenerateName()))
                                 .then(Mono.from(schemaHandler.useSchema(connection, dialect, configuration.getSchemaGenerateName())));
                         }
-                        return result.then(generate(connection, configuration, entities, builder))
+                        return restoringOracleSchema(connection, dialect, result.then(generate(connection, configuration, entities, builder)))
                             .then(Mono.from(connection.close()));
                     }).block();
                 }
             }
         }
+    }
+
+    static @Nullable String detectVersion(Connection connection, String dataSourceName) {
+        String versionText;
+        try {
+            versionText = connection.getMetadata().getDatabaseVersion();
+        } catch (RuntimeException e) {
+            // Oracle R2DBC rethrows a SQLException of the JDBC metadata as an R2dbcException
+            LOG.warn("Unable to detect the database version of datasource [{}]: schema generation uses no target version", dataSourceName, e);
+            return null;
+        }
+        String version = SqlDialectOptionsConfiguration.parseMajorMinor(versionText);
+        if (version == null) {
+            LOG.warn("Unable to detect the database version of datasource [{}] from [{}]: schema generation uses no target version",
+                dataSourceName, versionText);
+        } else if (LOG.isInfoEnabled()) {
+            LOG.info("Schema generation for datasource [{}] targets the detected database version {}", dataSourceName, version);
+        }
+        return version;
     }
 
     private Mono<Void> generate(Connection connection,
@@ -146,7 +170,9 @@ public class R2dbcSchemaGenerator {
                     if (DataSettings.QUERY_LOG.isDebugEnabled()) {
                         DataSettings.QUERY_LOG.debug("Creating Table: \n{}", sql);
                     }
-                    return execute(connection, sql)
+                    // Only the executed statement is wrapped, so the logs show the DDL as it is
+                    String statement = builder.getDialect() == Dialect.ORACLE ? executeImmediateDualityView(sql) : sql;
+                    return execute(connection, statement)
                             .onErrorResume((throwable -> {
                                 if (LOG.isWarnEnabled()) {
                                     LOG.warn("Unable to create table :{}, {}", throwable.getMessage(), sql);
@@ -170,7 +196,7 @@ public class R2dbcSchemaGenerator {
     private Mono<Void> dropTablesOneByOne(Connection connection,
                                           PersistentEntity[] entities,
                                           SqlQueryBuilder builder) {
-        List<String> dropStatements = Arrays.stream(entities).flatMap(entity -> Arrays.stream(builder.buildDropTableStatements(entity)))
+        List<String> dropStatements = Arrays.stream(SqlSchemaUtils.orderForDrop(entities)).flatMap(entity -> Arrays.stream(builder.buildDropTableStatements(entity)))
                 .toList();
         return Flux.fromIterable(dropStatements)
                 .concatMap(sql -> {
@@ -215,6 +241,66 @@ public class R2dbcSchemaGenerator {
             case CREATE -> createTables;
             default -> Mono.empty();
         };
+    }
+
+    /**
+     * Oracle R2DBC prepares every statement, and the Oracle driver finds bind markers in duality views whose sub-views
+     * have generated fields with function calls (ORA-17041). The DDL is passed to {@code EXECUTE IMMEDIATE} in string
+     * literals instead, and the driver doesn't look for bind markers inside string literals. A PL/SQL string literal is
+     * limited to 32,767 bytes, so the DDL is appended to a {@code CLOB} in literals of at most
+     * {@value #DDL_LITERAL_LENGTH} characters: up to 3 bytes each in AL32UTF8, twice that with every quote doubled.
+     *
+     * @param sql The CREATE statement
+     * @return The statement to execute
+     */
+    static String executeImmediateDualityView(String sql) {
+        if (!sql.startsWith("CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW")) {
+            return sql;
+        }
+        StringBuilder block = new StringBuilder("DECLARE ddl CLOB; BEGIN");
+        int start = 0;
+        while (start < sql.length()) {
+            int end = Math.min(start + DDL_LITERAL_LENGTH, sql.length());
+            if (end < sql.length() && Character.isHighSurrogate(sql.charAt(end - 1))) {
+                end--;
+            }
+            // Quotes are doubled after splitting, so that a doubled quote is never split
+            block.append(start == 0 ? " ddl := '" : " ddl := ddl || '")
+                .append(sql.substring(start, end).replace("'", "''"))
+                .append("';");
+            start = end;
+        }
+        return block.append(" EXECUTE IMMEDIATE ddl; END;").toString();
+    }
+
+    /**
+     * Generation switches the session schema on Oracle, and the connection may go back to a pool, so the
+     * schema in use before the generation is restored afterwards.
+     */
+    private Mono<Void> restoringOracleSchema(Connection connection, Dialect dialect, Mono<Void> generation) {
+        if (dialect != Dialect.ORACLE) {
+            return generation;
+        }
+        Mono<String> currentSchema = Flux.from(connection.createStatement("SELECT SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA') FROM DUAL").execute())
+            .flatMap(result -> result.map((row, metadata) -> row.get(0, String.class)))
+            .next();
+        return Mono.usingWhen(
+            currentSchema,
+            schema -> generation,
+            schema -> restoreOracleSchema(connection, schema),
+            (schema, error) -> restoreOracleSchema(connection, schema),
+            schema -> restoreOracleSchema(connection, schema)
+        );
+    }
+
+    private Mono<Void> restoreOracleSchema(Connection connection, String schema) {
+        // The exact name reported by the database, bound and quoted by the database so that its case is kept
+        return Flux.from(connection.createStatement(
+                "BEGIN EXECUTE IMMEDIATE 'ALTER SESSION SET CURRENT_SCHEMA = ' || DBMS_ASSERT.ENQUOTE_NAME(?, FALSE); END;")
+                .bind(0, schema)
+                .execute())
+            .flatMap(result -> Flux.from(result.getRowsUpdated()))
+            .then();
     }
 
     private Mono<Void> execute(Connection connection, String sql) {

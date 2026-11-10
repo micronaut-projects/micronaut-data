@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.data.annotation.VectorShape;
 import io.micronaut.data.annotation.VectorStorage;
+import io.micronaut.data.model.runtime.convert.DataAccessType;
 import io.micronaut.data.model.runtime.convert.DatabaseType;
 import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext;
 import io.micronaut.data.model.runtime.convert.SqlColumnDefinitionProvider;
@@ -55,6 +56,7 @@ abstract sealed class AbstractVectorAttributeConverter<X extends Vector, Y> impl
             DefaultSparseFloatVectorAttributeConverter,
             DefaultSparseDoubleVectorAttributeConverter,
             DefaultByteVectorAttributeConverter,
+            DefaultBinaryVectorAttributeConverter,
             DefaultSparseByteVectorAttributeConverter,
             DefaultFloatVectorAttributeConverter,
             DefaultDoubleVectorAttributeConverter {
@@ -86,13 +88,13 @@ abstract sealed class AbstractVectorAttributeConverter<X extends Vector, Y> impl
             return null;
         }
         final DatabaseType databaseType = extractDatabaseType(context);
-        VectorTypeConverter<?> vectorTypeConverter = databaseType != null ? selectWriteConverter(databaseType, entityValue) : null;
+        VectorTypeConverter<?> vectorTypeConverter = databaseType != null ? selectWriteConverter(databaseType, extractDataAccessType(context), entityValue) : null;
         if (vectorTypeConverter != null) {
             @SuppressWarnings("unchecked")
             Y result = (Y) vectorTypeConverter.convert(entityValue);
             return result;
         }
-        throw new IllegalArgumentException("Vectors aren't supported for the database " + databaseType);
+        throw unsupported(databaseType, extractDataAccessType(context));
     }
 
     @Override
@@ -101,31 +103,38 @@ abstract sealed class AbstractVectorAttributeConverter<X extends Vector, Y> impl
             return null;
         }
         final DatabaseType databaseType = extractDatabaseType(context);
-        VectorTypeConverter<Y> vectorTypeConverter = databaseType != null ? (VectorTypeConverter<Y>) selectReadConverter(databaseType, persistedValue, type) : null;
+        VectorTypeConverter<Y> vectorTypeConverter = databaseType != null ? (VectorTypeConverter<Y>) selectReadConverter(databaseType, extractDataAccessType(context), persistedValue, type) : null;
         if (vectorTypeConverter != null) {
             @SuppressWarnings("unchecked")
             X result = (X) vectorTypeConverter.convert(persistedValue, (Class<Vector>) type);
             return result;
         }
-        throw new IllegalArgumentException("Vectors aren't supported for the database " + databaseType);
+        throw unsupported(databaseType, extractDataAccessType(context));
     }
 
     @Override
-    public <R, I> Object readFromResultSet(DatabaseTypeConversionContext conversionContext,
+    public <R, I> @Nullable Object readFromResultSet(DatabaseTypeConversionContext conversionContext,
                                            ResultReader<R, I> reader,
                                            R resultSet,
                                            I columnName) {
-        VectorTypeConverter<?> vectorTypeConverter = selectResultSetReadConverter(conversionContext.getDatabaseType(), type);
+        VectorTypeConverter<?> vectorTypeConverter = selectResultSetReadConverter(conversionContext.getDatabaseType(), conversionContext.getDataAccessType(), type);
         if (vectorTypeConverter != null) {
-            Object value = reader.getRequiredValue(resultSet, columnName, vectorTypeConverter.getPersistedType());
-            if (value == null) {
-                // ResultReader#getRequiredValue is expected to be non-null, but its signature is @Nullable.
-                // Guard to satisfy NullAway and provide a better error message.
-                throw new IllegalStateException("Required value for column [" + columnName + "] was null");
-            }
-            return value;
+            // SQL NULL reads as null, which convertToEntityValue maps to a null property
+            return reader.getRequiredValue(resultSet, columnName, vectorTypeConverter.getPersistedType());
         }
-        throw new IllegalArgumentException("Vectors aren't supported for the database " + conversionContext.getDatabaseType());
+        throw unsupported(conversionContext.getDatabaseType(), conversionContext.getDataAccessType());
+    }
+
+    private static IllegalArgumentException unsupported(@Nullable DatabaseType databaseType, @Nullable DataAccessType dataAccessType) {
+        return new IllegalArgumentException("Vectors aren't supported for the database " + databaseType
+            + (dataAccessType == null ? "" : " with " + dataAccessType));
+    }
+
+    private static @Nullable DataAccessType extractDataAccessType(ConversionContext context) {
+        if (context instanceof DatabaseTypeConversionContext databaseTypeConversionContext) {
+            return databaseTypeConversionContext.getDataAccessType();
+        }
+        return null;
     }
 
     protected static @Nullable DatabaseType extractDatabaseType(ConversionContext context) {
@@ -137,6 +146,9 @@ abstract sealed class AbstractVectorAttributeConverter<X extends Vector, Y> impl
 
     private static boolean isConflicting(VectorTypeConverter<?> existing, VectorTypeConverter<?> candidate) {
         if (existing.isSparseSupported() != candidate.isSparseSupported()) {
+            return false;
+        }
+        if (!VectorTypeConverter.supports(existing, candidate.dataAccessType())) {
             return false;
         }
         if (!existing.getPersistedType().equals(candidate.getPersistedType())) {
@@ -152,58 +164,74 @@ abstract sealed class AbstractVectorAttributeConverter<X extends Vector, Y> impl
         return false;
     }
 
-    private @Nullable VectorTypeConverter<?> selectWriteConverter(DatabaseType databaseType, Vector entityValue) {
+    private @Nullable VectorTypeConverter<?> selectWriteConverter(DatabaseType databaseType, @Nullable DataAccessType dataAccessType, Vector entityValue) {
         List<VectorTypeConverter<?>> converters = converterMap.get(databaseType);
         if (converters == null || converters.isEmpty()) {
             return null;
         }
         boolean sparseValue = entityValue instanceof SparseVector;
-        return selectConverter(converters, converter -> supportsVectorType(converter, entityValue.getClass()), sparseValue);
+        // rank by the declared type, so that a generic Vector property keeps its storage whatever vector it holds,
+        // and only require that the converter accepts the value
+        return selectConverter(converters, converter -> VectorTypeConverter.supports(converter, dataAccessType)
+            && mostSpecificSupportedType(converter, entityValue.getClass()) != null, type, sparseValue);
     }
 
-    private @Nullable VectorTypeConverter<?> selectReadConverter(DatabaseType databaseType, Object persistedValue, Class<? extends Vector> targetType) {
+    private @Nullable VectorTypeConverter<?> selectReadConverter(DatabaseType databaseType, @Nullable DataAccessType dataAccessType, Object persistedValue, Class<? extends Vector> targetType) {
         List<VectorTypeConverter<?>> converters = converterMap.get(databaseType);
         if (converters == null || converters.isEmpty()) {
             return null;
         }
         boolean sparseTarget = SparseVector.class.isAssignableFrom(targetType);
-        return selectConverter(converters, converter ->
-            converter.getPersistedType().isInstance(persistedValue) && supportsVectorType(converter, targetType), sparseTarget);
+        return selectConverter(converters, converter -> VectorTypeConverter.supports(converter, dataAccessType)
+            && converter.getPersistedType().isInstance(persistedValue), targetType, sparseTarget);
     }
 
-    private @Nullable VectorTypeConverter<?> selectResultSetReadConverter(DatabaseType databaseType, Class<? extends Vector> targetType) {
+    private @Nullable VectorTypeConverter<?> selectResultSetReadConverter(DatabaseType databaseType, @Nullable DataAccessType dataAccessType, Class<? extends Vector> targetType) {
         List<VectorTypeConverter<?>> converters = converterMap.get(databaseType);
         if (converters == null || converters.isEmpty()) {
             return null;
         }
         boolean sparseTarget = SparseVector.class.isAssignableFrom(targetType);
-        return selectConverter(converters, converter -> supportsVectorType(converter, targetType), sparseTarget);
+        return selectConverter(converters, converter -> VectorTypeConverter.supports(converter, dataAccessType), targetType, sparseTarget);
     }
 
+    /**
+     * Selects the converter that supports the vector type, preferring one whose sparse support matches, then the one
+     * with the most specific supported type, whatever the order of the beans: for example, the binary converter
+     * over a generic converter of {@link Vector}.
+     */
     private static @Nullable VectorTypeConverter<?> selectConverter(List<VectorTypeConverter<?>> converters,
                                                                     Predicate<VectorTypeConverter<?>> candidate,
+                                                                    Class<?> vectorType,
                                                                     boolean sparse) {
-        VectorTypeConverter<?> fallback = null;
+        VectorTypeConverter<?> selected = null;
+        Class<?> selectedType = null;
+        boolean selectedSparse = false;
         for (VectorTypeConverter<?> converter : converters) {
-            if (candidate.test(converter)) {
-                if (fallback == null) {
-                    fallback = converter;
-                }
-                if (converter.isSparseSupported() == sparse) {
-                    return converter;
-                }
+            Class<?> supportedType = mostSpecificSupportedType(converter, vectorType);
+            if (supportedType == null || !candidate.test(converter)) {
+                continue;
+            }
+            boolean sparseMatches = converter.isSparseSupported() == sparse;
+            if (selectedType == null
+                || (sparseMatches && !selectedSparse)
+                || (sparseMatches == selectedSparse && supportedType != selectedType && selectedType.isAssignableFrom(supportedType))) {
+                selected = converter;
+                selectedType = supportedType;
+                selectedSparse = sparseMatches;
             }
         }
-        return fallback;
+        return selected;
     }
 
-    private static boolean supportsVectorType(VectorTypeConverter<?> converter, Class<? extends Vector> vectorType) {
+    private static @Nullable Class<?> mostSpecificSupportedType(VectorTypeConverter<?> converter, Class<?> vectorType) {
+        Class<?> mostSpecific = null;
         for (Class<? extends Vector> supportedType : converter.supportedVectorTypes()) {
-            if (supportedType.isAssignableFrom(vectorType)) {
-                return true;
+            if (supportedType.isAssignableFrom(vectorType) && (mostSpecific == null || mostSpecific.isAssignableFrom(supportedType))) {
+                mostSpecific = supportedType;
             }
         }
-        return false;
+        return mostSpecific;
     }
 
     abstract String getOracleType();

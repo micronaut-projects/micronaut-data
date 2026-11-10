@@ -17,9 +17,7 @@ package io.micronaut.data.runtime.multitenancy.internal;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-
-import java.util.Locale;
-import java.util.regex.Pattern;
+import io.micronaut.data.model.query.builder.sql.SqlSchemaNames;
 
 /**
  * Utilities for safely rendering schema names in schema-switching SQL.
@@ -27,38 +25,31 @@ import java.util.regex.Pattern;
 @Internal
 public final class SchemaNameUtils {
 
-    private static final Pattern SIMPLE_IDENTIFIER = Pattern.compile("[A-Za-z_][A-Za-z0-9_]*");
-
     private SchemaNameUtils() {
     }
 
     /**
-     * Renders a schema name as a dialect-compatible SQL identifier. Simple
-     * identifiers are left unquoted to preserve the case-folding behavior of
-     * existing applications. All other names are quoted and their delimiters
-     * escaped. The input is always treated as a logical name; SQL quoting
-     * supplied by a caller is not interpreted.
+     * Renders a schema name as a dialect-compatible SQL identifier.
      *
      * @param dialect The SQL dialect
      * @param name The logical schema name
      * @return The safely rendered identifier
      * @throws IllegalArgumentException If the name is null, empty, or contains a NUL character
+     * @see SqlSchemaNames#render(Dialect, String)
      */
     public static String render(Dialect dialect, String name) {
-        if (name == null || name.isEmpty() || name.indexOf('\u0000') >= 0) {
-            throw new IllegalArgumentException("Schema name must not be null, empty, or contain a NUL character");
-        }
-        if (SIMPLE_IDENTIFIER.matcher(name).matches()) {
-            return name;
-        }
-        return switch (dialect) {
-            case MYSQL, H2 -> "`" + name.replace("`", "``") + "`";
-            // SQL Server bracket-delimited identifiers only use ] as the
-            // closing delimiter. A [ inside the name is ordinary content;
-            // escaping it would change the schema name.
-            case SQL_SERVER -> "[" + name.replace("]", "]]") + "]";
-            case ORACLE -> "\"" + name.toUpperCase(Locale.ENGLISH).replace("\"", "\"\"") + "\"";
-            default -> "\"" + name.replace("\"", "\"\"") + "\"";
-        };
+        return SqlSchemaNames.render(dialect, name);
+    }
+
+    /**
+     * Builds the Oracle statement that creates a schema.
+     *
+     * @param name The logical schema name
+     * @return The PL/SQL block creating the schema
+     * @throws IllegalArgumentException If the name is null, empty, or contains a NUL character
+     * @see SqlSchemaNames#oracleCreateSchemaStatement(String)
+     */
+    public static String oracleCreateSchemaStatement(String name) {
+        return SqlSchemaNames.oracleCreateSchemaStatement(name);
     }
 }

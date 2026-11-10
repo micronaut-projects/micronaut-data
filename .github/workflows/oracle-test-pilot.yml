@@ -42,10 +42,29 @@ jobs:
           unset JAVA_HOME
           export PATH=$(echo "$PATH" | tr ':' '\n' | grep -v '/usr/lib/jvm' | paste -sd:)
 
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      # The runner image ships a ~/.gradle folder, so setup-gradle would skip restoring its cache and
+      # every job would download all dependencies from Maven Central, which rate-limits the runners
+      # (HTTP 429). Only the first setup-gradle step in a job takes effect, so this one runs before
+      # Pre-Build Steps, whose own setup-gradle step then does nothing. setup-gradle runs `java` to
+      # find the user home, so Java is set up first.
+      - name: Set up Java for the Gradle cache restore
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4.9.1
+        with:
+          distribution: 'oracle'
+          java-version: '25'
+
+      - name: Restore the Gradle cache over the runner's ~/.gradle
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6
+        with:
+          cache-overwrite-existing: true
+          # Restore only: the entries saved by the other "build" jobs on 5.3.x hold most of what this
+          # job needs, and saving more entries here would push those out of the repository's cache.
+          cache-read-only: true
 
       - name: Pre-Build Steps
-        uses: micronaut-projects/github-actions/graalvm/pre-build@master
+        uses: micronaut-projects/github-actions/graalvm/pre-build@bd80048acde40b1c50534529f8160b0a6a19d63b # master
         id: pre-build
         with:
           distribution: 'graalvm'
@@ -102,7 +121,7 @@ jobs:
           user: ${{ matrix.native_test_task }}
 
       - name: Post-Build Steps
-        uses: micronaut-projects/github-actions/graalvm/post-build@master
+        uses: micronaut-projects/github-actions/graalvm/post-build@bd80048acde40b1c50534529f8160b0a6a19d63b # master
         id: post-build
         with:
           java: ${{ matrix.java }}
