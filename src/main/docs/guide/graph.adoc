@@ -13,7 +13,7 @@ The module supports three databases:
 |`micronaut-data-neo4j`
 
 |https://www.oracle.com/database/integrated-graph-database/[Oracle Database property graphs]
-|https://pgql-lang.org[PGQL] or SQL/PGQ `GRAPH_TABLE` queries
+|SQL/PGQ `GRAPH_TABLE` queries
 |`micronaut-data-oracle-graph`
 
 |https://age.apache.org[PostgreSQL with Apache AGE]
