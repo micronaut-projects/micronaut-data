@@ -59,6 +59,25 @@ class AgeStatementsSpec extends Specification {
         AgeStatements.cypherStart('MATCH (n) RETURN n') == -1
     }
 
+    void "a tenant cannot use the configured graph or a reserved schema"() {
+        when:
+        AgeStatements.validateTenantGraphName(name, "movies")
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains("graph name")
+
+        where:
+        name << ["movies", "public", "PUBLIC", "ag_catalog", "pg_catalog", "pg_toast", "information_schema", "acme; DROP TABLE x"]
+    }
+
+    void "a tenant can use a graph of its own"() {
+        expect:
+        AgeStatements.validateTenantGraphName("acme", "movies") == "acme"
+        AgeStatements.validateTenantGraphName("Movies", "movies") == "Movies"
+        AgeStatements.validateTenantGraphName("tenant_public", "movies") == "tenant_public"
+    }
+
     void "reject what AGE cannot run"() {
         when:
         AgeStatements.validateGraphName("movies; DROP TABLE x")

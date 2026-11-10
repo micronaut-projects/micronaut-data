@@ -18,7 +18,9 @@ package io.micronaut.data.graph.runtime.age;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.naming.NameUtils;
+import io.micronaut.data.graph.model.query.builder.AgeStatements;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -42,8 +44,12 @@ public class AgeConfiguration {
 
     private String graph = DEFAULT_GRAPH;
     private Map<String, String> graphs = Map.of();
+    private Map<String, String> tenantGraphs = Map.of();
+    private Map<String, String> hyphenatedTenantGraphs = Map.of();
+    private String tenantGraphPrefix = "";
     private boolean createExtension;
     private boolean createGraph = true;
+    private boolean createTenantGraphs;
 
     /**
      * The graph that repositories use when their data source has no graph of its own in {@link #getGraphs()}.
@@ -102,6 +108,72 @@ public class AgeConfiguration {
     }
 
     /**
+     * The graph of each tenant, by tenant id, when multi-tenancy keeps a graph per tenant:
+     * {@code micronaut.data.age.tenant-graphs.acme: acme_graph}. A tenant without an entry uses its id, after
+     * {@link #getTenantGraphPrefix()}, as its graph name.
+     *
+     * @return The graphs by tenant id
+     * @since 5.3.0
+     */
+    public @NonNull Map<String, String> getTenantGraphs() {
+        return tenantGraphs;
+    }
+
+    /**
+     * @param tenantGraphs The graphs by tenant id
+     */
+    public void setTenantGraphs(@NonNull Map<String, String> tenantGraphs) {
+        this.tenantGraphs = tenantGraphs;
+        Map<String, String> hyphenated = new HashMap<>();
+        tenantGraphs.forEach((tenant, tenantGraph) -> hyphenated.put(NameUtils.hyphenate(tenant), tenantGraph));
+        this.hyphenatedTenantGraphs = hyphenated;
+    }
+
+    /**
+     * The prefix put before the id of a tenant without an entry in {@link #getTenantGraphs()} to name its graph,
+     * for example {@code tenant_}. Default empty: the tenant id is the graph name.
+     *
+     * @return The prefix
+     * @since 5.3.0
+     */
+    public @NonNull String getTenantGraphPrefix() {
+        return tenantGraphPrefix;
+    }
+
+    /**
+     * @param tenantGraphPrefix The prefix
+     */
+    public void setTenantGraphPrefix(@NonNull String tenantGraphPrefix) {
+        this.tenantGraphPrefix = tenantGraphPrefix;
+    }
+
+    /**
+     * The graph of a tenant: its entry in {@link #getTenantGraphs()}, else its id after {@link #getTenantGraphPrefix()}.
+     * Tenant ids are compared in their hyphenated form, as configuration binds them, so the entry {@code tenant-a} is
+     * that of the tenant {@code tenantA}. A tenant cannot use {@link #getGraph()}, a reserved schema of the database, or
+     * the graph mapped to another tenant.
+     *
+     * @param tenantId The tenant id
+     * @return The graph name
+     * @throws IllegalArgumentException if the graph name is not a valid identifier, or belongs to something else
+     * @since 5.3.0
+     */
+    public @NonNull String tenantGraph(@NonNull String tenantId) {
+        String tenant = NameUtils.hyphenate(tenantId);
+        String mapped = tenantGraphs.get(tenantId);
+        if (mapped == null) {
+            mapped = hyphenatedTenantGraphs.get(tenant);
+        }
+        String name = AgeStatements.validateTenantGraphName(mapped != null ? mapped : tenantGraphPrefix + tenantId, graph);
+        for (Map.Entry<String, String> entry : hyphenatedTenantGraphs.entrySet()) {
+            if (entry.getValue().equals(name) && !entry.getKey().equals(tenant)) {
+                throw new IllegalArgumentException("Apache AGE graph name [" + name + "] of tenant [" + tenantId + "] is mapped to tenant [" + entry.getKey() + "]");
+            }
+        }
+        return name;
+    }
+
+    /**
      * Whether to run {@code CREATE EXTENSION IF NOT EXISTS age} on first use. Default false.
      *
      * @return True to create the extension
@@ -118,7 +190,8 @@ public class AgeConfiguration {
     }
 
     /**
-     * Whether to create the graph on first use if it does not exist. Default true.
+     * Whether to create the configured graph of a data source on first use if it does not exist. Default true. The
+     * graphs of tenants are governed by {@link #isCreateTenantGraphs()}.
      *
      * @return True to create the graph
      */
@@ -131,5 +204,25 @@ public class AgeConfiguration {
      */
     public void setCreateGraph(boolean createGraph) {
         this.createGraph = createGraph;
+    }
+
+    /**
+     * Whether to create the graph of a tenant on first use if it does not exist. Default false: an operation of a
+     * tenant whose graph does not exist fails. Each graph is a schema of the database, so only enable this when tenant
+     * ids are trusted: with a tenant id taken from a request, a client could otherwise create schemas at will.
+     *
+     * @return True to create the graphs of tenants
+     * @since 5.3.0
+     */
+    public boolean isCreateTenantGraphs() {
+        return createTenantGraphs;
+    }
+
+    /**
+     * @param createTenantGraphs Whether to create the graphs of tenants
+     * @since 5.3.0
+     */
+    public void setCreateTenantGraphs(boolean createTenantGraphs) {
+        this.createTenantGraphs = createTenantGraphs;
     }
 }
