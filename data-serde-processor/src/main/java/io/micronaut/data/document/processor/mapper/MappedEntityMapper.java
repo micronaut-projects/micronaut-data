@@ -21,7 +21,6 @@ import io.micronaut.inject.annotation.TypedAnnotationMapper;
 import io.micronaut.inject.visitor.VisitorContext;
 import io.micronaut.serde.annotation.Serdeable;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -39,10 +38,10 @@ public class MappedEntityMapper implements TypedAnnotationMapper<MappedEntity> {
 
     @Override
     public List<AnnotationValue<?>> map(AnnotationValue<MappedEntity> annotation, VisitorContext visitorContext) {
-        return Arrays.asList(
-                AnnotationValue.builder(Serdeable.Serializable.class).member("enabled", true).build(),
-                AnnotationValue.builder(Serdeable.Deserializable.class).member("enabled", true).build()
-        );
+        // Serdeable itself rather than Serdeable.Serializable and Serdeable.Deserializable: members inherit the
+        // annotations of their class, and serde reads those two on a member as a property-level override, which turns
+        // source generation off
+        return List.of(AnnotationValue.builder(Serdeable.class).build());
     }
 
 }
