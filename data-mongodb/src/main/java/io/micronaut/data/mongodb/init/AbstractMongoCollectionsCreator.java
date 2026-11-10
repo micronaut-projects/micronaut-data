@@ -85,6 +85,8 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
         "turkish", "ukrainian");
     // the field MongoDB reads a document's language from when the text index names none
     private static final String DEFAULT_LANGUAGE_OVERRIDE = "language";
+    private static final String VECTOR = "vector";
+    private static final String FIELDS = "fields";
 
     /**
      * Get MongoDB database factory.
@@ -263,7 +265,7 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
         }
         String name = annotationMetadata.stringValue(MongoSearchIndex.class, MongoSearchIndex.MEMBER_VECTOR_INDEX)
             .filter(n -> !n.isEmpty())
-            .orElse("vector");
+            .orElse(VECTOR);
         return new VectorIndexDefinition(name, similarity, dimensions);
     }
 
@@ -402,12 +404,12 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
         public Bson definition() {
             List<Document> fields = new java.util.ArrayList<>(dimensions.size());
             for (Map.Entry<String, Integer> field : dimensions.entrySet()) {
-                fields.add(new Document("type", "vector")
+                fields.add(new Document("type", VECTOR)
                     .append("path", field.getKey())
                     .append("numDimensions", field.getValue())
                     .append("similarity", similarity));
             }
-            return new Document("fields", fields);
+            return new Document(FIELDS, fields);
         }
 
         /**
@@ -422,8 +424,8 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                 return false;
             }
             Map<String, Integer> existingDimensions = new LinkedHashMap<>();
-            for (Object field : latestDefinition.getList("fields", Object.class, List.of())) {
-                if (!(field instanceof Document fieldDocument) || !"vector".equals(fieldDocument.get("type"))) {
+            for (Object field : latestDefinition.getList(FIELDS, Object.class, List.of())) {
+                if (!(field instanceof Document fieldDocument) || !VECTOR.equals(fieldDocument.get("type"))) {
                     continue;
                 }
                 if (!similarity.equals(fieldDocument.get("similarity")) || !(fieldDocument.get("numDimensions") instanceof Number numDimensions)) {
@@ -464,7 +466,7 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                 fieldMappings.append(field, new Document("type", "string").append("analyzer", analyzer));
             }
             return new Document("analyzer", analyzer)
-                .append("mappings", new Document("dynamic", dynamic).append("fields", fieldMappings));
+                .append("mappings", new Document("dynamic", dynamic).append(FIELDS, fieldMappings));
         }
     }
 
