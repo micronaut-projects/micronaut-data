@@ -95,7 +95,7 @@ Annotate them with ann:data.oracle.graph.r2dbc.annotation.OracleGraphR2dbcReposi
 
 snippet::example.BankGraph[project-base="doc-examples/oracle-graph-r2dbc-example", source="main", tags="repository", languages="java,kotlin,groovy,python"]
 
-<1> The repository queries the `bank_graph` property graph over R2DBC. Queries are compiled to SQL/PGQ, as PGQL needs the PGQL JDBC driver.
+<1> The repository queries the `bank_graph` property graph over R2DBC.
 <2> `ReactorCrudRepository` provides reactive create, read, update and delete operations.
 <3> Finders return a `Flux` of results, streamed as the driver reads the rows.
 
