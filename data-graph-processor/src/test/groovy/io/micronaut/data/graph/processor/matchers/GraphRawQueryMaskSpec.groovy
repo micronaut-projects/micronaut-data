@@ -25,5 +25,6 @@ class GraphRawQueryMaskSpec extends Specification {
         'block comment'    | 'MATCH (n) /* SET \$p */ RETURN n'        | 'MATCH (n)              RETURN n'
         'trailing escape'  | "RETURN '\\"                              | "RETURN ' "
         'unclosed comment' | 'RETURN n /* x'                           | 'RETURN n     '
+        'SQL comment'      | 'RETURN n -- not a Cypher comment'        | 'RETURN n -- not a Cypher comment'
     }
 }
