@@ -14,7 +14,6 @@ import io.micronaut.data.oracle.graph.bank.CustomerGraph
 import io.micronaut.data.oracle.graph.bank.PeerGraph
 import io.micronaut.data.oracle.graph.bank.PgqlBankGraph
 import io.micronaut.data.oracle.graph.bank.Transfer
-import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.oracle.graph.operations.OracleGraphRepositoryOperations
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject

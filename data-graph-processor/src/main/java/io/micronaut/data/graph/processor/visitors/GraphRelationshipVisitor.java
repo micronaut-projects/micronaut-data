@@ -65,13 +65,17 @@ public final class GraphRelationshipVisitor implements TypeElementVisitor<Object
         for (int i = 0; i < relationships.size(); i++) {
             Association first = relationships.get(i);
             for (Association second : relationships.subList(i + 1, relationships.size())) {
-                if ((first.getKind().isSingleEnded() || second.getKind().isSingleEnded()) && overlap(first, second)) {
-                    Association single = first.getKind().isSingleEnded() ? first : second;
-                    Association other = single == first ? second : first;
-                    context.fail("The single-valued relationship [" + single.getName() + "] must own its relationship type: saving it would remove the ["
-                        + GraphEntities.relationshipType(single) + "] relationships of [" + other.getName() + "]", ((SourcePersistentProperty) single).getPropertyElement());
-                }
+                checkShared(first, second, context);
             }
+        }
+    }
+
+    private static void checkShared(Association first, Association second, VisitorContext context) {
+        if ((first.getKind().isSingleEnded() || second.getKind().isSingleEnded()) && overlap(first, second)) {
+            Association single = first.getKind().isSingleEnded() ? first : second;
+            Association other = single == first ? second : first;
+            context.fail("The single-valued relationship [" + single.getName() + "] must own its relationship type: saving it would remove the ["
+                + GraphEntities.relationshipType(single) + "] relationships of [" + other.getName() + "]", ((SourcePersistentProperty) single).getPropertyElement());
         }
     }
 
