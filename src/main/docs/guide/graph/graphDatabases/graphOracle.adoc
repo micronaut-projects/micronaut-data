@@ -39,6 +39,7 @@ Graph repositories write only the row of a node in its vertex table. A property 
 
 Methods that return what they write, such as `updateReturning`, run as `RETURNING ... INTO` on the vertex table. A node with a single relationship can only return its properties from them, such as with `updateReturningName`, because the relationship has no column to read: returning the whole entity fails at compile time.
 
+[[graphOracleSchema]]
 == Generating the schema
 
 When schema generation is enabled for the data source, the JDBC schema generator creates the tables of the graph entities and the property graphs over them, as it does for the tables of Micronaut Data JDBC entities:
@@ -58,16 +59,16 @@ The tables follow the mapping of the entities:
 * A relationship declared on both of its nodes, with opposite directions, is one edge table: the table of the relationship entity if one side has one, otherwise the table named after the node the edge leaves. Declare a relationship entity on one side only: a relationship entity on both sides fails the build.
 * A table holds one relationship type between one pair of nodes, as nothing in a row tells two relationships apart. Two relationships that need the same table fail the build, such as one relationship entity used for two relationship types, or a node with the same type towards the same node in both directions: give each of them its own relationship entity.
 
-These mappings, and a relationship entity used by several nodes, fail the compilation of an ann:data.oracle.graph.annotation.OracleGraphRepository[] whose entity reaches them through its relationships and relationship entities. The compiler only sees the entities one repository reaches, so the generator checks them again at startup over every node of the data source, and fails for conflicts between entities that only meet in the graph built from several repositories.
+These mappings, and a relationship entity used by several nodes, fail the compilation of an ann:data.oracle.graph.annotation.OracleGraphRepository[] or ann:data.oracle.graph.r2dbc.annotation.OracleGraphR2dbcRepository[] whose entity reaches them through its relationships and relationship entities. The compiler only sees the entities one repository reaches, so the generator checks them again at startup over every node of the data source, and fails for conflicts between entities that only meet in the graph built from several repositories.
 
-Each graph named by an ann:data.oracle.graph.annotation.OracleGraphRepository[] of the data source is then created with `CREATE PROPERTY GRAPH`, over the vertex tables of the entities its repositories reach through their relationships and the edge tables between them. Incoming relationships are stored as edges from their target to their owner. For the `Account` and `Transfer` entities of the <<graphOracleQuickStart, quick start>>, the generator runs:
+Each graph named by an ann:data.oracle.graph.annotation.OracleGraphRepository[] of the data source, or an ann:data.oracle.graph.r2dbc.annotation.OracleGraphR2dbcRepository[] of the connection factory with <<graphOracleR2dbcSchema, R2DBC>>, is then created with `CREATE OR REPLACE PROPERTY GRAPH`, over the vertex tables of the entities its repositories reach through their relationships and the edge tables between them. Incoming relationships are stored as edges from their target to their owner. For the `Account` and `Transfer` entities of the <<graphOracleQuickStart, quick start>>, the generator runs:
 
 [source,sql]
 ----
 CREATE TABLE "ACCOUNTS" ("ID" NUMBER(19) NOT NULL,"NAME" VARCHAR(255) NOT NULL, PRIMARY KEY("ID"))
 CREATE TABLE "TRANSFER" ("ID" NUMBER(19) NOT NULL,"AMOUNT" FLOAT(126) NOT NULL,"TOID" NUMBER(19) NOT NULL,"ACCOUNTID" NUMBER(19) NOT NULL, PRIMARY KEY("ID"))
 CREATE INDEX "IDX_TRANSFER_ACCOUNTID_TOID" ON "TRANSFER" ("ACCOUNTID", "TOID")
-CREATE PROPERTY GRAPH bank_graph
+CREATE OR REPLACE PROPERTY GRAPH bank_graph
   VERTEX TABLES ("ACCOUNTS" KEY ("ID") LABEL Account PROPERTIES ("ID", "NAME"))
   EDGE TABLES ("TRANSFER" KEY ("ID")
     SOURCE KEY ("ACCOUNTID") REFERENCES "ACCOUNTS" ("ID")
@@ -75,7 +76,7 @@ CREATE PROPERTY GRAPH bank_graph
     LABEL TRANSFERS PROPERTIES ("ID", "AMOUNT"))
 ----
 
-`CREATE_DROP` drops the property graphs before the tables. Graph repositories save nodes only, so rows of edge tables are written with SQL or a ann:data.jdbc.annotation.JdbcRepository[] over an entity of the edge table, which also supplies the identifier of a relationship entity. `VALIDATE` does not check the tables of graph entities.
+`CREATE_DROP` drops the property graphs before the tables, with `IF EXISTS`; a drop that fails, for example because another table has a foreign key to a vertex table, is logged as a warning. With `CREATE`, existing tables are kept and each property graph is replaced, so it follows changes to the entities. Graph repositories save nodes only, so rows of edge tables are written with SQL or a ann:data.jdbc.annotation.JdbcRepository[] over an entity of the edge table, which also supplies the identifier of a relationship entity. `VALIDATE` does not check the tables of graph entities.
 
 NOTE: Schema generation is meant for development and testing. In production, create the tables and property graphs with a migration tool such as https://micronaut-projects.github.io/micronaut-flyway/latest/guide/index.html[Flyway] or https://micronaut-projects.github.io/micronaut-liquibase/latest/guide/index.html[Liquibase].
 
@@ -109,3 +110,18 @@ snippet::example.BankGraphSpec[project-base="doc-examples/oracle-graph-r2dbc-exa
 <3> Block only to read the result in the test.
 
 Graph queries and node writes run in the same reactive connection, and join the transaction of a reactive `@Transactional` method. The build fails on a method that does not return a reactive or asynchronous type, inherited methods included. The module can sit beside `micronaut-data-oracle-graph` in one application as long as the data source and the connection factory have different names, as Micronaut Data JDBC and R2DBC beans of the same name clash, see https://github.com/micronaut-projects/micronaut-data/issues/4274[#4274].
+
+[[graphOracleR2dbcSchema]]
+=== Generating the schema with R2DBC
+
+The R2DBC schema generator creates the tables of the graph entities and the property graphs named by the ann:data.oracle.graph.r2dbc.annotation.OracleGraphR2dbcRepository[] repositories of the connection factory, with the same statements as the <<graphOracleSchema, JDBC schema generator>>:
+
+[configuration]
+----
+r2dbc:
+  datasources:
+    default:
+      schema-generate: CREATE_DROP
+----
+
+Rows of edge tables are written with SQL or a ann:data.r2dbc.annotation.R2dbcRepository[] over an entity of the edge table. R2DBC schema generation does not support `VALIDATE`.
