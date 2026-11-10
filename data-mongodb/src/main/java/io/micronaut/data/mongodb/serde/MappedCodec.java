@@ -145,6 +145,7 @@ class MappedCodec<T> implements Codec<T> {
      *
      * @return The serializer
      */
+    @SuppressWarnings("java:S1452") // SerializerLocator.findSerializer returns this wildcard type
     Serializer<? super T> nestedSerializer() {
         if (identitySerializedName == null) {
             return serializer;
@@ -171,7 +172,7 @@ class MappedCodec<T> implements Codec<T> {
         }
         Class<? extends PropertyNamingStrategy> namingStrategy = annotationMetadata.classValue(SerdeConfig.class, SerdeConfig.RUNTIME_NAMING)
             .or(() -> persistentEntity.getAnnotationMetadata().classValue(SerdeConfig.class, SerdeConfig.RUNTIME_NAMING))
-            .map(type -> type.asSubclass(PropertyNamingStrategy.class))
+            .map(strategy -> strategy.asSubclass(PropertyNamingStrategy.class))
             .orElse(null);
         if (namingStrategy == null) {
             return identity.getName();
