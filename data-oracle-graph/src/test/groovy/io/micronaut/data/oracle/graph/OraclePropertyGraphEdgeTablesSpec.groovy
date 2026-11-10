@@ -17,6 +17,7 @@ import jakarta.inject.Inject
 import spock.lang.Specification
 
 import javax.sql.DataSource
+import java.sql.ResultSet
 
 /**
  * Generates the edge tables of a relationship type with several targets, of a relationship declared on both of its
@@ -132,16 +133,20 @@ class OraclePropertyGraphEdgeTablesSpec extends Specification {
     }
 
     private List<String> query(String query) {
-        List<String> values = []
         DelegatingDataSource.unwrapDataSource(dataSource).connection.withCloseable { connection ->
             connection.createStatement().withCloseable { statement ->
-                statement.executeQuery(query).withCloseable { rs ->
-                    while (rs.next()) {
-                        values << rs.getString(1)
-                    }
-                }
+                firstColumn(statement.executeQuery(query))
             }
         }
-        values
+    }
+
+    private static List<String> firstColumn(ResultSet rs) {
+        rs.withCloseable {
+            List<String> values = []
+            while (rs.next()) {
+                values << rs.getString(1)
+            }
+            values
+        }
     }
 }
