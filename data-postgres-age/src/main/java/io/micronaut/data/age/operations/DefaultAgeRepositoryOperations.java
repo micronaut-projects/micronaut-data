@@ -135,6 +135,8 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
      * Serializes the creations of graphs outside a transaction, so that concurrent first operations create each once.
      */
     private final Object graphLock = new Object();
+    // An immutable list, replaced whole, so a volatile reference publishes it safely
+    @SuppressWarnings("java:S3077")
     private volatile List<String> indexStatements = List.of();
 
     @SuppressWarnings("ParameterNumber")
@@ -395,7 +397,7 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
         }
         boolean autoCommit = connection.getAutoCommit();
         try (Statement statement = connection.createStatement()) {
-            int state = sessionState(statement, PREPARED_SETTING);
+            int state = sessionState(connection, PREPARED_SETTING);
             if (state == COMMITTED) {
                 preparedConnections.add(physical);
             }
@@ -409,7 +411,7 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
                 }
                 statement.execute("LOAD 'age'");
                 statement.execute(SEARCH_PATH);
-                statement.execute("SELECT set_config('" + PREPARED_SETTING + "', transaction_timestamp()::text, false)");
+                markSession(connection, PREPARED_SETTING);
                 if (autoCommit) {
                     // Committed at once
                     preparedConnections.add(physical);
@@ -423,12 +425,26 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
      * @return {@link #ABSENT} when the session does not have the setting, {@link #CURRENT_TRANSACTION} when the current
      * transaction set it, or {@link #COMMITTED} when an earlier transaction did
      */
-    private static int sessionState(Statement statement, String setting) throws SQLException {
-        String value = "coalesce(current_setting('" + setting + "', true), '')";
-        try (ResultSet resultSet = statement.executeQuery("SELECT CASE WHEN " + value + " = '' THEN " + ABSENT
+    private static int sessionState(Connection connection, String setting) throws SQLException {
+        String value = "coalesce(current_setting(?, true), '')";
+        try (PreparedStatement statement = connection.prepareStatement("SELECT CASE WHEN " + value + " = '' THEN " + ABSENT
             + " WHEN " + value + " = transaction_timestamp()::text THEN " + CURRENT_TRANSACTION
             + " ELSE " + COMMITTED + " END")) {
-            return resultSet.next() ? resultSet.getInt(1) : ABSENT;
+            statement.setString(1, setting);
+            statement.setString(2, setting);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next() ? resultSet.getInt(1) : ABSENT;
+            }
+        }
+    }
+
+    /**
+     * Records in a session setting that the current transaction prepared the session, which a rollback reverts.
+     */
+    private static void markSession(Connection connection, String setting) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement("SELECT set_config(?, transaction_timestamp()::text, false)")) {
+            statement.setString(1, setting);
+            statement.execute();
         }
     }
 
@@ -526,25 +542,24 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
      */
     private void createIndexesInTransaction(Connection connection, String graph) throws SQLException {
         String setting = INDEXED_SETTING + HexFormat.of().formatHex(graph.getBytes(StandardCharsets.UTF_8));
-        try (Statement statement = connection.createStatement()) {
-            int state = sessionState(statement, setting);
-            if (state == COMMITTED) {
-                readyGraphs.add(graph);
-            }
-            if (state != ABSENT) {
-                return;
-            }
-            // A savepoint keeps the transaction usable when the indexes cannot be created
-            Savepoint savepoint = connection.setSavepoint();
-            try {
-                statement.execute("SELECT pg_advisory_xact_lock(hashtext('" + setting + "'))");
-                createIndexes(connection, graph);
-                statement.execute("SELECT set_config('" + setting + "', transaction_timestamp()::text, false)");
-                connection.releaseSavepoint(savepoint);
-            } catch (SQLException e) {
-                connection.rollback(savepoint);
-                throw e;
-            }
+        int state = sessionState(connection, setting);
+        if (state == COMMITTED) {
+            readyGraphs.add(graph);
+        }
+        if (state != ABSENT) {
+            return;
+        }
+        // A savepoint keeps the transaction usable when the indexes cannot be created
+        Savepoint savepoint = connection.setSavepoint();
+        try (PreparedStatement lock = connection.prepareStatement("SELECT pg_advisory_xact_lock(hashtext(?))")) {
+            lock.setString(1, setting);
+            lock.execute();
+            createIndexes(connection, graph);
+            markSession(connection, setting);
+            connection.releaseSavepoint(savepoint);
+        } catch (SQLException e) {
+            connection.rollback(savepoint);
+            throw e;
         }
     }
 
