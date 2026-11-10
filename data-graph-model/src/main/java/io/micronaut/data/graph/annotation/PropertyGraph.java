@@ -22,8 +22,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Names the property graph a repository queries, for databases that hold several graphs defined over tables,
- * and the query language its queries are compiled to.
+ * Names the property graph a repository queries, for databases that hold several graphs defined over tables.
  *
  * @author graemerocher
  * @since 5.3.0
@@ -37,27 +36,4 @@ public @interface PropertyGraph {
      * @return The name of the graph
      */
     String value() default "";
-
-    /**
-     * @return The query language
-     */
-    QueryLanguage language() default QueryLanguage.PGQL;
-
-    /**
-     * Query languages of property graphs defined over tables.
-     */
-    enum QueryLanguage {
-        /**
-         * PGQL, run through the PGQL JDBC driver.
-         *
-         * <p>Path finders are rejected at compile time, as they bind their endpoints as parameters and Oracle documents
-         * that a PGQL path query with bind variables fails on a property graph in the database. Use {@link #SQL_PGQ}
-         * to check for paths and count them.</p>
-         */
-        PGQL,
-        /**
-         * SQL/PGQ: {@code GRAPH_TABLE} queries in SQL, the property graph queries of the SQL standard.
-         */
-        SQL_PGQ
-    }
 }
