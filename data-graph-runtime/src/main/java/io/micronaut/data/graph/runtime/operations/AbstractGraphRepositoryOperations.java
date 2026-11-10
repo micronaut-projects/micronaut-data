@@ -109,6 +109,7 @@ import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
@@ -125,6 +126,8 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     AsyncCapableRepository,
     ReactiveCapableRepository,
     AutoCloseable {
+    private static final Pattern CRITERIA_DEPTH = Pattern.compile(Pattern.quote(PathQueryDefinition.CRITERIA_DEPTH_TOKEN) + "(\\d+)");
+
     protected final GraphQueryBuilder queryBuilder;
 
     protected final GraphEntityMapper mapper;
@@ -445,7 +448,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         if (preparedQuery instanceof BindableParametersPreparedQuery<?, ?> bindable) {
             bindable.bindParameters(new MapBinder(parameters));
         }
-        StringBuilder query = new StringBuilder(preparedQuery.getQuery());
+        StringBuilder query = new StringBuilder(checkCriteriaDepths(preparedQuery.getQuery()));
         int limitIndex = preparedQuery.getAnnotationMetadata().intValue(PathLimitParameter.class).orElse(-1);
         int tokenPosition = query.indexOf(PathQueryDefinition.PATH_LIMIT_TOKEN);
         if (tokenPosition >= 0) {
@@ -473,6 +476,21 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             appendSortAndLimit(query, entity, preparedQuery.getSort(), preparedQuery.getQueryLimit());
         }
         return new GraphQuery(query.toString(), parameters);
+    }
+
+    private String checkCriteriaDepths(String query) {
+        if (!query.contains(PathQueryDefinition.CRITERIA_DEPTH_TOKEN)) {
+            return query;
+        }
+        return CRITERIA_DEPTH.matcher(query).replaceAll(match -> {
+            // A criterion takes its depth at runtime, possibly from a request, so it is capped like a @PathLimit argument
+            int depth = Integer.parseInt(match.group(1));
+            if (depth > maxPathDepth) {
+                throw new IllegalArgumentException("The depth " + depth + " of a graph criterion is larger than "
+                    + GraphOperationsConfiguration.PREFIX + ".max-path-depth (" + maxPathDepth + ")");
+            }
+            return match.group(1);
+        });
     }
 
     /**

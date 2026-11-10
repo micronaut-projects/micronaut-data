@@ -45,7 +45,7 @@ public class GraphOperationsConfiguration {
     private int queryCacheSize = DEFAULT_QUERY_CACHE_SIZE;
 
     /**
-     * The largest depth a {@code @PathLimit} argument may ask for. A variable-length path visits
+     * The largest depth a {@code @PathLimit} argument or a graph criterion may ask for. A variable-length path visits
      * every path up to its depth, so a caller-supplied depth is capped. Default {@value #DEFAULT_MAX_PATH_DEPTH}.
      *
      * @return The maximum depth

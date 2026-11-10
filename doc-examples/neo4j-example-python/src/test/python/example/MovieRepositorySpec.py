@@ -8,7 +8,7 @@ from org.junit.jupiter.api import AfterEach, BeforeEach, Test
 from example.Movie import Movie
 from example.MovieRepository import MovieRepository
 from example.MovieSpecificationRepository import MovieSpecificationRepository
-from example.MovieSpecifications import directed_by, released_after
+from example.MovieSpecifications import connected_to, directed_by, released_after, with_roles
 from example.Person import Person
 from example.PersonRepository import PersonRepository
 from example.Role import Role
@@ -34,6 +34,8 @@ class MovieRepositorySpec:
 
         self.movieRepository.save(matrix)  # <1>
         # end::save[]
+        keanu = self.personRepository.findByName("Keanu Reeves")
+        lana = self.personRepository.findByName("Lana Wachowski")
         self.movieRepository.save(Movie("The Matrix Reloaded", "Free your mind", 2003, [Role(["Neo"], keanu)], [lana]))
         self.movieRepository.save(Movie("Speed", "Get ready for rush hour", 1994, [Role(["Jack Traven"], keanu)]))
 
@@ -95,3 +97,14 @@ class MovieRepositorySpec:
 
         assert sorted(m.title for m in recent) == ["The Matrix", "The Matrix Reloaded"]
         assert by_lana == 2
+
+    @Test
+    def testGraphCriteria(self):
+        # tag::useGraphCriteria[]
+        with_cast = self.movieSpecificationRepository.count(with_roles())  # <1>
+        near_speed = self.movieSpecificationRepository.findAll(connected_to("Speed", 2))  # <2>
+        # end::useGraphCriteria[]
+
+        assert with_cast == 3, f"with_cast={with_cast!r}"
+        titles = sorted(m.title for m in near_speed)
+        assert titles == ["The Matrix", "The Matrix Reloaded"], f"titles={titles!r}"

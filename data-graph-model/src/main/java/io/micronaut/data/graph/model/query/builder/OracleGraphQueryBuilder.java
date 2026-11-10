@@ -17,6 +17,7 @@ package io.micronaut.data.graph.model.query.builder;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Introspected;
+import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.graph.annotation.Direction;
@@ -26,6 +27,10 @@ import io.micronaut.data.graph.annotation.Labels;
 import io.micronaut.data.graph.annotation.PropertyGraph;
 import io.micronaut.data.graph.annotation.TargetNode;
 import io.micronaut.data.graph.model.GraphEntities;
+import io.micronaut.data.graph.model.criteria.DynamicPropertyExpression;
+import io.micronaut.data.graph.model.criteria.GraphExpressionVisitor;
+import io.micronaut.data.graph.model.criteria.GraphPredicateVisitor;
+import io.micronaut.data.graph.model.criteria.RelatedPredicate;
 import io.micronaut.data.graph.model.query.PathQueryDefinition;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
@@ -71,6 +76,11 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Selection;
 import org.jspecify.annotations.Nullable;
 
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -724,6 +734,53 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         return entity.getIdentity();
     }
 
+    /**
+     * The JSON path of a top-level key as a string literal. The key is quoted, so a dot reads a key
+     * with a dot in its name rather than a nested object, and a space or an apostrophe is not path
+     * syntax. A double quote or a backslash would need a JSON escape inside a string literal, which
+     * PGQL and SQL read differently, so such a name is rejected.
+     *
+     * @param name The key
+     * @return The path literal
+     */
+    private static String jsonPath(String name) {
+        if (name.indexOf('"') >= 0 || name.indexOf('\\') >= 0) {
+            throw new IllegalArgumentException("Schemaless property [" + name + "] cannot be read from an Oracle property graph: "
+                + "its name holds a double quote or a backslash, which a JSON path would need to escape");
+        }
+        return "'$.\"" + name.replace("'", "''") + "\"'";
+    }
+
+    /**
+     * The RETURNING clause that reads a JSON value as the SQL type of the expression, so numbers
+     * compare as numbers rather than as strings. Other types are read as the default string.
+     *
+     * @param type The type of the expression
+     * @return The clause, or an empty string
+     */
+    private static String jsonReturning(@Nullable Class<?> type) {
+        if (type == null) {
+            return "";
+        }
+        Class<?> wrapper = ReflectionUtils.getWrapperType(type);
+        if (Number.class.isAssignableFrom(wrapper)) {
+            return " RETURNING NUMBER";
+        }
+        if (wrapper == Boolean.class) {
+            return " RETURNING BOOLEAN";
+        }
+        if (wrapper == LocalDate.class) {
+            return " RETURNING DATE";
+        }
+        if (wrapper == LocalDateTime.class) {
+            return " RETURNING TIMESTAMP";
+        }
+        if (wrapper == OffsetDateTime.class || wrapper == ZonedDateTime.class || wrapper == Instant.class) {
+            return " RETURNING TIMESTAMP WITH TIME ZONE";
+        }
+        return "";
+    }
+
     private static String alias(String name) {
         return "\"" + name.replace("\"", "\"\"") + "\"";
     }
@@ -996,7 +1053,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     /**
      * Renders expressions in the graph pattern scope.
      */
-    private class ExpressionRenderer implements io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor {
+    private class ExpressionRenderer implements io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor, GraphExpressionVisitor {
         final Query query;
         final StringBuilder out;
         int depth;
@@ -1087,6 +1144,26 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         }
 
         @Override
+        public void visit(DynamicPropertyExpression<?, ?> expression) {
+            // Schemaless properties live in the JSON column of the vertex table
+            PersistentProperty attributes = null;
+            for (PersistentProperty property : query.entity.getPersistentProperties()) {
+                if (property.getAnnotationMetadata().hasAnnotation(DynamicAttributes.class)) {
+                    if (attributes != null) {
+                        throw new IllegalArgumentException("Entity [" + query.entity.getName() + "] has more than one @DynamicAttributes property: ["
+                            + attributes.getName() + "] and [" + property.getName() + "]");
+                    }
+                    attributes = property;
+                }
+            }
+            if (attributes == null) {
+                throw new IllegalArgumentException("Entity [" + query.entity.getName() + "] has no @DynamicAttributes property to read [" + expression.getName() + "] from");
+            }
+            out.append("JSON_VALUE(").append(property(ROOT, attributes)).append(", ").append(jsonPath(expression.getName()))
+                .append(jsonReturning(expression.getJavaType())).append(')');
+        }
+
+        @Override
         public void visit(IdExpression<?, ?> idExpression) {
             out.append(property(ROOT, identity(query.entity)));
         }
@@ -1142,11 +1219,16 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     /**
      * Renders predicates.
      */
-    private final class PredicateRenderer extends ExpressionRenderer implements AdvancedPredicateVisitor<io.micronaut.data.model.PersistentPropertyPath> {
+    private final class PredicateRenderer extends ExpressionRenderer implements AdvancedPredicateVisitor<io.micronaut.data.model.PersistentPropertyPath>, GraphPredicateVisitor {
         private boolean negated;
 
         PredicateRenderer(Query query, StringBuilder out) {
             super(query, out);
+        }
+
+        @Override
+        public void visit(RelatedPredicate<?, ?> predicate) {
+            throw new UnsupportedOperationException("Relationship criteria are not supported for Oracle property graphs: use a finder on the relationship property");
         }
 
         @Override
@@ -1417,7 +1499,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     /**
      * Renders the selected columns.
      */
-    private final class SelectionRenderer implements SelectionVisitor {
+    private final class SelectionRenderer implements SelectionVisitor, GraphExpressionVisitor {
         final Query query;
         boolean entity;
         boolean literal;
@@ -1510,6 +1592,11 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         @Override
         public void visit(FunctionExpression<?> functionExpression) {
             item(functionExpression, RESULT, null);
+        }
+
+        @Override
+        public void visit(DynamicPropertyExpression<?, ?> expression) {
+            item(expression, expression.getName(), null);
         }
 
         @Override
