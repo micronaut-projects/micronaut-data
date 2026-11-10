@@ -181,6 +181,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     private static final String LOCK_PROPERTY = GraphEntities.LOCK_PROPERTY;
     private static final String LINK_FROM = "a";
     private static final String LINK_TO = "b";
+    private static final String NOT_EQUAL_PARAMETER = " <> $";
 
     @Override
     public @Nullable QueryResult buildInsert(AnnotationMetadata repositoryMetadata, InsertQueryDefinition definition) {
@@ -692,7 +693,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      */
     @Override
     public String buildUnlinkOthersQuery(Association association, PersistentEntity owner, PersistentEntity target) {
-        return linkPattern(association, owner, target, " <> $")
+        return linkPattern(association, owner, target, NOT_EQUAL_PARAMETER)
             + " DELETE " + PATH_RELATIONSHIP + RETURN_COUNT;
     }
 
@@ -716,9 +717,9 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         StringBuilder query = linkFrom(association, owner, target);
         if (relationshipIdentity != null) {
             query.append(" AND (")
-                .append(identityExpression(target.getIdentity(), LINK_TO)).append(" <> $").append(LINK_TO_PARAMETER)
+                .append(identityExpression(target.getIdentity(), LINK_TO)).append(NOT_EQUAL_PARAMETER).append(LINK_TO_PARAMETER)
                 .append(" OR ")
-                .append(identityExpression(relationshipIdentity, PATH_RELATIONSHIP)).append(" <> $").append(ID_PARAMETER)
+                .append(identityExpression(relationshipIdentity, PATH_RELATIONSHIP)).append(NOT_EQUAL_PARAMETER).append(ID_PARAMETER)
                 .append(')');
         }
         return query.append(" DELETE ").append(PATH_RELATIONSHIP).append(RETURN_COUNT).toString();
