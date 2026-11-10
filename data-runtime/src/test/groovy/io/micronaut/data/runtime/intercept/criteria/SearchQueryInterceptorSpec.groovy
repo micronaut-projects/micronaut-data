@@ -71,7 +71,7 @@ class SearchQueryInterceptorSpec extends Specification {
         }
         findOne(_ as PreparedQuery) >> { PreparedQuery preparedQuery -> execute(preparedQuery) }
         reactive() >> Stub(ReactiveRepositoryOperations) {
-            findOne(_ as PreparedQuery) >> { PreparedQuery preparedQuery -> Mono.fromCallable { execute(preparedQuery) } }
+            findOne(_ as PreparedQuery) >> { PreparedQuery preparedQuery -> executeReactive(preparedQuery) }
         }
         async() >> Stub(AsyncRepositoryOperations) {
             findOne(_ as PreparedQuery) >> { PreparedQuery preparedQuery -> executeAsync(preparedQuery) }
@@ -171,6 +171,10 @@ class SearchQueryInterceptorSpec extends Specification {
     private Object execute(PreparedQuery preparedQuery) {
         executedQueries << preparedQuery.query
         return onExecute.call(preparedQuery.query)
+    }
+
+    private Mono<Object> executeReactive(PreparedQuery preparedQuery) {
+        return Mono.fromCallable { execute(preparedQuery) }
     }
 
     private CompletableFuture<Object> executeAsync(PreparedQuery preparedQuery) {
