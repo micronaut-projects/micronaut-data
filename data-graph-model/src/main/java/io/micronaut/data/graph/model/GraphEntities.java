@@ -46,6 +46,12 @@ import java.util.Locale;
 @Internal
 public final class GraphEntities {
 
+    /**
+     * The property a versioned write sets and removes to take the write lock of a node, so a node cannot store one
+     * of its own under this name.
+     */
+    public static final String LOCK_PROPERTY = "__lock";
+
     private static final java.util.Set<String> NATIVE_ID_TYPES = java.util.Set.of(
         String.class.getName(),
         Long.class.getName(),

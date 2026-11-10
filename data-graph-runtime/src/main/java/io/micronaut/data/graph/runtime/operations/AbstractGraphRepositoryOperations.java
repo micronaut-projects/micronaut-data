@@ -23,7 +23,9 @@ import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.EntityExistsException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
+import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.graph.annotation.TargetNode;
 import io.micronaut.data.graph.model.GraphEntities;
 import io.micronaut.data.graph.model.GraphPath;
@@ -42,9 +44,12 @@ import io.micronaut.data.graph.runtime.GraphSession;
 import io.micronaut.data.graph.runtime.GraphValueEncoderRegistrar;
 import io.micronaut.data.graph.runtime.GraphValueEncoders;
 import io.micronaut.data.graph.runtime.serde.GraphSerde;
+import io.micronaut.data.model.Association;
 import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
@@ -777,6 +782,23 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
      * @return The query, with the identifier written, or null when the database generates it
      */
     final <T> NodeWrite planNodeWrite(RuntimePersistentEntity<T> entity, T instance) {
+        return planNodeWrite(entity, instance, false, null);
+    }
+
+    /**
+     * Plans the query that creates or updates a node. An insert of an entity with a {@code @Version} property and an
+     * assigned identifier writes nothing when a node with the identifier exists, rather than overwrite it. An update
+     * of an entity with a {@code @Version} property only matches the node while it still has the version the entity
+     * was read with.
+     *
+     * @param entity          The entity
+     * @param instance        The instance
+     * @param insert          Whether the node is inserted
+     * @param previousVersion The version the entity was read with, or null to write without checking it
+     * @param <T>             The entity type
+     * @return The query, with the identifier written, or null when the database generates it
+     */
+    final <T> NodeWrite planNodeWrite(RuntimePersistentEntity<T> entity, T instance, boolean insert, @Nullable Object previousVersion) {
         RuntimePersistentProperty<T> identity = entity.getIdentity();
         Map<String, Object> properties = mapper.writeProperties(entity, instance);
         Object id = mapper.writeIdentity(entity, instance);
@@ -787,8 +809,12 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         List<String> labels = mapper.dynamicLabels(entity, instance);
         String addLabels = labels.isEmpty() ? null : queryBuilder.buildAddLabelsQuery(entity, labels);
         List<String> names = new ArrayList<>(properties.keySet());
-        String key = "write:" + entity.getName() + ":" + (id != null) + ":" + names;
-        String query = queryCache.computeIfAbsent(key, k -> queryBuilder.buildWriteNodeQuery(entity, names, id != null));
+        RuntimePersistentProperty<T> version = entity.hasVersion() ? entity.getVersion() : null;
+        boolean versioned = id != null && version != null && previousVersion != null;
+        // Saving merges a node on its assigned identifier, but a new versioned entity must not overwrite the node and
+        // its version
+        boolean assignedInsert = insert && version != null && id != null && identity != null && !GraphEntities.isNativeId(identity);
+        String query = nodeWriteQuery(entity, names, id != null, versioned, assignedInsert);
         Map<String, Object> parameters = new LinkedHashMap<>();
         int i = 0;
         for (Object value : properties.values()) {
@@ -797,7 +823,78 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         if (id != null) {
             parameters.put(CypherQueryBuilder.ID_PARAMETER, id);
         }
-        return new NodeWrite(new GraphQuery(query, parameters), id, addLabels);
+        if (versioned && version != null) {
+            parameters.put(CypherQueryBuilder.VERSION_PARAMETER, mapper.writeValue(version, previousVersion));
+        }
+        return new NodeWrite(new GraphQuery(query, parameters), id, versioned ? previousVersion : null, assignedInsert, addLabels);
+    }
+
+    private String nodeWriteQuery(RuntimePersistentEntity<?> entity, List<String> names, boolean idPresent, boolean versioned, boolean assignedInsert) {
+        String kind = versioned ? "writeVersioned:" : assignedInsert ? "insert:" : "write:";
+        String key = kind + entity.getName() + ":" + idPresent + ":" + names;
+        return queryCache.computeIfAbsent(key, k -> {
+            if (versioned) {
+                return queryBuilder.buildUpdateVersionedNodeQuery(entity, names);
+            }
+            return assignedInsert ? queryBuilder.buildInsertNodeQuery(entity, names) : queryBuilder.buildWriteNodeQuery(entity, names, idPresent);
+        });
+    }
+
+    /**
+     * Builds the statements that create the indexes and unique constraints of entities, and of the node entities their
+     * relationships reach, when they do not exist yet.
+     *
+     * @param entityTypes The entity types
+     * @return The statements
+     * @since 5.3.0
+     */
+    protected final List<String> buildCreateIndexStatements(Collection<Class<?>> entityTypes) {
+        Map<String, PersistentEntity> entities = new LinkedHashMap<>();
+        for (Class<?> entityType : entityTypes) {
+            collectReachableNodes(getEntity(entityType), entities);
+        }
+        List<String> statements = new ArrayList<>();
+        for (PersistentEntity entity : entities.values()) {
+            statements.addAll(queryBuilder.buildCreateIndexStatements(entity));
+        }
+        return statements;
+    }
+
+    private void collectReachableNodes(PersistentEntity entity, Map<String, PersistentEntity> entities) {
+        if (entities.putIfAbsent(entity.getName(), entity) != null) {
+            return;
+        }
+        for (PersistentProperty property : entity.getPersistentProperties()) {
+            if (property instanceof Association association && GraphEntities.isRelationship(association)) {
+                collectReachableNodes(GraphEntities.targetNodeEntity(association), entities);
+            }
+        }
+    }
+
+    /**
+     * Reads the {@code @Version} property of an instance about to be updated or deleted.
+     *
+     * @param entity   The entity
+     * @param instance The instance
+     * @param <T>      The entity type
+     * @return The version, or null if the entity has no version
+     */
+    final <T> @Nullable Object currentVersion(RuntimePersistentEntity<T> entity, T instance) {
+        RuntimePersistentProperty<T> version = entity.hasVersion() ? entity.getVersion() : null;
+        return version == null ? null : version.getProperty().get(instance);
+    }
+
+    /**
+     * Fails a versioned delete that deleted nothing, because the node was changed or deleted since it was read.
+     *
+     * @param entity          The entity
+     * @param previousVersion The version the entity was read with, or null if the delete was not versioned
+     * @param deleted         The number of deleted nodes
+     */
+    final void checkVersionedDelete(RuntimePersistentEntity<?> entity, @Nullable Object previousVersion, long deleted) {
+        if (previousVersion != null && entity.hasVersion() && deleted == 0) {
+            throw new OptimisticLockException("The node of [" + entity.getSimpleName() + "] was changed or deleted since it was read with version [" + previousVersion + "]");
+        }
     }
 
     /**
@@ -810,6 +907,13 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
      */
     final @Nullable Object generatedId(RuntimePersistentEntity<?> entity, NodeWrite write, List<GraphRecord> records) {
         if (records.isEmpty()) {
+            if (write.previousVersion() != null) {
+                throw new OptimisticLockException("The node of [" + entity.getSimpleName() + "] with identifier [" + write.id()
+                    + "] was changed or deleted since it was read with version [" + write.previousVersion() + "]");
+            }
+            if (write.insert()) {
+                throw new EntityExistsException("A node of [" + entity.getSimpleName() + "] with identifier [" + write.id() + "] already exists");
+            }
             throw new DataAccessException("No node of [" + entity.getSimpleName() + "] with identifier [" + write.id() + "] to update");
         }
         RuntimePersistentProperty<?> identity = entity.getIdentity();
@@ -1053,9 +1157,29 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
      * @return The query
      */
     final <T> GraphQuery planDelete(RuntimePersistentEntity<T> entity, T instance) {
+        return planDelete(entity, instance, null);
+    }
+
+    /**
+     * Plans the query that deletes a node with its relationships. A delete of an entity with a {@code @Version}
+     * property only matches the node while it still has the version the entity was read with.
+     *
+     * @param entity          The entity
+     * @param instance        The instance
+     * @param previousVersion The version the entity was read with, or null to delete without checking it
+     * @param <T>             The entity type
+     * @return The query
+     */
+    final <T> GraphQuery planDelete(RuntimePersistentEntity<T> entity, T instance, @Nullable Object previousVersion) {
         Object id = mapper.writeIdentity(entity, instance);
         if (id == null) {
             throw new DataAccessException("Cannot delete [" + entity.getSimpleName() + "] without an identifier");
+        }
+        RuntimePersistentProperty<T> version = entity.hasVersion() ? entity.getVersion() : null;
+        if (version != null && previousVersion != null) {
+            String query = queryCache.computeIfAbsent("deleteVersioned:" + entity.getName(), k -> queryBuilder.buildDeleteVersionedNodeQuery(entity));
+            return new GraphQuery(query, Map.of(CypherQueryBuilder.ID_PARAMETER, id,
+                CypherQueryBuilder.VERSION_PARAMETER, mapper.writeValue(version, previousVersion)));
         }
         String query = queryCache.computeIfAbsent("delete:" + entity.getName(), k -> queryBuilder.buildDeleteByIdQuery(entity));
         return new GraphQuery(query, Map.of(CypherQueryBuilder.ID_PARAMETER, id));
@@ -1064,11 +1188,13 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     /**
      * A query that writes a node.
      *
-     * @param query     The query
-     * @param id        The written identifier, or null when the database generates it
-     * @param addLabels The query that adds the dynamic labels of the node, or null
+     * @param query           The query
+     * @param id              The written identifier, or null when the database generates it
+     * @param previousVersion The version the update checks, or null if it does not check one
+     * @param insert          Whether the query inserts a versioned node with an assigned identifier, writing nothing if it exists
+     * @param addLabels       The query that adds the dynamic labels of the node, or null
      */
-    record NodeWrite(GraphQuery query, @Nullable Object id, @Nullable String addLabels) {
+    record NodeWrite(GraphQuery query, @Nullable Object id, @Nullable Object previousVersion, boolean insert, @Nullable String addLabels) {
     }
 
     /**
@@ -1230,6 +1356,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     private final class NodeOperation<T> extends AbstractSyncEntityOperations<OperationContext, T, RuntimeException> {
         private final Persister persister;
         private final T original;
+        private @Nullable Object previousVersion;
         private boolean created;
 
         NodeOperation(Persister persister, RuntimePersistentEntity<T> entity, T instance, boolean insert) {
@@ -1249,8 +1376,21 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         }
 
         @Override
+        protected void collectAutoPopulatedPreviousValues() {
+            previousVersion = insert ? null : currentVersion(persistentEntity, entity);
+        }
+
+        @Override
+        protected void failed(Exception e, String operation) {
+            if (e instanceof EntityExistsException entityExists) {
+                throw entityExists;
+            }
+            super.failed(e, operation);
+        }
+
+        @Override
         protected void execute() {
-            NodeWrite write = planNodeWrite(persistentEntity, entity);
+            NodeWrite write = planNodeWrite(persistentEntity, entity, insert, previousVersion);
             List<GraphRecord> records = persister.run(write.query()).records();
             Object generatedId = generatedId(persistentEntity, write, records);
             RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
@@ -1461,6 +1601,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     private final class DeleteNodeOperation<T> extends AbstractSyncEntityOperations<OperationContext, T, RuntimeException> {
         private final Persister persister;
         private int deleted;
+        private @Nullable Object previousVersion;
 
         DeleteNodeOperation(Persister persister, RuntimePersistentEntity<T> entity, T instance) {
             super(persister.context, AbstractGraphRepositoryOperations.this.noCascade, entityEventRegistry, entity, AbstractGraphRepositoryOperations.this.conversionService, instance, false);
@@ -1478,8 +1619,14 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         }
 
         @Override
+        protected void collectAutoPopulatedPreviousValues() {
+            previousVersion = currentVersion(persistentEntity, entity);
+        }
+
+        @Override
         protected void execute() {
-            deleted = updateCount(persister.run(planDelete(persistentEntity, entity))).intValue();
+            deleted = updateCount(persister.run(planDelete(persistentEntity, entity, previousVersion))).intValue();
+            checkVersionedDelete(persistentEntity, previousVersion, deleted);
         }
     }
 }

@@ -3,7 +3,10 @@ package io.micronaut.data.neo4j
 import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.data.connection.ConnectionDefinition
 import io.micronaut.data.exceptions.DataAccessException
+import io.micronaut.data.exceptions.EntityExistsException
 import io.micronaut.data.exceptions.NonUniqueResultException
+import io.micronaut.data.exceptions.OptimisticLockException
+import io.micronaut.data.graph.tck.entities.Article
 import io.micronaut.data.graph.tck.entities.Collaboration
 import io.micronaut.data.graph.tck.entities.Colleague
 import io.micronaut.data.graph.tck.entities.Movie
@@ -18,6 +21,7 @@ import io.micronaut.data.neo4j.features.Engineer
 import io.micronaut.data.neo4j.features.Ensemble
 import io.micronaut.data.neo4j.features.Pet
 import io.micronaut.data.neo4j.features.Project
+import io.micronaut.data.neo4j.features.ReactiveArticleRepository
 import io.micronaut.data.neo4j.features.ReactiveColleagueRepository
 import io.micronaut.data.neo4j.features.ReactiveEngineerRepository
 import io.micronaut.data.neo4j.features.ReactiveEnsembleRepository
@@ -25,11 +29,14 @@ import io.micronaut.data.neo4j.features.ReactiveMovieRepository
 import io.micronaut.data.neo4j.features.ReactiveMovieService
 import io.micronaut.data.neo4j.features.Player
 import io.micronaut.data.neo4j.features.ReactivePetRepository
+import io.micronaut.data.neo4j.features.ReactiveShelfRepository
 import io.micronaut.data.neo4j.features.ReactiveTeamRepository
 import io.micronaut.data.neo4j.features.Review
 import io.micronaut.data.neo4j.features.Seat
+import io.micronaut.data.neo4j.features.Shelf
 import io.micronaut.data.neo4j.features.Tag
 import io.micronaut.data.neo4j.features.Team
+import io.micronaut.data.neo4j.features.Volume
 import io.micronaut.data.neo4j.operations.Neo4jReactorRepositoryOperations
 import io.micronaut.data.neo4j.operations.Neo4jRepositoryOperations
 import io.micronaut.data.neo4j.session.Neo4jReactorConnectionOperations
@@ -56,7 +63,13 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
     ReactivePetRepository petRepository
 
     @Inject
+    ReactiveArticleRepository articleRepository
+
+    @Inject
     ReactiveTeamRepository teamRepository
+
+    @Inject
+    ReactiveShelfRepository shelfRepository
 
     @Inject
     ReactiveEngineerRepository engineerRepository
@@ -635,5 +648,64 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
 
         then:
         movieRepository.count().block() == 0
+    }
+
+    void "reactive updates and deletes check the @Version property"() {
+        given:
+        articleRepository.save(new Article("graphs", "Graphs")).block()
+        def stale = articleRepository.findById("graphs").block()
+        def staleForDelete = articleRepository.findById("graphs").block()
+        def current = articleRepository.findById("graphs").block()
+        current.title = "Current"
+
+        when:
+        def updated = articleRepository.update(current).block()
+
+        then:
+        updated.version == 1L
+
+        when:
+        stale.title = "Stale"
+        articleRepository.update(stale).block()
+
+        then:
+        thrown(OptimisticLockException)
+
+        when:
+        articleRepository.delete(staleForDelete).block()
+
+        then:
+        thrown(OptimisticLockException)
+        articleRepository.findById("graphs").block().title == "Current"
+
+        when:
+        articleRepository.delete(articleRepository.findById("graphs").block()).block()
+
+        then:
+        !articleRepository.existsById("graphs").block()
+    }
+
+    void "a new versioned related node with an assigned identifier is inserted reactively"() {
+        given:
+        def volume = new Volume("v1", "978-1")
+
+        when:
+        shelfRepository.save(new Shelf(null, "Graphs", [volume])).block()
+
+        then:
+        volume.version == 0L
+        operations.executeQuery("MATCH (v:Volume) RETURN v.version AS version", [:])*.asMap()*.get('version') == [0L]
+    }
+
+    void "a reactive insert of a versioned node with a taken identifier fails"() {
+        given:
+        articleRepository.save(new Article("graphs", "Graphs")).block()
+
+        when:
+        articleRepository.save(new Article("graphs", "Other")).block()
+
+        then:
+        thrown(EntityExistsException)
+        articleRepository.findById("graphs").block().title == "Graphs"
     }
 }
