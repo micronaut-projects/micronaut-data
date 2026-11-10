@@ -75,8 +75,8 @@ import java.util.Set;
 
 /**
  * Builds queries for Oracle property graphs, which are defined over tables with {@code CREATE PROPERTY GRAPH}.
- * Queries are compiled either to PGQL, run through the PGQL JDBC driver, or to SQL/PGQ {@code GRAPH_TABLE} queries.
- * The graph and the language are set with {@link PropertyGraph} on the repository.
+ * Queries are compiled to SQL/PGQ {@code GRAPH_TABLE} queries, the property graph queries of the SQL standard.
+ * The graph is set with {@link PropertyGraph} on the repository.
  *
  * <p>Every returned column is aliased {@code "<variable>__<property>"} so that the runtime can rebuild the nodes,
  * with {@code ID_} and {@code LABEL_} holding the identifier and label of a node. Property graphs over tables are
@@ -137,26 +137,12 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     private static final String READ_ONLY = "Oracle property graphs are read only views over tables: write to the tables with a JDBC repository";
 
     private final String graph;
-    private final PropertyGraph.QueryLanguage language;
 
     /**
      * @param repositoryMetadata The annotation metadata of the repository
      */
     public OracleGraphQueryBuilder(AnnotationMetadata repositoryMetadata) {
         this.graph = graphName(repositoryMetadata.stringValue(PropertyGraph.class).filter(s -> !s.isEmpty()).orElse("graph"));
-        this.language = repositoryMetadata.enumValue(PropertyGraph.class, "language", PropertyGraph.QueryLanguage.class)
-            .orElse(PropertyGraph.QueryLanguage.PGQL);
-    }
-
-    /**
-     * @return The query language
-     */
-    public PropertyGraph.QueryLanguage getLanguage() {
-        return language;
-    }
-
-    private boolean sqlPgq() {
-        return language == PropertyGraph.QueryLanguage.SQL_PGQ;
     }
 
     @Override
@@ -231,20 +217,11 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     @Override
     public String buildLimitAndOffset(long limit, long offset) {
         StringBuilder sb = new StringBuilder();
-        if (sqlPgq()) {
-            if (offset > 0) {
-                sb.append(" OFFSET ").append(offset).append(" ROWS");
-            }
-            if (limit > 0) {
-                sb.append(" FETCH NEXT ").append(limit).append(" ROWS ONLY");
-            }
-        } else {
-            if (offset > 0) {
-                sb.append(" OFFSET ").append(offset);
-            }
-            if (limit > 0) {
-                sb.append(" LIMIT ").append(limit);
-            }
+        if (offset > 0) {
+            sb.append(" OFFSET ").append(offset).append(" ROWS");
+        }
+        if (limit > 0) {
+            sb.append(" FETCH NEXT ").append(limit).append(" ROWS ONLY");
         }
         return sb.toString();
     }
@@ -378,20 +355,16 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             return buildRelationshipsQuery(definition, entity, types);
         }
         requireMaxDepth(definition);
-        if (!sqlPgq()) {
-            requireSupportedPgqlPath(definition);
-        }
         // A @PathLimit argument wins over @PathLimit(n) on the method, as it does for Cypher: the runtime renders it
         // in place of the token, capped by micronaut.data.graph.max-path-depth
         String quantifier = "{1," + (definition.maxDepthBound() ? PathQueryDefinition.PATH_LIMIT_TOKEN : String.valueOf(definition.maxDepth())) + "}";
         Query query = new Query(entity);
         boolean elements = definition.result() == PathQueryDefinition.Result.ELEMENTS;
-        if (elements && sqlPgq() && definition.kind() != PathQueryDefinition.Kind.ALL) {
+        if (elements && definition.kind() != PathQueryDefinition.Kind.ALL) {
             throw new IllegalArgumentException("Shortest paths are not supported by the SQL/PGQ dialect, which has no shortest path search: return every path up to the depth with findAllPaths");
         }
-        String edgeVariable = pathEdgeVariable(elements);
-        String pattern = directed(node(START, entity), edge(edgeVariable, types, "") + quantifier, node(END, entity), definition.direction());
-        query.pattern = sqlPgq() ? pattern : pathPrefix(definition.kind(), elements) + pattern;
+        // SQL/PGQ iterates the steps with variables of their own, so the edge of the pattern takes another name
+        query.pattern = directed(node(START, entity), edge(PATH_EDGE, types, "") + quantifier, node(END, entity), definition.direction());
         if (elements) {
             appendStepColumns(query, definition, entity);
         } else {
@@ -408,17 +381,6 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         return QueryResult.of(text, List.of(text), query.bindings, Map.of());
     }
 
-    /**
-     * The variable of the path edge: SQL/PGQ iterates the steps with variables of their own, so the edge of the
-     * pattern takes another name, and PGQL names it only when the steps are returned.
-     */
-    private String pathEdgeVariable(boolean elements) {
-        if (sqlPgq()) {
-            return PATH_EDGE;
-        }
-        return elements ? EDGE : "";
-    }
-
     private void excludeRepeats(Query query, PathQueryDefinition definition, PersistentEntity entity) {
         if (definition.start() != null && definition.end() != null && definition.kind() != PathQueryDefinition.Kind.ALL) {
             // A shortest path from a node to itself is the empty path, so the shortest kinds exclude it as the Cypher
@@ -427,26 +389,16 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             PersistentProperty identity = identity(entity);
             query.and(property(START, identity) + " <> " + property(END, identity));
         }
-        if (sqlPgq()) {
-            // SQL/PGQ matches walks, which may take an edge more than once, while a Cypher path takes each relationship
-            // once, so the match keeps the walks whose edges are distinct
-            String edgeId = "JSON_SERIALIZE(EDGE_ID(" + PATH_EDGE + "))";
-            query.and("COUNT(DISTINCT " + edgeId + ") = COUNT(" + edgeId + ")");
-        }
-    }
-
-    private static String pathPrefix(PathQueryDefinition.Kind kind, boolean elements) {
-        return switch (kind) {
-            case SHORTEST -> elements ? "ANY SHORTEST " : "ANY ";
-            case ALL_SHORTEST -> "ALL SHORTEST ";
-            default -> "ALL ";
-        };
+        // SQL/PGQ matches walks, which may take an edge more than once, while a Cypher path takes each relationship
+        // once, so the match keeps the walks whose edges are distinct
+        String edgeId = "JSON_SERIALIZE(EDGE_ID(" + PATH_EDGE + "))";
+        query.and("COUNT(DISTINCT " + edgeId + ") = COUNT(" + edgeId + ")");
     }
 
     private void appendStepColumns(Query query, PathQueryDefinition definition, PersistentEntity entity) {
         query.rowsPer = "ONE ROW PER STEP (" + STEP_START + ", " + EDGE + ", " + STEP_END + ")";
         // SQL/PGQ numbers the match without a variable
-        query.column(sqlPgq() ? "MATCHNUM()" : "MATCHNUM(" + STEP_START + ")", PATH_MATCH_COLUMN);
+        query.column("MATCHNUM()", PATH_MATCH_COLUMN);
         query.column("ELEMENT_NUMBER(" + EDGE + ")", PATH_STEP_COLUMN);
         query.entityColumns(STEP_START, entity);
         query.entityColumns(STEP_END, entity);
@@ -456,10 +408,6 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         }
         if (types.size() == 1) {
             query.column(literal(types.iterator().next()), EDGE + SEPARATOR + TYPE_COLUMN);
-        } else if (!sqlPgq()) {
-            // A path over several relationship types, or over any type, reads the type of each step from the label
-            // of its edge, which the graph definition gives each edge table
-            query.column("LABEL(" + EDGE + ")", EDGE + SEPARATOR + TYPE_COLUMN);
         } else if (types.isEmpty()) {
             throw new IllegalArgumentException("Paths over any relationship type are not supported by the SQL/PGQ dialect, which cannot read the label of an edge: name the relationships of the path");
         } else {
@@ -471,9 +419,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             query.column(type.append(" END").toString(), EDGE + SEPARATOR + TYPE_COLUMN);
         }
         // SQL/PGQ orders the rows of the graph table by their columns
-        query.orderBy = sqlPgq()
-            ? alias(PATH_MATCH_COLUMN) + ", " + alias(PATH_STEP_COLUMN)
-            : "MATCHNUM(" + STEP_START + "), ELEMENT_NUMBER(" + EDGE + ")";
+        query.orderBy = alias(PATH_MATCH_COLUMN) + ", " + alias(PATH_STEP_COLUMN);
     }
 
     private QueryResult buildRelationshipsQuery(PathQueryDefinition definition, PersistentEntity entity, String types) {
@@ -526,19 +472,6 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         }
     }
 
-    /**
-     * Oracle documents that PGQL on a property graph in the database has no {@code ALL SHORTEST} search, and that a
-     * path query with bind variables fails with "Use of bind variables for path queries is not supported".
-     */
-    private static void requireSupportedPgqlPath(PathQueryDefinition definition) {
-        if (definition.kind() == PathQueryDefinition.Kind.ALL_SHORTEST) {
-            throw new IllegalArgumentException("ALL SHORTEST is not supported by PGQL on Oracle property graphs");
-        }
-        if (definition.start() != null || definition.end() != null) {
-            throw new IllegalArgumentException("PGQL path queries cannot bind parameters on Oracle property graphs: use @PropertyGraph(language = SQL_PGQ) to check for paths and count them");
-        }
-    }
-
     private void endpoints(Query query, PathQueryDefinition definition, PersistentEntity entity) {
         endpoints(query, definition, entity, START, END);
     }
@@ -558,14 +491,14 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
 
     private String node(String variable, PersistentEntity entity) {
         String label = identifier(GraphEntities.primaryLabel(entity));
-        return sqlPgq() ? "(" + variable + " IS " + label + ")" : "(" + variable + ":" + label + ")";
+        return "(" + variable + " IS " + label + ")";
     }
 
     private String edge(String variable, String types, String suffix) {
         if (types.isEmpty()) {
             return "[" + variable + "]" + suffix;
         }
-        return sqlPgq() ? "[" + variable + (variable.isEmpty() ? "" : " ") + "IS " + types + "]" + suffix : "[" + variable + ":" + types + "]" + suffix;
+        return "[" + variable + (variable.isEmpty() ? "" : " ") + "IS " + types + "]" + suffix;
     }
 
     private static String edgeTypes(List<Association> associations) {
@@ -595,7 +528,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     }
 
     /**
-     * Quotes a label, relationship type or property name for SQL/PGQ and PGQL, which use double quotes
+     * Quotes a label, relationship type or property name for SQL/PGQ, which uses double quotes
      * where Cypher uses backticks.
      *
      * @param name The name
@@ -697,9 +630,6 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         void column(String expression, String name) {
             String quoted = alias(name);
             columns.put(quoted, expression);
-            if (!sqlPgq()) {
-                select.add(expression + " AS " + quoted);
-            }
         }
 
         /**
@@ -745,9 +675,6 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
          * References a graph expression outside the pattern match. SQL/PGQ exposes it as a column of the graph table.
          */
         String ref(String expression) {
-            if (!sqlPgq()) {
-                return expression;
-            }
             for (Map.Entry<String, String> entry : columns.entrySet()) {
                 if (entry.getValue().equals(expression)) {
                     return entry.getKey();
@@ -763,11 +690,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             if (distinct) {
                 sb.append("DISTINCT ");
             }
-            if (sqlPgq()) {
-                renderGraphTable(sb);
-            } else {
-                renderPgql(sb);
-            }
+            renderGraphTable(sb);
             if (orderBy != null) {
                 sb.append(" ORDER BY ").append(orderBy);
             }
@@ -799,29 +722,11 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             sb.append("))");
         }
 
-        private void renderPgql(StringBuilder sb) {
-            sb.append(String.join(", ", select));
-            sb.append(" FROM ");
-            if (pattern != null) {
-                sb.append("MATCH ").append(pattern).append(" ON ").append(graph);
-            } else {
-                sb.append("MATCH ").append(node(ROOT, entity)).append(" ON ").append(graph);
-                for (String[] value : patterns.values()) {
-                    sb.append(", MATCH ").append(value[0]).append(" ON ").append(graph);
-                }
-            }
-            appendRowsAndWhere(sb);
-        }
-
         private void appendRowsAndWhere(StringBuilder sb) {
-            // PGQL puts ONE ROW PER STEP before the WHERE clause, SQL/PGQ after it
-            if (rowsPer != null && !sqlPgq()) {
-                sb.append(' ').append(rowsPer);
-            }
             if (!where.isEmpty()) {
                 sb.append(" WHERE ").append(where);
             }
-            if (rowsPer != null && sqlPgq()) {
+            if (rowsPer != null) {
                 sb.append(' ').append(rowsPer);
             }
         }
@@ -1146,9 +1051,6 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         }
 
         private void like(Expression<?> left, Expression<?> right, boolean ignoreCase, String prefix, String suffix) {
-            if (!sqlPgq()) {
-                throw new UnsupportedOperationException("PGQL has no LIKE: use exact matches, a regular expression with Regex, or @PropertyGraph(language = SQL_PGQ)");
-            }
             io.micronaut.data.model.PersistentPropertyPath path = propertyPathOf(left);
             if (ignoreCase) {
                 out.append(LOWER);
@@ -1223,7 +1125,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         @Override
         public void visitRegexp(Expression<?> leftExpression, Expression<?> expression) {
             io.micronaut.data.model.PersistentPropertyPath path = propertyPathOf(leftExpression);
-            out.append(sqlPgq() ? "REGEXP_LIKE(" : "JAVA_REGEXP_LIKE(");
+            out.append("REGEXP_LIKE(");
             appendExpression(leftExpression, path);
             out.append(", ");
             appendExpression(expression, path);
@@ -1302,9 +1204,6 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
 
         @Override
         public void visit(LikePredicate likePredicate) {
-            if (!sqlPgq()) {
-                throw new UnsupportedOperationException("PGQL has no LIKE: use exact matches, a regular expression with Regex, or @PropertyGraph(language = SQL_PGQ)");
-            }
             if (likePredicate.isNegated()) {
                 out.append("NOT ");
             }
