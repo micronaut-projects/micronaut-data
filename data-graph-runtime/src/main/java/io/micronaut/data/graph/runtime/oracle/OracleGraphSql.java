@@ -48,8 +48,6 @@ import java.util.regex.Pattern;
 @Internal
 public final class OracleGraphSql {
 
-    private static final Pattern GRAPH_TABLE = Pattern.compile("\\bGRAPH_TABLE\\s*\\(");
-    private static final Pattern ROOT_VARIABLE = Pattern.compile("\\(\\s*N\\s*[:)]");
     private static final Pattern ORDER_BY = Pattern.compile("(?<![.\\w])ORDER\\s+BY\\b");
     private static final Pattern LIMIT_CLAUSE = Pattern.compile("(?<![.\\w])(LIMIT|OFFSET|FETCH\\s+(NEXT|FIRST))\\b");
     private static final SqlQueryBuilder SQL_QUERY_BUILDER = new SqlQueryBuilder(Dialect.ORACLE);
@@ -95,7 +93,7 @@ public final class OracleGraphSql {
     }
 
     /**
-     * Appends the ordering and paging of a query, in the syntax of its query language.
+     * Appends the ordering and paging of a query.
      *
      * @param query  The query
      * @param entity The entity
@@ -104,15 +102,11 @@ public final class OracleGraphSql {
      */
     public static void appendSortAndLimit(StringBuilder query, RuntimePersistentEntity<?> entity, @Nullable Sort sort, @Nullable Limit limit) {
         String masked = LiteralMasker.mask(query.toString(), true).toUpperCase(Locale.ENGLISH);
-        boolean sqlPgq = GRAPH_TABLE.matcher(masked).find();
         if (sort != null && sort.isSorted()) {
             if (ORDER_BY.matcher(masked).find()) {
                 throw new DataAccessException("Cannot apply the sort " + sort.getOrderBy() + " to the query [" + query + "]: it declares ORDER BY itself");
             }
-            if (!sqlPgq && !ROOT_VARIABLE.matcher(masked).find()) {
-                throw new DataAccessException("Cannot apply the sort " + sort.getOrderBy() + " to the query [" + query + "]: sort an explicit query with its own ORDER BY");
-            }
-            appendOrderBy(query, entity, sort, sqlPgq);
+            appendOrderBy(query, entity, sort);
         }
         if (limit != null && limit.isLimited()) {
             if (LIMIT_CLAUSE.matcher(masked).find()) {
@@ -122,20 +116,18 @@ public final class OracleGraphSql {
                 // Each row is a step of a path, so a limit could cut a path short
                 throw new DataAccessException("Cannot page the query [" + query + "]: its rows are the steps of paths");
             }
-            appendLimit(query, limit, sqlPgq);
+            appendLimit(query, limit);
         }
     }
 
-    private static void appendOrderBy(StringBuilder query, RuntimePersistentEntity<?> entity, Sort sort, boolean sqlPgq) {
+    private static void appendOrderBy(StringBuilder query, RuntimePersistentEntity<?> entity, Sort sort) {
         StringBuilder orderBy = new StringBuilder(" ORDER BY ");
         Iterator<Sort.Order> iterator = sort.getOrderBy().iterator();
         while (iterator.hasNext()) {
             Sort.Order order = iterator.next();
             RuntimePersistentProperty<?> property = sortProperty(entity, order.getProperty());
-            String expression = sqlPgq
-                ? "\"n" + OracleGraphQueryBuilder.SEPARATOR + property.getPersistedName() + "\""
-                : "n." + property.getPersistedName();
-            if (sqlPgq && query.indexOf(expression) < 0) {
+            String expression = "\"n" + OracleGraphQueryBuilder.SEPARATOR + property.getPersistedName() + "\"";
+            if (query.indexOf(expression) < 0) {
                 // A projection only exposes the columns it selects
                 throw new DataAccessException("Cannot apply the sort " + sort.getOrderBy() + " to the query [" + query + "]: it does not return " + expression);
             }
@@ -161,14 +153,14 @@ public final class OracleGraphSql {
         return property;
     }
 
-    private static void appendLimit(StringBuilder query, Limit limit, boolean sqlPgq) {
+    private static void appendLimit(StringBuilder query, Limit limit) {
         long offset = limit.offset();
         int max = limit.maxResults();
         if (offset > 0) {
-            query.append(" OFFSET ").append(offset).append(sqlPgq ? " ROWS" : "");
+            query.append(" OFFSET ").append(offset).append(" ROWS");
         }
         if (max > 0) {
-            query.append(sqlPgq ? " FETCH NEXT " + max + " ROWS ONLY" : " LIMIT " + max);
+            query.append(" FETCH NEXT ").append(max).append(" ROWS ONLY");
         }
     }
 }
