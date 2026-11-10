@@ -19,7 +19,7 @@ snippet::example.MovieSummary[project-base="doc-examples/neo4j-example", source=
 
 DTOs are read with Micronaut Serialization and must be annotated with `@Serdeable`. A repository method that returns a DTO without it fails to compile.
 
-NOTE: Cypher has no `LIKE` operator, so `Like` is compiled to an anchored regular expression: a pattern known at build time is translated by the processor, and one passed as a method argument is translated when it is bound, with `\` as the escape character. PGQL has no `LIKE` either and rejects `Like`; SQL/PGQ supports it natively.
+NOTE: Cypher has no `LIKE` operator, so `Like` is compiled to an anchored regular expression: a pattern known at build time is translated by the processor, and one passed as a method argument is translated when it is bound, with `\` as the escape character. SQL/PGQ supports `LIKE` natively.
 
 Repositories may return `Optional`, nullable types, lists, streams and pages, and Reactor, RxJava and Kotlin coroutine types. Reactive and coroutine methods run the blocking driver on an I/O executor.
 

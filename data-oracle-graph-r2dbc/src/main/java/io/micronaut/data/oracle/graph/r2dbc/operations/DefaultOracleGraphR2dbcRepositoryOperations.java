@@ -109,11 +109,6 @@ final class DefaultOracleGraphR2dbcRepositoryOperations extends AbstractGraphRep
     }
 
     @Override
-    protected String limitClause(StringBuilder query, Limit limit) {
-        return OracleGraphSql.limitClause(query, limit);
-    }
-
-    @Override
     protected <R> R read(AnnotationMetadata annotationMetadata, Function<GraphSession, R> work) {
         throw blocking();
     }
