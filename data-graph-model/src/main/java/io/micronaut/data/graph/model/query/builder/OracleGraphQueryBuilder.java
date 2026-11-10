@@ -1531,72 +1531,55 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     private record VertexInsert(PersistentEntity persistentEntity, boolean returning) implements InsertQueryDefinition {
     }
 
-    private record VertexUpdate(UpdateQueryDefinition definition,
-                                PersistentEntity persistentEntity,
-                                Map<String, Object> propertiesToUpdate,
-                                boolean isGeneratedEntityUpdate) implements GeneratedEntityUpdateQueryDefinition {
+    /**
+     * A write of the vertex table that keeps the criteria of the write it replaces.
+     */
+    private interface VertexWrite extends BaseQueryDefinition {
+
+        BaseQueryDefinition definition();
 
         @Override
-        public @Nullable Selection<?> returningSelection() {
-            return definition.returningSelection();
+        default @Nullable Predicate predicate() {
+            return definition().predicate();
         }
 
         @Override
-        public @Nullable Predicate predicate() {
-            return definition.predicate();
+        default Collection<JoinPath> getJoinPaths() {
+            return definition().getJoinPaths();
         }
 
         @Override
-        public Collection<JoinPath> getJoinPaths() {
-            return definition.getJoinPaths();
+        default Optional<JoinPath> getJoinPath(String path) {
+            return definition().getJoinPath(path);
         }
 
         @Override
-        public Optional<JoinPath> getJoinPath(String path) {
-            return definition.getJoinPath(path);
+        default int limit() {
+            return definition().limit();
         }
 
         @Override
-        public int limit() {
-            return definition.limit();
-        }
-
-        @Override
-        public int offset() {
-            return definition.offset();
+        default int offset() {
+            return definition().offset();
         }
     }
 
-    private record VertexDelete(DeleteQueryDefinition definition, PersistentEntity persistentEntity) implements DeleteQueryDefinition {
+    private record VertexUpdate(UpdateQueryDefinition definition,
+                                PersistentEntity persistentEntity,
+                                Map<String, Object> propertiesToUpdate,
+                                boolean isGeneratedEntityUpdate) implements GeneratedEntityUpdateQueryDefinition, VertexWrite {
 
         @Override
         public @Nullable Selection<?> returningSelection() {
             return definition.returningSelection();
         }
+    }
+
+    private record VertexDelete(DeleteQueryDefinition definition, PersistentEntity persistentEntity) implements DeleteQueryDefinition, VertexWrite {
 
         @Override
-        public @Nullable Predicate predicate() {
-            return definition.predicate();
-        }
-
-        @Override
-        public Collection<JoinPath> getJoinPaths() {
-            return definition.getJoinPaths();
-        }
-
-        @Override
-        public Optional<JoinPath> getJoinPath(String path) {
-            return definition.getJoinPath(path);
-        }
-
-        @Override
-        public int limit() {
-            return definition.limit();
-        }
-
-        @Override
-        public int offset() {
-            return definition.offset();
+        public @Nullable Selection<?> returningSelection() {
+            return definition.returningSelection();
         }
     }
 }
