@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.Introspected;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.graph.annotation.Direction;
 import io.micronaut.data.graph.annotation.DynamicAttributes;
+import io.micronaut.data.graph.annotation.DynamicRelationships;
 import io.micronaut.data.graph.annotation.Labels;
 import io.micronaut.data.graph.annotation.PropertyGraph;
 import io.micronaut.data.graph.annotation.TargetNode;
@@ -699,6 +700,9 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             }
             column(literal(GraphEntities.primaryLabel(nodeEntity)), variable + SEPARATOR + LABEL_COLUMN);
             for (PersistentProperty property : nodeEntity.getPersistentProperties()) {
+                if (property.getAnnotationMetadata().hasAnnotation(DynamicRelationships.class)) {
+                    throw new UnsupportedOperationException("Dynamic relationships are not supported for Oracle property graphs: " + nodeEntity.getName());
+                }
                 if (property.getAnnotationMetadata().hasAnnotation(DynamicAttributes.class)
                     || property.getAnnotationMetadata().hasAnnotation(Labels.class)) {
                     // A vertex table has fixed columns and its labels come from the graph definition

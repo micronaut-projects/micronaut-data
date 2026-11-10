@@ -155,6 +155,7 @@ graph:
   graphPaths: Paths and Shortest Paths
   graphExplicitQueries: Explicit Queries
   graphSchemaless: Schemaless Data
+  graphReactive: Reactive Repositories
   graphDatabases:
     title: Databases
     graphNeo4j: Neo4j

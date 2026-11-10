@@ -1,0 +1,55 @@
+Repositories return Reactor types when they extend api:data.repository.reactive.ReactorCrudRepository[] or declare methods that return `Mono` or `Flux`:
+
+snippet::example.ReactiveMovieRepository[project-base="doc-examples/neo4j-example", source="main", tags="repository", languages="java,kotlin,groovy,python"]
+
+<1> Extend api:data.repository.reactive.ReactorCrudRepository[] for reactive CRUD operations.
+<2> Finders return a `Flux` of results.
+
+With Neo4j, the reactive operations run on the reactive sessions of the Neo4j Java driver, without blocking a thread while a query runs. A `Flux` streams the rows of a query as the database returns them:
+
+snippet::example.ReactiveMovieRepositorySpec[project-base="doc-examples/neo4j-example", tags="reactive", indent="0", languages="java,kotlin,groovy,python"]
+
+<1> Save the movies, one query after another in the same session.
+<2> Then stream the movies released after 1995.
+<3> Block only to read the result in the test.
+
+Saving an entity writes its node, its labels and its relationships in sequence, and triggers the same entity events as a blocking save.
+
+== Reactive transactions
+
+A method annotated with `@Transactional` that returns a `Mono` or `Flux` runs in a transaction of the reactive session, which commits when the publisher completes and rolls back when it fails or is cancelled. Reactive repository methods called from it join the transaction through the Reactor context:
+
+snippet::example.ReactiveMovieService[project-base="doc-examples/neo4j-example", source="main", tags="transactional", languages="java,kotlin,groovy,python"]
+
+<1> The method runs in a transaction of the reactive session.
+<2> Both operations join the transaction.
+
+The transaction can also be managed programmatically with api:data.neo4j.transaction.Neo4jReactorTransactionOperations[]:
+
+snippet::example.ReactiveMovieRepositorySpec[project-base="doc-examples/neo4j-example", tags="transactionOperations", indent="0", languages="java,kotlin,groovy,python"]
+
+<1> The publisher returned by the callback runs in the transaction, which commits when it completes.
+
+Explicit queries can be streamed with api:data.neo4j.operations.Neo4jReactorRepositoryOperations[], which is also returned by `reactive()` of api:data.neo4j.operations.Neo4jRepositoryOperations[]:
+
+snippet::example.ReactiveMovieRepositorySpec[project-base="doc-examples/neo4j-example", tags="reactiveQuery", indent="0", languages="java,kotlin,groovy,python"]
+
+<1> The nodes are mapped to the entity as the database returns them.
+
+== Kotlin coroutines
+
+In Kotlin, repositories can extend api:data.repository.kotlin.CoroutineCrudRepository[] and declare `suspend` functions and functions that return a `Flow`. They run on the reactive operations of the database, so with Neo4j they do not block a thread either:
+
+snippet::example.CoroutineMovieRepository[project-base="doc-examples/neo4j-example", source="main", tags="repository", languages="kotlin"]
+
+<1> Extend api:data.repository.kotlin.CoroutineCrudRepository[] for suspending CRUD operations.
+<2> A `suspend` finder returns a single result, or `null`.
+<3> A finder returning a `Flow` streams its results.
+
+snippet::example.CoroutineMovieRepositorySpec[project-base="doc-examples/neo4j-example", tags="coroutines", indent="0", languages="kotlin"]
+
+<1> Save the movies from a coroutine.
+<2> Suspend until the movie is found.
+<3> Collect the movies released after 1995.
+
+Apache AGE and Oracle property graphs run reactive repository methods on a thread of the I/O executor, in the blocking operations of their JDBC driver.
