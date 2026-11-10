@@ -28,7 +28,6 @@ import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.EntityExistsException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.exceptions.OptimisticLockException;
-import io.micronaut.data.graph.annotation.TargetNode;
 import io.micronaut.data.graph.model.GraphEntities;
 import io.micronaut.data.graph.model.GraphPath;
 import io.micronaut.data.graph.model.GraphRelationship;
@@ -225,6 +224,22 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
      * @return The result
      */
     protected abstract <R> R write(AnnotationMetadata annotationMetadata, Function<GraphSession, R> work);
+
+    /**
+     * Runs work that writes several statements, which must all apply or none: within the current transaction, or
+     * in a transaction of its own that commits when the work returns and rolls back when it throws. A database
+     * module whose statements auto-commit outside a transaction overrides this method to begin one; the default
+     * runs the work like {@link #write(AnnotationMetadata, Function)}.
+     *
+     * @param annotationMetadata The annotation metadata of the operation
+     * @param work               The work
+     * @param <R>                The result type
+     * @return The result
+     * @since 5.3.0
+     */
+    protected <R> R writeInTransaction(AnnotationMetadata annotationMetadata, Function<GraphSession, R> work) {
+        return write(annotationMetadata, work);
+    }
 
     /**
      * Registers the encoders of the database, which replace or add to the defaults. Called once, while the operations
@@ -816,13 +831,13 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
 
     @Override
     public <T> T persist(InsertOperation<T> operation) {
-        return write(operation.getAnnotationMetadata(), session -> new Persister(session, operation.getAnnotationMetadata(), operation.getRepositoryType())
+        return writeInTransaction(operation.getAnnotationMetadata(), session -> new Persister(session, operation.getAnnotationMetadata(), operation.getRepositoryType())
             .save(getEntity(operation.getRootEntity()), operation.getEntity(), true));
     }
 
     @Override
     public <T> Iterable<T> persistAll(InsertBatchOperation<T> operation) {
-        return write(operation.getAnnotationMetadata(), session -> {
+        return writeInTransaction(operation.getAnnotationMetadata(), session -> {
             Persister persister = new Persister(session, operation.getAnnotationMetadata(), operation.getRepositoryType());
             return persister.saveAll(getEntity(operation.getRootEntity()), operation, true);
         });
@@ -830,13 +845,13 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
 
     @Override
     public <T> T update(UpdateOperation<T> operation) {
-        return write(operation.getAnnotationMetadata(), session -> new Persister(session, operation.getAnnotationMetadata(), operation.getRepositoryType())
+        return writeInTransaction(operation.getAnnotationMetadata(), session -> new Persister(session, operation.getAnnotationMetadata(), operation.getRepositoryType())
             .save(getEntity(operation.getRootEntity()), operation.getEntity(), false));
     }
 
     @Override
     public <T> Iterable<T> updateAll(UpdateBatchOperation<T> operation) {
-        return write(operation.getAnnotationMetadata(), session -> {
+        return writeInTransaction(operation.getAnnotationMetadata(), session -> {
             Persister persister = new Persister(session, operation.getAnnotationMetadata(), operation.getRepositoryType());
             return persister.saveAll(getEntity(operation.getRootEntity()), operation, false);
         });
@@ -844,7 +859,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
 
     @Override
     public <T> int delete(DeleteOperation<T> operation) {
-        return write(operation.getAnnotationMetadata(), session -> new Persister(session, operation.getAnnotationMetadata(), operation.getRepositoryType())
+        return writeInTransaction(operation.getAnnotationMetadata(), session -> new Persister(session, operation.getAnnotationMetadata(), operation.getRepositoryType())
             .delete(getEntity(operation.getRootEntity()), operation.getEntity()));
     }
 
@@ -855,7 +870,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             String query = deleteAllQuery(entity);
             return Optional.of(write(operation.getAnnotationMetadata(), session -> updateCount(session.run(query, Map.of()))));
         }
-        return Optional.of(write(operation.getAnnotationMetadata(), session -> {
+        return Optional.of(writeInTransaction(operation.getAnnotationMetadata(), session -> {
             Persister persister = new Persister(session, operation.getAnnotationMetadata(), operation.getRepositoryType());
             int count = 0;
             for (T instance : operation) {
@@ -871,15 +886,6 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         }
         property.set(bean, value);
         return bean;
-    }
-
-    static RuntimeAssociation<Object> targetNode(RuntimePersistentEntity<?> relationshipEntity) {
-        for (RuntimePersistentProperty<?> property : relationshipEntity.getPersistentProperties()) {
-            if (property instanceof RuntimeAssociation<?> association && property.getAnnotationMetadata().hasStereotype(TargetNode.class)) {
-                return (RuntimeAssociation<Object>) association;
-            }
-        }
-        throw new DataAccessException("Relationship entity [" + relationshipEntity.getName() + "] has no @TargetNode property");
     }
 
     /**
@@ -1234,7 +1240,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
                         @Nullable Object toId,
                         Map<String, Object> properties,
                         @Nullable RuntimePersistentProperty<?> relationshipIdentity,
-                        LinkMode mode,
+                        RelationshipTarget.LinkMode mode,
                         @Nullable Object relationshipId) {
         if (fromId == null || toId == null) {
             throw new DataAccessException("Cannot link [" + association.getName() + "] without the identifiers of both nodes");
@@ -1260,21 +1266,53 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     }
 
     /**
-     * Reads the identifier of the relationship a link query wrote.
+     * Plans the query that links an owner to many target nodes with relationships that have no identifier, one row
+     * per relationship. The rows write the same relationship properties.
      *
-     * @param association The association
-     * @param mode        How the relationship was written
-     * @param records     The rows the link returned
-     * @return The identifier, or null, which for an update means no such relationship connects the nodes
+     * @param association   The association
+     * @param owner         The owning entity
+     * @param target        The target entity
+     * @param rows          The rows
+     * @param propertyNames The stored names of the relationship properties every row writes
+     * @return The query
      */
-    static @Nullable Object linkedRelationshipId(RuntimeAssociation<?> association, LinkMode mode, List<GraphRecord> records) {
-        if (records.isEmpty()) {
-            if (mode == LinkMode.UPDATE) {
-                return null;
-            }
-            throw new DataAccessException("Could not link [" + association.getName() + "]: one of the nodes does not exist");
+    final GraphQuery planLinks(RuntimeAssociation<?> association,
+                               RuntimePersistentEntity<?> owner,
+                               RuntimePersistentEntity<?> target,
+                               List<RelationshipTarget.LinkRow> rows,
+                               List<String> propertyNames) {
+        String key = "links:" + owner.getName() + ":" + association.getName() + ":" + propertyNames;
+        String query = queryCache.computeIfAbsent(key, k -> queryBuilder.buildLinksQuery(association, owner, target, propertyNames, null));
+        List<Map<String, Object>> parameters = new ArrayList<>(rows.size());
+        for (RelationshipTarget.LinkRow row : rows) {
+            Map<String, Object> parameter = new LinkedHashMap<>();
+            parameter.put(CypherQueryBuilder.ROW_POSITION, row.position());
+            parameter.put(CypherQueryBuilder.LINK_FROM_PARAMETER, row.fromId());
+            parameter.put(CypherQueryBuilder.LINK_TO_PARAMETER, row.toId());
+            parameter.put(CypherQueryBuilder.ROW_PROPERTIES, row.properties());
+            parameters.add(parameter);
         }
-        return records.get(0).get(CypherQueryBuilder.ID_PARAMETER);
+        return new GraphQuery(query, Map.of(CypherQueryBuilder.ROWS_PARAMETER, parameters));
+    }
+
+    /**
+     * Replaces the instances a relationship property holds with the instances that were written, when the write
+     * changed any of them.
+     *
+     * @param property The relationship property
+     * @param bean     The owner
+     * @param many     Whether the property holds many instances
+     * @param items    The instances the property held
+     * @param written  The written instances
+     * @param <B>      The owner type
+     * @return The owner holding the written instances
+     */
+    final <B> B withWritten(BeanProperty<B, Object> property, B bean, boolean many, List<Object> items, List<Object> written) {
+        if (RelationshipTarget.sameItems(items, written)) {
+            return bean;
+        }
+        Object value = many ? conversionService.convertRequired(written, property.asArgument()) : written.get(0);
+        return withProperty(property, bean, value);
     }
 
     /**
@@ -1313,7 +1351,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
      * @param relationship The relationship
      * @return The relationship with its identifier
      */
-    final Object populateRelationshipId(RuntimePersistentEntity<Object> associated, RuntimePersistentProperty<Object> identity, Object relationship) {
+    private Object populateRelationshipId(RuntimePersistentEntity<Object> associated, RuntimePersistentProperty<Object> identity, Object relationship) {
         DefaultEntityEventContext<Object> event = new DefaultEntityEventContext<>(associated, relationship);
         entityEventRegistry.prePersist(event);
         Object item = event.getEntity();
@@ -1321,6 +1359,24 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             throw new DataAccessException("Relationship [" + associated.getSimpleName() + "] needs its identifier [" + identity.getName() + "] assigned before it is saved");
         }
         return item;
+    }
+
+    /**
+     * Populates the identifiers of written relationship entities that are not assigned by the database. An instance
+     * held twice is given one identifier.
+     *
+     * @param target  The target of the association
+     * @param written The written relationship entities, replaced in place
+     * @return The written relationship entities
+     */
+    final List<Object> populateRelationshipIds(RelationshipTarget target, List<Object> written) {
+        RuntimePersistentProperty<Object> identity = target.identity();
+        if (identity == null || GraphEntities.isNativeId(identity)) {
+            return written;
+        }
+        Map<Object, Object> populated = new IdentityHashMap<>();
+        written.replaceAll(item -> populated.computeIfAbsent(item, i -> mapper.writeIdentity(target.associated(), i) == null ? populateRelationshipId(target.associated(), identity, i) : i));
+        return written;
     }
 
     /**
@@ -1667,6 +1723,59 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         }
 
         /**
+         * Saves the nodes an association relates an owner to, as its cascade declares: nodes already saved by this
+         * persister stand for themselves, new nodes are created together and existing nodes are updated together,
+         * or linked as they are when the association does not cascade to them.
+         *
+         * @param association The association
+         * @param owner       The owning entity
+         * @param entity      The target entity
+         * @param targets     The target instances
+         * @param <E>         The target type
+         * @return The saved instances, in the order of the targets
+         */
+        <E> List<E> saveTargets(RuntimeAssociation<?> association, RuntimePersistentEntity<?> owner, RuntimePersistentEntity<E> entity, List<E> targets) {
+            List<E> results = new ArrayList<>(Collections.nCopies(targets.size(), (E) null));
+            Map<E, List<Integer>> toInsert = new IdentityHashMap<>();
+            Map<E, List<Integer>> toUpdate = new IdentityHashMap<>();
+            for (int i = 0; i < targets.size(); i++) {
+                E target = targets.get(i);
+                link(target);
+                Object existing = saved.get(target);
+                if (existing != null) {
+                    results.set(i, (E) existing);
+                } else if (RelationshipTarget.cascadesPersist(association) ? isNew(entity, target) : newWithoutLookup(entity, target)) {
+                    if (!RelationshipTarget.cascadesPersist(association)) {
+                        throw RelationshipTarget.targetNotPersisted(association, owner, entity);
+                    }
+                    toInsert.computeIfAbsent(target, k -> new ArrayList<>()).add(i);
+                } else if (RelationshipTarget.cascadesUpdate(association)) {
+                    toUpdate.computeIfAbsent(target, k -> new ArrayList<>()).add(i);
+                } else {
+                    results.set(i, target);
+                }
+            }
+            saveGroup(entity, toInsert, true, results);
+            saveGroup(entity, toUpdate, false, results);
+            return results;
+        }
+
+        private <E> void saveGroup(RuntimePersistentEntity<E> entity, Map<E, List<Integer>> group, boolean insert, List<E> results) {
+            RelationshipTarget.resolveSaved(group, saved, results);
+            if (group.isEmpty()) {
+                return;
+            }
+            List<E> savedTargets = saveAll(entity, new ArrayList<>(group.keySet()), insert);
+            int i = 0;
+            for (List<Integer> positions : group.values()) {
+                E savedTarget = savedTargets.get(i++);
+                for (int position : positions) {
+                    results.set(position, savedTarget);
+                }
+            }
+        }
+
+        /**
          * Whether a related node is written for the first time, which decides the lifecycle it goes through. A
          * database-assigned identifier means it was saved before. An identifier the application assigned says
          * nothing, as a new node has one too, so the database is asked.
@@ -1675,7 +1784,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
          * @param instance The related node
          * @return Whether the node is new
          */
-        boolean isNew(RuntimePersistentEntity<Object> entity, Object instance) {
+        <E> boolean isNew(RuntimePersistentEntity<E> entity, E instance) {
             GraphQuery lookup = saved.containsKey(instance) ? null : planFindExisting(entity, instance);
             if (lookup == null) {
                 return newWithoutLookup(entity, instance);
@@ -1692,14 +1801,6 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         GraphResult run(GraphQuery query) {
             return session.run(query.query(), query.parameters());
         }
-    }
-
-    /**
-     * How a relationship is written. Relationship entities with an identifier can be told apart, so two of them may
-     * connect the same nodes. Any other relationship is identified by its nodes and type.
-     */
-    enum LinkMode {
-        MERGE, CREATE, UPDATE
     }
 
     /**
@@ -1911,27 +2012,82 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
 
         private void writeRelationships() {
             for (RuntimePersistentProperty<T> property : persistentEntity.getPersistentProperties()) {
-                if (!(property instanceof RuntimeAssociation<T> association) || !GraphEntities.isRelationship(association)) {
-                    continue;
+                if (property instanceof RuntimeAssociation<T> association && GraphEntities.isRelationship(association)) {
+                    writeRelationship(association);
                 }
-                BeanProperty<T, Object> beanProperty = association.getProperty();
-                Object value = beanProperty.get(entity);
-                if (value == null) {
-                    continue;
+            }
+        }
+
+        /**
+         * Saves the nodes an association relates the entity to, then merges its relationships with one query per
+         * set of relationship properties.
+         */
+        private void writeRelationship(RuntimeAssociation<T> association) {
+            BeanProperty<T, Object> beanProperty = association.getProperty();
+            Object value = beanProperty.get(entity);
+            List<Object> items = RelationshipTarget.relatedItems(value);
+            if (items.isEmpty()) {
+                return;
+            }
+            RelationshipTarget target = RelationshipTarget.of(association);
+            List<Object> targets = target.targets(items);
+            List<Object> savedTargets = persister.saveTargets(association, persistentEntity, target.entity(), targets);
+            Object fromId = mapper.writeIdentity(persistentEntity, entity);
+            List<Object> written = populateRelationshipIds(target, target.written(items, savedTargets));
+            List<RelationshipTarget.LinkRow> rows = target.linkRows(association, mapper, fromId, written, savedTargets);
+            RuntimePersistentProperty<Object> identity = target.identity();
+            // A single-valued association has one row
+            if (identity == null) {
+                unlinkOthers(association, target.entity(), fromId, rows.get(0).toId());
+                runLinks(association, target.entity(), rows);
+            } else {
+                unlinkOtherRelationships(association, target.entity(), identity, fromId, rows.get(0).toId(), mapper.writeIdentity(target.associated(), written.get(0)));
+                runIdentifiedLinks(association, target, rows, written);
+            }
+            entity = withWritten(beanProperty, entity, value instanceof Iterable<?>, items, written);
+        }
+
+        /**
+         * Merges the relationships of the rows, which have no identifier: the rows that write the same properties
+         * with one query, when the database supports it, and the others one at a time.
+         */
+        private void runLinks(RuntimeAssociation<T> association, RuntimePersistentEntity<?> target, List<RelationshipTarget.LinkRow> rows) {
+            for (Map.Entry<List<String>, List<RelationshipTarget.LinkRow>> group : RelationshipTarget.groupLinkRows(rows).entrySet()) {
+                List<RelationshipTarget.LinkRow> batch = group.getValue();
+                if (batch.size() > 1 && queryBuilder.supportsBatchedLinks()) {
+                    GraphQuery query = planLinks(association, persistentEntity, target, batch, group.getKey());
+                    RelationshipTarget.checkLinked(association, persister.run(query).records(), batch.size());
+                } else {
+                    for (RelationshipTarget.LinkRow row : batch) {
+                        runLink(association, target, row.toId(), row.fromId(), row.properties(), null, RelationshipTarget.LinkMode.MERGE, null);
+                    }
                 }
-                boolean many = value instanceof Iterable<?>;
-                Iterable<Object> items = many ? (Iterable<Object>) value : List.of(value);
-                List<Object> written = new ArrayList<>();
-                boolean changed = false;
-                for (Object item : items) {
-                    Object result = link(association, item);
-                    changed |= result != item;
-                    written.add(result);
+            }
+        }
+
+        /**
+         * Writes relationship entities with an identifier one at a time, as several of them may connect the same
+         * nodes. One that was not saved, or that no longer connects these nodes, is a new one. Saving one that was
+         * saved finds it by its identifier from either end, even if it is undirected. An instance held twice is one
+         * relationship.
+         *
+         * @param written The written relationship entities, replaced in place with those holding their identifiers
+         */
+        private void runIdentifiedLinks(RuntimeAssociation<T> association, RelationshipTarget target, List<RelationshipTarget.LinkRow> rows, List<Object> written) {
+            Map<Object, Object> linked = new IdentityHashMap<>();
+            for (RelationshipTarget.LinkRow row : rows) {
+                Object item = written.get(row.position());
+                Object done = linked.get(item);
+                if (done == null) {
+                    Object savedId = mapper.writeIdentity(target.associated(), item);
+                    Object id = savedId == null ? null : runLink(association, target.entity(), row.toId(), row.fromId(), row.properties(), target.identity(), RelationshipTarget.LinkMode.UPDATE, savedId);
+                    if (id == null) {
+                        id = runLink(association, target.entity(), row.toId(), row.fromId(), row.properties(), target.identity(), RelationshipTarget.LinkMode.CREATE, null);
+                    }
+                    done = target.withRelationshipId(mapper, item, id);
+                    linked.put(item, done);
                 }
-                if (changed) {
-                    Object newValue = many ? conversionService.convertRequired(written, beanProperty.asArgument()) : written.get(0);
-                    entity = withProperty(beanProperty, entity, newValue);
-                }
+                written.set(row.position(), done);
             }
         }
 
@@ -1970,59 +2126,6 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             }
         }
 
-        private Object link(RuntimeAssociation<T> association, Object item) {
-            RuntimePersistentEntity<Object> associated = (RuntimePersistentEntity<Object>) association.getAssociatedEntity();
-            Object fromId = mapper.writeIdentity(persistentEntity, entity);
-            if (GraphEntities.isRelationshipEntity(associated)) {
-                return linkRelationshipEntity(association, associated, item, fromId);
-            }
-            Object savedTarget = persister.save(associated, item, persister.isNew(associated, item));
-            Object toId = mapper.writeIdentity(associated, savedTarget);
-            unlinkOthers(association, associated, fromId, toId);
-            runLink(association, associated, toId, fromId, Map.of(), null, LinkMode.MERGE, null);
-            return savedTarget;
-        }
-
-        private Object linkRelationshipEntity(RuntimeAssociation<T> association, RuntimePersistentEntity<Object> associated, Object relationship, @Nullable Object fromId) {
-            Object item = relationship;
-            RuntimeAssociation<Object> targetAssociation = (RuntimeAssociation<Object>) targetNode(associated);
-            BeanProperty<Object, Object> targetProperty = targetAssociation.getProperty();
-            Object target = targetProperty.get(item);
-            if (target == null) {
-                throw new DataAccessException("Relationship [" + associated.getSimpleName() + "] has no @TargetNode value");
-            }
-            RuntimePersistentEntity<Object> targetEntity = (RuntimePersistentEntity<Object>) targetAssociation.getAssociatedEntity();
-            Object savedTarget = persister.save(targetEntity, target, persister.isNew(targetEntity, target));
-            if (savedTarget != target) {
-                item = withProperty(targetProperty, item, savedTarget);
-            }
-            RuntimePersistentProperty<Object> relationshipIdentity = associated.hasIdentity() ? associated.getIdentity() : null;
-            boolean nativeId = relationshipIdentity != null && GraphEntities.isNativeId(relationshipIdentity);
-            if (relationshipIdentity != null && !nativeId && mapper.writeIdentity(associated, item) == null) {
-                item = populateRelationshipId(associated, relationshipIdentity, item);
-            }
-            Map<String, Object> properties = mapper.writeProperties(associated, item);
-            Object toId = mapper.writeIdentity(targetEntity, savedTarget);
-            Object savedId = mapper.writeIdentity(associated, item);
-            if (relationshipIdentity == null) {
-                unlinkOthers(association, targetEntity, fromId, toId);
-            } else {
-                unlinkOtherRelationships(association, targetEntity, relationshipIdentity, fromId, toId, savedId);
-            }
-            Object relationshipId = savedId == null ? null : runLink(association, targetEntity, toId, fromId, properties, relationshipIdentity, LinkMode.UPDATE, savedId);
-            if (relationshipId == null) {
-                // A relationship that was not saved, or that no longer connects these nodes, is a new one. Saving one
-                // that was saved finds it by its identifier from either end, even if it is undirected
-                relationshipId = runLink(association, targetEntity, toId, fromId, properties, relationshipIdentity, relationshipIdentity != null ? LinkMode.CREATE : LinkMode.MERGE, null);
-            }
-            if (relationshipIdentity != null && nativeId && relationshipId != null) {
-                BeanProperty<Object, Object> idProperty = relationshipIdentity.getProperty();
-                Object id = mapper.readValue(relationshipIdentity, relationshipId);
-                item = withProperty(idProperty, item, id);
-            }
-            return item;
-        }
-
         /**
          * A single-valued association holds one relationship, so linking a new target replaces the old. A value
          * that is null is left alone, as it may be an association that was not fetched. Nothing can be linked yet
@@ -2053,10 +2156,10 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
                                          @Nullable Object fromId,
                                          Map<String, Object> properties,
                                          @Nullable RuntimePersistentProperty<?> relationshipIdentity,
-                                         LinkMode mode,
+                                         RelationshipTarget.LinkMode mode,
                                          @Nullable Object relationshipId) {
             GraphQuery query = planLink(association, persistentEntity, target, fromId, toId, properties, relationshipIdentity, mode, relationshipId);
-            return linkedRelationshipId(association, mode, persister.run(query).records());
+            return RelationshipTarget.linkedRelationshipId(association, mode, persister.run(query).records());
         }
     }
 

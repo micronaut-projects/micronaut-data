@@ -30,8 +30,12 @@ import io.micronaut.data.neo4j.features.ReactiveMovieRepository
 import io.micronaut.data.neo4j.features.Player
 import io.micronaut.data.neo4j.features.Review
 import io.micronaut.data.neo4j.features.Seat
+import io.micronaut.data.neo4j.features.Recruit
+import io.micronaut.data.neo4j.features.RecruitRepository
 import io.micronaut.data.neo4j.features.Shelf
 import io.micronaut.data.neo4j.features.ShelfRepository
+import io.micronaut.data.neo4j.features.Squad
+import io.micronaut.data.neo4j.features.SquadRepository
 import io.micronaut.data.neo4j.features.Station
 import io.micronaut.data.neo4j.features.StationRepository
 import io.micronaut.data.neo4j.features.Tag
@@ -79,6 +83,12 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
 
     @Inject
     ShelfRepository shelfRepository
+
+    @Inject
+    RecruitRepository recruitRepository
+
+    @Inject
+    SquadRepository squadRepository
 
     @Inject
     EngineerRepository engineerRepository
@@ -732,5 +742,40 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
         then:
         def e = thrown(DataAccessException)
         e.message.contains("declares SKIP or LIMIT itself")
+    }
+
+    void "a related node that a new node of the list updates is not updated again"() {
+        given:
+        def bob = recruitRepository.save(new Recruit(null, null, "Bob", []))
+        def cid = recruitRepository.save(new Recruit(null, null, "Cid", []))
+        def ann = new Recruit(null, null, "Ann", [bob])
+
+        when:
+        def saved = squadRepository.save(new Squad(null, "Alpha", [ann, bob, cid]))
+
+        then: "Ann updates Bob through her relationship, and the update of the list does not write him again"
+        saved.recruits()*.name() == ["Ann", "Bob", "Cid"]
+        saved.recruits()*.version() == [0L, 1L, 1L]
+        operations.executeQuery("MATCH (:Squad)-[r:HAS]->(:Recruit) RETURN count(r) AS c", [:])*.asMap()*.get('c') == [3L]
+    }
+
+    void "an immutable relationship entity instance held twice is one relationship"() {
+        given:
+        def assignment = new Assignment(null, "lead", new Project("Compiler"))
+        def audit = new Audit(null, "clean", new Project("Linker"))
+        def engineer = new Engineer("Ada")
+        engineer.assignments = [assignment, assignment]
+        engineer.audits = [audit, audit]
+
+        when:
+        def saved = engineerRepository.save(engineer)
+
+        then:
+        operations.executeQuery("MATCH (:Engineer)-[r:STAFFED]->(:Project) RETURN count(r) AS c", [:])*.asMap()*.get('c') == [1L]
+        operations.executeQuery("MATCH (:Engineer)-[r:AUDITED]->(:Project) RETURN count(r) AS c", [:])*.asMap()*.get('c') == [1L]
+        saved.assignments[0].id() != null
+        saved.assignments*.id().toSet().size() == 1
+        saved.audits[0].id() != null
+        saved.audits*.id().toSet().size() == 1
     }
 }
