@@ -944,6 +944,16 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
      * @param relationship The relationship
      * @return The relationship with its identifier
      */
+    /**
+     * The targets of a dynamic relationship: a collection of them, or a single one.
+     */
+    static Iterable<?> dynamicTargets(@Nullable Object value) {
+        if (value instanceof Iterable<?> iterable) {
+            return iterable;
+        }
+        return value == null ? List.of() : List.of(value);
+    }
+
     final Object populateRelationshipId(RuntimePersistentEntity<Object> associated, RuntimePersistentProperty<Object> identity, Object relationship) {
         DefaultEntityEventContext<Object> event = new DefaultEntityEventContext<>(associated, relationship);
         entityEventRegistry.prePersist(event);
@@ -1303,29 +1313,30 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             boolean changed = false;
             for (Map.Entry<?, ?> entry : relationships.entrySet()) {
                 String type = String.valueOf(entry.getKey());
-                Object value = entry.getValue();
-                Iterable<?> targets = value instanceof Iterable<?> iterable ? iterable : value == null ? List.of() : List.of(value);
                 List<Object> savedTargets = new ArrayList<>();
-                for (Object target : targets) {
-                    if (target == null) {
-                        continue;
+                for (Object target : dynamicTargets(entry.getValue())) {
+                    if (target != null) {
+                        Object savedTarget = saveDynamicTarget(type, target, fromId);
+                        changed |= savedTarget != target;
+                        savedTargets.add(savedTarget);
                     }
-                    if (target instanceof Map<?, ?>) {
-                        // A node of a label no entity maps reads as its properties, and it is already linked
-                        savedTargets.add(target);
-                        continue;
-                    }
-                    RuntimePersistentEntity<Object> targetEntity = (RuntimePersistentEntity<Object>) AbstractGraphRepositoryOperations.this.getEntity(target.getClass());
-                    Object savedTarget = persister.save(targetEntity, target, persister.isNew(targetEntity, target));
-                    changed |= savedTarget != target;
-                    savedTargets.add(savedTarget);
-                    persister.run(planDynamicLink(persistentEntity, targetEntity, type, fromId, mapper.writeIdentity(targetEntity, savedTarget)));
                 }
                 written.put(type, savedTargets);
             }
             if (changed) {
                 entity = withProperty((BeanProperty<T, Object>) (BeanProperty<?, ?>) property, entity, written);
             }
+        }
+
+        private Object saveDynamicTarget(String type, Object target, @Nullable Object fromId) {
+            if (target instanceof Map<?, ?>) {
+                // A node of a label no entity maps reads as its properties, and it is already linked
+                return target;
+            }
+            RuntimePersistentEntity<Object> targetEntity = (RuntimePersistentEntity<Object>) AbstractGraphRepositoryOperations.this.getEntity(target.getClass());
+            Object savedTarget = persister.save(targetEntity, target, persister.isNew(targetEntity, target));
+            persister.run(planDynamicLink(persistentEntity, targetEntity, type, fromId, mapper.writeIdentity(targetEntity, savedTarget)));
+            return savedTarget;
         }
 
         private Object link(RuntimeAssociation<T> association, Object item) {

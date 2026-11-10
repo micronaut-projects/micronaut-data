@@ -215,26 +215,7 @@ public final class OracleGraphRows {
         List<GraphPathValue> values = new ArrayList<>(paths.size());
         int[] nextId = {0};
         for (Map.Entry<Object, List<Map<String, Map<String, @Nullable Object>>>> path : paths.entrySet()) {
-            List<GraphNode> nodes = new ArrayList<>();
-            List<GraphEdge> edges = new ArrayList<>();
-            // The vertices of the path without an identifier column, told apart by their label and properties
-            Map<Map<String, @Nullable Object>, Integer> anonymous = new LinkedHashMap<>();
-            List<Map<String, Map<String, @Nullable Object>>> steps = path.getValue();
-            for (int i = 0; i < steps.size(); i++) {
-                Map<String, Map<String, @Nullable Object>> step = steps.get(i);
-                // Each step starts where the previous one ended
-                GraphNode start = i == 0
-                    ? pathNode(step.getOrDefault(OracleGraphQueryBuilder.STEP_START, Map.of()), anonymous, nextId)
-                    : nodes.get(nodes.size() - 1);
-                GraphNode end = pathNode(step.getOrDefault(OracleGraphQueryBuilder.STEP_END, Map.of()), anonymous, nextId);
-                if (i == 0) {
-                    nodes.add(start);
-                }
-                Object type = step.getOrDefault("x", Map.of()).get(OracleGraphQueryBuilder.TYPE_COLUMN);
-                edges.add(new GraphEdge(path.getKey() + "/" + i, type == null ? "" : type.toString(), start.id(), end.id(), Map.of()));
-                nodes.add(end);
-            }
-            values.add(new GraphPathValue(nodes, edges));
+            values.add(pathValue(path.getKey(), path.getValue(), nextId));
         }
         // Shortest first, as Cypher orders the paths by their length; a stable sort keeps the order of the matches
         values.sort(Comparator.comparingInt(value -> value.relationships().size()));
@@ -243,6 +224,28 @@ public final class OracleGraphRows {
             records.add(new GraphRecord(List.of("p"), List.of(value)));
         }
         return records;
+    }
+
+    private static GraphPathValue pathValue(Object key, List<Map<String, Map<String, @Nullable Object>>> steps, int[] nextId) {
+        List<GraphNode> nodes = new ArrayList<>();
+        List<GraphEdge> edges = new ArrayList<>();
+        // The vertices of the path without an identifier column, told apart by their label and properties
+        Map<Map<String, @Nullable Object>, Integer> anonymous = new LinkedHashMap<>();
+        for (int i = 0; i < steps.size(); i++) {
+            Map<String, Map<String, @Nullable Object>> step = steps.get(i);
+            // Each step starts where the previous one ended
+            GraphNode start = i == 0
+                ? pathNode(step.getOrDefault(OracleGraphQueryBuilder.STEP_START, Map.of()), anonymous, nextId)
+                : nodes.get(nodes.size() - 1);
+            GraphNode end = pathNode(step.getOrDefault(OracleGraphQueryBuilder.STEP_END, Map.of()), anonymous, nextId);
+            if (i == 0) {
+                nodes.add(start);
+            }
+            Object type = step.getOrDefault("x", Map.of()).get(OracleGraphQueryBuilder.TYPE_COLUMN);
+            edges.add(new GraphEdge(key + "/" + i, type == null ? "" : type.toString(), start.id(), end.id(), Map.of()));
+            nodes.add(end);
+        }
+        return new GraphPathValue(nodes, edges);
     }
 
     /**
