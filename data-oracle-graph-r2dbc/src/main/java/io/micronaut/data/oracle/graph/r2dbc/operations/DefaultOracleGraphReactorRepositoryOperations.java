@@ -268,7 +268,7 @@ final class DefaultOracleGraphReactorRepositoryOperations extends AbstractReacti
                 rowValues.add(normalize(row.get(i)));
             }
             if (columns.contains(OracleGraphQueryBuilder.PATH_MATCH_COLUMN)) {
-                throw new IllegalStateException("Paths are returned by PGQL queries, which are not available over R2DBC");
+                throw new IllegalStateException("Paths are not read over R2DBC: return them from a repository annotated with @OracleGraphRepository");
             }
             return OracleGraphRows.decodeRow(columns, rowValues, rowIndex);
         }
