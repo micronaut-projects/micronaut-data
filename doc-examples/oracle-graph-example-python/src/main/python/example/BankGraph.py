@@ -3,20 +3,20 @@ from java.math import BigDecimal
 from micronaut.data.annotation import Query
 from micronaut.data.graph.annotation import PathLimit, PropertyGraph
 from micronaut.data.oracle.graph.annotation import OracleGraphRepository
-from micronaut.data.repository import GenericRepository
+from micronaut.data.repository import CrudRepository
 
 from example.Account import Account
 from example.TransferView import TransferView
 
 
 @OracleGraphRepository(graph="bank_graph", language=PropertyGraph.QueryLanguage.SQL_PGQ)  # <1>
-class BankGraph(GenericRepository[Account, int]):
+class BankGraph(CrudRepository[Account, int]):  # <2>
 
-    def findById(self, id: int) -> Account | None: ...
+    def findByNameStartsWithOrderByName(self, prefix: str) -> list[Account]: ...
 
-    def findByTransfersAmountGreaterThan(self, amount: BigDecimal) -> list[Account]: ...  # <2>
+    def findByTransfersAmountGreaterThan(self, amount: BigDecimal) -> list[Account]: ...  # <3>
 
-    @PathLimit(3)  # <3>
+    @PathLimit(3)  # <4>
     def existsPathByTransfers(self, start: int, end: int) -> bool: ...
     # end::repository[]
 
