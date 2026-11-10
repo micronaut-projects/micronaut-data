@@ -1,0 +1,43 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
+plugins {
+    id "java-library"
+    id "io.micronaut.build.internal.data-base"
+    id "io.micronaut.build.internal.data-dependencies"
+    id 'io.micronaut.test-resources'
+}
+
+dependencies {
+
+    testAnnotationProcessor projects.micronautDataGraphProcessor
+
+    testImplementation projects.micronautJakartaDataTck.micronautJakartaDataSupportTck
+    testImplementation projects.micronautDataNeo4j
+    testImplementation projects.micronautDataGraphProcessor
+    testImplementation mnValidation.micronaut.validation.processor
+    testImplementation mnValidation.micronaut.validation
+
+    testRuntimeOnly mnTest.junit.jupiter.engine
+    testRuntimeOnly mnLogging.logback.classic
+    testRuntimeOnly mn.snakeyaml
+}
+
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    testResources {
+        enabled = true
+        inferClasspath = false
+        additionalModules.add(KnownModules.NEO4J)
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
+}
+
+
+test {
+    scanForTestClasses true
+    systemProperty("junit.jupiter.extensions.autodetection.enabled", "true")
+    useJUnitPlatform()
+    maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+}

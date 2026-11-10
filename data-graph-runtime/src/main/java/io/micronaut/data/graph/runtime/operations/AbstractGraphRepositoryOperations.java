@@ -17,10 +17,12 @@ package io.micronaut.data.graph.runtime.operations;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.EntityExistsException;
@@ -34,6 +36,7 @@ import io.micronaut.data.graph.model.query.PathLimitParameter;
 import io.micronaut.data.graph.model.query.PathQueryDefinition;
 import io.micronaut.data.graph.model.query.builder.CypherQueryBuilder;
 import io.micronaut.data.graph.model.query.builder.GraphQueryBuilder;
+import io.micronaut.data.graph.model.query.builder.LiteralMasker;
 import io.micronaut.data.graph.runtime.GraphEdge;
 import io.micronaut.data.graph.runtime.GraphEntityMapper;
 import io.micronaut.data.graph.runtime.GraphNode;
@@ -109,6 +112,7 @@ import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
@@ -126,6 +130,10 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     AsyncCapableRepository,
     ReactiveCapableRepository,
     AutoCloseable {
+    private static final Pattern RETURN_CLAUSE = clause("RETURN");
+    private static final Pattern ORDER_BY_CLAUSE = clause("ORDER\\s+BY");
+    private static final Pattern SKIP_CLAUSE = clause("SKIP");
+    private static final Pattern LIMIT_CLAUSE = clause("LIMIT");
     private static final Pattern CRITERIA_DEPTH = Pattern.compile(Pattern.quote(PathQueryDefinition.CRITERIA_DEPTH_TOKEN) + "(\\d+)");
 
     protected final GraphQueryBuilder queryBuilder;
@@ -323,6 +331,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     @Override
     public <T> Iterable<T> findAll(PagedQuery<T> query) {
         RuntimePersistentEntity<T> entity = getEntity(query.getRootEntity());
+        checkOffsetPageable(query.getPageable());
         StringBuilder cypher = new StringBuilder(queryBuilder.buildFindAllQuery(entity));
         appendSortAndLimit(cypher, entity, query.getSort(), query.getQueryLimit());
         return read(query.getAnnotationMetadata(), session -> session.run(cypher.toString(), Map.of()).records()
@@ -472,8 +481,9 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             }
         }
         if (applyLimits && !preparedQuery.isCount()) {
+            checkOffsetPageable(preparedQuery.getPageable());
             RuntimePersistentEntity<?> entity = getEntity(preparedQuery.getRootEntity());
-            appendSortAndLimit(query, entity, preparedQuery.getSort(), preparedQuery.getQueryLimit());
+            appendSortAndLimit(query, entity, preparedQuery.getSort(), unrenderedLimit(preparedQuery, query));
         }
         return new GraphQuery(query.toString(), parameters);
     }
@@ -494,6 +504,41 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     }
 
     /**
+     * The limit left to append. The criteria runtime renders the {@code Limit} argument of a method into the query it
+     * builds and still reports it on the prepared query.
+     */
+    private Limit unrenderedLimit(PreparedQuery<?, ?> preparedQuery, StringBuilder query) {
+        Limit limit = preparedQuery.getQueryLimit();
+        if (limit.isLimited() && !preparedQuery.isRawQuery()
+            && LiteralMasker.mask(query.toString()).contains(limitClause(query, limit))) {
+            return Limit.UNLIMITED;
+        }
+        return limit;
+    }
+
+    /**
+     * The text of a limit in a query.
+     *
+     * @param query The query
+     * @param limit The limit
+     * @return The text the criteria runtime renders for the limit
+     */
+    protected String limitClause(StringBuilder query, Limit limit) {
+        return queryBuilder.buildLimitAndOffset(limit.maxResults(), limit.offset());
+    }
+
+    /**
+     * Rejects a cursored pageable: without keyset pagination an offset page would hand out cursors that do not work.
+     *
+     * @param pageable The pageable
+     */
+    static void checkOffsetPageable(Pageable pageable) {
+        if (pageable.getMode() != Pageable.Mode.OFFSET) {
+            throw new UnsupportedOperationException("Graph repositories do not support cursored pagination: return a Page and pass an offset Pageable instead of a CursoredPage or CursoredPageable");
+        }
+    }
+
+    /**
      * Appends the ordering and limits requested by method arguments to a query. A query that cannot
      * take them, because it is an explicit query or already sorts or limits itself, is rejected
      * rather than silently returned unsorted or unpaged.
@@ -505,25 +550,72 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
      */
     protected void appendSortAndLimit(StringBuilder query, RuntimePersistentEntity<?> entity, Sort sort, Limit limit) {
         if (sort != null && sort.isSorted()) {
-            boolean rootQuery = query.indexOf("MATCH (" + CypherQueryBuilder.ROOT) == 0;
-            if (!rootQuery || query.indexOf(" ORDER BY ") >= 0) {
-                throw new DataAccessException("Cannot apply the sort " + sort.getOrderBy() + " to the query [" + query + "]: sort an explicit query with its own ORDER BY clause");
-            }
-            appendOrderBy(query, entity, sort);
+            appendSort(query, entity, sort);
         }
         if (limit != null && limit.isLimited()) {
+            String masked = maskedWithoutTrailingComment(query);
             // A WITH clause may limit what it carries, as the shortest of the paths up to a depth; the final RETURN may not
-            int lastReturn = query.lastIndexOf(" RETURN ");
-            String returnClause = lastReturn < 0 ? query.toString() : query.substring(lastReturn);
-            if (returnClause.contains(" LIMIT ") || returnClause.contains(" SKIP ")) {
+            int returnIndex = lastClause(masked, RETURN_CLAUSE, -1);
+            if (lastClause(masked, LIMIT_CLAUSE, returnIndex) >= 0 || lastClause(masked, SKIP_CLAUSE, returnIndex) >= 0) {
                 throw new DataAccessException("Cannot page the query [" + query + "]: it declares SKIP or LIMIT itself");
             }
             query.append(queryBuilder.buildLimitAndOffset(limit.maxResults(), limit.offset()));
         }
     }
 
-    private void appendOrderBy(StringBuilder query, RuntimePersistentEntity<?> entity, Sort sort) {
-        query.append(" ORDER BY ");
+    private void appendSort(StringBuilder query, RuntimePersistentEntity<?> entity, Sort sort) {
+        boolean rootQuery = query.indexOf("MATCH (" + CypherQueryBuilder.ROOT) == 0;
+        if (!rootQuery) {
+            throw new DataAccessException("Cannot apply the sort " + sort.getOrderBy() + " to the query [" + query + "]: it does not match the root node as " + CypherQueryBuilder.ROOT);
+        }
+        // The ordering the query declares takes precedence, and SKIP and LIMIT stay last
+        String masked = maskedWithoutTrailingComment(query);
+        int returnIndex = lastClause(masked, RETURN_CLAUSE, -1);
+        int tailIndex = lastClause(masked, SKIP_CLAUSE, returnIndex);
+        int limitIndex = lastClause(masked, LIMIT_CLAUSE, returnIndex);
+        if (tailIndex < 0 || (limitIndex >= 0 && limitIndex < tailIndex)) {
+            tailIndex = limitIndex;
+        }
+        String tail = tailIndex < 0 ? "" : " " + query.substring(tailIndex);
+        if (tailIndex >= 0) {
+            query.setLength(query.substring(0, tailIndex).stripTrailing().length());
+        }
+        query.append(lastClause(masked, ORDER_BY_CLAUSE, returnIndex) >= 0 ? ", " : " ORDER BY ");
+        appendOrderItems(query, entity, sort);
+        query.append(tail);
+    }
+
+    /**
+     * @return A clause keyword in any case, which a property, parameter or alias of the same name is not
+     */
+    private static Pattern clause(String keyword) {
+        return Pattern.compile("(?<![.$\\w])(?<!\\bAS\\s{1,8})" + keyword + "(?!\\w)", Pattern.CASE_INSENSITIVE);
+    }
+
+    /**
+     * Drops a comment that ends the query, which would swallow anything appended to it.
+     *
+     * @return The query with its literals and comments masked, to look for clauses in
+     */
+    private static String maskedWithoutTrailingComment(StringBuilder query) {
+        String masked = LiteralMasker.mask(query.toString()).stripTrailing();
+        query.setLength(masked.length());
+        return masked;
+    }
+
+    /**
+     * @return The index of the last occurrence of a clause after the given index, or -1
+     */
+    private static int lastClause(String masked, Pattern clause, int after) {
+        Matcher matcher = clause.matcher(masked);
+        int index = -1;
+        while (matcher.find()) {
+            index = matcher.start();
+        }
+        return index > after ? index : -1;
+    }
+
+    private void appendOrderItems(StringBuilder query, RuntimePersistentEntity<?> entity, Sort sort) {
         Iterator<Sort.Order> iterator = sort.getOrderBy().iterator();
         while (iterator.hasNext()) {
             Sort.Order order = iterator.next();
@@ -558,9 +650,13 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         Object first = record.size() == 0 ? null : record.get(0);
         Argument<R> resultArgument = preparedQuery.getResultArgument();
         Class<R> resultType = preparedQuery.getResultType();
+        if (resultType == Object[].class) {
+            // Object[] rows are the values of the columns, in column order
+            return (R) record.values().toArray();
+        }
         if (preparedQuery.isDtoProjection()) {
             Map<String, Object> values = record.size() == 1 && first instanceof GraphNode node ? node.properties() : record.asMap();
-            return readDto(values, resultType);
+            return readDto(projected(values, resultType, preparedQuery.getAnnotationMetadata()), resultType);
         }
         Class<?> nodeType = nodeType(resultArgument, preparedQuery.getRootEntity());
         return (R) mapValue(record, first, resultType, nodeType, targetNodeType(resultArgument, nodeType), preparedQuery.getAnnotationMetadata());
@@ -681,6 +777,39 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
 
     private <R> R readDto(Map<String, Object> values, Class<R> type) {
         return graphSerde.read(type, values);
+    }
+
+    /**
+     * Adds the columns a DTO selects under another name with {@link Projection} under the names of its properties.
+     * The projection is declared on the properties or, in order, on the method: the processor rejects a method and DTO that both declare it.
+     *
+     * @param values             The columns of the row
+     * @param type               The DTO type
+     * @param annotationMetadata The annotation metadata of the method
+     * @return The columns, under the names of the DTO properties
+     */
+    private static Map<String, Object> projected(Map<String, Object> values, Class<?> type, AnnotationMetadata annotationMetadata) {
+        Optional<BeanIntrospection<Object>> introspection = BeanIntrospector.SHARED.findIntrospection((Class<Object>) type);
+        if (introspection.isEmpty()) {
+            return values;
+        }
+        Iterator<String> methodProjections = annotationMetadata.getAnnotationValuesByType(Projection.class).stream()
+            .flatMap(projection -> projection.stringValue().stream())
+            .iterator();
+        Map<String, Object> projected = null;
+        for (BeanProperty<Object, Object> property : introspection.get().getBeanProperties()) {
+            String projection = property.stringValue(Projection.class).orElse(null);
+            if (projection == null && methodProjections.hasNext()) {
+                projection = methodProjections.next();
+            }
+            if (projection != null && !projection.equals(property.getName()) && values.containsKey(projection) && !values.containsKey(property.getName())) {
+                if (projected == null) {
+                    projected = new LinkedHashMap<>(values);
+                }
+                projected.put(property.getName(), values.get(projection));
+            }
+        }
+        return projected == null ? values : projected;
     }
 
     // Writes

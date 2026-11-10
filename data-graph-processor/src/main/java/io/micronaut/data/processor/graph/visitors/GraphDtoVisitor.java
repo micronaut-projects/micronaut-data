@@ -56,6 +56,10 @@ public final class GraphDtoVisitor implements TypeElementVisitor<GraphRepository
         if (dto == null || dto.hasStereotype(Serdeable.class) || dto.hasStereotype(Serdeable.Deserializable.class)) {
             return;
         }
+        if (dto.getName().equals(Object.class.getName())) {
+            // Object[] rows are read as the values of the columns, without a deserializer
+            return;
+        }
         context.fail("Graph repositories read DTOs with Micronaut Serialization: annotate [" + dto.getName()
             + "] with @Serdeable", element);
     }

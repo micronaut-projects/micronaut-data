@@ -1,5 +1,7 @@
 package io.micronaut.data.graph.processor
 
+import io.micronaut.data.graph.model.query.builder.LikePatternConverter
+import io.micronaut.data.intercept.annotation.DataMethodQueryParameter
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.annotation.Relation
 import io.micronaut.data.intercept.annotation.DataMethod
@@ -539,6 +541,73 @@ interface DtoRepository extends CrudRepository<Movie, String> {
         e.message.contains('Graph repositories read DTOs with Micronaut Serialization: annotate [test.TitleOnly] with @Serdeable')
     }
 
+    void "test @Projection on both the method and the DTO is rejected"() {
+        when:
+        buildRepository('test.MixedRepository', """
+$MOVIES
+
+@io.micronaut.serde.annotation.Serdeable
+record TitleAndYear(String label, @io.micronaut.data.annotation.Projection("released") Integer year) {
+}
+
+@TestGraphRepository
+interface MixedRepository extends CrudRepository<Movie, String> {
+    @Query("MATCH (n:Movie) RETURN n.title AS title, n.released AS released")
+    @io.micronaut.data.annotation.Projection("title")
+    List<TitleAndYear> mixed();
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('Declare @Projection either on the method or on the properties of [test.TitleAndYear], not both')
+    }
+
+    void "test @Projection on the method alone or the DTO alone compiles"() {
+        when:
+        def repository = buildRepository('test.ProjectionRepository', """
+$MOVIES
+
+@io.micronaut.serde.annotation.Serdeable
+record ByMethod(String label) {
+}
+
+@io.micronaut.serde.annotation.Serdeable
+record ByProperty(@io.micronaut.data.annotation.Projection("title") String label) {
+}
+
+@TestGraphRepository
+interface ProjectionRepository extends CrudRepository<Movie, String> {
+    @Query("MATCH (n:Movie) RETURN n.title AS title")
+    @io.micronaut.data.annotation.Projection("title")
+    List<ByMethod> byMethod();
+
+    @Query("MATCH (n:Movie) RETURN n.title AS title")
+    List<ByProperty> byProperty();
+}
+""")
+
+        then:
+        findMethod(repository, 'byMethod', 0) != null
+        findMethod(repository, 'byProperty', 0) != null
+    }
+
+    void "test Object[] rows are read without a deserializer"() {
+        when:
+        def repository = buildRepository('test.RowsRepository', """
+$MOVIES
+
+@TestGraphRepository
+interface RowsRepository extends CrudRepository<Movie, String> {
+    @Query("MATCH (n:Movie) RETURN n.title AS title, n.released AS released")
+    List<Object[]> titlesAndYears();
+}
+""")
+
+        then:
+        getQuery(findMethod(repository, 'titlesAndYears', 0)) == 'MATCH (n:Movie) RETURN n.title AS title, n.released AS released'
+    }
+
     void "test names that cannot be quoted are rejected"() {
         when:
         buildRepository('test.HostileRepository', """
@@ -561,20 +630,24 @@ interface HostileRepository extends CrudRepository<Hostile, String> {
         e.message.contains('cannot appear in a graph query')
     }
 
-    void "test LIKE is rejected"() {
+    void "test LIKE is matched as a regular expression built from the pattern"() {
         when:
-        buildRepository('test.LikeRepository', """
+        def repository = buildRepository('test.LikeRepository', """
 $MOVIES
 
 @TestGraphRepository
 interface LikeRepository extends CrudRepository<Movie, String> {
     List<Movie> findByTitleLike(String title);
+    List<Movie> findByTitleNotLike(String title);
 }
 """)
+        def like = repository.executableMethods.find { it.methodName == 'findByTitleLike' }
+        def notLike = repository.executableMethods.find { it.methodName == 'findByTitleNotLike' }
 
-        then:
-        def e = thrown(RuntimeException)
-        e.message.contains('LIKE is not supported by graph repositories')
+        then: "the pattern is translated when it is bound"
+        getQuery(like) == "MATCH (n:Movie) WHERE n.title =~ ('(?s)' + \$p0) RETURN n"
+        like.getAnnotation(DataMethod).getAnnotations('parameters', DataMethodQueryParameter).first().classValue('converter').get() == LikePatternConverter
+        getQuery(notLike) == "MATCH (n:Movie) WHERE NOT (n.title =~ ('(?s)' + \$p0)) RETURN n"
     }
 
     void "test joins deeper than one relationship fetch nested nodes"() {

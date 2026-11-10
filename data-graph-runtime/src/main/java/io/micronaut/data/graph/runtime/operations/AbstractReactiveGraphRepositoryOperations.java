@@ -188,6 +188,7 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
         RuntimePersistentEntity<T> entity = operations.getEntity(pagedQuery.getRootEntity());
         AnnotationMetadata annotationMetadata = pagedQuery.getAnnotationMetadata();
         return withSessionFlux(annotationMetadata, session -> {
+            AbstractGraphRepositoryOperations.checkOffsetPageable(pagedQuery.getPageable());
             StringBuilder query = new StringBuilder(operations.queryBuilder.buildFindAllQuery(entity));
             operations.appendSortAndLimit(query, entity, pagedQuery.getSort(), pagedQuery.getQueryLimit());
             return session.stream(query.toString(), Map.of())

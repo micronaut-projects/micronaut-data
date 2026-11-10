@@ -77,6 +77,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.UnaryOperator;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -191,6 +192,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     private static final String CLOSE_AS = ") AS ";
     private static final String RETURN = " RETURN ";
     private static final String MATCH_OPEN = "MATCH (";
+    private static final String NOT_OPEN = "NOT (";
     private static final String WHERE = " WHERE ";
     private static final String CLOSE_WHERE = ") WHERE ";
     private static final String RETURN_COUNT = " RETURN count(*) AS result";
@@ -974,6 +976,16 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     }
 
     /**
+     * The flags of a case-insensitive {@code LIKE}, which is matched as a regular expression.
+     *
+     * @return The embedded flags
+     */
+    protected String caseInsensitiveLikeFlags() {
+        // u: a Java regular expression otherwise folds the case of ASCII only
+        return "(?siu)";
+    }
+
+    /**
      * Whether the database can search paths of any length.
      *
      * @return True if path queries may omit a maximum depth
@@ -1455,8 +1467,13 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         }
 
         private int pushParameter(BindingParameter bindingParameter, BindingParameter.BindingContext bindingContext) {
+            return pushParameter(bindingParameter, bindingContext, UnaryOperator.identity());
+        }
+
+        private int pushParameter(BindingParameter bindingParameter, BindingParameter.BindingContext bindingContext,
+                                  UnaryOperator<QueryParameterBinding> decorator) {
             int index = position++;
-            parameterBindings.add(bindingParameter.bind(bindingContext.index(index).name(PARAMETER_PREFIX + index)));
+            parameterBindings.add(decorator.apply(bindingParameter.bind(bindingContext.index(index).name(PARAMETER_PREFIX + index))));
             return index;
         }
 
@@ -1659,6 +1676,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             appendExpression(binaryExpression.getLeft(), bound);
             out.append(switch (binaryExpression.getType()) {
                 case SUM, CONCAT -> " + ";
+                case DIFF -> " - ";
                 case PROD -> " * ";
                 case QUOT -> " / ";
                 default -> throw new UnsupportedOperationException("Unsupported binary expression: " + binaryExpression.getType());
@@ -1684,12 +1702,30 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
 
         @Override
         public void visit(FunctionExpression<?> functionExpression) {
-            out.append(functionExpression.getName()).append('(');
+            // The standard names Jakarta Data expressions use: Cypher concatenates with + and has length() for paths
+            String name = functionExpression.getName();
+            if (name.equals("CONCAT")) {
+                appendConcat(functionExpression.getExpressions());
+                return;
+            }
+            out.append(name.equals("LENGTH") ? "size" : name).append('(');
             Iterator<Expression<?>> iterator = functionExpression.getExpressions().iterator();
             while (iterator.hasNext()) {
                 appendExpression(iterator.next(), boundProperty);
                 if (iterator.hasNext()) {
                     out.append(", ");
+                }
+            }
+            out.append(')');
+        }
+
+        private void appendConcat(List<Expression<?>> expressions) {
+            out.append('(');
+            Iterator<Expression<?>> iterator = expressions.iterator();
+            while (iterator.hasNext()) {
+                appendExpression(iterator.next(), boundProperty);
+                if (iterator.hasNext()) {
+                    out.append(" + ");
                 }
             }
             out.append(')');
@@ -1858,7 +1894,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
 
         @Override
         public void visit(NegatedPredicate negate) {
-            out.append("NOT (");
+            out.append(NOT_OPEN);
             visitBoolean(negate.getNegated());
             out.append(')');
         }
@@ -1872,7 +1908,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         public void visitIn(Expression<?> expression, Collection<?> values, boolean negated) {
             io.micronaut.data.model.PersistentPropertyPath bound = findPropertyPath(expression);
             if (negated) {
-                out.append("NOT (");
+                out.append(NOT_OPEN);
             }
             appendExpression(expression, bound);
             out.append(" IN ");
@@ -2076,9 +2112,73 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             return null;
         }
 
+        /**
+         * Cypher has no {@code LIKE}: the pattern is matched as an anchored regular expression. A literal pattern
+         * is translated when the query is built, one bound at runtime by {@link LikePatternConverter} at bind time.
+         *
+         * @param likePredicate The predicate
+         */
         @Override
         public void visit(LikePredicate likePredicate) {
-            throw new UnsupportedOperationException("LIKE is not supported by graph repositories. Use StartsWith, EndsWith, Contains or Regex instead.");
+            Expression<String> expression = likePredicate.getExpression();
+            io.micronaut.data.model.PersistentPropertyPath bound = findPropertyPath(expression);
+            Character escape = likeEscape(likePredicate.getEscapeChar());
+            String flags = likePredicate.isCaseInsensitive() ? caseInsensitiveLikeFlags() : "(?s)";
+            if (likePredicate.isNegated()) {
+                out.append(NOT_OPEN);
+            }
+            appendExpression(expression, bound);
+            out.append(" =~ ");
+            Expression<String> pattern = likePredicate.getPattern();
+            if (pattern instanceof LiteralExpression<?> literal) {
+                out.append(asLiteral(flags + LikePatternConverter.toRegex(String.valueOf(literal.getValue()), escape)));
+            } else if (pattern instanceof BindingParameter bindingParameter) {
+                int index = state.pushParameter(bindingParameter, BindingParameter.BindingContext.create()
+                        .incomingMethodParameterProperty(bound)
+                        .outgoingQueryParameterProperty(bound),
+                    binding -> likeBinding(binding, escape));
+                out.append('(').append(quote(flags)).append(" + ").append(parameterPlaceholder(index)).append(')');
+            } else {
+                throw new UnsupportedOperationException("Unsupported LIKE pattern: " + pattern);
+            }
+            if (likePredicate.isNegated()) {
+                out.append(')');
+            }
+        }
+
+        private QueryParameterBinding likeBinding(QueryParameterBinding binding, char escape) {
+            if (binding.getValue() instanceof String pattern) {
+                // A runtime literal: the pattern is known, so bind the regular expression in its place
+                return new LikeParameterBinding(binding, LikePatternConverter.toRegex(pattern, escape), null);
+            }
+            if (escape != LikePatternConverter.DEFAULT_ESCAPE) {
+                throw new UnsupportedOperationException("A LIKE pattern bound as a method argument uses the escape character '\\', not '" + escape + "'");
+            }
+            return new LikeParameterBinding(binding, null, LikePatternConverter.class.getName());
+        }
+
+        /**
+         * The escape character is the one declared by the predicate, and {@code \\} otherwise, wherever the pattern
+         * comes from.
+         */
+        private char likeEscape(@Nullable Expression<Character> escapeChar) {
+            if (escapeChar == null) {
+                return LikePatternConverter.DEFAULT_ESCAPE;
+            }
+            Object value = null;
+            if (escapeChar instanceof LiteralExpression<?> literal) {
+                value = literal.getValue();
+            } else if (escapeChar instanceof BindingParameter bindingParameter) {
+                // A runtime literal carries its value; the escape character is not a query parameter
+                value = bindingParameter.bind(BindingParameter.BindingContext.create()).getValue();
+            }
+            if (value instanceof Character c) {
+                return c;
+            }
+            if (value instanceof String s && !s.isEmpty()) {
+                return s.charAt(0);
+            }
+            throw new UnsupportedOperationException("The escape character of a LIKE pattern must be a literal: the pattern is translated to a regular expression before the query runs");
         }
 
         @Override
