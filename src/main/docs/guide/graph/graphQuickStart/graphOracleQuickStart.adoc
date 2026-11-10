@@ -57,4 +57,4 @@ snippet::example.BankGraphSpec[project-base="doc-examples/oracle-graph-example",
 <1> Insert the row of a new account.
 <2> Find it through the property graph.
 
-See <<graphOracle, Oracle Property Graphs>> for the query languages and what they support.
+See <<graphOracle, Oracle Property Graphs>> for what the SQL/PGQ queries support.
