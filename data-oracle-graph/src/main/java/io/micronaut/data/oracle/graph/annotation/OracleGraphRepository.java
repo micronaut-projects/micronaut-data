@@ -32,7 +32,7 @@ import java.lang.annotation.Target;
 /**
  * Stereotype that configures a {@link Repository} for an Oracle property graph defined over tables with
  * {@code CREATE PROPERTY GRAPH}. Queries are compiled at build time to SQL/PGQ {@code GRAPH_TABLE} queries, which run
- * on any Oracle 23ai data source, or to PGQL, which needs a data source that uses the PGQL JDBC driver.
+ * on any Oracle 23ai data source.
  *
  * <p>Saving, updating and deleting nodes writes their vertex tables with SQL through Micronaut Data JDBC. Write
  * relationships to their edge tables with a JDBC repository. For reactive repositories on the Oracle R2DBC driver,
@@ -65,10 +65,4 @@ public @interface OracleGraphRepository {
      */
     @AliasFor(annotation = PropertyGraph.class, member = "value")
     String graph();
-
-    /**
-     * @return The query language, SQL/PGQ by default
-     */
-    @AliasFor(annotation = PropertyGraph.class, member = "language")
-    PropertyGraph.QueryLanguage language() default PropertyGraph.QueryLanguage.SQL_PGQ;
 }

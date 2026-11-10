@@ -75,4 +75,4 @@ Without lazy loading, a relationship that was not fetched is an empty collection
 
 == Query languages
 
-Each repository stereotype compiles queries to the language of its database: Cypher for Neo4j, the subset of Cypher that Apache AGE runs, and SQL/PGQ or PGQL for Oracle. A separate dialect selector is therefore not needed. ISO GQL is not generated: Neo4j runs the Cypher that GQL standardises, and Oracle implements the graph queries of SQL:2023, SQL/PGQ, which the Oracle module generates.
+Each repository stereotype compiles queries to the language of its database: Cypher for Neo4j, the subset of Cypher that Apache AGE runs, and SQL/PGQ for Oracle. A separate dialect selector is therefore not needed. ISO GQL is not generated: Neo4j runs the Cypher that GQL standardises, and Oracle implements the graph queries of SQL:2023, SQL/PGQ, which the Oracle module generates.
