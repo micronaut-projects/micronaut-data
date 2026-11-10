@@ -502,8 +502,9 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
             LOG.debug("Creating Apache AGE graph [{}]", graph);
             create.setString(1, graph);
             create.execute();
-            try (Statement created = connection.createStatement()) {
-                created.execute("SELECT set_config('" + CREATED_SETTING_PREFIX + graph + "', 'true', true)");
+            try (PreparedStatement created = connection.prepareStatement("SELECT set_config(?, 'true', true)")) {
+                created.setString(1, CREATED_SETTING_PREFIX + graph);
+                created.execute();
             }
             connection.releaseSavepoint(savepoint);
         } catch (SQLException e) {
@@ -572,9 +573,10 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
      * when the current transaction created it, or {@link #COMMITTED} when it exists for good
      */
     private static int graphState(Connection connection, String graph) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement("SELECT CASE WHEN current_setting('" + CREATED_SETTING_PREFIX + graph + "', true) = 'true' THEN "
+        try (PreparedStatement statement = connection.prepareStatement("SELECT CASE WHEN current_setting(?, true) = 'true' THEN "
             + CURRENT_TRANSACTION + " ELSE " + COMMITTED + " END FROM ag_catalog.ag_graph WHERE name = ?")) {
-            statement.setString(1, graph);
+            statement.setString(1, CREATED_SETTING_PREFIX + graph);
+            statement.setString(2, graph);
             try (ResultSet resultSet = statement.executeQuery()) {
                 return resultSet.next() ? resultSet.getInt(1) : ABSENT;
             }
