@@ -9,6 +9,7 @@ dependencies {
     api mn.micronaut.aop
     api projects.micronautDataModel
     api mnSerde.micronaut.serde.api
+    api projects.micronautDataSerde
 
     compileOnly(mnSql.jakarta.persistence.api)
 }

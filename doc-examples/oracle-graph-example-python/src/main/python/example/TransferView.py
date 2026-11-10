@@ -2,10 +2,10 @@
 from dataclasses import dataclass
 
 from java.math import BigDecimal
-from micronaut.core.annotation import Introspected
+from micronaut.serde.annotation import Serdeable
 
 
-@Introspected
+@Serdeable
 @dataclass
 class TransferView:
     source: str

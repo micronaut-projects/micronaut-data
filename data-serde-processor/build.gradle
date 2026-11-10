@@ -1,0 +1,18 @@
+plugins {
+    id "io.micronaut.build.internal.data-module"
+}
+
+dependencies {
+    api projects.micronautDataProcessor
+    api projects.micronautDataSerde
+    api mnSerde.micronaut.serde.processor
+    api mnSerde.micronaut.serde.api
+
+    compileOnly mn.micronaut.inject.java
+}
+
+micronautBuild {
+    binaryCompatibility {
+        enabledAfter("5.3.0")
+    }
+}

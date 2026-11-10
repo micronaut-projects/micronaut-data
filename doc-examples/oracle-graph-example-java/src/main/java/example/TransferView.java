@@ -1,11 +1,11 @@
 package example;
 
-import io.micronaut.core.annotation.Introspected;
+import io.micronaut.serde.annotation.Serdeable;
 
 import java.math.BigDecimal;
 
 // tag::view[]
-@Introspected
+@Serdeable
 public record TransferView(String source, String target, BigDecimal amount) {
 }
 // end::view[]
