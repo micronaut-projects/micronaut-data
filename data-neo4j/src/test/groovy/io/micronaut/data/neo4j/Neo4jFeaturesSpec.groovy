@@ -9,6 +9,8 @@ import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.neo4j.features.Assignment
 import io.micronaut.data.neo4j.features.Audit
+import io.micronaut.data.neo4j.features.Chapter
+import io.micronaut.data.neo4j.features.ChapterRepository
 import io.micronaut.data.neo4j.features.Employee
 import io.micronaut.data.neo4j.features.EmployeeRepository
 import io.micronaut.data.neo4j.features.Engineer
@@ -27,6 +29,8 @@ import io.micronaut.data.neo4j.features.Seat
 import io.micronaut.data.neo4j.features.Shelf
 import io.micronaut.data.neo4j.features.ShelfRepository
 import io.micronaut.data.neo4j.features.Tag
+import io.micronaut.data.neo4j.features.Member
+import io.micronaut.data.neo4j.features.MemberRepository
 import io.micronaut.data.neo4j.features.TagRepository
 import io.micronaut.data.neo4j.features.Team
 import io.micronaut.data.neo4j.features.TeamRepository
@@ -51,6 +55,12 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
 
     @Inject
     TeamRepository teamRepository
+
+    @Inject
+    MemberRepository memberRepository
+
+    @Inject
+    ChapterRepository chapterRepository
 
     @Inject
     EmployeeRepository employeeRepository
@@ -140,6 +150,25 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
         teamRepository.count() == 1
     }
 
+    void "immutable records that reference each other are batched"() {
+        given: "two teams whose players refer back to the team instances being saved"
+        def teams = ["Wanderers", "Rovers"].collect { name ->
+            def players = []
+            def team = new Team(null, name, players)
+            players << new Player(null, "Player of $name".toString(), team)
+            team
+        }
+
+        when:
+        def saved = teamRepository.saveAll(teams)
+
+        then:
+        saved*.id().every { it != null }
+        saved.collectMany { it.players() }*.id().every { it != null }
+        operations.executeQuery("MATCH (p:Player)-[:PLAYS_FOR]->(t:Team) RETURN count(t)", [:], Long) == [2L]
+        teamRepository.count() == 2
+    }
+
     void "reactive repositories"() {
         when:
         reactiveMovieRepository.save(new Movie("Speed", "Get ready for rush hour", 1994)).block()
@@ -158,6 +187,99 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
         operations.executeQuery("MATCH (t:Tag) RETURN t", [:], Tag)*.name == ["graph"]
         operations.executeQuery("MATCH (t:Tag) RETURN t.name AS name", [:])*.get("name") == ["graph"]
         operations.executeQuery("MATCH (t:Tag {name: \$name}) RETURN count(t)", [name: "graph"], Long) == [1L]
+    }
+
+    void "a record in a batch links to a record later in the same batch by its generated identifier"() {
+        given:
+        def mentor = new Member(null, "Grace", null)
+        def mentee = new Member(null, "Ada", mentor)
+
+        when:
+        def saved = memberRepository.saveAll([mentee, mentor])
+
+        then:
+        saved*.id().every { it != null }
+        saved[0].mentor().id() == saved[1].id()
+        memberRepository.count() == 2
+        operations.executeQuery("MATCH (:Member {name: 'Ada'})-[:MENTORED_BY]->(m:Member {name: 'Grace'}) RETURN count(m)", [:], Long) == [1L]
+    }
+
+    void "a record that the entity events replace is not created again when another record of the batch links to it"() {
+        given:
+        def last = new Chapter(null, "last", null, null)
+        def middle = new Chapter(null, "middle", null, last)
+        def first = new Chapter(null, "first", null, middle)
+
+        when:
+        def saved = chapterRepository.saveAll([first, middle, last])
+
+        then:
+        chapterRepository.count() == 3
+        saved*.version() == [0L, 0L, 0L]
+        saved[0].next().id() == saved[1].id()
+        saved[0].next().next().id() == saved[2].id()
+        operations.executeQuery("MATCH (:Chapter {name: 'first'})-[:NEXT]->(:Chapter {name: 'middle'})-[:NEXT]->(c:Chapter {name: 'last'}) RETURN count(c)", [:], Long) == [1L]
+
+        when: "the results are saved again"
+        def updated = chapterRepository.updateAll(saved)
+
+        then:
+        chapterRepository.count() == 3
+        updated*.version() == [1L, 1L, 1L]
+        updated[0].next().next().version() == 1L
+    }
+
+    void "records in a batch return complete references to records with database generated identifiers"() {
+        given:
+        def last = new Member(null, "Ada", null)
+        def middle = new Member(null, "Grace", last)
+        def first = new Member(null, "Katherine", middle)
+
+        when:
+        def saved = memberRepository.saveAll([first, middle, last])
+
+        then:
+        memberRepository.count() == 3
+        saved[0].mentor().id() == saved[1].id()
+        saved[0].mentor().mentor().id() == saved[2].id()
+        saved[1].mentor().id() == saved[2].id()
+    }
+
+    void "records in a batch that link to each other keep the identifiers they were given"() {
+        given:
+        def team = new Team(null, "Wanderers", [])
+        team.players() << new Player(null, "Ada", team)
+
+        when:
+        def saved = teamRepository.saveAll([team, new Team(null, "Rovers", [])])
+
+        then:
+        teamRepository.count() == 2
+        saved[0].players()[0].team().id() == saved[0].id()
+    }
+
+    void "saveAll writes an instance passed twice once"() {
+        given:
+        def tag = new Tag("graph")
+
+        when:
+        def saved = tagRepository.saveAll([tag, new Tag("nosql"), tag])
+
+        then:
+        saved.size() == 3
+        saved[0].id != null
+        saved[0].id == saved[2].id
+        tagRepository.count() == 2
+    }
+
+    void "saveAll creates nodes with database generated identifiers in one batch"() {
+        when:
+        def tags = tagRepository.saveAll([new Tag("graph"), new Tag("nosql"), new Tag("cypher")])
+
+        then: "each instance gets the identifier of its own node"
+        tags*.id.every { it != null }
+        tags*.id.unique().size() == 3
+        tags.collect { tagRepository.findById(it.id).get().name } == ["graph", "nosql", "cypher"]
     }
 
     void "numeric identifiers are those the queries match on"() {
