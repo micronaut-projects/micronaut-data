@@ -12,6 +12,7 @@ import spock.lang.Specification
 
 import javax.sql.DataSource
 import java.sql.Connection
+import java.sql.ResultSet
 import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
@@ -174,18 +175,21 @@ class AgeIndexCreationSpec extends Specification {
     private boolean waitUntilBlocked(String text) {
         long deadline = System.currentTimeMillis() + 10_000
         while (System.currentTimeMillis() < deadline) {
-            boolean blocked = withConnection { Connection connection ->
-                connection.prepareStatement("SELECT count(*) FROM pg_stat_activity WHERE wait_event_type = 'Lock' AND query LIKE ?").withCloseable { statement ->
-                    statement.setString(1, "%" + text + "%")
-                    statement.executeQuery().withCloseable { it.next(); it.getInt(1) > 0 }
-                }
-            }
-            if (blocked) {
+            if (blocked(text)) {
                 return true
             }
             Thread.sleep(50)
         }
         return false
+    }
+
+    private boolean blocked(String text) {
+        withConnection { Connection connection ->
+            connection.prepareStatement("SELECT count(*) FROM pg_stat_activity WHERE wait_event_type = 'Lock' AND query LIKE ?").withCloseable { statement ->
+                statement.setString(1, "%" + text + "%")
+                statement.executeQuery().withCloseable { it.next(); it.getInt(1) > 0 }
+            }
+        }
     }
 
     private boolean labelExists() {
@@ -200,14 +204,18 @@ class AgeIndexCreationSpec extends Specification {
     private Set<String> indexes() {
         withConnection { Connection connection ->
             connection.createStatement().withCloseable { statement ->
-                statement.executeQuery("SELECT indexname FROM pg_indexes WHERE schemaname = '" + GRAPH + "' AND tablename = 'Contended' AND indexname LIKE 'Contended_%'").withCloseable { rows ->
-                    Set<String> names = []
-                    while (rows.next()) {
-                        names << rows.getString(1)
-                    }
-                    names
-                }
+                names(statement.executeQuery("SELECT indexname FROM pg_indexes WHERE schemaname = '" + GRAPH + "' AND tablename = 'Contended' AND indexname LIKE 'Contended_%'"))
             }
+        }
+    }
+
+    private static Set<String> names(ResultSet rows) {
+        rows.withCloseable {
+            Set<String> names = []
+            while (rows.next()) {
+                names << rows.getString(1)
+            }
+            names
         }
     }
 

@@ -74,28 +74,33 @@ public final class OraclePropertyGraphMapping {
         Map<String, PersistentEntity> owners = new LinkedHashMap<>();
         for (PersistentEntity node : reachableNodes(root)) {
             for (PersistentProperty property : node.getPersistentProperties()) {
-                if (!(property instanceof Association association) || !GraphEntities.isRelationship(association)) {
-                    continue;
-                }
-                PersistentEntity associated = association.getAssociatedEntity();
-                if (associated == null) {
-                    continue;
-                }
-                if (GraphEntities.isRelationshipEntity(associated)) {
-                    checkRelationshipEntityOwner(owners, node, associated);
-                    Association targetNode = GraphEntities.findTargetNode(associated);
-                    if (targetNode == null || targetNode.getAssociatedEntity() == null) {
-                        continue;
+                if (property instanceof Association association && GraphEntities.isRelationship(association)) {
+                    EdgeTable edge = reachableEdge(owners, node, association);
+                    if (edge != null) {
+                        edges.add(edge);
                     }
-                    edges.add(edgeTable(node, association, targetNode.getAssociatedEntity(),
-                        qualifiedTableName(schemaName(associated), associated.getPersistedName()), true));
-                } else {
-                    edges.add(edgeTable(node, association, associated,
-                        qualifiedTableName(schemaName(node), nodeEdgeTableName(node, association)), false));
                 }
             }
         }
         mergeEdges(edges, Function.identity());
+    }
+
+    /**
+     * The edge table of a relationship of a reachable node, or null for a relationship entity without a target node.
+     */
+    private static @Nullable EdgeTable reachableEdge(Map<String, PersistentEntity> owners, PersistentEntity node, Association association) {
+        PersistentEntity associated = association.getAssociatedEntity();
+        if (!GraphEntities.isRelationshipEntity(associated)) {
+            return edgeTable(node, association, associated,
+                qualifiedTableName(schemaName(node), nodeEdgeTableName(node, association)), false);
+        }
+        checkRelationshipEntityOwner(owners, node, associated);
+        Association targetNode = GraphEntities.findTargetNode(associated);
+        if (targetNode == null) {
+            return null;
+        }
+        return edgeTable(node, association, targetNode.getAssociatedEntity(),
+            qualifiedTableName(schemaName(associated), associated.getPersistedName()), true);
     }
 
     /**
@@ -243,7 +248,7 @@ public final class OraclePropertyGraphMapping {
 
     private static @Nullable PersistentEntity targetNode(Association association) {
         PersistentEntity associated = association.getAssociatedEntity();
-        if (associated != null && GraphEntities.isRelationshipEntity(associated)) {
+        if (GraphEntities.isRelationshipEntity(associated)) {
             Association targetNode = GraphEntities.findTargetNode(associated);
             return targetNode == null ? null : targetNode.getAssociatedEntity();
         }
