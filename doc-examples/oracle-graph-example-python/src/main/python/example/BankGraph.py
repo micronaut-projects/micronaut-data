@@ -1,7 +1,7 @@
 # tag::repository[]
 from java.math import BigDecimal
 from micronaut.data.annotation import Query
-from micronaut.data.graph.annotation import PathLimit, PropertyGraph
+from micronaut.data.graph.annotation import PathLimit
 from micronaut.data.oracle.graph.annotation import OracleGraphRepository
 from micronaut.data.repository import GenericRepository
 
@@ -9,7 +9,7 @@ from example.Account import Account
 from example.TransferView import TransferView
 
 
-@OracleGraphRepository(graph="bank_graph", language=PropertyGraph.QueryLanguage.SQL_PGQ)  # <1>
+@OracleGraphRepository(graph="bank_graph")  # <1>
 class BankGraph(GenericRepository[Account, int]):
 
     def findById(self, id: int) -> Account | None: ...
