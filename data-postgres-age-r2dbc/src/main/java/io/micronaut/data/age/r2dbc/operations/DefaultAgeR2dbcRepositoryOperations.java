@@ -18,7 +18,6 @@ package io.micronaut.data.age.r2dbc.operations;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
@@ -27,6 +26,7 @@ import io.micronaut.data.graph.model.query.builder.AgeStatements;
 import io.micronaut.data.graph.runtime.GraphSession;
 import io.micronaut.data.graph.runtime.GraphValueEncoderRegistrar;
 import io.micronaut.data.graph.runtime.GraphValueEncoders;
+import io.micronaut.data.graph.runtime.age.AgeConfiguration;
 import io.micronaut.data.graph.runtime.age.AgeParameters;
 import io.micronaut.data.graph.runtime.operations.AbstractGraphRepositoryOperations;
 import io.micronaut.data.graph.runtime.serde.GraphSerde;
@@ -64,10 +64,9 @@ final class DefaultAgeR2dbcRepositoryOperations extends AbstractGraphRepositoryO
     private final SynchronizedLazyValue<AsyncRepositoryOperations> asyncOperations = new SynchronizedLazyValue<>();
 
     DefaultAgeR2dbcRepositoryOperations(@Parameter ReactorConnectionOperations<Connection> connectionOperations,
+                                        @Parameter String dataSourceName,
+                                        AgeConfiguration configuration,
                                         JsonMapper jsonMapper,
-                                        @Value("${micronaut.data.age.graph:graph}") String graph,
-                                        @Value("${micronaut.data.age.create-extension:false}") boolean createExtension,
-                                        @Value("${micronaut.data.age.create-graph:true}") boolean createGraph,
                                         DateTimeProvider<Object> dateTimeProvider,
                                         RuntimeEntityRegistry runtimeEntityRegistry,
                                         DataConversionService conversionService,
@@ -77,7 +76,7 @@ final class DefaultAgeR2dbcRepositoryOperations extends AbstractGraphRepositoryO
         super(new AgeCypherQueryBuilder(), dateTimeProvider, runtimeEntityRegistry, conversionService,
             attributeConverterRegistry, null, encoderRegistrars, graphSerde);
         this.reactiveOperations = new DefaultAgeReactorRepositoryOperations(this, connectionOperations, jsonMapper,
-            AgeStatements.validateGraphName(graph), createExtension, createGraph);
+            AgeStatements.validateGraphName(configuration.graphFor(dataSourceName)), configuration.isCreateExtension(), configuration.isCreateGraph());
     }
 
     @Override

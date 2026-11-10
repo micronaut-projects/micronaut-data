@@ -48,7 +48,7 @@ When schema generation is enabled for the data source, the JDBC schema generator
 ----
 datasources:
   default:
-    schema-generate: CREATE_DROP
+    schema-generate: CREATE
 ----
 
 The tables follow the mapping of the entities:
@@ -124,7 +124,7 @@ The R2DBC schema generator creates the tables of the graph entities and the prop
 r2dbc:
   datasources:
     default:
-      schema-generate: CREATE_DROP
+      schema-generate: CREATE
 ----
 
 Rows of edge tables are written with SQL or a ann:data.r2dbc.annotation.R2dbcRepository[] over an entity of the edge table. R2DBC schema generation does not support `VALIDATE`.

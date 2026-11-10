@@ -1201,8 +1201,12 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
                 // A path through node relationships, such as directors.mentor, is fetched as a tree
                 Association first = associationPath[0];
                 JoinTree tree = nested.computeIfAbsent(first.getName(), name -> new JoinTree(first));
+                // An inner join cannot match below an absent relationship, so the whole path is inner
+                boolean inner = joinPath.getJoinType() == Join.Type.INNER_FETCH;
+                tree.inner |= inner;
                 for (int i = 1; i < associationPath.length; i++) {
                     tree = tree.child(associationPath[i]);
+                    tree.inner |= inner;
                 }
             } else {
                 direct.add(joinPath);
@@ -1213,6 +1217,8 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             Association[] associationPath = joinPath.getAssociationPath();
             if (associationPath.length > 1 || !nested.containsKey(associationPath[0].getName())) {
                 appendFetchJoin(query, joinPath, columns, carried);
+            } else if (joinPath.getJoinType() == Join.Type.INNER_FETCH) {
+                nested.get(associationPath[0].getName()).inner = true;
             }
         }
         nested.values().forEach(tree -> appendNestedFetchJoin(query, tree, columns, carried));
@@ -1246,7 +1252,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             throw new IllegalArgumentException("Graph repositories can only join relationships with properties at the start of a join path, found: " + association.getName());
         }
         PersistentEntity target = GraphEntities.targetNodeEntity(association);
-        query.append(OPTIONAL_MATCH)
+        query.append(tree.inner ? " MATCH " : OPTIONAL_MATCH)
             .append(GraphEntities.relationshipPattern(association, from, null, "(" + variable + labelExpression(target) + ")"));
         // The collects are DISTINCT: a node reached through parallel relationships, or the rows a sibling branch
         // multiplied, would otherwise be collected more than once
@@ -2107,6 +2113,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     private static final class JoinTree {
         private final Association association;
         private final Map<String, JoinTree> children = new LinkedHashMap<>();
+        private boolean inner;
 
         private JoinTree(Association association) {
             this.association = association;
