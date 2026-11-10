@@ -2,12 +2,11 @@ package example
 
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.graph.annotation.PathLimit
-import io.micronaut.data.graph.annotation.PropertyGraph
 import io.micronaut.data.oracle.graph.annotation.OracleGraphRepository
 import io.micronaut.data.repository.GenericRepository
 
 // tag::repository[]
-@OracleGraphRepository(graph = "bank_graph", language = PropertyGraph.QueryLanguage.SQL_PGQ) // <1>
+@OracleGraphRepository(graph = "bank_graph") // <1>
 interface BankGraph extends GenericRepository<Account, Long> {
 
     Optional<Account> findById(Long id)

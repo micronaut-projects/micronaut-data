@@ -70,7 +70,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
- * Repository operations for Oracle property graphs. Queries compiled to PGQL or SQL/PGQ run as JDBC prepared
+ * Repository operations for Oracle property graphs. Queries compiled to SQL/PGQ run as JDBC prepared
  * statements on the connection of the current transaction, or on a connection opened for the operation.
  *
  * @author graemerocher

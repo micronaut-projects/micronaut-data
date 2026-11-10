@@ -47,4 +47,4 @@ snippet::example.BankGraphSpec[project-base="doc-examples/oracle-graph-example",
 <1> The accounts that sent a transfer of more than 1000.
 <2> Whether a chain of transfers leads from account 1 to account 3.
 
-See <<graphOracle, Oracle Property Graphs>> for the query languages and what they support.
+See <<graphOracle, Oracle Property Graphs>> for what the SQL/PGQ queries support.
