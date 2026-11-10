@@ -337,6 +337,16 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                                                     Iterator<ParameterElement> parametersIt,
                                                     PersistentEntityRoot<T> root,
                                                     PersistentEntityCriteriaBuilder cb) {
+        Optional<MethodNameParser.Match> literalRestriction = matches.stream()
+            .filter(m -> m.id() == QueryMatchId.LITERAL_PROPERTY_RESTRICTION)
+            .findFirst();
+        if (querySequence != null && literalRestriction.isPresent()) {
+            Restrictions.PropertyRestriction<Object> restriction = Restrictions.findPropertyRestriction(literalRestriction.get().part());
+            Objects.requireNonNull(restriction);
+            Expression<Object> property = getProperty(root, querySequence);
+            return restriction.find(root, cb, property,
+                provideParams(parametersIt, restriction.getRequiredParameters(), restriction.getName(), cb, property));
+        }
         Predicate predicate = null;
 
         // if it contains operator and split

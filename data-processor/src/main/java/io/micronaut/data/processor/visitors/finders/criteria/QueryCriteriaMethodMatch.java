@@ -754,6 +754,9 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
 
     @SuppressWarnings("StringSplitter")
     private @Nullable VectorPredicate resolveVectorPredicate(List<MethodNameParser.Match> predicateMatches) {
+        if (matches.stream().anyMatch(m -> m.id() == QueryMatchId.LITERAL_PROPERTY_RESTRICTION)) {
+            return null;
+        }
         String predicate = predicateMatches.getFirst().part();
         int parameterIndex = 0;
         for (String part : LOGICAL_OPERATOR_PATTERN.split(predicate)) {
