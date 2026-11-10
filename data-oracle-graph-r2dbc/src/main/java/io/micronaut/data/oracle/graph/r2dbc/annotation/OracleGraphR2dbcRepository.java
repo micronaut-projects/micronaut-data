@@ -31,8 +31,7 @@ import java.lang.annotation.Target;
 
 /**
  * Stereotype that configures a reactive {@link Repository} for an Oracle property graph, run on an R2DBC connection
- * factory with the Oracle R2DBC driver. Queries are compiled at build time to SQL/PGQ {@code GRAPH_TABLE} queries:
- * PGQL needs the PGQL JDBC driver, so it is not available over R2DBC.
+ * factory with the Oracle R2DBC driver. Queries are compiled at build time to SQL/PGQ {@code GRAPH_TABLE} queries.
  *
  * <p>Repository methods return Reactor, Reactive Streams or asynchronous types, and the build fails on any other. Saving, updating and deleting nodes writes their
  * vertex tables with SQL through Micronaut Data R2DBC, in the same connection and transaction as the graph
@@ -52,7 +51,6 @@ import java.lang.annotation.Target;
 @Documented
 @Repository
 @GraphRepository(nonBlocking = true)
-@PropertyGraph(language = PropertyGraph.QueryLanguage.SQL_PGQ)
 public @interface OracleGraphR2dbcRepository {
 
     /**

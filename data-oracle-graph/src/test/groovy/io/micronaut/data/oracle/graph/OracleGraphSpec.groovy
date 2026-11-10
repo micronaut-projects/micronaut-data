@@ -12,7 +12,6 @@ import io.micronaut.data.oracle.graph.bank.BankGraph
 import io.micronaut.data.oracle.graph.bank.Customer
 import io.micronaut.data.oracle.graph.bank.CustomerGraph
 import io.micronaut.data.oracle.graph.bank.PeerGraph
-import io.micronaut.data.oracle.graph.bank.PgqlBankGraph
 import io.micronaut.data.oracle.graph.bank.Transfer
 import io.micronaut.data.oracle.graph.operations.OracleGraphRepositoryOperations
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
@@ -33,9 +32,6 @@ class OracleGraphSpec extends Specification {
 
     @Inject
     BankGraph bankGraph
-
-    @Inject
-    PgqlBankGraph pgqlBankGraph
 
     @Inject
     CustomerGraph customerGraph
@@ -529,23 +525,8 @@ class OracleGraphSpec extends Specification {
         thrown(UnsupportedOperationException)
     }
 
-    void "PGQL repositories need the PGQL JDBC driver"() {
-        when:
-        pgqlBankGraph.findByIdGreaterThan(0L)
-
-        then:
-        def e = thrown(DataAccessException)
-        e.message.contains("needs a data source that uses the PGQL JDBC driver")
-        e.message.contains("language = SQL_PGQ")
-    }
-
-    void "a PGQL criteria query takes the limit it renders for its own"() {
-        when: "the query reaches the driver check, not a rejection of its limit"
-        pgqlBankGraph.findAll({ root, cb -> cb.greaterThan(root.get("id"), 0L) } as PredicateSpecification<Account>, Limit.of(2, 1))
-
-        then:
-        def e = thrown(DataAccessException)
-        e.message.contains("needs a data source that uses the PGQL JDBC driver")
-        e.message.contains(" OFFSET 1 LIMIT 2")
+    void "a criteria query takes the limit it renders for its own"() {
+        expect: "the limit is not rejected as a second one"
+        bankGraph.findAll({ root, cb -> cb.greaterThan(root.get("id"), 0L) } as PredicateSpecification<Account>, Limit.of(2, 1)).size() == 2
     }
 }
