@@ -510,20 +510,16 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     private Limit unrenderedLimit(PreparedQuery<?, ?> preparedQuery, StringBuilder query) {
         Limit limit = preparedQuery.getQueryLimit();
         if (limit.isLimited() && !preparedQuery.isRawQuery()
-            && LiteralMasker.mask(query.toString()).contains(limitClause(query, limit))) {
+            && LiteralMasker.mask(query.toString()).contains(limitClause(limit))) {
             return Limit.UNLIMITED;
         }
         return limit;
     }
 
     /**
-     * The text of a limit in a query.
-     *
-     * @param query The query
-     * @param limit The limit
-     * @return The text the criteria runtime renders for the limit
+     * The text the criteria runtime renders for a limit.
      */
-    protected String limitClause(StringBuilder query, Limit limit) {
+    private String limitClause(Limit limit) {
         return queryBuilder.buildLimitAndOffset(limit.maxResults(), limit.offset());
     }
 
