@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.AnnotationClassValue;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.Duplicated;
 import io.micronaut.data.annotation.EmbeddedNaming;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.Indexes;
@@ -29,14 +30,17 @@ import io.micronaut.data.annotation.JsonViewGenerated;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.Sharded;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.annotation.search.SearchField;
 import io.micronaut.data.annotation.search.Searchable;
 import io.micronaut.data.annotation.sql.JoinColumn;
 import io.micronaut.data.annotation.sql.JoinColumns;
+import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
@@ -175,6 +179,23 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
 
         if (entity.hasAnnotation(JSON_VIEW_ANNOTATION) || entity.hasAnnotation(JSON_SUB_VIEW_ANNOTATION)) {
             validateJsonView(entity, context);
+        }
+        validateDistribution(entity, context);
+    }
+
+    private void validateDistribution(SourcePersistentEntity entity, VisitorContext context) {
+        if (!entity.hasAnnotation(Sharded.class) && !entity.hasAnnotation(Duplicated.class)) {
+            return;
+        }
+        SourcePersistentEntity parent = entity.stringValue(Sharded.class, "parent")
+            .filter(parentName -> !"void".equals(parentName))
+            .flatMap(context::getClassElement)
+            .map(entityResolver)
+            .orElse(null);
+        try {
+            SqlSchemaUtils.validateTableDistribution(entity, parent);
+        } catch (MappingException e) {
+            throw new ProcessingException(entity.getClassElement(), e.getMessage());
         }
     }
 
