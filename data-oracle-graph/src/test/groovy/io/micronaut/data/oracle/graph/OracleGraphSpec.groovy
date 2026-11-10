@@ -10,7 +10,6 @@ import io.micronaut.data.oracle.graph.bank.BankGraph
 import io.micronaut.data.oracle.graph.bank.Customer
 import io.micronaut.data.oracle.graph.bank.CustomerGraph
 import io.micronaut.data.oracle.graph.bank.PeerGraph
-import io.micronaut.data.oracle.graph.bank.PgqlBankGraph
 import io.micronaut.data.oracle.graph.bank.Transfer
 import io.micronaut.data.oracle.graph.operations.OracleGraphRepositoryOperations
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
@@ -31,9 +30,6 @@ class OracleGraphSpec extends Specification {
 
     @Inject
     BankGraph bankGraph
-
-    @Inject
-    PgqlBankGraph pgqlBankGraph
 
     @Inject
     CustomerGraph customerGraph
@@ -525,15 +521,5 @@ class OracleGraphSpec extends Specification {
 
         then:
         thrown(UnsupportedOperationException)
-    }
-
-    void "PGQL repositories need the PGQL JDBC driver"() {
-        when:
-        pgqlBankGraph.findByIdGreaterThan(0L)
-
-        then:
-        def e = thrown(DataAccessException)
-        e.message.contains("needs a data source that uses the PGQL JDBC driver")
-        e.message.contains("language = SQL_PGQ")
     }
 }

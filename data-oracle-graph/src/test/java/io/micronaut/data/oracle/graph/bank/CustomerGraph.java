@@ -1,14 +1,13 @@
 package io.micronaut.data.oracle.graph.bank;
 
 import io.micronaut.data.annotation.Id;
-import io.micronaut.data.graph.annotation.PropertyGraph;
 import io.micronaut.data.oracle.graph.annotation.OracleGraphRepository;
 import io.micronaut.data.repository.GenericRepository;
 
 import java.util.List;
 import java.util.Optional;
 
-@OracleGraphRepository(graph = "customer_graph", language = PropertyGraph.QueryLanguage.SQL_PGQ)
+@OracleGraphRepository(graph = "customer_graph")
 public interface CustomerGraph extends GenericRepository<Customer, Long> {
 
     Optional<Customer> findById(Long id);
