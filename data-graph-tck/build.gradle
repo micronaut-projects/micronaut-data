@@ -1,0 +1,17 @@
+plugins {
+    id "io.micronaut.build.internal.data-tck"
+}
+
+dependencies {
+    annotationProcessor mn.micronaut.inject.java
+    annotationProcessor projects.micronautDataGraphProcessor
+
+    api projects.micronautDataGraphModel
+    implementation projects.micronautDataGraphRuntime
+    implementation projects.micronautDataTx
+    implementation mnTest.micronaut.test.spock
+    implementation mnTest.micronaut.test.core
+    implementation(mnSql.jakarta.persistence.api)
+
+    compileOnly mn.micronaut.inject.groovy
+}
