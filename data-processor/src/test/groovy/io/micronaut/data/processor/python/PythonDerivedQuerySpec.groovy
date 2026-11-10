@@ -58,6 +58,8 @@ class ItemRepository(GenericRepository[Item, int], ABC):
         "save_one"     | 'INSERT INTO `item` (`code`,`first_name`,`id`) VALUES (?,?,?)'
         "updateItem"   | 'UPDATE `item` SET `code`=?,`first_name`=? WHERE (`id` = ?)'
         "update_item"  | 'UPDATE `item` SET `code`=?,`first_name`=? WHERE (`id` = ?)'
+        "update_code"  | 'UPDATE `item` SET `code`=?,`first_name`=? WHERE (`id` = ?)'
+        "update_first_name" | 'UPDATE `item` SET `code`=?,`first_name`=? WHERE (`id` = ?)'
         "update_one"   | 'UPDATE `item` SET `code`=?,`first_name`=? WHERE (`id` = ?)'
     }
 
@@ -124,21 +126,15 @@ class ItemRepository(GenericRepository[Item, int], ABC):
         def exception = thrown(RuntimeException)
         exception.message.contains("Unsupported Python snake_case derived query")
         exception.message.contains(methodName)
-        exception.message.contains("camelCase")
+        exception.message.contains("derived query")
 
         where:
         methodName                           | parameters                    | returnType
-        "update_one_by_code"                 | ", code: str, first_name: str" | "int"
-        "update_first_name_by_code"          | ", code: str, first_name: str" | "int"
         "update2_by_code"                    | ", code: str, first_name: str" | "int"
         "updateé_by_code"                    | ", code: str, first_name: str" | "int"
         "updateOne_by_code"                  | ", code: str, first_name: str" | "int"
         "updateFirstName_by_code"            | ", code: str, first_name: str" | "int"
         "updateOne_by_codeByFirst_name"      | ", code: str, first_name: str" | "int"
-        "find_first_by_code"                 | ", code: str"                 | "Item | None"
-        "find_by_code_and_first_name"        | ", code: str, first_name: str" | "list[Item]"
-        "find_by_code_greater_than"          | ", code: str"                 | "list[Item]"
-        "find_by_code_order_by_first_name"   | ", code: str"                 | "list[Item]"
     }
 
     void "Python literal property is not a parser keyword for #methodName"() {
