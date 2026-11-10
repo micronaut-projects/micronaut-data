@@ -938,6 +938,9 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             if (identity != null && !GraphEntities.isNativeId(identity) && id == null) {
                 throw new DataAccessException("Entity [" + persistentEntity.getSimpleName() + "] needs its identifier [" + identity.getName() + "] assigned before it is saved");
             }
+            // Checked ahead of the write, so that a label that cannot be stored leaves the node as it was
+            List<String> labels = mapper.dynamicLabels(persistentEntity, entity);
+            String addLabels = labels.isEmpty() ? null : queryBuilder.buildAddLabelsQuery(persistentEntity, labels);
             List<String> names = new ArrayList<>(properties.keySet());
             String key = "write:" + persistentEntity.getName() + ":" + (id != null) + ":" + names;
             String query = queryCache.computeIfAbsent(key, k -> queryBuilder.buildWriteNodeQuery(persistentEntity, names, id != null));
@@ -961,6 +964,13 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
                 }
                 entity = updateEntityId((BeanProperty<T, Object>) identity.getProperty(), entity, generatedId);
                 created = true;
+            }
+            if (addLabels != null) {
+                Object nodeId = mapper.writeIdentity(persistentEntity, entity);
+                if (nodeId == null) {
+                    throw new DataAccessException("Cannot add labels to [" + persistentEntity.getSimpleName() + "] without an identifier");
+                }
+                persister.run(addLabels, Map.of(CypherQueryBuilder.ID_PARAMETER, nodeId));
             }
             persister.written(original, entity);
             writeRelationships();

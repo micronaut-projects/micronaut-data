@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
+import io.micronaut.data.graph.annotation.DynamicAttributes;
 import io.micronaut.data.graph.annotation.Node;
 import io.micronaut.data.graph.annotation.RelationshipProperties;
 import io.micronaut.inject.ast.ClassElement;
@@ -29,6 +30,8 @@ import io.micronaut.inject.visitor.VisitorContext;
 /**
  * Rejects database-assigned identifiers of a primitive type. Such a property cannot be unset, and the value it starts
  * with is an identifier the database also assigns, so a new node could not be told from a saved one.
+ *
+ * <p>Also rejects {@code @DynamicAttributes} on a relationship entity, whose attributes would be written but not read.</p>
  *
  * @author graemerocher
  * @since 5.3.0
@@ -42,6 +45,9 @@ public final class GraphIdentityVisitor implements TypeElementVisitor<Object, Ob
             return;
         }
         for (PropertyElement property : element.getBeanProperties()) {
+            if (element.hasStereotype(RelationshipProperties.class) && property.hasAnnotation(DynamicAttributes.class)) {
+                context.fail("@DynamicAttributes is not supported on a relationship entity: " + property.getName(), property);
+            }
             if (property.hasStereotype(Id.class)
                 && property.hasStereotype(GeneratedValue.class)
                 && !property.hasStereotype(AutoPopulated.class)
