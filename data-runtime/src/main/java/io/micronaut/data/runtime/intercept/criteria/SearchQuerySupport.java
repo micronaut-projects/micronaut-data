@@ -79,15 +79,16 @@ public final class SearchQuerySupport {
         Vector vector = null;
         AnnotationValue<HybridSearchMethod> hybrid = context.getAnnotation(HybridSearchMethod.class);
         String queryParameter = hybrid == null ? null : hybrid.stringValue("queryParameter").orElse(null);
+        boolean byName = queryParameter != null && !queryParameter.isEmpty();
         Object[] values = context.getParameterValues();
-        io.micronaut.core.type.Argument<?>[] arguments = context.getArguments();
+        io.micronaut.core.type.Argument<?>[] arguments = byName ? context.getArguments() : io.micronaut.core.type.Argument.ZERO_ARGUMENTS;
         for (int i = 0; i < values.length; i++) {
             Object value = values[i];
             if (value instanceof SearchQuery searchQuery) {
                 return searchQuery;
             }
             // the search string is the parameter the matcher named, or the first String when it named none
-            boolean isQuery = queryParameter == null || queryParameter.isEmpty() ? value instanceof String : arguments[i].getName().equals(queryParameter);
+            boolean isQuery = byName ? arguments[i].getName().equals(queryParameter) : value instanceof String;
             if (isQuery && value instanceof String string && text == null) {
                 text = string;
             } else if (value instanceof Vector v && vector == null) {
