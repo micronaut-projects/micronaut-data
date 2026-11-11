@@ -22,6 +22,7 @@ import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.transaction.async.AsyncUsingReactiveTransactionOperations;
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
 import io.micronaut.transaction.sync.SynchronousTransactionOperationsFromReactiveTransactionOperations;
+import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import jakarta.inject.Named;
 
@@ -37,15 +38,15 @@ import java.util.concurrent.ExecutorService;
 final class R2dbcTransactionManagerFactory {
 
     @EachBean(ConnectionFactory.class)
-    <T> SynchronousTransactionOperationsFromReactiveTransactionOperations<T> buildSynchronousTransactionManager(@Parameter String dataSourceName,
-                                                                                                                @Parameter ReactorReactiveTransactionOperations<T> reactiveTransactionOperations,
-                                                                                                                @Named(TaskExecutors.IO) ExecutorService executorService) {
+    SynchronousTransactionOperationsFromReactiveTransactionOperations<Connection> buildSynchronousTransactionManager(@Parameter String dataSourceName,
+                                                                                                                     @Parameter ReactorReactiveTransactionOperations<Connection> reactiveTransactionOperations,
+                                                                                                                     @Named(TaskExecutors.IO) ExecutorService executorService) {
         return new SynchronousTransactionOperationsFromReactiveTransactionOperations<>(reactiveTransactionOperations, executorService);
     }
 
     @EachBean(ConnectionFactory.class)
-    <T> AsyncUsingReactiveTransactionOperations<T> buildAsyncTransactionOperations(@Parameter String dataSourceName,
-                                                                                   @Parameter ReactorReactiveTransactionOperations<T> reactiveTransactionOperations) {
+    AsyncUsingReactiveTransactionOperations<Connection> buildAsyncTransactionOperations(@Parameter String dataSourceName,
+                                                                                        @Parameter ReactorReactiveTransactionOperations<Connection> reactiveTransactionOperations) {
         return new AsyncUsingReactiveTransactionOperations<>(reactiveTransactionOperations);
     }
 

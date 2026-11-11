@@ -21,13 +21,13 @@ import io.micronaut.data.connection.ConnectionOperations
 import io.micronaut.data.connection.ConnectionStatus
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration
 import io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations
+import io.micronaut.data.jdbc.operations.JdbcDatabaseConversionContextFactory
 import io.micronaut.data.jdbc.operations.JdbcSchemaHandler
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.runtime.AttributeConverterRegistry
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.model.runtime.RuntimePersistentProperty
-import io.micronaut.data.runtime.convert.DatabaseConversionContextFactory
 import io.micronaut.data.runtime.convert.DataConversionService
 import io.micronaut.data.runtime.date.DateTimeProvider
 import io.micronaut.data.runtime.event.EntityEventRegistry
@@ -357,7 +357,7 @@ class DefaultJdbcRepositoryOperationsSpec extends Specification {
                 Mock(JdbcSchemaHandler),
                 null,
                 context.getBean(SqlJsonColumnMapperProvider),
-                Mock(DatabaseConversionContextFactory),
+                new JdbcDatabaseConversionContextFactory(new DataJdbcConfiguration("default")),
                 [],
                 []
         )

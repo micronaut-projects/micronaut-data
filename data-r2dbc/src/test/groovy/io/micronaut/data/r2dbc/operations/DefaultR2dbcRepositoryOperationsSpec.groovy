@@ -24,7 +24,6 @@ import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.r2dbc.config.DataR2dbcConfiguration
 import io.micronaut.data.r2dbc.transaction.R2dbcReactorTransactionOperations
 import io.micronaut.data.runtime.convert.DataConversionService
-import io.micronaut.data.runtime.convert.DatabaseConversionContextFactory
 import io.micronaut.data.runtime.date.DateTimeProvider
 import io.micronaut.data.runtime.event.EntityEventRegistry
 import io.micronaut.data.runtime.operations.internal.sql.SqlJsonColumnMapperProvider
@@ -96,6 +95,7 @@ class DefaultR2dbcRepositoryOperationsSpec extends Specification {
     private DefaultR2dbcRepositoryOperations newOperations(ExecutorService executorService) {
         context = ApplicationContext.run()
         ConnectionFactory connectionFactory = Mock()
+        DataR2dbcConfiguration configuration = new DataR2dbcConfiguration("default", connectionFactory, Mock(Provider))
         return new DefaultR2dbcRepositoryOperations(
                 "default",
                 connectionFactory,
@@ -107,7 +107,7 @@ class DefaultR2dbcRepositoryOperationsSpec extends Specification {
                 Mock(AttributeConverterRegistry),
                 null,
                 Mock(R2dbcSchemaHandler),
-                new DataR2dbcConfiguration("default", connectionFactory, Mock(Provider)),
+                configuration,
                 null,
                 context.getBean(SqlJsonColumnMapperProvider) as SqlJsonColumnMapperProvider<Row>,
                 [],
@@ -115,7 +115,7 @@ class DefaultR2dbcRepositoryOperationsSpec extends Specification {
                 [],
                 Mock(R2dbcReactorTransactionOperations),
                 Mock(ReactorConnectionOperations<Connection>),
-                Mock(DatabaseConversionContextFactory)
+                new R2dbcDatabaseConversionContextFactory(configuration)
         )
     }
 
