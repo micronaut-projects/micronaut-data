@@ -1,8 +1,10 @@
 package io.micronaut.data.runtime.operations.internal.sql
 
 import io.micronaut.data.model.DataType
+import io.micronaut.data.model.runtime.convert.DataAccessType
 import io.micronaut.data.model.runtime.convert.DatabaseType
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter
+import io.micronaut.data.model.vector.BinaryVector
 import io.micronaut.data.model.vector.SparseFloatVector
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.vector.Vector
@@ -70,6 +72,28 @@ class VectorParameterBinderSpec extends Specification {
         ex.message.contains("Multiple VectorTypeConverter beans registered for database ORACLE")
     }
 
+    void "JDBC and R2DBC converters for the same database coexist"() {
+        when:
+        def converters = [new OracleJdbcTestVectorTypeConverter(), new OracleR2dbcTestVectorTypeConverter()]
+        def jdbcBinder = VectorParameterBinder.create(converters, DataAccessType.JDBC)
+        def r2dbcBinder = VectorParameterBinder.create(converters, DataAccessType.R2DBC)
+        VectorParameterBinder.create(converters)
+
+        then:
+        noExceptionThrown()
+        jdbcBinder.bind(Dialect.ORACLE, DataType.OBJECT, Vector.of([1d] as double[])).value() == "jdbc"
+        r2dbcBinder.bind(Dialect.ORACLE, DataType.OBJECT, Vector.of([1d] as double[])).value() == "r2dbc"
+    }
+
+    void "duplicate converters for the same data access type still fail fast"() {
+        when:
+        VectorParameterBinder.create([new OracleJdbcTestVectorTypeConverter(), new OracleJdbcTestVectorTypeConverter()], DataAccessType.JDBC)
+
+        then:
+        def ex = thrown(IllegalStateException)
+        ex.message.contains("Multiple VectorTypeConverter beans registered for database ORACLE")
+    }
+
     void "binder prefers sparse converter for sparse vectors"() {
         given:
         def binder = VectorParameterBinder.create([new PostgresDenseVectorTypeConverter(), new PostgresSparseVectorTypeConverter()])
@@ -92,6 +116,45 @@ class VectorParameterBinderSpec extends Specification {
         then:
         prepared.dataType() == DataType.OBJECT
         prepared.value() == "pg-dense:[1.0, 2.0]"
+    }
+
+    void "binder prefers the binary converter over a generic converter registered first"() {
+        given:
+        def binder = VectorParameterBinder.create([new PostgresDenseVectorTypeConverter(), new PostgresBinaryVectorTypeConverter()])
+
+        when:
+        def prepared = binder.bind(Dialect.POSTGRES, DataType.OBJECT, BinaryVector.of(true, false, true, false, false, false, false, false))
+
+        then:
+        prepared.value() == [(byte) 0xA0] as byte[]
+    }
+
+    private static final class PostgresBinaryVectorTypeConverter implements VectorTypeConverter<byte[]> {
+
+        @Override
+        byte[] convert(Vector vector) {
+            return ((BinaryVector) vector).data()
+        }
+
+        @Override
+        Vector convert(byte[] object, Class<Vector> targetType) {
+            return new BinaryVector(object)
+        }
+
+        @Override
+        Set<Class<? extends Vector>> supportedVectorTypes() {
+            return [BinaryVector] as Set
+        }
+
+        @Override
+        DatabaseType databaseType() {
+            return DatabaseType.POSTGRES
+        }
+
+        @Override
+        Class<byte[]> getPersistedType() {
+            return byte[]
+        }
     }
 
     private static class OracleTestVectorTypeConverter implements VectorTypeConverter<String> {
@@ -123,6 +186,30 @@ class VectorParameterBinderSpec extends Specification {
     }
 
     private static final class OracleDuplicateVectorTypeConverter extends OracleTestVectorTypeConverter {
+    }
+
+    private static class OracleJdbcTestVectorTypeConverter extends OracleTestVectorTypeConverter {
+        @Override
+        String convert(Vector vector) {
+            return "jdbc"
+        }
+
+        @Override
+        DataAccessType dataAccessType() {
+            return DataAccessType.JDBC
+        }
+    }
+
+    private static class OracleR2dbcTestVectorTypeConverter extends OracleTestVectorTypeConverter {
+        @Override
+        String convert(Vector vector) {
+            return "r2dbc"
+        }
+
+        @Override
+        DataAccessType dataAccessType() {
+            return DataAccessType.R2DBC
+        }
     }
 
     private static class PostgresDenseVectorTypeConverter implements VectorTypeConverter<String> {

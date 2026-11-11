@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.r2dbc.convert;
 
+import io.micronaut.data.model.runtime.convert.DataAccessType;
 import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext;
 import io.r2dbc.spi.Connection;
 import org.jspecify.annotations.NonNull;
@@ -33,5 +34,14 @@ public interface R2dbcConversionContext extends DatabaseTypeConversionContext {
      * @return the current connection
      */
     @NonNull Connection getConnection();
+
+    /**
+     * @return {@link DataAccessType#R2DBC}, so that vector converters for another driver API are not used
+     * @since 5.3.0
+     */
+    @Override
+    default DataAccessType getDataAccessType() {
+        return DataAccessType.R2DBC;
+    }
 
 }

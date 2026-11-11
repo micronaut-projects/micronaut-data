@@ -35,6 +35,7 @@ import java.util.Objects;
  * - DoubleVector (double[])
  * - FloatVector  (float[])
  * - ByteVector   (byte[])
+ * - BinaryVector (bit-packed byte[])
  *
  * All constructors perform defensive copying to guarantee immutability. Callers should
  * avoid excessive copying in tight loops; prefer reusing instances when possible.
@@ -53,6 +54,7 @@ public sealed interface Vector
     permits DoubleVector,
             FloatVector,
             ByteVector,
+            BinaryVector,
             SparseVector {
     String VALUES = "values";
 

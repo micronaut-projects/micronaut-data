@@ -53,7 +53,9 @@ final class VectorScoringDialectSupports {
             return EnumSet.of(
                 ScoringFunction.COSINE,
                 ScoringFunction.L2_EUCLIDEAN,
-                ScoringFunction.DOT
+                ScoringFunction.DOT,
+                ScoringFunction.HAMMING,
+                ScoringFunction.JACCARD
             );
         }
 
@@ -64,13 +66,24 @@ final class VectorScoringDialectSupports {
 
         @Override
         public String adaptQueryForScoringFunction(String query, ScoringFunction selected) {
+            // pgvector defines Hamming and Jaccard distance for bit operands only, and the others for numeric operands only
+            boolean binaryFunction = selected == ScoringFunction.HAMMING || selected == ScoringFunction.JACCARD;
+            if (binaryFunction && query.contains("<=>")) {
+                throw new IllegalArgumentException("Scoring function " + selected + " is only supported for binary vectors on PostgreSQL");
+            }
+            if (!binaryFunction && query.contains("<~>")) {
+                throw new IllegalArgumentException("Scoring function " + selected + " is not supported for binary vectors on PostgreSQL. Use HAMMING or JACCARD.");
+            }
             String operator = switch (selected) {
                 case COSINE -> "<=>";
                 case L2_EUCLIDEAN -> "<->";
                 case DOT -> "<#>";
+                case HAMMING -> "<~>";
+                case JACCARD -> "<%>";
                 default -> throw new IllegalArgumentException("Scoring function " + selected + " is not supported for PostgreSQL");
             };
-            return query.replace("<=>", operator);
+            // derived queries default to cosine distance, or to Hamming distance for bit vectors
+            return query.replace("<=>", operator).replace("<~>", operator);
         }
     }
 
@@ -93,7 +106,9 @@ final class VectorScoringDialectSupports {
                 ScoringFunction.L2_EUCLIDEAN,
                 ScoringFunction.L2_EUCLIDEAN_SQUARED,
                 ScoringFunction.DOT,
-                ScoringFunction.L1_MANHATTAN
+                ScoringFunction.L1_MANHATTAN,
+                ScoringFunction.HAMMING,
+                ScoringFunction.JACCARD
             );
         }
 
@@ -110,9 +125,13 @@ final class VectorScoringDialectSupports {
                 case L2_EUCLIDEAN_SQUARED -> "EUCLIDEAN_SQUARED";
                 case DOT -> "DOT";
                 case L1_MANHATTAN -> "MANHATTAN";
+                case HAMMING -> "HAMMING";
+                case JACCARD -> "JACCARD";
                 default -> throw new IllegalArgumentException("Scoring function " + selected + " is not supported for Oracle");
             };
-            return query.replace(",COSINE)", "," + metric + ")");
+            // derived queries default to COSINE, or to HAMMING for binary vectors
+            return query.replace(",COSINE)", "," + metric + ")")
+                .replace(",HAMMING)", "," + metric + ")");
         }
     }
 

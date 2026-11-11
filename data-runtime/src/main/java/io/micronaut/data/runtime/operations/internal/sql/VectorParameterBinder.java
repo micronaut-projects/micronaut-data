@@ -17,6 +17,7 @@ package io.micronaut.data.runtime.operations.internal.sql;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.runtime.convert.DataAccessType;
 import io.micronaut.data.model.runtime.convert.DatabaseType;
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -60,6 +61,24 @@ sealed interface VectorParameterBinder permits VectorParameterBinder.DefaultVect
      */
     static VectorParameterBinder create(Collection<VectorTypeConverter<?>> vectorTypeConverters) {
         return new DefaultVectorParameterBinder(vectorTypeConverters);
+    }
+
+    /**
+     * Creates the default vector binder using the discovered vector type converters for one driver API.
+     * Converters declaring another {@link DataAccessType} are ignored.
+     *
+     * @param vectorTypeConverters available vector type converters
+     * @param dataAccessType the driver API of the operations, or {@code null} to use all converters
+     * @return vector parameter binder
+     * @since 5.3.0
+     */
+    static VectorParameterBinder create(Collection<VectorTypeConverter<?>> vectorTypeConverters, @Nullable DataAccessType dataAccessType) {
+        if (dataAccessType == null) {
+            return create(vectorTypeConverters);
+        }
+        return new DefaultVectorParameterBinder(vectorTypeConverters.stream()
+            .filter(converter -> VectorTypeConverter.supports(converter, dataAccessType))
+            .toList());
     }
 
     /**
@@ -109,33 +128,44 @@ sealed interface VectorParameterBinder permits VectorParameterBinder.DefaultVect
             if (converters == null || converters.isEmpty()) {
                 return null;
             }
+            // Prefers a converter whose sparse support matches, then the most specific supported type, whatever the
+            // order of the beans: for example, the binary converter over a generic converter of Vector
             boolean sparseValue = vector instanceof SparseVector;
-            VectorTypeConverter<?> fallback = null;
+            VectorTypeConverter<?> selected = null;
+            Class<?> selectedType = null;
+            boolean selectedSparse = false;
             for (VectorTypeConverter<?> converter : converters) {
-                if (!supportsVectorType(converter, vector.getClass())) {
+                Class<?> supportedType = mostSpecificSupportedType(converter, vector.getClass());
+                if (supportedType == null) {
                     continue;
                 }
-                if (fallback == null) {
-                    fallback = converter;
-                }
-                if (converter.isSparseSupported() == sparseValue) {
-                    return converter;
+                boolean sparseMatches = converter.isSparseSupported() == sparseValue;
+                if (selectedType == null
+                    || sparseMatches && !selectedSparse
+                    || sparseMatches == selectedSparse && supportedType != selectedType && selectedType.isAssignableFrom(supportedType)) {
+                    selected = converter;
+                    selectedType = supportedType;
+                    selectedSparse = sparseMatches;
                 }
             }
-            return fallback;
+            return selected;
         }
 
-        private static boolean supportsVectorType(VectorTypeConverter<?> converter, Class<?> vectorType) {
+        private static @Nullable Class<?> mostSpecificSupportedType(VectorTypeConverter<?> converter, Class<?> vectorType) {
+            Class<?> mostSpecific = null;
             for (Class<? extends Vector> supportedType : converter.supportedVectorTypes()) {
-                if (supportedType.isAssignableFrom(vectorType)) {
-                    return true;
+                if (supportedType.isAssignableFrom(vectorType) && (mostSpecific == null || mostSpecific.isAssignableFrom(supportedType))) {
+                    mostSpecific = supportedType;
                 }
             }
-            return false;
+            return mostSpecific;
         }
 
         private static boolean isConflicting(VectorTypeConverter<?> existing, VectorTypeConverter<?> candidate) {
             if (existing.isSparseSupported() != candidate.isSparseSupported()) {
+                return false;
+            }
+            if (!VectorTypeConverter.supports(existing, candidate.dataAccessType())) {
                 return false;
             }
             if (!existing.getPersistedType().equals(candidate.getPersistedType())) {

@@ -36,6 +36,9 @@ dependencies {
         api(libs.commons.lang3) {
             because("GHSA-j288-q9x7-2f5v, via jakarta.data-tck -> sigtest-maven-plugin -> maven-core")
         }
+        api(libs.guava) {
+            because("GHSA-xxph-c9ww-hj94, via jakarta.data-tck -> sigtest-maven-plugin -> maven-core")
+        }
     }
 }
 

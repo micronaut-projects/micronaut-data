@@ -51,16 +51,19 @@ import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 
 import jakarta.annotation.PostConstruct;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.lang.reflect.Modifier;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -78,6 +81,8 @@ public class SchemaGenerator {
     private static final String MATCH_ALL = "%";
 
     private static final Logger LOG = LoggerFactory.getLogger(SchemaGenerator.class);
+    private static final String RESTORE_ORACLE_SCHEMA =
+        "BEGIN EXECUTE IMMEDIATE 'ALTER SESSION SET CURRENT_SCHEMA = ' || DBMS_ASSERT.ENQUOTE_NAME(?, FALSE); END;";
 
     private final List<DataJdbcConfiguration> configurations;
     private final JdbcSchemaHandler schemaHandler;
@@ -152,29 +157,38 @@ public class SchemaGenerator {
                 DataSource dataSource = DelegatingDataSource.unwrapDataSource(beanLocator.getBean(DataSource.class, Qualifiers.byName(name)));
                 try {
                     try (Connection connection = dataSource.getConnection()) {
-                        if (configuration.getSchemaGenerateNames() != null && !configuration.getSchemaGenerateNames().isEmpty()) {
-                            for (String schemaName : configuration.getSchemaGenerateNames()) {
-                                if (schemaGenerate != SchemaGenerate.VALIDATE) {
-                                    schemaHandler.createSchema(connection, dialect, schemaName);
+                        String dialectVersion = configuration.getDialectOptions().resolveVersion(() -> detectVersion(connection, name));
+                        // An Oracle session keeps its current schema when the connection returns to the pool
+                        String originalOracleSchema = dialect == Dialect.ORACLE ? connection.getSchema() : null;
+                        try {
+                            if (configuration.getSchemaGenerateNames() != null && !configuration.getSchemaGenerateNames().isEmpty()) {
+                                for (String schemaName : configuration.getSchemaGenerateNames()) {
+                                    if (schemaGenerate != SchemaGenerate.VALIDATE) {
+                                        schemaHandler.createSchema(connection, dialect, schemaName);
+                                    }
+                                    schemaHandler.useSchema(connection, dialect, schemaName);
+                                    if (schemaGenerate == SchemaGenerate.VALIDATE) {
+                                        validate(connection, configuration, dialectVersion, entities, dialectSqlTableMappingValidatorMap, definitionProviders);
+                                    } else {
+                                        generate(connection, configuration, dialectVersion, propertyPlaceholderResolver, entities);
+                                    }
                                 }
-                                schemaHandler.useSchema(connection, dialect, schemaName);
-                                if (schemaGenerate == SchemaGenerate.VALIDATE) {
-                                    validate(connection, configuration, entities, dialectSqlTableMappingValidatorMap, definitionProviders);
-                                } else {
-                                    generate(connection, configuration, propertyPlaceholderResolver, entities);
-                                }
-                            }
-                        } else {
-                            if (configuration.getSchemaGenerateName() != null) {
-                                if (schemaGenerate != SchemaGenerate.VALIDATE) {
-                                    schemaHandler.createSchema(connection, dialect, configuration.getSchemaGenerateName());
-                                }
-                                schemaHandler.useSchema(connection, dialect, configuration.getSchemaGenerateName());
-                            }
-                            if (schemaGenerate == SchemaGenerate.VALIDATE) {
-                                validate(connection, configuration, entities, dialectSqlTableMappingValidatorMap, definitionProviders);
                             } else {
-                                generate(connection, configuration, propertyPlaceholderResolver, entities);
+                                if (configuration.getSchemaGenerateName() != null) {
+                                    if (schemaGenerate != SchemaGenerate.VALIDATE) {
+                                        schemaHandler.createSchema(connection, dialect, configuration.getSchemaGenerateName());
+                                    }
+                                    schemaHandler.useSchema(connection, dialect, configuration.getSchemaGenerateName());
+                                }
+                                if (schemaGenerate == SchemaGenerate.VALIDATE) {
+                                    validate(connection, configuration, dialectVersion, entities, dialectSqlTableMappingValidatorMap, definitionProviders);
+                                } else {
+                                    generate(connection, configuration, dialectVersion, propertyPlaceholderResolver, entities);
+                                }
+                            }
+                        } finally {
+                            if (originalOracleSchema != null) {
+                                restoreOracleSchema(connection, originalOracleSchema);
                             }
                         }
                     } catch (SQLException e) {
@@ -187,13 +201,36 @@ public class SchemaGenerator {
         }
     }
 
+    private static @Nullable String detectVersion(Connection connection, String dataSourceName) {
+        try {
+            DatabaseMetaData metadata = connection.getMetaData();
+            String version = metadata.getDatabaseMajorVersion() + "." + metadata.getDatabaseMinorVersion();
+            if (LOG.isInfoEnabled()) {
+                LOG.info("Schema generation for datasource [{}] targets the detected database version {}", dataSourceName, version);
+            }
+            return version;
+        } catch (SQLException e) {
+            LOG.warn("Unable to detect the database version of datasource [{}]: schema generation uses no target version", dataSourceName, e);
+            return null;
+        }
+    }
+
+    private static void restoreOracleSchema(Connection connection, String schema) throws SQLException {
+        // The exact name reported by the driver, bound and quoted by the database so that its case is kept
+        try (CallableStatement statement = connection.prepareCall(RESTORE_ORACLE_SCHEMA)) {
+            statement.setString(1, schema);
+            statement.execute();
+        }
+    }
+
     @SuppressWarnings("java:S3776")
     private void generate(Connection connection,
                           DataJdbcConfiguration configuration,
+                          @Nullable String dialectVersion,
                           PropertyPlaceholderResolver propertyPlaceholderResolver,
                           PersistentEntity[] entities) throws SQLException {
         Dialect dialect = configuration.getDialect();
-        SqlQueryBuilder builder = new SqlQueryBuilder(dialect, configuration.getDialectOptions().getVersion());
+        SqlQueryBuilder builder = new SqlQueryBuilder(dialect, dialectVersion);
         // Oracle JDBC doesn't execute several statements in one string
         if (dialect.allowBatch() && dialect != Dialect.ORACLE && configuration.isBatchGenerate()) {
             switch (configuration.getSchemaGenerate()) {
@@ -226,7 +263,7 @@ public class SchemaGenerator {
         } else {
             switch (configuration.getSchemaGenerate()) {
                 case CREATE_DROP:
-                    for (PersistentEntity entity : entities) {
+                    for (PersistentEntity entity : SqlSchemaUtils.orderForDrop(entities)) {
                         try {
                             String[] statements = builder.buildDropTableStatements(entity);
                             for (String sql : statements) {
@@ -252,8 +289,10 @@ public class SchemaGenerator {
                             DataSettings.QUERY_LOG.debug("Executing CREATE statement: \n{}", stmt);
                         }
                         try {
-                            try (PreparedStatement ps = connection.prepareStatement(stmt)) {
-                                ps.executeUpdate();
+                            // DDL has no parameters, a plain statement avoids the driver parsing it for bind markers,
+                            // which the Oracle driver gets wrong for some duality view definitions
+                            try (Statement s = connection.createStatement()) {
+                                s.execute(stmt);
                             }
                         } catch (SQLException e) {
                             if (DataSettings.QUERY_LOG.isWarnEnabled()) {
@@ -271,11 +310,12 @@ public class SchemaGenerator {
     @SuppressWarnings("java:S3776")
     private static void validate(Connection connection,
                                  DataJdbcConfiguration configuration,
+                                 @Nullable String dialectVersion,
                                  PersistentEntity[] entities,
                                  Map<Dialect, SqlTableMappingValidator> dialectSqlTableMappingValidatorMap,
                                  List<DefinitionProvider> definitionProviders) throws SQLException {
         Dialect dialect = configuration.getDialect();
-        SqlDialectOptions dialectOptions = SqlDialectOptions.of(dialect, configuration.getDialectOptions().getVersion());
+        SqlDialectOptions dialectOptions = SqlDialectOptions.of(dialect, dialectVersion);
         SqlTableMappingValidator sqlTableMappingValidator = dialectSqlTableMappingValidatorMap.get(dialect);
         if (sqlTableMappingValidator == null) {
             throw new IllegalStateException("There is no supported SqlTableMappingValidator for dialect " + dialect);

@@ -16,7 +16,9 @@
 package io.micronaut.data.runtime.convert;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.model.runtime.convert.DataAccessType;
 import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext;
 
 /**
@@ -39,4 +41,12 @@ public interface DatabaseConversionContextFactory {
      */
     @NonNull
     DatabaseTypeConversionContext forArgument(@NonNull Argument<?> argument);
+
+    /**
+     * @return the driver API of the operations this factory creates contexts for, or {@code null} if unknown
+     * @since 5.3.0
+     */
+    default @Nullable DataAccessType getDataAccessType() {
+        return null;
+    }
 }

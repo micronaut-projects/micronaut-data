@@ -16,17 +16,22 @@
 package io.micronaut.data.runtime.multitenancy.internal;
 
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.query.builder.sql.SqlSchemaNames;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SchemaNameUtilsTest {
 
     @Test
-    void simpleNamesArePreservedForEveryDialect() {
+    void simpleNamesArePreservedForEveryDialectButOracle() {
         for (Dialect dialect : Dialect.values()) {
-            assertEquals("tenant_1", SchemaNameUtils.render(dialect, "tenant_1"));
+            if (dialect != Dialect.ORACLE) {
+                assertEquals("tenant_1", SchemaNameUtils.render(dialect, "tenant_1"));
+            }
         }
     }
 
@@ -67,9 +72,64 @@ class SchemaNameUtilsTest {
     }
 
     @Test
+    void oracleQuotesEveryNameInUpperCase() {
+        assertEquals("\"TENANT_1\"", SchemaNameUtils.render(Dialect.ORACLE, "tenant_1"));
+        assertEquals("\"ORDER\"", SchemaNameUtils.render(Dialect.ORACLE, "order"));
+        assertEquals("\"EXCEPT\"", SchemaNameUtils.render(Dialect.ORACLE, "except"));
+        assertEquals("\"USER\"", SchemaNameUtils.render(Dialect.ORACLE, "User"));
+        assertEquals("\"_TENANT\"", SchemaNameUtils.render(Dialect.ORACLE, "_tenant"));
+        assertEquals("order", SchemaNameUtils.render(Dialect.POSTGRES, "order"));
+        assertEquals("_tenant", SchemaNameUtils.render(Dialect.H2, "_tenant"));
+    }
+
+    @Test
     void emptyAndNulNamesAreRejected() {
         assertThrows(IllegalArgumentException.class, () -> SchemaNameUtils.render(Dialect.H2, null));
         assertThrows(IllegalArgumentException.class, () -> SchemaNameUtils.render(Dialect.H2, ""));
         assertThrows(IllegalArgumentException.class, () -> SchemaNameUtils.render(Dialect.H2, "tenant\u0000a"));
+    }
+
+    @Test
+    void oracleCreateSchemaCreatesAUserWithQuota() {
+        String sql = SchemaNameUtils.oracleCreateSchemaStatement("tenant_1");
+
+        assertTrue(sql.contains("EXECUTE IMMEDIATE 'CREATE USER \"TENANT_1\" NO AUTHENTICATION QUOTA UNLIMITED ON '"));
+        assertTrue(sql.contains("IF SQLCODE != -1920 THEN"));
+        assertFalse(sql.contains("CREATE DATABASE"));
+    }
+
+    @Test
+    void oracleCreateSchemaOnlyAcceptsAnExistingUser() {
+        String sql = SchemaNameUtils.oracleCreateSchemaStatement("tenant_1");
+
+        assertTrue(sql.contains("SELECT COUNT(*) INTO users FROM all_users WHERE username = 'TENANT_1';"));
+        assertTrue(sql.contains("IF users = 0 THEN"));
+    }
+
+    @Test
+    void oracleCreateSchemaKeepsAPlaceholderInARenderedIdentifier() {
+        String quoted = SqlSchemaNames.oracleCreateSchemaStatement("\"${tenant.schema}\"", true);
+        String unquoted = SqlSchemaNames.oracleCreateSchemaStatement("${tenant.schema}", false);
+
+        assertTrue(quoted.contains("'CREATE USER \"${tenant.schema}\" NO AUTHENTICATION"));
+        assertTrue(quoted.contains("WHERE username = '${tenant.schema}';"));
+        assertTrue(unquoted.contains("'CREATE USER ${tenant.schema} NO AUTHENTICATION"));
+        assertTrue(unquoted.contains("WHERE username = UPPER('${tenant.schema}');"));
+    }
+
+    @Test
+    void oracleCreateSchemaQuotesReservedWords() {
+        String sql = SchemaNameUtils.oracleCreateSchemaStatement("order");
+
+        assertTrue(sql.contains("'CREATE USER \"ORDER\" NO AUTHENTICATION"));
+        assertTrue(sql.contains("WHERE username = 'ORDER';"));
+    }
+
+    @Test
+    void oracleCreateSchemaEscapesTheIdentifierInsideTheLiteral() {
+        String sql = SchemaNameUtils.oracleCreateSchemaStatement("tenant'a");
+
+        assertTrue(sql.contains("'CREATE USER \"TENANT''A\" NO AUTHENTICATION"));
+        assertTrue(sql.contains("WHERE username = 'TENANT''A';"));
     }
 }

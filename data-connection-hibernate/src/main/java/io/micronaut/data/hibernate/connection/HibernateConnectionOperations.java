@@ -28,6 +28,8 @@ import org.hibernate.Session;
 import org.hibernate.SessionBuilder;
 import org.hibernate.SessionFactory;
 
+import java.sql.Connection;
+
 /**
  * The Hibernate connection operations.
  *
@@ -53,6 +55,21 @@ public final class HibernateConnectionOperations extends AbstractConnectionOpera
     @Override
     protected Session openConnection(ConnectionDefinition definition) {
         SessionBuilder sessionBuilder = sessionFactory.withOptions();
+        if (entityInterceptor != null) {
+            sessionBuilder = sessionBuilder.interceptor(entityInterceptor);
+        }
+        return sessionBuilder.openSession();
+    }
+
+    /**
+     * Opens a session on a JDBC connection supplied by the caller. Closing the session leaves the connection open.
+     *
+     * @param connection The connection
+     * @return The session
+     * @since 5.3.0
+     */
+    Session openSession(Connection connection) {
+        SessionBuilder sessionBuilder = sessionFactory.withOptions().connection(connection);
         if (entityInterceptor != null) {
             sessionBuilder = sessionBuilder.interceptor(entityInterceptor);
         }

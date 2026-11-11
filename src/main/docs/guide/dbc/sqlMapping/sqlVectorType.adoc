@@ -5,6 +5,7 @@ Micronaut Data provides vector value types in `io.micronaut.data.model.vector`:
 - `FloatVector`: `float[]` backed values.
 - `DoubleVector`: `double[]` backed values.
 - `ByteVector`: `byte[]` backed values.
+- `BinaryVector`: one bit per dimension, packed eight per byte (Oracle, and PostgreSQL with JDBC; see <<binaryVectors, Binary vectors>>).
 
 Sparse vectors are represented by:
 
@@ -41,7 +42,8 @@ Dialect notes:
 
 - PostgreSQL (pgvector): creates `ivfflat` or `hnsw` indexes. The operator class is derived from distance (`COSINE` -> `vector_cosine_ops`, `DOT` -> `vector_ip_ops`, `L1`/`L2` -> `vector_l1_ops`/`vector_l2_ops`).
   For sparse columns (`@VectorStorage(shape = VectorShape.SPARSE)`), Micronaut Data emits sparse operator classes (`sparsevec_*_ops`) and requires `HNSW`.
-- Oracle: creates `CREATE VECTOR INDEX` with `ORGANIZATION NEIGHBOR PARTITIONS` (`IVF`) or `GRAPH` (`HNSW`), plus distance and target accuracy settings.
+- Oracle: creates `CREATE VECTOR INDEX` with `ORGANIZATION NEIGHBOR PARTITIONS` (`IVF`) or `ORGANIZATION INMEMORY NEIGHBOR GRAPH` (`HNSW`), plus distance and target accuracy settings.
+  An `HNSW` index is held in the vector memory pool, which is empty unless the database sets `vector_memory_size`; without it, creating the index fails with `ORA-51962`. Schema generation logs that failure as a warning and continues without the index, so set `vector_memory_size` (for example `ALTER SYSTEM SET vector_memory_size = 512M SCOPE = SPFILE` and a restart), or use `IVF`.
 - MySQL: `@VectorIndex` is not supported and schema generation fails fast instead of creating a plain non-vector index.
 
 == Repository usage
@@ -106,11 +108,38 @@ Only one `ScoringFunction` parameter is allowed for vector derived search method
 
 Current derived-search scoring function support by dialect:
 
-- PostgreSQL: `COSINE`, `L2_EUCLIDEAN`, `DOT`
-- Oracle: `COSINE`, `L2_EUCLIDEAN`, `L2_EUCLIDEAN_SQUARED`, `DOT`, `L1_MANHATTAN`
+- PostgreSQL: `COSINE`, `L2_EUCLIDEAN`, `DOT`, and `HAMMING` and `JACCARD` for binary vectors
+- Oracle: `COSINE`, `L2_EUCLIDEAN`, `L2_EUCLIDEAN_SQUARED`, `DOT`, `L1_MANHATTAN`, and `HAMMING` and `JACCARD` for binary vectors
 - MySQL: `COSINE`, `L2_EUCLIDEAN`, `DOT`
 
 If an unsupported function is requested for the active dialect, Micronaut Data fails fast with an `IllegalArgumentException`.
+
+[[binaryVectors]]
+== Binary vectors
+
+Oracle stores binary vectors in `VECTOR(n, BINARY)` columns, where each dimension is a single bit. Map them with `BinaryVector`. Set the number of dimensions, in bits, with `@VectorStorage(length = N)`. Oracle requires it to be a multiple of 8.
+
+Binary vectors are compared with Hamming distance (`HAMMING`) or Jaccard distance (`JACCARD`), and `@VectorIndex` accepts both as its `distanceType`:
+
+snippet::example.ImageFingerprint[project-base="doc-examples/jdbc-vector-example", source="main"]
+
+`BinaryVector` holds the bits packed eight per byte, most significant bit first, which is the layout Oracle uses. Create one from packed bytes, or from one `boolean` per bit with `BinaryVector.of`:
+
+snippet::example.ImageFingerprintRepositorySpec[project-base="doc-examples/jdbc-vector-example", tags="binary_vector"]
+
+Derived search methods on a binary vector property use `HAMMING` by default, because Oracle compares binary vectors with `HAMMING` and `JACCARD` only. A `ScoringFunction` parameter selects `JACCARD`:
+
+snippet::example.ImageFingerprintRepository[project-base="doc-examples/jdbc-vector-example", source="main"]
+
+snippet::example.ImageFingerprintRepositorySpec[project-base="doc-examples/jdbc-vector-example", tags="binary_search"]
+
+The Hamming score is the number of bits that differ, and its `Similarity` is the same value. The Jaccard score runs from `0` (the same set bits) to `1` (no set bits in common), and its `Similarity` is one minus the score.
+
+The array conversions of the `Vector` API return one element per dimension, `0` or `1`. `BinaryVector.data()` returns the packed bytes. Oracle JDBC and Oracle R2DBC both support binary vectors.
+
+On PostgreSQL, pgvector stores binary vectors in `bit(n)` columns, where `n` is the `@VectorStorage` length in bits, or `bit varying` when no length is set. Derived search methods use pgvector's Hamming distance operator (`<~>`) by default, and its Jaccard distance operator (`<%>`) when `JACCARD` is selected. The scores and similarities are the same as on Oracle. `@VectorIndex` uses the `bit_hamming_ops` or `bit_jaccard_ops` operator class. Jaccard distance needs an `HNSW` index. Set a length on indexed columns. Binary vectors on PostgreSQL need JDBC with the pgvector Java library; the PostgreSQL R2DBC driver has no codec for them.
+
+Other databases get the same `VARCHAR(255)` fallback column as vectors on databases without vector support.
 
 == Oracle sparse vector columns
 
@@ -150,7 +179,7 @@ snippet::example.DocumentEmbeddingService[project-base="doc-examples/jdbc-vector
 
 Micronaut Data determines vector dimensions from `@VectorStorage(length = N)`, or from `@jakarta.persistence.Column(length = N)` when `@VectorStorage` does not define a length:
 
-- PostgreSQL (pgvector): `vector(N)` / `vector` by default, or `sparsevec(N)` / `sparsevec` when `@VectorStorage(shape = VectorShape.SPARSE)` is set
+- PostgreSQL (pgvector): `vector(N)` / `vector` by default, `sparsevec(N)` / `sparsevec` when `@VectorStorage(shape = VectorShape.SPARSE)` is set, or `bit(N)` / `bit varying` for `BinaryVector`
 - Oracle: `VECTOR(N, <TYPE>)` or `VECTOR(*, <TYPE>)` when no length is present
 - MySQL HeatWave: `VECTOR(N)` or `VECTOR`
 
@@ -158,6 +187,7 @@ The Oracle `<TYPE>` is inferred from the vector subtype:
 - `DoubleVector` -> `FLOAT64`
 - `FloatVector`  -> `FLOAT32`
 - `ByteVector`   -> `INT8`
+- `BinaryVector` -> `BINARY`
 
 For sparse columns declared as generic `Vector` (`@VectorStorage(shape = VectorShape.SPARSE)`), Oracle defaults to `FLOAT32`.
 
@@ -170,6 +200,8 @@ If the dialect does not support vectors, Micronaut Data emits `VARCHAR(255)` for
 - PostgreSQL vector storage is float32-based. Dense mappings use `FloatVector` semantics, and sparse mappings use `SparseFloatVector` semantics; generic `Vector` values are coerced through those float-based paths.
 - Use `@VectorStorage(length = N)` (or `@Column(length = N)`) to define the dimension in schema generation
 - Sparse index DDL uses `HNSW` with `sparsevec_*_ops` operator classes; sparse + `IVF` is rejected.
+- `BinaryVector` columns use `bit(N)` and the `bit_hamming_ops` or `bit_jaccard_ops` operator classes (JDBC only).
+- `HAMMING` and `JACCARD` apply to `BinaryVector` columns only, and the other functions to numeric columns only. Any other combination in a `ScoringFunction` parameter or a `@VectorIndex` fails with an `IllegalArgumentException`.
 - PostgreSQL JDBC supports dense and sparse conversion paths.
 - Postgres R2DBC currently supports dense `vector` only; sparse-like payloads are rejected with an explicit unsupported error because the current R2DBC path uses the dense vector codec from the PostgreSQL R2DBC driver.
 
@@ -193,6 +225,7 @@ CREATE TABLE document_embedding (
   - `DoubleVector` -> `FLOAT64`
   - `FloatVector`  -> `FLOAT32`
   - `ByteVector`   -> `INT8`
+  - `BinaryVector` -> `BINARY`
 - Use `@VectorStorage(length = N)` (or `@Column(length = N)`) to set the dimension; when omitted, `*` is used.
 - JDBC and R2DBC derived `SearchResults` mappings both return empty `SearchResults` when no rows match.
 - Oracle JDBC and Oracle R2DBC both support sparse vector columns (`VECTOR(..., SPARSE)`) for derived search scenarios.
@@ -208,15 +241,21 @@ CREATE TABLE document_embedding (
 );
 ----
 
-Oracle approximate row-limiting syntax for vector search can use `FETCH FIRST APPROX` / `APPROXIMATE` when supported by the database version and query shape:
+By default a vector search compares the query vector with every row. To let Oracle answer the top-K query from a vector index (see `@VectorIndex`), annotate the search method with api:data.annotation.ApproximateSearch[]:
+
+snippet::example.DocumentEmbeddingRepository[project-base="doc-examples/jdbc-vector-example", source="main", tags="approximate"]
+
+The row limit, from the method name as here or from a `Limit` or `Pageable` argument, is then rendered as an approximate row limit:
 
 [source,sql]
 ----
-SELECT *
+SELECT ...
 FROM document_embedding d
-ORDER BY VECTOR_DISTANCE(d.embedding, :vec, COSINE)
-FETCH FIRST APPROX 2 ROWS ONLY;
+ORDER BY VECTOR_DISTANCE(d.embedding, ?, COSINE)
+FETCH APPROX FIRST 5 ROWS ONLY WITH TARGET ACCURACY 90
 ----
+
+`targetAccuracy` is a percentage from 1 to 100; the default `0` uses the accuracy of the index. A query with an offset keeps the exact row limit. Other dialects ignore the annotation; PostgreSQL, for example, uses a pgvector index for an ordered, limited query without extra syntax.
 
 == MySQL HeatWave (VECTOR)
 
