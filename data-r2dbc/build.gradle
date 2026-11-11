@@ -129,3 +129,13 @@ micronautBuild {
         }
     }
 }
+
+// the specs that need an Oracle Test Pilot database, which the Oracle Test Pilot workflow runs
+tasks.register("oracleTestPilotTest", Test) {
+    description = "Runs the specs that need an Oracle Test Pilot database"
+    group = "verification"
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform()
+    include "io/micronaut/data/r2dbc/oraclexe/testpilot/**"
+}
