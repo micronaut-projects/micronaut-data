@@ -87,8 +87,8 @@ final class PainlessScripts {
     static Map<String, Object> compare(String left, String operator, String right, boolean numeric) {
         // numbers and booleans compare with the operator itself; booleans only for equality
         String comparison = numeric || "==".equals(operator) || "!=".equals(operator)
-            ? doc(left) + ".value " + operator + " " + doc(right) + ".value"
-            : doc(left) + ".value.compareTo(" + doc(right) + ".value) " + operator + " 0";
+            ? docValue(left) + " " + operator + " " + docValue(right)
+            : docValue(left) + ".compareTo(" + docValue(right) + ") " + operator + " 0";
         return script(doc(left) + ".size() != 0 && " + doc(right) + ".size() != 0 && " + comparison, null);
     }
 
@@ -104,7 +104,7 @@ final class PainlessScripts {
      */
     static Map<String, Object> caseFoldedCompare(String field, Fold fold, String operator, @Nullable Object value, Fold valueFold) {
         String source = "if (" + doc(field) + ".size() == 0 || params.value == null) { return false; } "
-            + "return " + doc(field) + ".value" + fold.method + ".compareTo(params.value.toString()" + valueFold.method + ") " + operator + " 0;";
+            + "return " + docValue(field) + fold.method + ".compareTo(params.value.toString()" + valueFold.method + ") " + operator + " 0;";
         Map<String, Object> params = new LinkedHashMap<>();
         params.put("value", value);
         return script(source, params);
@@ -128,7 +128,7 @@ final class PainlessScripts {
                                                boolean negated) {
         String inRange = "v.compareTo(params.from.toString()" + fromFold.method + ") >= 0 && v.compareTo(params.to.toString()" + toFold.method + ") <= 0";
         String source = "if (" + doc(field) + ".size() == 0 || params.from == null || params.to == null) { return false; } "
-            + "String v = " + doc(field) + ".value" + fold.method + "; "
+            + "String v = " + docValue(field) + fold.method + "; "
             + "return " + (negated ? "!(" + inRange + ")" : inRange) + ";";
         Map<String, Object> params = new LinkedHashMap<>();
         params.put("from", from);
@@ -138,6 +138,10 @@ final class PainlessScripts {
 
     private static String doc(String field) {
         return "doc['" + field + "']";
+    }
+
+    private static String docValue(String field) {
+        return doc(field) + ".value";
     }
 
     private static Map<String, Object> script(String source, @Nullable Map<String, Object> params) {
