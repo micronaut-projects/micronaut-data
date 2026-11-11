@@ -37,6 +37,7 @@ import io.micronaut.inject.ast.Element;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.ast.PropertyElement;
+import io.micronaut.inject.processing.ProcessingException;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
 import io.micronaut.sourcegen.generator.SourceGenerator;
@@ -51,6 +52,7 @@ import io.micronaut.sourcegen.model.VariableDef;
 import org.jspecify.annotations.Nullable;
 
 import javax.lang.model.element.Modifier;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.ResultSet;
@@ -197,7 +199,7 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
                 return;
             }
             String name = element.getName() + SUFFIX;
-            sourceGenerator.write(generate(name, element, model), context, element);
+            write(sourceGenerator, generate(name, element, model), context, element);
             context.visitServiceDescriptor(MAPPER_INTERFACE, name, element);
         } catch (RuntimeException e) {
             if (isPostponement(e)) {
@@ -216,6 +218,23 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
 
     private static boolean isPostponement(RuntimeException e) {
         return MappedEntityVisitor.isPostponement(e);
+    }
+
+    /**
+     * Writes the class through the context rather than {@code SourceGenerator.write(ObjectDef, VisitorContext, ...)}:
+     * since Sourcegen 2.2.4 that overload annotates the type with {@code @GeneratedSource}, which only compiles
+     * when {@code micronaut-sourcegen-annotations} is on the project's compile classpath, and a project using
+     * data-jdbc need not have it. The two-argument form exists in every Sourcegen version and adds nothing.
+     */
+    private static void write(SourceGenerator sourceGenerator, ClassDef classDef, VisitorContext context, ClassElement element) {
+        context.visitGeneratedSourceFile(classDef.getPackageName(), classDef.getSimpleName(), element)
+            .ifPresent(file -> {
+                try {
+                    file.write(writer -> sourceGenerator.write(classDef, writer));
+                } catch (IOException e) {
+                    throw new ProcessingException(element, "Failed to generate '" + classDef.getName() + "': " + e.getMessage(), e);
+                }
+            });
     }
 
     /**
