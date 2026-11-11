@@ -141,12 +141,7 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
     private static final ClassTypeDef TIME = ClassTypeDef.of(java.sql.Time.class);
 
     private final Map<String, SourcePersistentEntity> entities = new HashMap<>();
-    private final Function<ClassElement, SourcePersistentEntity> entityResolver = new Function<>() {
-        @Override
-        public SourcePersistentEntity apply(ClassElement classElement) {
-            return entities.computeIfAbsent(classElement.getName(), n -> new SourcePersistentEntity(classElement, this));
-        }
-    };
+    private final Function<ClassElement, SourcePersistentEntity> entityResolver = this::resolveEntity;
 
     @Override
     public VisitorKind getVisitorKind() {
@@ -214,6 +209,10 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
             // The mapper is an optimization: a failure to generate it must not fail the build
             context.warn(NO_MAPPER + element.getName() + ": " + e + ". Rows are mapped at runtime.", element);
         }
+    }
+
+    private SourcePersistentEntity resolveEntity(ClassElement classElement) {
+        return entities.computeIfAbsent(classElement.getName(), n -> new SourcePersistentEntity(classElement, entityResolver));
     }
 
     private static boolean isPostponement(RuntimeException e) {
@@ -840,7 +839,7 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
             VariableDef local = value.variable();
             values.put(leaf, local);
             if (leaf.read().type().isPrimitive()) {
-                // boolean nN = vN == 0 && rs.wasNull(): the getters return zero for NULL
+                // the local nN records whether vN, which the getters return as zero for NULL, was in fact NULL
                 ExpressionDef.ConditionExpressionDef zero = leaf.read().type().equals(TypeDef.Primitive.BOOLEAN)
                     ? local.isFalse()
                     : local.compare(ExpressionDef.ComparisonOperation.OpType.EQUAL_TO, ((TypeDef.Primitive) leaf.read().type()).constant(0));
