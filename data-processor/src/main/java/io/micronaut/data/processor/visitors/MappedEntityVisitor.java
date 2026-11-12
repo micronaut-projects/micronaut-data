@@ -277,12 +277,8 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         }
         // the Java processor's PostponeToNextRoundException is not on this module's classpath,
         // so resolve it through the loader of the thrown exception
-        ClassLoader classLoader = e.getClass().getClassLoader();
-        if (classLoader == null) {
-            return false;
-        }
         try {
-            return Class.forName(JAVA_POSTPONE_EXCEPTION, false, classLoader).isInstance(e);
+            return Class.forName(JAVA_POSTPONE_EXCEPTION, false, e.getClass().getClassLoader()).isInstance(e);
         } catch (ClassNotFoundException | LinkageError _) {
             return false;
         }
