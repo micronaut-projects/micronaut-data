@@ -1,0 +1,47 @@
+plugins {
+    id "io.micronaut.build.internal.data-module"
+}
+
+dependencies {
+    annotationProcessor mn.micronaut.inject.java
+    annotationProcessor mn.micronaut.graal
+
+    api projects.micronautDataGraphRuntime
+    api projects.micronautDataTx
+    api projects.micronautDataConnection
+    api(mnNeo4j.micronaut.neo4j.bolt) {
+        exclude group: "io.micronaut"
+    }
+    api mnNeo4j.neo4j.java.driver
+
+    compileOnly(mnSql.jakarta.persistence.api)
+
+    testAnnotationProcessor projects.micronautDataGraphProcessor
+    testAnnotationProcessor mn.micronaut.inject.java
+
+    testImplementation projects.micronautDataGraphProcessor
+    testImplementation projects.micronautDataGraphTck
+    testImplementation mnReactor.micronaut.reactor
+    testImplementation mnTest.micronaut.test.spock
+    testImplementation(mnSql.jakarta.persistence.api)
+    testImplementation(libs.neo4j.harness) {
+        exclude group: "org.slf4j"
+        exclude group: "ch.qos.logback"
+    }
+
+    testRuntimeOnly mnLogging.logback.classic
+
+    testCompileOnly mn.micronaut.inject.groovy
+}
+
+tasks.withType(Test).configureEach {
+    // The embedded Neo4j server opens many files and uses off heap memory
+    maxHeapSize = "2g"
+    jvmArgs "--add-opens=java.base/java.nio=ALL-UNNAMED", "--add-opens=java.base/java.lang=ALL-UNNAMED", "--enable-native-access=ALL-UNNAMED"
+}
+
+micronautBuild {
+    binaryCompatibility {
+        enabledAfter("5.3.0")
+    }
+}
