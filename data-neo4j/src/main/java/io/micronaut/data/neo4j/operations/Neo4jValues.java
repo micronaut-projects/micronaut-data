@@ -23,10 +23,13 @@ import io.micronaut.data.graph.runtime.GraphRecord;
 import org.jspecify.annotations.Nullable;
 import org.neo4j.driver.Record;
 import org.neo4j.driver.Value;
+import org.neo4j.driver.types.IsoDuration;
 import org.neo4j.driver.types.Node;
 import org.neo4j.driver.types.Path;
 import org.neo4j.driver.types.Relationship;
 
+import java.time.Duration;
+import java.time.Period;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -89,7 +92,29 @@ final class Neo4jValues {
             map.forEach((k, v) -> decoded.put(String.valueOf(k), decodeObject(v)));
             return decoded;
         }
+        if (value instanceof IsoDuration duration) {
+            return duration(duration);
+        }
         return value;
+    }
+
+    /**
+     * Adapts a Neo4j duration to the Java type that represents it exactly: a {@link Duration} when it only has
+     * seconds and nanoseconds, a {@link Period} when it only has months and days. A duration with both, such as
+     * {@code P1DT2H}, has no exact Java counterpart because a day is not a fixed number of seconds. It stays a driver
+     * value: a node can hold one that the entity does not declare, so it is only rejected when it is read into a
+     * {@link Duration} or a {@link Period}, by {@link Neo4jDurationConverters}.
+     */
+    private static Object duration(IsoDuration duration) {
+        boolean calendar = duration.months() != 0 || duration.days() != 0;
+        boolean time = duration.seconds() != 0 || duration.nanoseconds() != 0;
+        if (calendar && time) {
+            return duration;
+        }
+        if (calendar) {
+            return Period.of(0, Math.toIntExact(duration.months()), Math.toIntExact(duration.days()));
+        }
+        return Duration.ofSeconds(duration.seconds(), duration.nanoseconds());
     }
 
     // Numeric identifiers are matched with id(n), and the driver's id() is the same value
@@ -97,12 +122,12 @@ final class Neo4jValues {
     private static GraphNode node(Node node) {
         List<String> labels = new ArrayList<>();
         node.labels().forEach(labels::add);
-        return new GraphNode(node.elementId(), labels, node.asMap(), node.id());
+        return new GraphNode(node.elementId(), labels, node.asMap(Neo4jValues::decode), node.id());
     }
 
     @SuppressWarnings("deprecation")
     private static GraphEdge relationship(Relationship relationship) {
         return new GraphEdge(relationship.elementId(), relationship.type(), relationship.startNodeElementId(),
-            relationship.endNodeElementId(), relationship.asMap(), relationship.id());
+            relationship.endNodeElementId(), relationship.asMap(Neo4jValues::decode), relationship.id());
     }
 }

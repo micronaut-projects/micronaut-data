@@ -17,6 +17,8 @@ snippet::example.MovieRepository[project-base="doc-examples/neo4j-example", sour
 
 snippet::example.MovieSummary[project-base="doc-examples/neo4j-example", source="main", tags="dto", languages="java,kotlin,groovy,python"]
 
+DTOs are read with Micronaut Serialization and must be annotated with `@Serdeable`. A repository method that returns a DTO without it fails to compile.
+
 NOTE: `Like` is not supported, as Cypher has no `LIKE` operator. Use `StartsWith`, `EndsWith`, `Contains` or `Regex`.
 
 Repositories may return `Optional`, nullable types, lists, streams and pages, and Reactor, RxJava and Kotlin coroutine types. Reactive and coroutine methods run the blocking driver on an I/O executor.

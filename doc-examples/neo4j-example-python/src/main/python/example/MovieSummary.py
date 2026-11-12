@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 
-from micronaut.core.annotation import Introspected
+from micronaut.serde.annotation import Serdeable
 
 
 # tag::dto[]
-@Introspected
+@Serdeable
 @dataclass
 class MovieSummary:
     title: str
