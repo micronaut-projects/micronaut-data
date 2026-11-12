@@ -7,7 +7,7 @@ import io.micronaut.data.graph.annotation.Relationship;
 import java.util.List;
 
 // tag::account[]
-@Node("Account") // <1>
+@Node(value = "accounts", labels = "Account") // <1>
 public record Account(@Id Long id, // <2>
                       String name,
                       @Relationship("TRANSFERS") List<Transfer> transfers) { // <3>

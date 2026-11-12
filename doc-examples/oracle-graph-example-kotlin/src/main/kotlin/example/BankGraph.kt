@@ -3,18 +3,18 @@ package example
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.graph.annotation.PathLimit
 import io.micronaut.data.oracle.graph.annotation.OracleGraphRepository
-import io.micronaut.data.repository.GenericRepository
+import io.micronaut.data.repository.CrudRepository
 import java.math.BigDecimal
 
 // tag::repository[]
 @OracleGraphRepository(graph = "bank_graph") // <1>
-interface BankGraph : GenericRepository<Account, Long> {
+interface BankGraph : CrudRepository<Account, Long> { // <2>
 
-    fun findById(id: Long): Account?
+    fun findByNameStartsWithOrderByName(prefix: String): List<Account>
 
-    fun findByTransfersAmountGreaterThan(amount: BigDecimal): List<Account> // <2>
+    fun findByTransfersAmountGreaterThan(amount: BigDecimal): List<Account> // <3>
 
-    @PathLimit(3) // <3>
+    @PathLimit(3) // <4>
     fun existsPathByTransfers(from: Long, to: Long): Boolean
     // end::repository[]
 

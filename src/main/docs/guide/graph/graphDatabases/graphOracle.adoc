@@ -17,4 +17,21 @@ snippet::example.TransferView[project-base="doc-examples/oracle-graph-example", 
 
 Path finders check for paths and count them, with `existsPath` and `countPaths`, and `findAllPaths` returns every path up to the maximum depth, shortest first, on a release whose `GRAPH_TABLE` supports `ONE ROW PER STEP`, such as Oracle AI Database 26ai. Shortest path finders fail at build time, as `GRAPH_TABLE` has no shortest path search. A path takes each relationship once, as in Cypher, and a path over several relationship types names them after `By`, as SQL/PGQ cannot read the label of an edge. `StartsWith`, `EndsWith` and `Contains` are supported through `LIKE`.
 
-Property graphs over tables are read only views: write the tables with a JDBC repository, for example a ann:data.jdbc.annotation.JdbcRepository[] over the same entities. Path finders need a maximum depth set with ann:data.graph.annotation.PathLimit[], either on the method or on an `int` parameter, whose argument is capped by `micronaut.data.graph.max-path-depth` as described in <<graphPaths, Paths and Shortest Paths>>. Relationship finders need a single relationship type. An undirected relationship finder returns each relationship with the nodes it starts and ends at as stored in its edge table, whichever argument matched which end, as Neo4j does.
+Path finders need a maximum depth set with ann:data.graph.annotation.PathLimit[], either on the method or on an `int` parameter, whose argument is capped by `micronaut.data.graph.max-path-depth` as described in <<graphPaths, Paths and Shortest Paths>>. Relationship finders need a single relationship type. An undirected relationship finder returns each relationship with the nodes it starts and ends at as stored in its edge table, whichever argument matched which end, as Neo4j does.
+
+== Writing nodes
+
+A property graph over tables is a view, so its repositories write nodes to their vertex tables with SQL, as Micronaut Data JDBC does. The value of ann:data.graph.annotation.Node[] names the vertex table, and `labels` the label the graph gives it, as in the `Account` entity of the <<graphOracleQuickStart, quick start>>.
+
+Save, update and delete methods, including those of api:data.repository.CrudRepository[], are compiled to SQL for Oracle at build time and run by the JDBC repository operations of the same data source:
+
+snippet::example.BankGraphSpec[project-base="doc-examples/oracle-graph-example", tags="save", indent="0", languages="java,kotlin,groovy,python"]
+
+<1> Runs `INSERT INTO "ACCOUNTS" ("NAME","ID") VALUES (?,?)`.
+<2> Runs a SQL/PGQ `GRAPH_TABLE` query over the property graph.
+
+Writes join the current connection and transaction of the data source, as graph queries do. Writes need the `micronaut-data-jdbc` module, which `micronaut-data-oracle-graph` depends on. Saving a node writes only its row: relationships are rows of their edge tables, which a ann:data.jdbc.annotation.JdbcRepository[] over an entity of the edge table writes.
+
+Graph repositories write only the row of a node in its vertex table. A property with ann:data.graph.annotation.Relationship[] has no column there, whether it holds one node or many, so a save or update of a node with a single relationship set, such as a `Person` with its `mentor` set, or with a relationship collection that is not empty, such as an `Account` with `transfers`, fails with a api:data.exceptions.DataAccessException[] before anything is written, rather than losing the relationships. Write the edges through a ann:data.jdbc.annotation.JdbcRepository[] over the entity of the edge table instead, and save the nodes with their relationships null or empty. Nodes read through a graph repository come back with their relationships empty, so they can be saved again.
+
+Methods that return what they write, such as `updateReturning`, run as `RETURNING ... INTO` on the vertex table. A node with a single relationship can only return its properties from them, such as with `updateReturningName`, because the relationship has no column to read: returning the whole entity fails at compile time.
