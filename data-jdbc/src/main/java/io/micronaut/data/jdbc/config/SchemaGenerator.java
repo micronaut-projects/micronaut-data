@@ -263,7 +263,7 @@ public class SchemaGenerator {
         } else {
             switch (configuration.getSchemaGenerate()) {
                 case CREATE_DROP:
-                    for (PersistentEntity entity : entities) {
+                    for (PersistentEntity entity : SqlSchemaUtils.orderForDrop(entities)) {
                         try {
                             String[] statements = builder.buildDropTableStatements(entity);
                             for (String sql : statements) {
