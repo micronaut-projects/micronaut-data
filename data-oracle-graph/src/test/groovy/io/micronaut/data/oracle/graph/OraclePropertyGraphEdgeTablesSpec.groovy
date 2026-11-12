@@ -4,7 +4,10 @@ import io.micronaut.context.annotation.Property
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration
 import io.micronaut.data.jdbc.config.JdbcSchemaContributor
+import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
+import io.micronaut.data.runtime.config.SchemaGenerate
+import io.micronaut.data.runtime.schema.SchemaContext
 import io.micronaut.data.oracle.graph.fans.Fan
 import io.micronaut.data.oracle.graph.fans.FanGraph
 import io.micronaut.data.oracle.graph.fans.Film
@@ -89,15 +92,15 @@ class OraclePropertyGraphEdgeTablesSpec extends Specification {
     void "the tables of an entity in a schema are qualified"() {
         given:
         def entities = [Fan, Film, Novel]
-        def graph = createStatements(*entities).find { it.startsWith("CREATE PROPERTY GRAPH") }
+        def graph = createStatements(*entities).find { it.startsWith("CREATE OR REPLACE PROPERTY GRAPH") }
 
         expect:
         createStatements(*entities).any { it.startsWith('CREATE TABLE "TEST"."NOVELS_SEQUEL" ') }
         graph.contains('"TEST"."NOVELS" KEY ("ID") LABEL Novel')
         graph.contains('"TEST"."NOVELS_SEQUEL" KEY (')
         graph.contains('REFERENCES "NOVELS" ("ID")')
-        contributor(*entities).buildDropStatements(configuration, entities.collect { entityRegistry.getEntity(it) })
-            .containsAll(['DROP TABLE "TEST"."NOVELS_SEQUEL"', 'DROP TABLE "TEST"."NOVELS"'])
+        contributor(*entities).buildDropStatements(context(*entities), persistentEntities(*entities))
+            .containsAll(['DROP TABLE IF EXISTS "TEST"."NOVELS_SEQUEL"', 'DROP TABLE IF EXISTS "TEST"."NOVELS"'])
     }
 
     void "edge tables that would lose a relationship are rejected"() {
@@ -116,12 +119,19 @@ class OraclePropertyGraphEdgeTablesSpec extends Specification {
     }
 
     private List<String> createStatements(Class<?>... types) {
-        contributor(types).buildCreateStatements(configuration, types.collect { entityRegistry.getEntity(it) })
+        contributor(types).buildCreateStatements(context(types), persistentEntities(types))
     }
 
     private JdbcSchemaContributor contributor(Class<?>... types) {
-        def entities = types.collect { entityRegistry.getEntity(it) }
-        contributors.find { !it.selectEntities(configuration, entities).isEmpty() }
+        contributors.find { !it.selectEntities(context(types), persistentEntities(types)).isEmpty() }
+    }
+
+    private SchemaContext context(Class<?>... types) {
+        new SchemaContext(configuration.name, configuration.dialect, configuration.dialectOptions.version, SchemaGenerate.CREATE_DROP, persistentEntities(types))
+    }
+
+    private List<PersistentEntity> persistentEntities(Class<?>... types) {
+        types.collect { entityRegistry.getEntity(it) as PersistentEntity }
     }
 
     private void sql(String... statements) {
