@@ -29,6 +29,10 @@ import java.lang.annotation.Target;
  * Designates a type of data repository. If the type is an interface or abstract
  * class this annotation will attempt to automatically provide implementations at compilation time.
  *
+ * <p>A repository without a scope annotation is a {@link Prototype}, so that each injection point can choose
+ * its own data source: every injection point gets a new instance. Annotate a repository whose data source is
+ * fixed with {@code @Singleton} to create it once.</p>
+ *
  * @author graemerocher
  * @since 1.0
  */
