@@ -17,6 +17,7 @@ package io.micronaut.data.cosmos.operations;
 
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.cosmos.common.Constants;
@@ -31,6 +32,9 @@ import io.micronaut.serde.Deserializer;
 import io.micronaut.serde.LimitingStream;
 import io.micronaut.serde.SerdeRegistry;
 import io.micronaut.serde.Serializer;
+import io.micronaut.serde.config.SerdeConfiguration;
+import io.micronaut.serde.config.annotation.SerdeConfig;
+import io.micronaut.serde.config.naming.PropertyNamingStrategy;
 import io.micronaut.serde.jackson.JacksonDecoder;
 import io.micronaut.serde.support.util.JsonNodeEncoder;
 import jakarta.inject.Singleton;
@@ -74,25 +78,37 @@ final class CosmosSerde {
             return null;
         }
         if (persistentEntity.hasIdentity()) {
-            RuntimePersistentProperty<E> identity = persistentEntity.getIdentity();
-            if (!identity.getName().equals(Constants.INTERNAL_ID)) {
-                Object value = identity.getProperty().get(bean);
-                String id = value == null ? null : value.toString();
-                result.set(Constants.INTERNAL_ID, id == null ? NullNode.getInstance() : new TextNode(id));
-            }
+            writeIdentity(persistentEntity, bean, result);
         }
-        CosmosEntity cosmosEntity = CosmosEntity.get(persistentEntity);
-        String versionField = cosmosEntity.getVersionField();
-        if (versionField != null) {
-            RuntimePersistentProperty<E> versionProperty = persistentEntity.getPropertyByName(versionField);
-            if (versionProperty != null && !versionProperty.getName().equals(Constants.ETAG_FIELD_NAME)) {
-                Object value = versionProperty.getProperty().get(bean);
-                if (value != null) {
-                    result.set(Constants.ETAG_FIELD_NAME, new TextNode(value.toString()));
-                }
-            }
-        }
+        writeVersion(persistentEntity, bean, result);
         return result;
+    }
+
+    private <E> void writeIdentity(RuntimePersistentEntity<E> persistentEntity, E bean, com.fasterxml.jackson.databind.node.ObjectNode result) {
+        RuntimePersistentProperty<E> identity = persistentEntity.getIdentity();
+        String runtimeName = runtimeIdentityName(persistentEntity);
+        if (runtimeName != null && result.has(runtimeName)) {
+            result.set(identity.getName(), result.remove(runtimeName));
+        }
+        if (!identity.getName().equals(Constants.INTERNAL_ID)) {
+            Object value = identity.getProperty().get(bean);
+            String id = value == null ? null : value.toString();
+            result.set(Constants.INTERNAL_ID, id == null ? NullNode.getInstance() : new TextNode(id));
+        }
+    }
+
+    private static <E> void writeVersion(RuntimePersistentEntity<E> persistentEntity, E bean, com.fasterxml.jackson.databind.node.ObjectNode result) {
+        String versionField = CosmosEntity.get(persistentEntity).getVersionField();
+        if (versionField == null) {
+            return;
+        }
+        RuntimePersistentProperty<E> versionProperty = persistentEntity.getPropertyByName(versionField);
+        if (versionProperty != null && !versionProperty.getName().equals(Constants.ETAG_FIELD_NAME)) {
+            Object value = versionProperty.getProperty().get(bean);
+            if (value != null) {
+                result.set(Constants.ETAG_FIELD_NAME, new TextNode(value.toString()));
+            }
+        }
     }
 
     /**
@@ -138,6 +154,7 @@ final class CosmosSerde {
             // Remove the internal id field if there is no such field in the entity
             objectNode.remove(Constants.INTERNAL_ID);
         }
+        withSerializedIdentity(persistentEntity, objectNode);
         CosmosEntity cosmosEntity = CosmosEntity.get(persistentEntity);
         String versionField = cosmosEntity.getVersionField();
         if (versionField != null) {
@@ -149,6 +166,60 @@ final class CosmosSerde {
             }
         }
         return deserialize(objectNode, type);
+    }
+
+    /**
+     * Moves the identity of a stored document to the field the deserializer reads it from.
+     *
+     * @param persistentEntity the persistent entity
+     * @param objectNode the object node (JSON representation)
+     * @return the given object node
+     */
+    com.fasterxml.jackson.databind.node.ObjectNode withSerializedIdentity(RuntimePersistentEntity<?> persistentEntity, com.fasterxml.jackson.databind.node.ObjectNode objectNode) {
+        String runtimeName = runtimeIdentityName(persistentEntity);
+        if (runtimeName != null) {
+            String storedName = persistentEntity.getIdentity().getName();
+            if (objectNode.has(storedName)) {
+                objectNode.set(runtimeName, objectNode.remove(storedName));
+            }
+        }
+        return objectNode;
+    }
+
+    /**
+     * Finds the name a naming strategy applied at runtime gives the identity. Such a strategy doesn't apply to the
+     * stored document: the queries and the partition key path use the property name of the identity.
+     *
+     * @param persistentEntity the persistent entity
+     * @return the name, or null if the serde writes the identity under the name stored in the document
+     */
+    @Nullable
+    private String runtimeIdentityName(RuntimePersistentEntity<?> persistentEntity) {
+        if (!persistentEntity.hasIdentity()) {
+            return null;
+        }
+        RuntimePersistentProperty<?> identity = persistentEntity.getIdentity();
+        AnnotationMetadata annotationMetadata = identity.getAnnotationMetadata();
+        if (annotationMetadata.stringValue(SerdeConfig.class, SerdeConfig.PROPERTY).isPresent()) {
+            // An explicit name, or a naming strategy resolved during annotation processing
+            return null;
+        }
+        try (Serializer.EncoderContext encoderContext = serdeRegistry.newEncoderContext(null)) {
+            Class<? extends PropertyNamingStrategy> namingStrategyClass = annotationMetadata.classValue(SerdeConfig.class, SerdeConfig.RUNTIME_NAMING)
+                .or(() -> persistentEntity.getAnnotationMetadata().classValue(SerdeConfig.class, SerdeConfig.RUNTIME_NAMING))
+                .map(type -> type.asSubclass(PropertyNamingStrategy.class))
+                .orElse(null);
+            PropertyNamingStrategy namingStrategy = namingStrategyClass != null
+                ? encoderContext.findNamingStrategy(namingStrategyClass)
+                : encoderContext.getSerdeConfiguration().map(SerdeConfiguration::getPropertyNamingStrategy).orElse(null);
+            if (namingStrategy == null) {
+                return null;
+            }
+            String name = namingStrategy.translate(identity.getProperty());
+            return identity.getName().equals(name) ? null : name;
+        } catch (IOException e) {
+            throw new DataAccessException("Failed to resolve the identity name of " + persistentEntity.getName() + ": " + e.getMessage(), e);
+        }
     }
 
     /**
