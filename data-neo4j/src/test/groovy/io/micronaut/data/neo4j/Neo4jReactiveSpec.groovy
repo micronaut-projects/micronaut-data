@@ -12,6 +12,7 @@ import io.micronaut.data.graph.tck.entities.Colleague
 import io.micronaut.data.graph.tck.entities.Movie
 import io.micronaut.data.graph.tck.entities.Person
 import io.micronaut.data.graph.tck.entities.Role
+import io.micronaut.data.graph.tck.entities.Step
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.runtime.PagedQuery
@@ -28,8 +29,11 @@ import io.micronaut.data.neo4j.features.ReactiveEnsembleRepository
 import io.micronaut.data.neo4j.features.ReactiveMovieRepository
 import io.micronaut.data.neo4j.features.ReactiveMovieService
 import io.micronaut.data.neo4j.features.Player
+import io.micronaut.data.neo4j.features.ReactiveMovieSpecificationRepository
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.neo4j.features.ReactivePetRepository
 import io.micronaut.data.neo4j.features.ReactiveShelfRepository
+import io.micronaut.data.neo4j.features.ReactiveStepRepository
 import io.micronaut.data.neo4j.features.ReactiveTeamRepository
 import io.micronaut.data.neo4j.features.Review
 import io.micronaut.data.neo4j.features.Seat
@@ -66,7 +70,13 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
     ReactiveArticleRepository articleRepository
 
     @Inject
+    ReactiveMovieSpecificationRepository movieSpecificationRepository
+
+    @Inject
     ReactiveTeamRepository teamRepository
+
+    @Inject
+    ReactiveStepRepository stepRepository
 
     @Inject
     ReactiveShelfRepository shelfRepository
@@ -683,6 +693,54 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
 
         then:
         !articleRepository.existsById("graphs").block()
+    }
+
+    void "reactive criteria specifications"() {
+        given:
+        movieRepository.saveAll([
+            new Movie("Speed", "Get ready for rush hour", 1994),
+            new Movie("The Matrix", "Welcome to the Real World", 1999)
+        ]).collectList().block()
+        def after1995 = { root, cb -> cb.greaterThan(root.get("released"), 1995) } as PredicateSpecification<Movie>
+
+        expect:
+        movieSpecificationRepository.findAll(after1995).collectList().block()*.title == ["The Matrix"]
+        movieSpecificationRepository.count(after1995).block() == 1
+        movieSpecificationRepository.exists(after1995).block()
+        movieSpecificationRepository.findOne(after1995).block().title == "The Matrix"
+    }
+
+    void "a reactive saveAll links records to the nodes of the batch"() {
+        given:
+        def last = new Step(null, "last", null)
+        def middle = new Step(null, "middle", last)
+        def first = new Step(null, "first", middle)
+
+        when:
+        def saved = stepRepository.saveAll([first, middle, last]).collectList().block()
+
+        then:
+        stepRepository.count().block() == 3
+        saved[0].next().id() == saved[1].id()
+        saved[0].next().next().id() == saved[2].id()
+    }
+
+    void "a reactive saveAll that repeats an identifier conflicts"() {
+        when:
+        articleRepository.saveAll([new Article("a", "First"), new Article("a", "Second")]).collectList().block()
+
+        then:
+        thrown(EntityExistsException)
+
+        when:
+        articleRepository.deleteAll().block()
+        articleRepository.save(new Article("a", "A")).block()
+        def copy = articleRepository.findById("a").block()
+        def other = articleRepository.findById("a").block()
+        articleRepository.updateAll([copy, other]).collectList().block()
+
+        then:
+        thrown(OptimisticLockException)
     }
 
     void "a new versioned related node with an assigned identifier is inserted reactively"() {

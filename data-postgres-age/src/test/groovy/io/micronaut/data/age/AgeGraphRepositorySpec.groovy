@@ -5,7 +5,10 @@ import io.micronaut.data.age.features.EnsembleRepository
 import io.micronaut.data.age.features.Seat
 import io.micronaut.data.age.features.Section
 import io.micronaut.data.age.operations.AgeRepositoryOperations
+import io.micronaut.data.age.tck.AgeMovieSpecificationRepository
 import io.micronaut.data.age.tck.AgeArticleRepository
+import io.micronaut.data.age.tck.AgeMilestoneRepository
+import io.micronaut.data.age.tck.AgeStepRepository
 import io.micronaut.data.age.tck.AgeColleagueRepository
 import io.micronaut.data.age.tck.AgeFriendRepository
 import io.micronaut.data.age.tck.AgeMovieRepository
@@ -26,7 +29,16 @@ import java.sql.Connection
 class AgeGraphRepositorySpec extends AbstractGraphRepositorySpec {
 
     @Inject
+    AgeMovieSpecificationRepository movieSpecificationRepository
+
+    @Inject
     AgeArticleRepository articleRepository
+
+    @Inject
+    AgeStepRepository stepRepository
+
+    @Inject
+    AgeMilestoneRepository milestoneRepository
 
     @Inject
     AgeMovieRepository movieRepository
