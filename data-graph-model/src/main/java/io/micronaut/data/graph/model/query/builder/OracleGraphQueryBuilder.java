@@ -19,6 +19,8 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.graph.annotation.Direction;
+import io.micronaut.data.graph.annotation.DynamicAttributes;
+import io.micronaut.data.graph.annotation.Labels;
 import io.micronaut.data.graph.annotation.PropertyGraph;
 import io.micronaut.data.graph.annotation.TargetNode;
 import io.micronaut.data.graph.model.GraphEntities;
@@ -641,6 +643,12 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             }
             column(literal(GraphEntities.primaryLabel(nodeEntity)), variable + SEPARATOR + LABEL_COLUMN);
             for (PersistentProperty property : nodeEntity.getPersistentProperties()) {
+                if (property.getAnnotationMetadata().hasAnnotation(DynamicAttributes.class)
+                    || property.getAnnotationMetadata().hasAnnotation(Labels.class)) {
+                    // A vertex table has fixed columns and its labels come from the graph definition
+                    throw new IllegalArgumentException("Schemaless properties and dynamic labels are not supported by Oracle property graphs, entity ["
+                        + nodeEntity.getName() + "] declares [" + property.getName() + "]");
+                }
                 if (property instanceof Association) {
                     continue;
                 }
