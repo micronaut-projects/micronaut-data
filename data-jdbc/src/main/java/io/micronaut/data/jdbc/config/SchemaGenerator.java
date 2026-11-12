@@ -323,7 +323,7 @@ public class SchemaGenerator {
             dropQuietly(connection, propertyPlaceholderResolver, "Dropping Tables", builder.buildBatchDropTableStatement(entities));
             return;
         }
-        for (PersistentEntity entity : entities) {
+        for (PersistentEntity entity : SqlSchemaUtils.orderForDrop(entities)) {
             dropQuietly(connection, propertyPlaceholderResolver, "Dropping Table", builder.buildDropTableStatements(entity));
         }
     }
