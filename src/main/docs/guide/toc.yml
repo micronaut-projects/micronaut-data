@@ -88,6 +88,7 @@ dbc:
     sqlGeospatial: Geospatial Support
     sqlJsonType: JSON Column Support
     sqlReservable: Oracle Reservable Columns
+    sqlShardedTables: Oracle Sharded and Duplicated Tables
     sqlJsonView: JSON View
     sqlOracleBoolean: Oracle BOOLEAN Support
     sqlVectorType: SQL Vector Type Mapping
