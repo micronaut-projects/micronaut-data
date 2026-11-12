@@ -379,7 +379,7 @@ public final class FlatEntityResultSetMapper<R> implements SqlTypeMapper<ResultS
         Object v;
         try {
             v = rs.getObject(ordinal, UUID.class);
-        } catch (SQLException | ClassCastException e) {
+        } catch (SQLException | ClassCastException _) {
             v = rs.getObject(ordinal);
         }
         if (v == null || v instanceof UUID) {
