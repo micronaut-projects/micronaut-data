@@ -81,6 +81,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
      */
     public static final int POSITION = 100;
 
+    private static final String JAVA_POSTPONE_EXCEPTION = "io.micronaut.annotation.processing.PostponeToNextRoundException";
     private static final String JSON_VIEW_ANNOTATION = "io.micronaut.data.annotation.JsonView";
     private static final String JSON_SUB_VIEW_ANNOTATION = "io.micronaut.data.annotation.JsonSubView";
     private static final String JSON_CREATOR_ANNOTATION = "com.fasterxml.jackson.annotation.JsonCreator";
@@ -381,8 +382,16 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
     }
 
     private static boolean isPostponement(RuntimeException e) {
-        // the Java processor's PostponeToNextRoundException is not on this module's classpath
-        return e instanceof ElementPostponedToNextRoundException || e.getClass().getSimpleName().equals("PostponeToNextRoundException");
+        if (e instanceof ElementPostponedToNextRoundException) {
+            return true;
+        }
+        // the Java processor's PostponeToNextRoundException is not on this module's classpath,
+        // so resolve it through the loader of the thrown exception
+        try {
+            return Class.forName(JAVA_POSTPONE_EXCEPTION, false, e.getClass().getClassLoader()).isInstance(e);
+        } catch (ClassNotFoundException | LinkageError _) {
+            return false;
+        }
     }
 
     private static boolean isJsonCreator(MethodElement element) {
