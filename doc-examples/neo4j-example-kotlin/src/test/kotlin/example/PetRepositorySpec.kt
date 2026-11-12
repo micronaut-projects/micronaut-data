@@ -36,4 +36,18 @@ class PetRepositorySpec : AbstractNeo4jTest() {
         assertEquals(4L, found["legs"])
         assertEquals(listOf("Dino"), inPatch.map { it.name })
     }
+
+    @Test
+    fun testDynamicRelationships() {
+        // tag::dynamicRelationships[]
+        val dino = Pet("Dino")
+        dino.related["PLAYS_WITH"] = listOf(Pet("Hoppy")) // <1>
+        petRepository.save(dino) // <2>
+
+        val found = petRepository.findById("Dino").get()
+        val playsWith = found.related["PLAYS_WITH"] // <3>
+        // end::dynamicRelationships[]
+
+        assertEquals(listOf("Hoppy"), playsWith!!.map { (it as Pet).name })
+    }
 }
