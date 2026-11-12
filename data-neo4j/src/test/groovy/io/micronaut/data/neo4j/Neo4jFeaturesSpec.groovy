@@ -24,12 +24,15 @@ import io.micronaut.data.neo4j.features.ReactiveMovieRepository
 import io.micronaut.data.neo4j.features.Player
 import io.micronaut.data.neo4j.features.Review
 import io.micronaut.data.neo4j.features.Seat
+import io.micronaut.data.neo4j.features.Shelf
+import io.micronaut.data.neo4j.features.ShelfRepository
 import io.micronaut.data.neo4j.features.Tag
 import io.micronaut.data.neo4j.features.TagRepository
 import io.micronaut.data.neo4j.features.Team
 import io.micronaut.data.neo4j.features.TeamRepository
 import io.micronaut.data.neo4j.features.Topic
 import io.micronaut.data.neo4j.features.TopicRepository
+import io.micronaut.data.neo4j.features.Volume
 import io.micronaut.data.neo4j.operations.Neo4jRepositoryOperations
 import io.micronaut.data.neo4j.tck.Neo4jMovieRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
@@ -51,6 +54,9 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
 
     @Inject
     EmployeeRepository employeeRepository
+
+    @Inject
+    ShelfRepository shelfRepository
 
     @Inject
     EngineerRepository engineerRepository
@@ -394,6 +400,18 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
 
         then:
         employeeRepository.findById("Bob").get().created == created
+    }
+
+    void "a new versioned related node with an assigned identifier is inserted"() {
+        given:
+        def volume = new Volume("v1", "978-1")
+
+        when:
+        shelfRepository.save(new Shelf(null, "Graphs", [volume]))
+
+        then:
+        volume.version == 0L
+        operations.executeQuery("MATCH (v:Volume) RETURN v.version AS version", [:])*.asMap()*.get('version') == [0L]
     }
 
     void "a collection property absent from the node stays null"() {
