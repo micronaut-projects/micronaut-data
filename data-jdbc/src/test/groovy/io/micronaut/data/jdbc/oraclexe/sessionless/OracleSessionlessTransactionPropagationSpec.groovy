@@ -331,10 +331,12 @@ class ExpenseReportService {
 
     @OracleTransactional(sessionless = OracleTransactional.Sessionless.SUSPEND, timeout = 3600)
     void emptyInitialStage() {
+        // starts and suspends a sessionless transaction without doing any work
     }
 
     @OracleTransactional(sessionless = OracleTransactional.Sessionless.RESUME_AND_SUSPEND)
     void emptyStage() {
+        // resumes and suspends a sessionless transaction without doing any work
     }
 
     @OracleTransactional(sessionless = OracleTransactional.Sessionless.RESUME_AND_SUSPEND)
