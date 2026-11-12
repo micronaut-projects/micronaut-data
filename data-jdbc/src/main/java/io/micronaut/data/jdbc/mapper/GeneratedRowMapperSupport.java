@@ -169,7 +169,7 @@ public final class GeneratedRowMapperSupport {
         Object v;
         try {
             v = rs.getObject(c, UUID.class);
-        } catch (SQLException | ClassCastException e) {
+        } catch (SQLException | ClassCastException _) {
             v = rs.getObject(c);
         }
         if (v == null || v instanceof UUID) {

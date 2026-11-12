@@ -245,7 +245,7 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
     private static SourceGenerator sourceGenerator(VisitorContext context) {
         try {
             return SourceGenerators.findByLanguage(context.getLanguage()).orElse(null);
-        } catch (NoClassDefFoundError e) {
+        } catch (NoClassDefFoundError _) {
             return null;
         }
     }
