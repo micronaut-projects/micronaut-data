@@ -22,6 +22,9 @@ dependencies {
     implementation projects.micronautDataSearchElasticsearch
     implementation mnSerde.micronaut.serde.jackson
     implementation mnKotlin.micronaut.kotlin.runtime
+    implementation(mn.kotlinx.coroutines.core)
+    implementation(mn.kotlinx.coroutines.reactive)
+    implementation(mn.kotlinx.coroutines.reactor)
 
     runtimeOnly mnLogging.logback.classic
 
