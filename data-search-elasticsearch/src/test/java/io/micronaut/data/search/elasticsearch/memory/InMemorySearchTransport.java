@@ -44,7 +44,13 @@ public class InMemorySearchTransport implements SearchTransport {
     final Map<String, String> createdIndexes = new LinkedHashMap<>();
     final List<String> bodies = new ArrayList<>();
     final List<DocumentSearchConfiguration.Refresh> refreshes = new ArrayList<>();
+    final List<String> refreshed = new ArrayList<>();
     final List<Integer> bulkSizes = new ArrayList<>();
+    /**
+     * When set, the next index creation fails with it, after creating the index when {@link #createRacing} is set.
+     */
+    RuntimeException createFailure;
+    boolean createRacing;
     private int generated;
 
     private Map<String, Map<String, Object>> documents(String index) {
@@ -56,6 +62,8 @@ public class InMemorySearchTransport implements SearchTransport {
         bodies.clear();
         refreshes.clear();
         bulkSizes.clear();
+        createFailure = null;
+        createRacing = false;
         generated = 0;
     }
 
@@ -130,6 +138,26 @@ public class InMemorySearchTransport implements SearchTransport {
 
     @Override
     public void createIndex(String index, String body) {
+        RuntimeException failure = createFailure;
+        if (failure != null) {
+            createFailure = null;
+            if (createRacing) {
+                // another caller created the index first, which the store reports as an index that exists
+                createdIndexes.put(index, body);
+            }
+            throw failure;
+        }
         createdIndexes.put(index, body);
+    }
+
+    @Override
+    public void deleteIndex(String index) {
+        createdIndexes.remove(index);
+        indexes.remove(index);
+    }
+
+    @Override
+    public void refresh(String index) {
+        refreshed.add(index);
     }
 }
