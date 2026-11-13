@@ -66,6 +66,16 @@ public @interface MongoSearchIndex {
     String MEMBER_DYNAMIC = "dynamic";
 
     /**
+     * The vector index member.
+     */
+    String MEMBER_VECTOR_INDEX = "vectorIndex";
+
+    /**
+     * The similarity member.
+     */
+    String MEMBER_SIMILARITY = "similarity";
+
+    /**
      * @return The name of the search index, {@code default} unless set
      */
     String name() default "default";
@@ -80,4 +90,46 @@ public @interface MongoSearchIndex {
      * @return Whether the index maps every field dynamically in addition to the search fields
      */
     boolean dynamic() default false;
+
+    /**
+     * @return The name of the vector search index created for the {@link io.micronaut.data.model.vector.Vector}
+     * properties of the entity and searched with {@code $vectorSearch}, {@code vector} unless set
+     */
+    String vectorIndex() default "vector";
+
+    /**
+     * @return The similarity of the vector search index, {@link Similarity#COSINE} unless set
+     */
+    Similarity similarity() default Similarity.COSINE;
+
+    /**
+     * The similarity functions of a MongoDB vector search index.
+     */
+    enum Similarity {
+        /**
+         * Cosine similarity, {@code cosine}.
+         */
+        COSINE("cosine"),
+        /**
+         * Euclidean distance, {@code euclidean}.
+         */
+        EUCLIDEAN("euclidean"),
+        /**
+         * Dot product, {@code dotProduct}, for vectors normalized to unit length.
+         */
+        DOT_PRODUCT("dotProduct");
+
+        private final String indexValue;
+
+        Similarity(String indexValue) {
+            this.indexValue = indexValue;
+        }
+
+        /**
+         * @return The value of the {@code similarity} option of the index definition
+         */
+        public String indexValue() {
+            return indexValue;
+        }
+    }
 }

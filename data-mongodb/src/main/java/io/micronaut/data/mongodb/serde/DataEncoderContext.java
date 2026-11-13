@@ -95,72 +95,87 @@ final class DataEncoderContext implements Serializer.EncoderContext {
     @Override
     public <T, D extends Serializer<? extends T>> D findCustomSerializer(Class<? extends D> serializerClass) throws SerdeException {
         if (serializerClass == IdSerializer.class) {
-            IdSerializer idSerializer = new IdSerializer() {
-
-                @Override
-                public Serializer<Object> createSpecific(EncoderContext encoderContext, Argument<? extends Object> type) throws SerdeException {
-                    boolean isGeneratedObjectIdAsString = type.isAssignableFrom(String.class)
-                            && type.isAnnotationPresent(GeneratedValue.class);
-                    if (isGeneratedObjectIdAsString) {
-                        Serializer<? super ObjectId> objectIdSerializer = findSerializer(OBJECT_ID);
-                        return (encoder, encoderContext2, stringType, value) -> {
-                            String stringId = (String) value;
-                            if (ObjectId.isValid(stringId)) {
-                                objectIdSerializer.serialize(encoder, encoderContext2, OBJECT_ID, new ObjectId(stringId));
-                            } else {
-                                encoder.encodeString(stringId);
-                            }
-                        };
-                    }
-                    Serializer<? super Object> serializer = findSerializer(type);
-                    return serializer.createSpecific(encoderContext, type);
-                }
-
-                @Override
-                public void serialize(Encoder encoder, EncoderContext context, Argument<?> type, Object value) {
-                    throw new IllegalStateException("Create specific call is required!");
-                }
-            };
-            return (D) idSerializer;
+            return (D) idSerializer();
         }
         if (serializerClass == CustomConverterSerializer.class) {
-            CustomConverterSerializer customConverterSerializer = new CustomConverterSerializer() {
-                @Override
-                public Serializer<Object> createSpecific(EncoderContext encoderContext, Argument<?> type) throws SerdeException {
-                    Class<?> converterClass = type.getAnnotationMetadata().classValue(MappedProperty.class, "converter")
-                            .orElseThrow(IllegalStateException::new);
-                    Class<Object> converterPersistedType = type.getAnnotationMetadata().classValue(MappedProperty.class, "converterPersistedType")
-                            .orElseThrow(IllegalStateException::new);
-                    Argument<Object> convertedType = Argument.of(converterPersistedType);
-                    Serializer<? super Object> serializer = findSerializer(convertedType);
-                    AttributeConverter<Object, Object> converter = attributeConverterRegistry.getConverter(converterClass);
-                    return new Serializer<>() {
-
-                        @Override
-                        public void serialize(Encoder encoder, EncoderContext context, Argument<?> type, Object value) throws IOException {
-                            if (value == null) {
-                                encoder.encodeNull();
-                                return;
-                            }
-                            Object converted = converter.convertToPersistedValue(value, ConversionContext.of(type));
-                            if (converted == null) {
-                                encoder.encodeNull();
-                                return;
-                            }
-                            serializer.serialize(encoder, context, convertedType, converted);
-                        }
-
-                    };
-                }
-
-                @Override
-                public void serialize(Encoder encoder, EncoderContext context, Argument<?> type, Object value) {
-                    throw new IllegalStateException("Create specific call is required!");
-                }
-            };
-            return (D) customConverterSerializer;
+            return (D) customConverterSerializer();
         }
         return parent.findCustomSerializer(serializerClass);
+    }
+
+    /** Serializes a generated {@code String} id as an {@link ObjectId} when it is one. */
+    private IdSerializer idSerializer() {
+        return new IdSerializer() {
+
+            @Override
+            public Serializer<Object> createSpecific(EncoderContext encoderContext, Argument<? extends Object> type) throws SerdeException {
+                boolean isGeneratedObjectIdAsString = type.isAssignableFrom(String.class)
+                        && type.isAnnotationPresent(GeneratedValue.class);
+                if (isGeneratedObjectIdAsString) {
+                    Serializer<? super ObjectId> objectIdSerializer = findSerializer(OBJECT_ID);
+                    return (encoder, encoderContext2, stringType, value) -> {
+                        String stringId = (String) value;
+                        if (ObjectId.isValid(stringId)) {
+                            objectIdSerializer.serialize(encoder, encoderContext2, OBJECT_ID, new ObjectId(stringId));
+                        } else {
+                            encoder.encodeString(stringId);
+                        }
+                    };
+                }
+                Serializer<? super Object> serializer = findSerializer(type);
+                return serializer.createSpecific(encoderContext, type);
+            }
+
+            @Override
+            public void serialize(Encoder encoder, EncoderContext context, Argument<?> type, Object value) {
+                throw new IllegalStateException("Create specific call is required!");
+            }
+        };
+    }
+
+    /** Serializes a property through its {@link AttributeConverter}, by the persisted type the converter declares or the value it produces. */
+    private CustomConverterSerializer customConverterSerializer() {
+        return new CustomConverterSerializer() {
+            @Override
+            public Serializer<Object> createSpecific(EncoderContext encoderContext, Argument<?> type) throws SerdeException {
+                Class<?> converterClass = type.getAnnotationMetadata().classValue(MappedProperty.class, "converter")
+                        .orElseThrow(IllegalStateException::new);
+                Class<Object> converterPersistedType = type.getAnnotationMetadata().classValue(MappedProperty.class, "converterPersistedType")
+                        .orElseThrow(IllegalStateException::new);
+                Argument<Object> convertedType = Argument.of(converterPersistedType);
+                Serializer<? super Object> serializer = findSerializer(convertedType);
+                AttributeConverter<Object, Object> converter = attributeConverterRegistry.getConverter(converterClass);
+                return new Serializer<>() {
+
+                    @Override
+                    public void serialize(Encoder encoder, EncoderContext context, Argument<?> type, Object value) throws IOException {
+                        if (value == null) {
+                            encoder.encodeNull();
+                            return;
+                        }
+                        Object converted = converter.convertToPersistedValue(value, ConversionContext.of(type));
+                        if (converted == null) {
+                            encoder.encodeNull();
+                            return;
+                        }
+                        if (converterPersistedType == Object.class) {
+                            // the converter declares no persisted type: serialize what it produced, such as a vector's float[]
+                            Argument<Object> actualType = (Argument<Object>) Argument.of(converted.getClass());
+                            Serializer<? super Object> actual = context.findSerializer(actualType).createSpecific(context, actualType);
+                            actual.serialize(encoder, context, actualType, converted);
+                            return;
+                        }
+                        serializer.serialize(encoder, context, convertedType, converted);
+                    }
+
+                };
+            }
+
+            @Override
+            public void serialize(Encoder encoder, EncoderContext context, Argument<?> type, Object value) {
+                throw new IllegalStateException("Create specific call is required!");
+            }
+        };
     }
 
     @Override
