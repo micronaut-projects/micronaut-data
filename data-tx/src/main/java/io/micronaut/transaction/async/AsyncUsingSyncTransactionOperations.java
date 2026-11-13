@@ -23,8 +23,10 @@ import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.transaction.SynchronousTransactionManager;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionStatus;
+import io.micronaut.transaction.exceptions.OracleTransactionPriorityException;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
@@ -71,26 +73,57 @@ public final class AsyncUsingSyncTransactionOperations<C> implements AsyncTransa
         // Last step to complete the TX, we need to use `withState` to properly setup thread-locals for the TX manager
         result.whenComplete((o, throwable) -> {
             propagatedContext.propagate(() -> {
-                if (throwable == null) {
-                    try {
-                        synchronousTransactionManager.commit(status);
-                    } catch (Throwable e) {
-                        newResult.completeExceptionally(e);
-                        return null;
-                    }
-                    newResult.complete(o);
-                } else {
-                    try {
-                        synchronousTransactionManager.rollback(status);
-                    } catch (Throwable e) {
-                        // Ignore rethrow
-                    }
-                    newResult.completeExceptionally(throwable);
-                }
+                complete(definition, status, o, throwable, newResult);
                 return null;
             });
         });
         return newResult;
+    }
+
+    /**
+     * Completes the transaction once the work has completed, then completes the result returned to the caller.
+     *
+     * @param definition The transaction definition
+     * @param status     The transaction status
+     * @param value      The value of the work
+     * @param throwable  The failure of the work, or {@code null}
+     * @param newResult  The result returned to the caller
+     * @param <T>        The value type
+     */
+    // Sonar java:S1181 -- the returned result must complete whatever the transaction manager throws, errors included
+    @SuppressWarnings("java:S1181")
+    private <T extends @Nullable Object> void complete(TransactionDefinition definition,
+                                                       TransactionStatus<C> status,
+                                                       T value,
+                                                       @Nullable Throwable throwable,
+                                                       CompletableFuture<T> newResult) {
+        if (throwable != null && rollbackOn(definition, throwable)) {
+            try {
+                synchronousTransactionManager.rollback(status);
+            } catch (Throwable e) {
+                // Ignore rethrow
+            }
+            newResult.completeExceptionally(throwable);
+            return;
+        }
+        // Same as the synchronous transaction manager: an exception that doesn't trigger a rollback commits the work
+        try {
+            synchronousTransactionManager.commit(status);
+        } catch (Throwable e) {
+            newResult.completeExceptionally(e);
+            return;
+        }
+        if (throwable == null) {
+            newResult.complete(value);
+        } else {
+            newResult.completeExceptionally(throwable);
+        }
+    }
+
+    private static boolean rollbackOn(TransactionDefinition definition, Throwable throwable) {
+        // A dependent stage reports the failure wrapped in a CompletionException
+        Throwable failure = throwable instanceof CompletionException && throwable.getCause() != null ? throwable.getCause() : throwable;
+        return failure instanceof OracleTransactionPriorityException || definition.rollbackOn(failure);
     }
 
     private record DefaultAsyncTransactionStatus<T>(

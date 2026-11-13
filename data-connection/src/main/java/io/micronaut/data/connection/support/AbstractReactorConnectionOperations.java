@@ -46,6 +46,9 @@ import java.util.function.Supplier;
 @Internal
 public abstract class AbstractReactorConnectionOperations<C> implements ReactorConnectionOperations<C> {
 
+    // A scope that reuses a connection doesn't close it
+    private static final Supplier<Publisher<Void>> NO_CLOSE = Mono::empty;
+
     /**
      * Open a new connection.
      *
@@ -117,8 +120,18 @@ public abstract class AbstractReactorConnectionOperations<C> implements ReactorC
         });
     }
 
+    /**
+     * The synchronizations registered for a scope that reuses a connection run when the scope completes,
+     * as for a scope that opened the connection; the connection is closed by the scope that opened it.
+     */
     private <T> Flux<T> existingConnectionFlux(ConnectionDefinition definition, Function<ConnectionStatus<C>, Flux<T>> callback, ConnectionStatus<C> existing) {
-        return applyCallbackFlux(callback, new DefaultReactiveConnectionStatus<>(existing.getConnection(), definition, this, false, executorOf(existing)));
+        return Flux.usingWhen(
+            Mono.fromSupplier(() -> reusedConnectionStatus(definition, existing)),
+            connectionStatus -> applyCallbackFlux(callback, connectionStatus),
+            connectionStatus -> connectionStatus.onComplete(NO_CLOSE),
+            (connectionStatus, throwable) -> connectionStatus.onError(throwable, NO_CLOSE),
+            connectionStatus -> connectionStatus.onCancel(NO_CLOSE)
+        );
     }
 
     private <T> Flux<T> openConnectionFlux(ConnectionDefinition definition, Function<ConnectionStatus<C>, Flux<T>> callback) {
@@ -152,8 +165,22 @@ public abstract class AbstractReactorConnectionOperations<C> implements ReactorC
         });
     }
 
+    /**
+     * The synchronizations registered for a scope that reuses a connection run when the scope completes,
+     * as for a scope that opened the connection; the connection is closed by the scope that opened it.
+     */
     private <T> Mono<T> existingConnectionMono(ConnectionDefinition definition, Function<ConnectionStatus<C>, Mono<T>> callback, ConnectionStatus<C> existing) {
-        return applyCallbackMono(callback, new DefaultReactiveConnectionStatus<>(existing.getConnection(), definition, this, false, executorOf(existing)));
+        return Mono.usingWhen(
+            Mono.fromSupplier(() -> reusedConnectionStatus(definition, existing)),
+            connectionStatus -> applyCallbackMono(callback, connectionStatus),
+            connectionStatus -> connectionStatus.onComplete(NO_CLOSE),
+            (connectionStatus, throwable) -> connectionStatus.onError(throwable, NO_CLOSE),
+            connectionStatus -> connectionStatus.onCancel(NO_CLOSE)
+        );
+    }
+
+    private DefaultReactiveConnectionStatus<C> reusedConnectionStatus(ConnectionDefinition definition, ConnectionStatus<C> existing) {
+        return new DefaultReactiveConnectionStatus<>(existing.getConnection(), definition, this, false, executorOf(existing));
     }
 
     private <T> Mono<T> openConnectionMono(ConnectionDefinition definition, Function<ConnectionStatus<C>, Mono<T>> callback) {
