@@ -17,6 +17,11 @@ import io.micronaut.data.model.search.TextSearchSupport
 import io.micronaut.data.runtime.intercept.criteria.SearchQuerySupport
 import io.micronaut.data.model.vector.search.SearchResults
 import jakarta.persistence.criteria.Expression
+import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.search.SearchCapability
+import io.micronaut.data.model.search.SearchQuery
+import io.micronaut.data.model.search.UnsupportedSearchFeatureException
+import io.micronaut.data.runtime.intercept.criteria.SearchQuerySupport
 import spock.lang.Specification
 
 /**
@@ -79,6 +84,71 @@ class TextSearchCriteriaSpec extends Specification {
 
         then:
         result.query.contains('CTX_DOC.POLICY_SNIPPET(\'MN_SEARCH_POLICY\',JSON_VALUE(search_json_article_.DATA,\'$.title\' RETURNING CLOB),?,starttag => \'<em>\',endtag => \'</em>\') AS mn_hl_title')
+    }
+
+    void "a language override replaces the entity language of a PostgreSQL query and is rejected on Oracle"() {
+        given:
+        def searchQuery = SearchQuery.builder("coffee").language("simple").highlight("title").build()
+
+        when:
+        def postgres = ((PersistentEntityCriteriaQueryBuilder) SearchQuerySupport.textQuery(cb, SearchArticle as Class<Object>, searchQuery, Pageable.UNPAGED))
+                .build(AnnotationMetadata.EMPTY_METADATA, new SqlQueryBuilder(Dialect.POSTGRES))
+
+        then:
+        postgres.query.contains("to_tsvector('simple',coalesce(search_article_.\"title\",''))")
+        postgres.query.contains("to_tsquery('simple',?)")
+        postgres.query.contains("ts_headline('simple',search_article_.\"title\",to_tsquery('simple',?)")
+        !postgres.query.contains("'english'")
+
+        when:
+        ((PersistentEntityCriteriaQueryBuilder) SearchQuerySupport.textQuery(cb, SearchArticle as Class<Object>, searchQuery, Pageable.UNPAGED))
+                .build(AnnotationMetadata.EMPTY_METADATA, new SqlQueryBuilder(Dialect.ORACLE))
+
+        then:
+        def e = thrown(UnsupportedSearchFeatureException)
+        e.capability == SearchCapability.LANGUAGE_OVERRIDE
+    }
+
+    private String postgresQuery(SearchQuery searchQuery) {
+        return ((PersistentEntityCriteriaQueryBuilder) SearchQuerySupport.textQuery(cb, SearchLanguageArticle as Class<Object>, searchQuery, Pageable.UNPAGED))
+                .build(AnnotationMetadata.EMPTY_METADATA, new SqlQueryBuilder(Dialect.POSTGRES)).query
+    }
+
+    void "a PostgreSQL language override also replaces the @Language column of the rows"() {
+        when: "the entity language is the fallback of the row's configuration"
+        def entityLanguage = postgresQuery(SearchQuery.of("bakers"))
+
+        then:
+        entityLanguage.contains("WHERE (to_tsvector(coalesce(search_language_article_.\"lang\",'english')::regconfig,search_language_article_.\"title\") @@ to_tsquery('english',?))")
+
+        when: "an override analyses the rows with the configuration of the query terms"
+        def overridden = postgresQuery(SearchQuery.builder("bakers").language("simple").build())
+
+        then:
+        !overridden.contains("coalesce(search_language_article_.\"lang\"")
+        overridden.contains("ts_rank_cd(to_tsvector('simple',search_language_article_.\"title\"),to_tsquery('simple',?))")
+        overridden.contains("WHERE (to_tsvector('simple',search_language_article_.\"title\") @@ to_tsquery('simple',?))")
+    }
+
+    void "a PostgreSQL fuzzy match rejects a language override, as trigrams have no configuration"() {
+        when:
+        postgresQuery(SearchQuery.builder("bakrs").fuzzy().language("simple").build())
+
+        then:
+        def e = thrown(UnsupportedSearchFeatureException)
+        e.capability == SearchCapability.LANGUAGE_OVERRIDE
+        e.message.contains("pg_trgm")
+
+        when: "the score alone, as a criteria query may project it"
+        def query = cb.createQuery(SearchResults)
+        def from = query.from(SearchLanguageArticle)
+        query.multiselect(from, cb.searchScore([from.get("title")], cb.parameter(String, null, "bakrs"), MatchMode.FUZZY,
+                TextMatchOptions.builder().language("simple").build()).alias(TextSearchSupport.SCORE_ALIAS))
+        ((PersistentEntityCriteriaQueryBuilder) query).build(AnnotationMetadata.EMPTY_METADATA, new SqlQueryBuilder(Dialect.POSTGRES))
+
+        then:
+        def scoreError = thrown(UnsupportedSearchFeatureException)
+        scoreError.capability == SearchCapability.LANGUAGE_OVERRIDE
     }
 
     void "unsupported dialects reject the highlight function"() {

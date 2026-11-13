@@ -51,7 +51,10 @@ public enum SearchCapability {
      */
     HIGHLIGHT,
     /**
-     * A per-row language override through {@code @Language}.
+     * A query-time language: {@link SearchQuery.Builder#language(String)} analyses the search string with
+     * another language than the entity's. The per-row {@code @Language} property is separate: PostgreSQL
+     * and MongoDB {@code $text} read it and the other stores ignore it, whether or not they report this
+     * capability.
      */
     LANGUAGE_OVERRIDE,
     /**
