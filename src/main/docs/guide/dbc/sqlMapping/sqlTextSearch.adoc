@@ -1,6 +1,6 @@
 Micronaut Data can run full-text searches through repositories: an entity declares which properties are searchable, and repository methods search them and return hits ordered by relevance. The API is the same for every supported store; this section describes the PostgreSQL implementation, which uses the built-in `tsvector` and `tsquery` types.
 
-NOTE: Full-text search is experimental. PostgreSQL and Oracle are supported for JDBC and R2DBC, and MongoDB has its own <<mongoTextSearch, section>>.
+NOTE: Full-text search is experimental. PostgreSQL and Oracle are supported for JDBC and R2DBC, and MongoDB (`$text` and MongoDB Search) has its own <<mongoTextSearch, section>>.
 
 == Mapping searchable entities
 
@@ -41,7 +41,7 @@ snippet::example.BookRepository[project-base="doc-examples/jdbc-search-example",
 <4> `SearchPhrase` requires the terms to be adjacent and in order.
 <5> `SearchPrefix` matches every term as a prefix, for search-as-you-type. Each word of a quoted phrase is a prefix too, so the phrase being typed, `"micronaut da`, already finds `micronaut data`.
 <6> Search keywords combine with any other predicate.
-<7> A trailing api:data.model.vector.search.Score[] parameter after the predicate parameters keeps only the hits whose relevance score is at least its value, as a restriction rendered by the store (`ts_rank_cd(...) >= ?` on PostgreSQL, `SCORE(n) >= ?` on Oracle, `min_score` on Elasticsearch and OpenSearch); MongoDB `$text` cannot restrict on the score.
+<7> A trailing api:data.model.vector.search.Score[] parameter after the predicate parameters keeps only the hits whose relevance score is at least its value, as a restriction rendered by the store (`ts_rank_cd(...) >= ?` on PostgreSQL, `SCORE(n) >= ?` on Oracle, `min_score` on Elasticsearch and OpenSearch, a `$match` on the `searchScore` with MongoDB Search); MongoDB `$text` cannot restrict on the score.
 
 |===
 |Keyword |Meaning |PostgreSQL query
@@ -84,7 +84,7 @@ A property declared `@SearchField(highlightable = true)` is highlighted by defau
 
 Every store returns at most one fragment per property, but its length follows the store: PostgreSQL uses the `ts_headline` defaults (between 15 and 35 words), Oracle the `CTX_DOC.POLICY_SNIPPET` default snippet length, and Elasticsearch and OpenSearch request `number_of_fragments: 1` with a `fragment_size` of 100 characters, so the fragment is the best-scoring passage of about 100 characters rather than the store default of up to five. A matched term outside that passage is not shown, and a fragment can start or end mid-sentence.
 
-The tags are the same on every store, so a client can render them without knowing the backend. A fragment is document text with the tags inserted and is not HTML-escaped, so it carries any markup stored in the document; before putting fragments into an HTML page, use `SearchResult.escapedHighlights()`, which escapes the text and keeps only the `<em>` and `</em>` tags. PostgreSQL renders `ts_headline`, Oracle `CTX_DOC.POLICY_SNIPPET`, and the document stores the `highlight` request clause. MongoDB `$text` cannot highlight and throws api:data.model.search.UnsupportedSearchFeatureException[]. The criteria API exposes the same projection as `PersistentEntityCriteriaBuilder.searchHighlight(field, query, MatchMode)`.
+The tags are the same on every store, so a client can render them without knowing the backend. A fragment is document text with the tags inserted and is not HTML-escaped, so it carries any markup stored in the document; before putting fragments into an HTML page, use `SearchResult.escapedHighlights()`, which escapes the text and keeps only the `<em>` and `</em>` tags. PostgreSQL renders `ts_headline`, Oracle `CTX_DOC.POLICY_SNIPPET`, the document stores the `highlight` request clause, and MongoDB Search the `highlight` option of `$search` with the `searchHighlights` metadata. MongoDB `$text` cannot highlight and throws api:data.model.search.UnsupportedSearchFeatureException[]. The criteria API exposes the same projection as `PersistentEntityCriteriaBuilder.searchHighlight(field, query, MatchMode)`.
 
 == Hybrid search
 
@@ -135,20 +135,20 @@ The criteria builder exposes the same predicate through `PersistentEntityCriteri
 The portable API is the same on every store; the table lists which optional capabilities each store honours. A capability a store lacks fails at compile time for a derived method and throws api:data.model.search.UnsupportedSearchFeatureException[] from `search(SearchQuery)`.
 
 |===
-|Capability |PostgreSQL |Oracle |MongoDB `$text` |Elasticsearch / OpenSearch
+|Capability |PostgreSQL |Oracle |MongoDB `$text` |MongoDB Search |Elasticsearch / OpenSearch
 
-|Any, all and negated terms, relevance order |yes |yes |yes |yes
-|Phrase (`SearchPhrase`) |yes |yes |yes |yes
-|Prefix (`SearchPrefix`) |yes |yes |no |yes
-|Fuzzy (`SearchFuzzy`) |no |yes |no |yes
-|Field scope (`findByTitleSearch` searches only `title`) |yes |yes |no, the whole text index |yes
-|`SearchAll` over several fields matches terms spread across them |yes |no, every term in one field |yes |yes
-|Index-time weights (`@SearchField(weight)`) |yes |yes |yes |yes
-|Query-time boosts (`SearchQuery.boost`) |no |no |no |no, planned
-|Highlighting |yes |yes |no |yes
-|Vector search and hybrid search |yes, pgvector |yes, 23ai |no |yes, `knn`
-|Reactive and async repositories |yes |yes |yes |yes
-|Minimum score (`Score` parameter) |yes |yes |no |yes
-|Per-row language (`@Language`) |yes |no |yes |no
+|Any, all and negated terms, relevance order |yes |yes |yes |yes |yes
+|Phrase (`SearchPhrase`) |yes |yes |yes |yes |yes
+|Prefix (`SearchPrefix`) |yes |yes |no |yes |yes
+|Fuzzy (`SearchFuzzy`) |no |yes |no |yes |yes
+|Field scope (`findByTitleSearch` searches only `title`) |yes |yes |no, the whole text index |yes |yes
+|`SearchAll` over several fields matches terms spread across them |yes |no, every term in one field |yes |yes |yes
+|Index-time weights (`@SearchField(weight)`) |yes |yes |yes |yes, as boosts |yes
+|Query-time boosts (`SearchQuery.boost`) |no |no |no |no |no, planned
+|Highlighting |yes |yes |no |yes |yes
+|Vector search and hybrid search |yes, pgvector |yes, 23ai |no |no, planned |yes, `knn`
+|Reactive and async repositories |yes |yes |yes |yes |yes
+|Minimum score (`Score` parameter) |yes |yes |no |yes |yes
+|Per-row language (`@Language`) |yes |no |yes |no |no
 |===
 

@@ -30,6 +30,7 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.document.model.query.builder.MongoQueryBuilder;
+import io.micronaut.data.model.search.MatchMode;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.PersistentPropertyPath;
@@ -68,6 +69,7 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -390,6 +392,29 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
         throw new IllegalStateException("Unrecognized value: " + value);
     }
 
+    /**
+     * Renders the MongoDB Search operator of a search predicate from the bound search string.
+     *
+     * @param placeholder The placeholder document carrying the mode, the paths and the boosts
+     * @param value The bound search string
+     * @return The operator
+     */
+    private static BsonDocument searchOperator(BsonDocument placeholder, @Nullable Object value) {
+        MatchMode mode = MatchMode.valueOf(placeholder.getString(MongoQueryBuilder.SEARCH_OPERATOR_PLACEHOLDER).getValue());
+        List<String> paths = placeholder.getArray(MongoQueryBuilder.SEARCH_PATHS).stream()
+            .map(path -> path.asString().getValue())
+            .toList();
+        Map<String, Number> boosts = new LinkedHashMap<>();
+        BsonDocument boostsDocument = placeholder.getDocument(MongoQueryBuilder.SEARCH_BOOSTS, null);
+        if (boostsDocument != null) {
+            for (Map.Entry<String, BsonValue> boost : boostsDocument.entrySet()) {
+                BsonValue number = boost.getValue();
+                boosts.put(boost.getKey(), number.isInt32() ? number.asInt32().getValue() : number.asNumber().doubleValue());
+            }
+        }
+        return MongoSearchOperators.render(value == null ? null : value.toString(), mode, paths, boosts);
+    }
+
     private List<Bson> replaceQueryParametersInList(List<Bson> values, @Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {
         values = new ArrayList<>(values);
         for (int i = 0; i < values.size(); i++) {
@@ -467,6 +492,9 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                 Map.Entry<QueryParameterBinding, Object> e = bind(queryParameterBinding, invocationContext, entity);
                 if (e == null) {
                     throw new DataAccessException("Cannot bind a value at index: " + index);
+                }
+                if (bsonDocument.containsKey(MongoQueryBuilder.SEARCH_OPERATOR_PLACEHOLDER)) {
+                    return searchOperator(bsonDocument, e.getValue());
                 }
                 BsonValue bsonValue = getValue(e.getKey(), e.getValue());
                 if (bsonDocument.containsKey(MongoQueryBuilder.NEGATE)) {

@@ -36,6 +36,7 @@ public interface MongoAnnotations {
     String SORT = "io.micronaut.data.mongodb.annotation.MongoSort";
     String PROJECTION = "io.micronaut.data.mongodb.annotation.MongoProjection";
     String COLLATION = "io.micronaut.data.mongodb.annotation.MongoCollation";
+    String SEARCH_INDEX = "io.micronaut.data.mongodb.annotation.MongoSearchIndex";
 
     String FILTER_ROLE = "filter";
     String PIPELINE_ROLE = "pipeline";
