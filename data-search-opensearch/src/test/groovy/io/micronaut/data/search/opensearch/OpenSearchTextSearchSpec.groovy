@@ -35,4 +35,9 @@ class OpenSearchTextSearchSpec extends AbstractTextSearchSpec implements TestPro
     Set<SearchCapability> capabilities() {
         return EnumSet.of(SearchCapability.LANGUAGE_OVERRIDE, SearchCapability.PHRASE, SearchCapability.PREFIX, SearchCapability.FUZZY, SearchCapability.FIELD_SCOPE, SearchCapability.BOOST, SearchCapability.HIGHLIGHT, SearchCapability.MIN_SCORE, SearchCapability.VECTOR, SearchCapability.HYBRID, SearchCapability.FUZZINESS)
     }
+
+    @Override
+    String nativeProgrammingWithoutKotlinQuery() {
+        return "programming AND NOT kotlin"
+    }
 }

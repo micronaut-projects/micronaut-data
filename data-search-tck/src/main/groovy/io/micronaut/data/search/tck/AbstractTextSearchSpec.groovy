@@ -22,6 +22,7 @@ import io.micronaut.data.model.Sort
 import io.micronaut.data.model.search.MatchMode
 import io.micronaut.data.model.search.SearchCapability
 import io.micronaut.data.model.search.SearchQuery
+import io.micronaut.data.model.search.SearchSyntax
 import io.micronaut.data.model.search.UnsupportedSearchFeatureException
 import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.model.vector.search.Score
@@ -102,6 +103,15 @@ abstract class AbstractTextSearchSpec extends Specification {
     @Nullable
     String noStemmingQueryLanguage() {
         return noStemmingLanguage()
+    }
+
+    /**
+     * @return A query in the backend's own syntax matching the books about programming other than the Kotlin
+     * one, or {@code null} when the backend has no native syntax to test
+     */
+    @Nullable
+    String nativeProgrammingWithoutKotlinQuery() {
+        return null
     }
 
     /**
@@ -377,6 +387,15 @@ abstract class AbstractTextSearchSpec extends Specification {
         rejects(SearchQuery.builder("programming").language(noStemmingQueryLanguage() ?: "simple").build()) == !capabilities().contains(SearchCapability.LANGUAGE_OVERRIDE)
     }
 
+    void "the native syntax passes the query string to the store unparsed"() {
+        assumeTrue(nativeProgrammingWithoutKotlinQuery() != null)
+
+        expect:
+        bookSearchRepository.findByTitleSearchNative(nativeProgrammingWithoutKotlinQuery())*.title == ["The Rust Programming Language"]
+        bookSearchRepository.search(SearchQuery.builder(nativeProgrammingWithoutKotlinQuery()).syntax(SearchSyntax.NATIVE).build()).results()*.entity()*.title == ["The Rust Programming Language"]
+        SearchQuery.builder("x").syntax(SearchSyntax.NATIVE).build().mode == MatchMode.NATIVE
+    }
+
     void "a language override selects the stemming of the query"() {
         assumeTrue(capabilities().contains(SearchCapability.LANGUAGE_OVERRIDE) && supportsStemming() && noStemmingQueryLanguage() != null)
 
@@ -406,6 +425,20 @@ abstract class AbstractTextSearchSpec extends Specification {
 
         then:
         // 'Programming Kotlin' matches in the title only, so its score grows with the title boost
+        def kotlinBoosted = boosted.results().find { it.entity().title == "Programming Kotlin" }
+        def kotlinPlain = plain.results().find { it.entity().title == "Programming Kotlin" }
+        kotlinBoosted.score().value() > kotlinPlain.score().value()
+        boosted.results().size() == 2
+    }
+
+    void "query-time boosts weigh a field's matches with the native syntax"() {
+        assumeTrue(capabilities().contains(SearchCapability.BOOST) && nativeProgrammingWithoutKotlinQuery() != null)
+
+        when: "a one-word native query, valid in every store's syntax, boosts the title far above the description"
+        def boosted = bookSearchRepository.search(SearchQuery.builder("programming").syntax(SearchSyntax.NATIVE).boost("title", 10).boost("description", 1).build())
+        def plain = bookSearchRepository.search(SearchQuery.builder("programming").syntax(SearchSyntax.NATIVE).boost("title", 1).boost("description", 1).build())
+
+        then:
         def kotlinBoosted = boosted.results().find { it.entity().title == "Programming Kotlin" }
         def kotlinPlain = plain.results().find { it.entity().title == "Programming Kotlin" }
         kotlinBoosted.score().value() > kotlinPlain.score().value()

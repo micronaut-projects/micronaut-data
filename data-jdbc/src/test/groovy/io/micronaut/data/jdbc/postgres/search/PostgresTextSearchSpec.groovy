@@ -28,6 +28,11 @@ class PostgresTextSearchSpec extends AbstractTextSearchSpec implements PostgresT
         return [getClass().package.name, "io.micronaut.data.search.tck.entities"]
     }
 
+    @Override
+    String nativeProgrammingWithoutKotlinQuery() {
+        return "programming & !kotlin"
+    }
+
     void "a language override also analyses rows that hold their own language"() {
         given:
         def stemmed = newBook("Bakers Dozen", "Twelve loaves", "Miller", 90)

@@ -62,4 +62,9 @@ class MongoTextSearchSpec extends AbstractTextSearchSpec implements MongoTestPro
         bookSearchRepository.searchByTitleSearchAll("programming languages").results().isEmpty()
         bookSearchRepository.search("languages").results()*.entity()*.title == ["The Rust Programming Language"]
     }
+
+    @Override
+    String nativeProgrammingWithoutKotlinQuery() {
+        return "programming -kotlin"
+    }
 }

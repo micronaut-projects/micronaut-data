@@ -8,6 +8,7 @@ import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.runtime.convert.OracleTextQueryConverter
 import io.micronaut.data.model.runtime.convert.PostgresTsQueryConverter
+import io.micronaut.data.model.search.MatchMode
 import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.model.vector.search.Score
 import io.micronaut.data.processor.visitors.AbstractDataSpec
@@ -724,6 +725,32 @@ interface PostRepository extends CrudRepository<Post, Long> {
 
         expect:
         getQuery(repository.getRequiredMethod("searchBySearch", String)).contains("to_tsvector(coalesce(post_.\"lang\",'german')::regconfig,post_.\"title\") @@ to_tsquery('german',?)")
+    }
+
+    void "the SearchNative keyword binds the query string unparsed"() {
+        given:
+        def repository = articleRepository("""
+    List<Article> findByTitleSearchNative(String query);
+    List<Article> findBySearchNative(String query);
+""")
+        def titled = repository.getRequiredMethod("findByTitleSearchNative", String)
+        def all = repository.getRequiredMethod("findBySearchNative", String)
+
+        expect:
+        getQuery(titled).contains("to_tsquery('english',?)")
+        converters(titled) == [PostgresTsQueryConverter.Native.name]
+        converters(all) == [PostgresTsQueryConverter.Native.name]
+        PostgresTsQueryConverter.render("programming & !kotlin", MatchMode.NATIVE) == "programming & !kotlin"
+        OracleTextQueryConverter.render("programming NOT kotlin", MatchMode.NATIVE, OracleTextQueryConverter.Part.FULL) == "programming NOT kotlin"
+
+        when:
+        def oracle = articleRepository("""
+    List<Article> findBySearchNative(String query);
+""", "ORACLE")
+
+        then:
+        getQuery(oracle.getRequiredMethod("findBySearchNative", String)) == 'SELECT article_."ID",article_."TITLE",article_."BODY",article_."AUTHOR" FROM "ARTICLE" article_ WHERE ((CONTAINS(article_."TITLE",?,1) > 0 OR CONTAINS(article_."BODY",?,2) > 0))'
+        converters(oracle.getRequiredMethod("findBySearchNative", String)) == [OracleTextQueryConverter.Native.name, OracleTextQueryConverter.Native.name]
     }
 
     void "a derived hybrid finder records its fields and vector property and runs through the search query interceptor"() {

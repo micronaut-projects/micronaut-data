@@ -34,6 +34,8 @@ The query sets `$language` to the entity's language, which is also the text inde
 
 A api:data.model.search.SearchQuery[] passed to `search(SearchQuery)` runs the same `$text` aggregation at runtime, as described in the <<sqlTextSearch, SQL full-text search section>>; as `$text` always searches the whole index, a query whose `fields` name only some of the search fields fails when the method runs with an api:data.model.search.UnsupportedSearchFeatureException[] for `FIELD_SCOPE` rather than silently searching every field. The `PREFIX` and `FUZZY` modes also fail when the method runs.
 
+The `SearchNative` keyword and `SearchQuery.syntax(SearchSyntax.NATIVE)` bind the string as the `$search` string of `$text` unchanged, so MongoDB's own rules apply (`programming -kotlin`); as `$text` searches the whole text index, the native string reaches no field the other modes do not.
+
 == MongoDB Search
 
 Annotating a searchable entity with ann:data.mongodb.annotation.MongoSearchIndex[] switches the entity's search from `$text` to a `$search` aggregation stage over the search fields, which adds field scoping, prefix and fuzzy matching, highlighting and minimum score restrictions:
@@ -57,6 +59,8 @@ snippet::example.ArticleRepository[project-base="doc-examples/mongo-search-examp
 <6> A vector finder renders a `$vectorSearch` stage, see <<mongoVectorSearch, below>>.
 
 The search string grammar is rendered into `compound` operators at bind time: every term becomes a `text` operator over the searched paths, a quoted phrase a `phrase` operator, a negated term a `mustNot` clause, and `OR` groups `should` clauses. `SearchAll` puts the terms in `must`, so every one is required.
+
+With `SearchNative` or `SearchQuery.syntax(SearchSyntax.NATIVE)` the string is passed unparsed to one `queryString` operator per searched path, with that path as its `defaultPath` and the path's boost as its `score.boost`, and a document matching any of them matches. `queryString` accepts `field:value`, which reaches any path of the search index, including the fields `@MongoSearchIndex(dynamic = true)` maps, as well as wildcard, regular expression and range syntax, so pass only trusted input, as described in the <<sqlTextSearch, SQL full-text search section>>. Because each path is queried on its own, an exclusion such as `programming AND NOT kotlin` only excludes documents with both words in the same field.
 
 `search(SearchQuery)` honours the `fields`, `mode`, `highlight` and `minScore` options. Highlights are read from the `searchHighlights` metadata and returned as one fragment per field with the hits wrapped in `<em>` tags, like the other stores. The relevance score is the `searchScore`.
 

@@ -18,6 +18,18 @@ class MongoSearchOperatorsSpec extends Specification {
         render('"ken burns" tea', MatchMode.ANY) == '{"compound": {"should": [{"phrase": {"query": "ken burns", "path": ["title", "body"]}}, {"text": {"query": "tea", "path": ["title", "body"]}}], "minimumShouldMatch": 1}}'
     }
 
+    void "a native query string searches every path"() {
+        expect:
+        render("coffee AND NOT cake", MatchMode.NATIVE, ["title"]) == '{"queryString": {"defaultPath": "title", "query": "coffee AND NOT cake"}}'
+        render("coffee", MatchMode.NATIVE) == '{"compound": {"should": [{"queryString": {"defaultPath": "title", "query": "coffee"}}, {"queryString": {"defaultPath": "body", "query": "coffee"}}], "minimumShouldMatch": 1}}'
+    }
+
+    void "a native query string carries the boost of each path"() {
+        expect:
+        render("coffee", MatchMode.NATIVE, ["title", "body"], [title: 10, body: 2.5d]) == '{"compound": {"should": [{"queryString": {"defaultPath": "title", "query": "coffee", "score": {"boost": {"value": 10.0}}}}, {"queryString": {"defaultPath": "body", "query": "coffee", "score": {"boost": {"value": 2.5}}}}], "minimumShouldMatch": 1}}'
+        render("coffee", MatchMode.NATIVE, ["title"], [title: 1]) == '{"queryString": {"defaultPath": "title", "query": "coffee"}}'
+    }
+
     void "all-terms queries become must clauses"() {
         expect:
         render("coffee tea", MatchMode.ALL) == '{"compound": {"must": [{"text": {"query": "coffee", "path": ["title", "body"]}}, {"text": {"query": "tea", "path": ["title", "body"]}}]}}'

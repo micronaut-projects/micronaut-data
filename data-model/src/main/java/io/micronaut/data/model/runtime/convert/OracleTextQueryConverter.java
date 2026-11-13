@@ -92,7 +92,52 @@ public abstract class OracleTextQueryConverter implements TextSearchQueryConvert
             case PHRASE -> positive ? PhrasePositive.class.getName() : Phrase.class.getName();
             case PREFIX -> positive ? PrefixPositive.class.getName() : Prefix.class.getName();
             case FUZZY -> positive ? FuzzyPositive.class.getName() : Fuzzy.class.getName();
+            case NATIVE -> Native.class.getName();
         };
+    }
+
+    /**
+     * Checks that a native {@code CONTAINS} query closes every parenthesis and escape it opens. The query of a
+     * JSON entity is bound into {@code '(' || ? || ') INPATH (/path)'}, so an unbalanced query such as
+     * {@code x) INPATH (/other) OR (y} would move the search to another path; parentheses inside a
+     * {@code {...}} escape or after a {@code \} are literal and not counted.
+     *
+     * @param query The native query
+     * @return The query
+     * @throws IllegalArgumentException When a parenthesis, a brace escape or a backslash escape is left open
+     */
+    static String checkNativeStructure(String query) {
+        int depth = 0;
+        boolean braced = false;
+        int i = 0;
+        while (i < query.length()) {
+            char c = query.charAt(i);
+            if (c == '\\') {
+                // the next character is literal
+                i++;
+                if (i == query.length()) {
+                    throw unbalanced(query);
+                }
+            } else if (braced) {
+                braced = c != '}';
+            } else if (c == '{') {
+                braced = true;
+            } else if (c == '(' || c == ')') {
+                depth += c == '(' ? 1 : -1;
+                if (depth < 0) {
+                    throw unbalanced(query);
+                }
+            }
+            i++;
+        }
+        if (depth != 0 || braced) {
+            throw unbalanced(query);
+        }
+        return query;
+    }
+
+    private static IllegalArgumentException unbalanced(String query) {
+        return new IllegalArgumentException("A native Oracle Text query must close every parenthesis, brace escape and backslash escape it opens: " + query);
     }
 
     /**
@@ -106,6 +151,10 @@ public abstract class OracleTextQueryConverter implements TextSearchQueryConvert
     public static String render(@Nullable String query, MatchMode mode, Part part) {
         if (query == null) {
             return MATCH_NOTHING;
+        }
+        if (mode == MatchMode.NATIVE) {
+            // the caller wrote CONTAINS query syntax
+            return query.isBlank() ? MATCH_NOTHING : checkNativeStructure(query);
         }
         if (mode == MatchMode.PHRASE) {
             if (part == Part.NEGATED) {
@@ -391,7 +440,23 @@ public abstract class OracleTextQueryConverter implements TextSearchQueryConvert
     }
 
     /**
-     * Negated terms converter.
+     * {@link MatchMode#NATIVE} converter: the string is {@code CONTAINS} query syntax already.
+     */
+    @Singleton
+    public static final class Native extends OracleTextQueryConverter {
+        @Override
+        protected MatchMode mode() {
+            return MatchMode.NATIVE;
+        }
+
+        @Override
+        protected Part part() {
+            return Part.FULL;
+        }
+    }
+
+    /**
+     * The negated terms of a multi-field search, see {@link Part#NEGATED}.
      */
     @Singleton
     public static final class Negated extends OracleTextQueryConverter {

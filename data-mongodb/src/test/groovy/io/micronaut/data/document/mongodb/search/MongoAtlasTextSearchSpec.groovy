@@ -65,4 +65,9 @@ class MongoAtlasTextSearchSpec extends AbstractTextSearchSpec implements MongoAt
         coffee*.entity()*.title == ["Cooking with Coffee"]
         coffee[0].score().value() > 0
     }
+
+    @Override
+    String nativeProgrammingWithoutKotlinQuery() {
+        return "programming AND NOT kotlin"
+    }
 }
