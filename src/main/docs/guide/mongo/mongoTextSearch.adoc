@@ -43,7 +43,7 @@ A api:data.model.search.SearchQuery[] passed to `search(SearchQuery)` runs the s
 |A property keyword on a property without `@SearchField` or of a joined entity |rejected at compile time, as the property is not in the text index
 |Stemming in `SearchAll` |not supported, every term is matched literally
 |`SearchPrefix` and `SearchFuzzy` |not supported, rejected at compile time
-|Highlighting and query-time boosts |not supported
+|Highlighting and query-time boosts |not supported; `@SearchField(highlightable = true)` is ignored by derived `SearchResults` methods, and `SearchQuery.highlight(...)` throws `UnsupportedSearchFeatureException`
 |`$text` under `OR` or `NOT` |rejected at compile time, as MongoDB only allows `$text` as a top-level condition
 |`$text` with joins |the `$text` match is moved ahead of the join lookups, as MongoDB requires it in the first stage
 |===

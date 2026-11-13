@@ -147,6 +147,14 @@ public final class TextSearchSupport {
         return found.stream().map(Map.Entry::getValue).toList();
     }
 
+    /**
+     * @param property A property
+     * @return Whether it is a {@code @SearchField(highlightable = true)}
+     */
+    public static boolean isHighlightable(PersistentProperty property) {
+        return property.getAnnotationMetadata().booleanValue(SearchField.class, SearchField.MEMBER_HIGHLIGHTABLE).orElse(false);
+    }
+
     private static int aliasPosition(String query, String alias) {
         String clause = " AS " + alias;
         int from = 0;

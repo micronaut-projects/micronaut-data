@@ -903,6 +903,22 @@ public final class MongoQueryBuilder implements QueryBuilder {
         );
     }
 
+    /**
+     * MongoDB {@code $text} matches whole stemmed words over the whole text index, scores without
+     * query-time boosts and returns no highlights.
+     *
+     * @param entity     The entity
+     * @param capability The capability
+     * @return Whether {@code $text} supports the capability
+     */
+    @Override
+    public boolean supportsSearchCapability(PersistentEntity entity, SearchCapability capability) {
+        return switch (capability) {
+            case PREFIX, FUZZY, FIELD_SCOPE, BOOST, HIGHLIGHT -> false;
+            default -> true;
+        };
+    }
+
     @Override
     public String buildLimitAndOffset(long limit, long offset) {
         throw new UnsupportedOperationException();

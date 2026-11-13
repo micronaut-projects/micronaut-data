@@ -16,6 +16,8 @@
 package io.micronaut.data.search.elasticsearch.transport;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch.core.BulkResponse;
+import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.OpType;
 import co.elastic.clients.elasticsearch._types.Refresh;
@@ -35,6 +37,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -85,6 +88,18 @@ public final class ElasticsearchSearchTransport implements SearchTransport {
         } catch (IOException | ElasticsearchException e) {
             throw new DataAccessException("Elasticsearch index failed: " + e.getMessage(), e);
         }
+    }
+
+    @Override
+    public List<String> bulkIndex(String index, List<BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
+        BulkRequest request = ElasticsearchAsyncSearchTransport.bulkRequest(index, documents, refresh);
+        BulkResponse response;
+        try {
+            response = client.bulk(request);
+        } catch (IOException | ElasticsearchException e) {
+            throw new DataAccessException("Elasticsearch bulk failed: " + e.getMessage(), e);
+        }
+        return ElasticsearchAsyncSearchTransport.bulkIds(response);
     }
 
     @Override

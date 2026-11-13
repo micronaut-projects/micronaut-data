@@ -71,6 +71,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
 import io.micronaut.data.model.query.builder.sql.SqlQueryConfiguration;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.search.UnsupportedSearchFeatureException;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.model.criteria.impl.SourceParameterExpressionImpl;
@@ -138,6 +139,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     private static final String JDBC_REPO_ANNOTATION = "io.micronaut.data.jdbc.annotation.JdbcRepository";
     private static final String R2DBC_REPO_ANNOTATION = "io.micronaut.data.r2dbc.annotation.R2dbcRepository";
     private static final String DIALECT_ATTR = "dialect";
+    // PostponeToNextRoundException is part of inject-java, which is not on the classpath of this processor
+    private static final Set<String> POSTPONE_EXCEPTION_NAMES = Set.of("PostponeToNextRoundException");
     private static final boolean IS_DOCUMENT_ANNOTATION_PROCESSOR = ClassUtils.isPresent("io.micronaut.data.document.processor.mapper.MappedEntityMapper", RepositoryTypeElementVisitor.class.getClassLoader());
     private static final Map<String, String> COMMON_TYPE_ROLES;
     private static final List<Map.Entry<String, String>> COMMON_ANNOTATION_ROLES;
@@ -460,87 +463,96 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         Objects.requireNonNull(entityResolver);
         Objects.requireNonNull(entityBySimplyNameResolver);
 
+        if (!method.isAbstract() || method.isStatic()) {
+            return;
+        }
         ClassElement genericReturnType = method.getGenericReturnType();
-        if (method.isAbstract() && !method.isStatic()) {
-            ParameterElement[] parameters = method.getParameters();
-            Map<Element, String> parametersInRole = getParametersInRole(parameters);
+        ParameterElement[] parameters = method.getParameters();
+        Map<Element, String> parametersInRole = getParametersInRole(parameters);
 
-            if (method.hasDeclaredAnnotation(DataMethod.class)) {
-                // explicitly handled
-                return;
-            }
+        if (method.hasDeclaredAnnotation(DataMethod.class)) {
+            // explicitly handled
+            return;
+        }
 
-            Map<ClassElement, FindInterceptorDef> findInterceptors = createFindInterceptors(currentRepository, context);
+        Map<ClassElement, FindInterceptorDef> findInterceptors = createFindInterceptors(currentRepository, context);
 
-            MatchContext matchContext = new MatchContext(
+        MatchContext matchContext = new MatchContext(
+            queryEncoder,
+            currentRepository,
+            context,
+            method,
+            Objects.requireNonNull(currentClassTypeRoles),
+            COMMON_ANNOTATION_ROLES,
+            genericReturnType,
+            parameters,
+            findInterceptors);
+
+        try {
+            List<ParameterElement> parametersNotInRole = Arrays.stream(parameters)
+                .filter(p -> !parametersInRole.containsKey(p))
+                .toList();
+            SourcePersistentEntity entity = resolvePersistentEntity(currentRepository, method, parametersInRole, parametersNotInRole, entityResolver);
+            MethodMatchContext methodMatchContext = new MethodMatchContext(
                 queryEncoder,
                 currentRepository,
+                entity,
                 context,
-                method,
-                Objects.requireNonNull(currentClassTypeRoles),
-                COMMON_ANNOTATION_ROLES,
                 genericReturnType,
+                method,
+                parametersInRole,
+                currentClassTypeRoles,
+                COMMON_ANNOTATION_ROLES,
                 parameters,
-                findInterceptors);
+                entityResolver,
+                findInterceptors,
+                entityBySimplyNameResolver
+            );
+            methodMatchContext.setConflictingRootEntities(getConflictingRootEntities(entity, method, entityResolver));
+            matchAndProcess(methodMatchContext, matchContext, method);
+        } catch (Exception e) {
+            throw toProcessingFailure(e, method, matchContext);
+        }
+    }
 
-            try {
-                List<ParameterElement> parametersNotInRole = Arrays.stream(parameters)
-                    .filter(p -> !parametersInRole.containsKey(p))
-                    .toList();
-                SourcePersistentEntity entity = resolvePersistentEntity(currentRepository, method, parametersInRole, parametersNotInRole, entityResolver);
-                MethodMatchContext methodMatchContext = new MethodMatchContext(
-                    queryEncoder,
-                    currentRepository,
-                    entity,
-                    context,
-                    genericReturnType,
-                    method,
-                    parametersInRole,
-                    currentClassTypeRoles,
-                    COMMON_ANNOTATION_ROLES,
-                    parameters,
-                    entityResolver,
-                    findInterceptors,
-                    entityBySimplyNameResolver
-                );
-                methodMatchContext.setConflictingRootEntities(getConflictingRootEntities(entity, method, entityResolver));
-
-                for (MethodMatcher finder : methodsMatchers) {
-                    MethodMatcher.MethodMatch matcher = finder.match(methodMatchContext);
-                    if (matcher == null) {
-                        continue;
-                    }
-
-                    MethodMatchInfo methodInfo = matcher.buildMatchInfo(methodMatchContext);
-                    if (methodInfo == null) {
-                        continue;
-                    }
-
-                    processMethodInfo(methodMatchContext, methodInfo);
-                    return;
-                }
-                if (matchContext.isPossiblyFailing()) {
-                    matchContext.logPossibleFailures();
-                    throw new ProcessingException(method, "Failures found.");
-                } else {
-                    String messageStart = matchContext.getUnableToImplementMessage();
-                    throw new ProcessingException(method, messageStart + "No possible implementations found.");
-                }
-            } catch (MatchFailedException e) {
-                throw new ProcessingException(e.getElement() == null ? method : e.getElement(), matchContext.getUnableToImplementMessage() + e.getMessage());
-            } catch (ProcessingException e) {
-                // Already reported against the right element
-                throw e;
-            } catch (Exception e) {
-                if (e instanceof ElementPostponedToNextRoundException || e.getClass().getSimpleName().equals("PostponeToNextRoundException")) {
-                    // rethrow postponed and don't fail compilation
-                    // this is not ideal since PostponeToNextRoundException is part of inject-java
-                    throw e;
-                }
-                printUnexpectedFailure(e);
-                throw new ProcessingException(method, "Exception occurred while processing: " + (e.getMessage() == null ? e.toString() : e.getMessage()), e);
+    private void matchAndProcess(MethodMatchContext methodMatchContext, MatchContext matchContext, MethodElement method) {
+        for (MethodMatcher finder : methodsMatchers) {
+            MethodMatcher.MethodMatch matcher = finder.match(methodMatchContext);
+            MethodMatchInfo methodInfo = matcher == null ? null : matcher.buildMatchInfo(methodMatchContext);
+            if (methodInfo != null) {
+                processMethodInfo(methodMatchContext, methodInfo);
+                return;
             }
         }
+        if (matchContext.isPossiblyFailing()) {
+            matchContext.logPossibleFailures();
+            throw new ProcessingException(method, "Failures found.");
+        }
+        throw new ProcessingException(method, matchContext.getUnableToImplementMessage() + "No possible implementations found.");
+    }
+
+    private static RuntimeException toProcessingFailure(Exception e, MethodElement method, MatchContext matchContext) {
+        if (e instanceof MatchFailedException matchFailed) {
+            Element element = matchFailed.getElement() == null ? method : matchFailed.getElement();
+            return new ProcessingException(element, matchContext.getUnableToImplementMessage() + e.getMessage());
+        }
+        if (e instanceof ProcessingException processingException) {
+            // Already reported against the right element
+            return processingException;
+        }
+        if (e instanceof UnsupportedSearchFeatureException) {
+            // a search the store cannot run is a mistake in the method, not a failure of the processor
+            return new ProcessingException(method, matchContext.getUnableToImplementMessage() + e.getMessage());
+        }
+        if (e instanceof RuntimeException runtimeException
+            && (e instanceof ElementPostponedToNextRoundException || POSTPONE_EXCEPTION_NAMES.contains(e.getClass().getSimpleName()))) {
+            // rethrow postponed and don't fail compilation
+            // this is not ideal since PostponeToNextRoundException is part of inject-java
+            return runtimeException;
+        }
+        printUnexpectedFailure(e);
+        String message = e.getMessage() == null ? e.toString() : e.getMessage();
+        return new ProcessingException(method, "Exception occurred while processing: " + message, e);
     }
 
     // Sonar java:S106 -- the compiler only reports the message of the ProcessingException, without its cause:
