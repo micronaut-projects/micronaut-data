@@ -142,9 +142,10 @@ abstract class AbstractHybridSearchSpec extends Specification {
 
     void "candidates and the minimum score limit the fused ranking"() {
         expect:
-        // only the best vector hit joins the text hit
+        // only the best vector hit joins the text hit; both rank first in one ranking, so their fused scores tie
+        // and a store fusing natively may return them in either order
         articleRepository.search(SearchQuery.builder("bread").vector("embedding", COFFEE_LIKE).candidates(1).build())
-                .results()*.entity()*.title == ["Baking Bread", "Cooking with Coffee"]
+                .results()*.entity()*.title as Set == ["Baking Bread", "Cooking with Coffee"] as Set
         articleRepository.search(SearchQuery.builder("bread").vector("embedding", COFFEE_LIKE).minScore(0.03).build())
                 .results()*.entity()*.title == ["Baking Bread"]
     }
