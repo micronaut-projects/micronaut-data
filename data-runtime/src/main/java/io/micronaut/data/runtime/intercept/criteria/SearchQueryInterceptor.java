@@ -32,6 +32,7 @@ import io.micronaut.data.model.vector.search.SearchResults;
 import io.micronaut.data.operations.RepositoryOperations;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.ParameterExpression;
+import jakarta.persistence.criteria.Selection;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -71,7 +72,13 @@ public class SearchQueryInterceptor extends AbstractSpecificationInterceptor<Obj
         ParameterExpression<String> queryParameter = cb.parameter(String.class, null, searchQuery.getQuery());
         Expression<Double> score = cb.searchScore(fields, queryParameter, searchQuery.getMode());
         criteriaQuery.where(cb.textMatch(fields, queryParameter, searchQuery.getMode()));
-        criteriaQuery.multiselect(root, score.alias(TextSearchSupport.SCORE_ALIAS));
+        List<Selection<?>> selections = new ArrayList<>(2 + searchQuery.getHighlightFields().size());
+        selections.add(root);
+        selections.add(score.alias(TextSearchSupport.SCORE_ALIAS));
+        for (String field : searchQuery.getHighlightFields()) {
+            selections.add(cb.searchHighlight(root.get(requireSearchField(root, field)), queryParameter, searchQuery.getMode()).alias(TextSearchSupport.highlightAlias(field)));
+        }
+        criteriaQuery.multiselect(selections);
         if (!pageable.getSort().isSorted()) {
             criteriaQuery.orderBy(cb.desc(score));
         }
@@ -98,9 +105,6 @@ public class SearchQueryInterceptor extends AbstractSpecificationInterceptor<Obj
         if (!searchQuery.getBoosts().isEmpty()) {
             throw new UnsupportedSearchFeatureException(SearchCapability.BOOST, OPERATION);
         }
-        if (!searchQuery.getHighlightFields().isEmpty()) {
-            throw new UnsupportedSearchFeatureException(SearchCapability.HIGHLIGHT, OPERATION);
-        }
         if (searchQuery.getLanguage() != null) {
             throw new UnsupportedSearchFeatureException(SearchCapability.LANGUAGE_OVERRIDE, OPERATION);
         }
@@ -110,6 +114,16 @@ public class SearchQueryInterceptor extends AbstractSpecificationInterceptor<Obj
      * Resolves the properties to search: the query's fields when given, otherwise every search field
      * of the entity.
      */
+    /** A field named by a SearchQuery, which must be one of the entity's search fields. */
+    private static String requireSearchField(PersistentEntityRoot<Object> root, String field) {
+        List<String> searchFields = TextSearchSupport.searchFields(root.getPersistentEntity()).stream().map(PersistentProperty::getName).toList();
+        if (!searchFields.contains(field)) {
+            throw new IllegalArgumentException("Property '" + field + "' of entity " + root.getPersistentEntity().getSimpleName()
+                + " is not a @SearchField; the search fields are " + searchFields);
+        }
+        return field;
+    }
+
     private static List<Expression<?>> resolveFields(PersistentEntityRoot<Object> root, SearchQuery searchQuery) {
         List<Expression<?>> fields = new ArrayList<>();
         if (searchQuery.getFields().isEmpty()) {
@@ -120,13 +134,8 @@ public class SearchQueryInterceptor extends AbstractSpecificationInterceptor<Obj
                 throw new IllegalStateException("Entity " + root.getPersistentEntity().getName() + " has no @SearchField properties to search");
             }
         } else {
-            List<String> searchFields = TextSearchSupport.searchFields(root.getPersistentEntity()).stream().map(PersistentProperty::getName).toList();
             for (String field : searchQuery.getFields()) {
-                if (!searchFields.contains(field)) {
-                    throw new IllegalArgumentException("Property '" + field + "' of entity " + root.getPersistentEntity().getSimpleName()
-                        + " is not a @SearchField; the search fields are " + searchFields);
-                }
-                fields.add(root.get(field));
+                fields.add(root.get(requireSearchField(root, field)));
             }
         }
         return fields;

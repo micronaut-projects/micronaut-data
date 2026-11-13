@@ -7,6 +7,7 @@ import io.micronaut.data.model.vector.search.SearchResult;
 import io.micronaut.data.model.vector.search.SearchResults;
 import jakarta.inject.Singleton;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Singleton
@@ -40,5 +41,18 @@ public class BookService {
         SearchResults<Book> firstPage = bookRepository.search(searchQuery, Pageable.from(0, 10)); // <5>
         // end::searchQuery[]
         return results.results().stream().map(hit -> hit.entity().title()).toList();
+    }
+
+    public List<String> highlightedTitles(String query) {
+        // tag::highlight[]
+        SearchQuery searchQuery = SearchQuery.builder(query)
+            .highlight("title") // <1>
+            .build();
+        List<String> fragments = new ArrayList<>();
+        for (SearchResult<Book> hit : bookRepository.search(searchQuery)) {
+            fragments.addAll(hit.highlights().get("title")); // <2>
+        }
+        // end::highlight[]
+        return fragments;
     }
 }

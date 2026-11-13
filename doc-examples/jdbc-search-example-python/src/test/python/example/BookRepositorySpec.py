@@ -48,3 +48,9 @@ class BookRepositorySpec:
         assert self.service.titles_containing_every_word("coffee roaster") == ["The Coffee Roaster"]
         assert self.service.titles_containing_every_word("coffee beans") == []
         assert self.repository.search(SearchQuery.of("coffee")).totalHits() == 2
+
+    @Test
+    def highlighting(self):
+        fragments = self.service.highlighted_titles("coffee")
+        assert len(fragments) == 2
+        assert all("<em>Coffee</em>" in f for f in fragments)

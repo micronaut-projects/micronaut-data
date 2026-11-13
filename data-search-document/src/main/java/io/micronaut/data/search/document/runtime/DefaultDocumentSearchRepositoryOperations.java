@@ -148,7 +148,7 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractRep
             SearchTransport.SearchHits hits = transport.search(indexName(entity), SearchJson.write(body));
             List<SearchResult<T>> results = new ArrayList<>(hits.hits().size());
             for (SearchTransport.SearchHit hit : hits.hits()) {
-                results.add(new SearchResult<>(toEntity(hit, entity, preparedQuery), new Score(hit.score() == null ? 0d : hit.score())));
+                results.add(new SearchResult<>(toEntity(hit, entity, preparedQuery), new Score(hit.score() == null ? 0d : hit.score()), hit.highlights()));
             }
             return (R) SearchResults.of(results, hits.total());
         }

@@ -39,4 +39,17 @@ class BookService {
         // end::searchQuery[]
         return results.results()*.entity()*.title
     }
+
+    List<String> highlightedTitles(String query) {
+        // tag::highlight[]
+        SearchQuery searchQuery = SearchQuery.builder(query)
+            .highlight("title") // <1>
+            .build()
+        List<String> fragments = []
+        for (SearchResult<Book> hit : bookRepository.search(searchQuery)) {
+            fragments.addAll(hit.highlights()["title"]) // <2>
+        }
+        // end::highlight[]
+        return fragments
+    }
 }
