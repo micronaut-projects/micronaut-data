@@ -216,6 +216,20 @@ public interface TextSearchDialect {
     }
 
     /**
+     * Renders the DDL of the index backing full-text search, for an entity with a {@code @Language} column.
+     *
+     * @param indexName The escaped index name
+     * @param escapedTableName The escaped table name
+     * @param columns The search field columns, escaped when needed
+     * @param language The default text search language
+     * @param languageColumn The escaped column holding the per-row language, or {@code null}
+     * @return The {@code CREATE INDEX} statements
+     */
+    default List<String> buildSearchIndex(String indexName, String escapedTableName, List<SearchColumn> columns, String language, @Nullable String languageColumn) {
+        return buildSearchIndex(indexName, escapedTableName, columns, language);
+    }
+
+    /**
      * The path of a property's keys in the JSON document of a JSON-represented entity. Each step is renamed
      * when its property declares its key with {@code @SerdeConfig(property)} or {@code @JsonProperty}; a naming
      * strategy of the serializer, such as {@code @JsonNaming}, is not applied, nor is {@code @MappedProperty},
@@ -257,20 +271,30 @@ public interface TextSearchDialect {
      *
      * @param jsonColumn The JSON column holding the whole entity, or {@code null} for relational entities
      * @param tableAlias The table alias in the query, or {@code null}
+     * @param languageColumn The rendered {@code @Language} column holding the per-row language, or {@code null}
      * @param labels The {@code CONTAINS} labels of the statement being built, or {@code null} to start at 1
      */
-    record Target(@Nullable String jsonColumn, @Nullable String tableAlias, @Nullable Labels labels) {
+    record Target(@Nullable String jsonColumn, @Nullable String tableAlias, @Nullable String languageColumn, @Nullable Labels labels) {
         /**
          * A relational target without alias.
          */
-        public static final Target RELATIONAL = new Target(null, null, null);
+        public static final Target RELATIONAL = new Target(null, null, null, null);
 
         /**
          * @param jsonColumn The JSON column holding the whole entity, or {@code null} for relational entities
          * @param tableAlias The table alias in the query, or {@code null}
          */
         public Target(@Nullable String jsonColumn, @Nullable String tableAlias) {
-            this(jsonColumn, tableAlias, null);
+            this(jsonColumn, tableAlias, null, null);
+        }
+
+        /**
+         * @param jsonColumn The JSON column holding the whole entity, or {@code null} for relational entities
+         * @param tableAlias The table alias in the query, or {@code null}
+         * @param languageColumn The rendered {@code @Language} column, or {@code null}
+         */
+        public Target(@Nullable String jsonColumn, @Nullable String tableAlias, @Nullable String languageColumn) {
+            this(jsonColumn, tableAlias, languageColumn, null);
         }
 
         /**
@@ -278,7 +302,7 @@ public interface TextSearchDialect {
          * @return This target with the statement's labels
          */
         public Target withLabels(Labels labels) {
-            return new Target(jsonColumn, tableAlias, labels);
+            return new Target(jsonColumn, tableAlias, languageColumn, labels);
         }
     }
 
@@ -377,7 +401,7 @@ public interface TextSearchDialect {
                 throw new UnsupportedSearchFeatureException(SearchCapability.FUZZY, "PostgreSQL text search");
             }
             String language = resolveLanguage(fields);
-            appendVector(query, fields, language, appendExpression);
+            appendVector(query, fields, language, target.languageColumn(), appendExpression);
             query.append(" @@ ");
             appendTsQuery(query, queryExpression, mode, language, appendParameter);
         }
@@ -392,7 +416,7 @@ public interface TextSearchDialect {
                                       Function<String, Consumer<Expression<?>>> appendParameter) {
             String language = resolveLanguage(fields);
             query.append("ts_rank_cd(");
-            appendVector(query, fields, language, appendExpression);
+            appendVector(query, fields, language, target.languageColumn(), appendExpression);
             query.append(',');
             appendTsQuery(query, queryExpression, mode, language, appendParameter);
             query.append(')');
@@ -430,20 +454,26 @@ public interface TextSearchDialect {
 
         @Override
         public List<String> buildSearchIndex(String indexName, String escapedTableName, List<SearchColumn> columns, String language) {
+            return buildSearchIndex(indexName, escapedTableName, columns, language, null);
+        }
+
+        @Override
+        public List<String> buildSearchIndex(String indexName, String escapedTableName, List<SearchColumn> columns, String language, @Nullable String languageColumn) {
             StringBuilder ddl = new StringBuilder("CREATE INDEX IF NOT EXISTS ").append(indexName).append(" ON ").append(escapedTableName).append(" USING GIN (");
             List<SearchWeight> weights = columns.stream().map(SearchColumn::weight).toList();
             List<Consumer<StringBuilder>> renderers = columns.stream().map(c -> (Consumer<StringBuilder>) sb -> sb.append(c.column())).toList();
-            appendVector(ddl, renderers, weights, language);
+            appendVector(ddl, renderers, weights, language, languageColumn);
             return List.of(ddl.append(");").toString());
         }
 
         private void appendVector(StringBuilder query,
                                   List<Expression<?>> fields,
                                   String language,
+                                  @Nullable String languageColumn,
                                   Consumer<Expression<?>> appendExpression) {
             List<SearchWeight> weights = fields.stream().map(TextSearchDialect::resolveWeight).toList();
             List<Consumer<StringBuilder>> renderers = fields.stream().map(f -> (Consumer<StringBuilder>) sb -> appendExpression.accept(f)).toList();
-            appendVector(query, renderers, weights, language);
+            appendVector(query, renderers, weights, language, languageColumn);
         }
 
         /**
@@ -453,7 +483,12 @@ public interface TextSearchDialect {
         private static void appendVector(StringBuilder query,
                                          List<Consumer<StringBuilder>> fieldRenderers,
                                          List<SearchWeight> weights,
-                                         String language) {
+                                         String language,
+                                         @Nullable String languageColumn) {
+            // a @Language column selects the text search configuration per row, the entity language is its fallback
+            String config = languageColumn == null
+                ? "'" + language + "'"
+                : "coalesce(" + languageColumn + ",'" + language + "')::regconfig";
             boolean multiple = fieldRenderers.size() > 1;
             if (multiple) {
                 query.append('(');
@@ -466,7 +501,7 @@ public interface TextSearchDialect {
                 if (weight != null) {
                     query.append("setweight(");
                 }
-                query.append("to_tsvector('").append(language).append("',");
+                query.append("to_tsvector(").append(config).append(',');
                 if (multiple) {
                     query.append("coalesce(");
                     fieldRenderers.get(i).accept(query);

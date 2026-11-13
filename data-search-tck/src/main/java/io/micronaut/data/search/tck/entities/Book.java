@@ -18,6 +18,7 @@ package io.micronaut.data.search.tck.entities;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.search.Language;
 import io.micronaut.data.annotation.search.SearchField;
 import io.micronaut.data.annotation.search.SearchWeight;
 import io.micronaut.data.annotation.search.Searchable;
@@ -47,6 +48,13 @@ public class Book {
     private String author;
 
     private int pages;
+
+    /**
+     * The per-row language: {@code null} uses the entity language.
+     */
+    @Language
+    @Nullable
+    private String language;
 
     public Book(String title, String description, String author, int pages) {
         this.title = title;
@@ -86,6 +94,15 @@ public class Book {
 
     public void setAuthor(String author) {
         this.author = author;
+    }
+
+    @Nullable
+    public String getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(@Nullable String language) {
+        this.language = language;
     }
 
     public int getPages() {

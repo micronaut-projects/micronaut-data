@@ -16,6 +16,7 @@
 package io.micronaut.data.model.search;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.annotation.search.Language;
 import io.micronaut.data.annotation.search.SearchField;
 import io.micronaut.data.annotation.search.Searchable;
 import io.micronaut.data.model.query.builder.DelegatingQueryParameterBinding;
@@ -145,6 +146,22 @@ public final class TextSearchSupport {
         }
         found.sort(Map.Entry.comparingByKey());
         return found.stream().map(Map.Entry::getValue).toList();
+    }
+
+    /**
+     * The property annotated {@code @Language}, holding the per-row language.
+     *
+     * @param entity The entity
+     * @return The property, or {@code null}
+     */
+    @Nullable
+    public static PersistentProperty languageProperty(PersistentEntity entity) {
+        for (PersistentProperty property : entity.getPersistentProperties()) {
+            if (property.getAnnotationMetadata().hasAnnotation(Language.class)) {
+                return property;
+            }
+        }
+        return null;
     }
 
     /**

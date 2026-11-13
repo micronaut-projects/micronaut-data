@@ -120,7 +120,11 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
         PersistentEntity entity = definition.persistentEntity();
         Bindings bindings = new Bindings();
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put(QUERY, buildQuery(definition.predicate(), entity, bindings));
+        DocumentPredicateVisitor visitor = new DocumentPredicateVisitor(entity, bindings);
+        body.put(QUERY, definition.predicate() == null ? MATCH_ALL : visitor.build(definition.predicate()));
+        if (visitor.minScore != null) {
+            body.put("min_score", visitor.minScore);
+        }
         Map<String, Object> highlightFields = new LinkedHashMap<>();
         if (definition.selection() != null) {
             collectHighlightFields(definition.selection(), highlightFields);
@@ -284,6 +288,10 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
         private final PersistentEntity entity;
         private final Bindings bindings;
         private Map<String, Object> result = Map.of();
+        @Nullable
+        private Object minScore;
+        // the number of OR and NOT predicates around the one being visited, where a score restriction cannot apply
+        private int scoreForbiddenDepth;
 
         DocumentPredicateVisitor(PersistentEntity entity, Bindings bindings) {
             this.entity = entity;
@@ -319,16 +327,30 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
         public void visit(ConjunctionPredicate conjunction) {
             List<Map<String, Object>> must = new ArrayList<>();
             for (IExpression<Boolean> predicate : conjunction.getPredicates()) {
-                must.add(render(predicate));
+                Map<String, Object> rendered = render(predicate);
+                // match_all restricts nothing but adds 1.0 to every hit's score inside "must", which would
+                // shift the scores a min_score compares against
+                if (!MATCH_ALL.equals(rendered)) {
+                    must.add(rendered);
+                }
             }
-            result = must.size() == 1 ? must.get(0) : Map.of(BOOL, Map.of(MUST, must));
+            if (must.isEmpty()) {
+                result = MATCH_ALL;
+            } else {
+                result = must.size() == 1 ? must.get(0) : Map.of(BOOL, Map.of(MUST, must));
+            }
         }
 
         @Override
         public void visit(DisjunctionPredicate disjunction) {
             List<Map<String, Object>> should = new ArrayList<>();
-            for (IExpression<Boolean> predicate : disjunction.getPredicates()) {
-                should.add(render(predicate));
+            scoreForbiddenDepth++;
+            try {
+                for (IExpression<Boolean> predicate : disjunction.getPredicates()) {
+                    should.add(render(predicate));
+                }
+            } finally {
+                scoreForbiddenDepth--;
             }
             if (should.size() == 1) {
                 result = should.get(0);
@@ -342,7 +364,12 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
 
         @Override
         public void visit(NegatedPredicate negate) {
-            result = Map.of(BOOL, Map.of(MUST_NOT, render(negate.getNegated())));
+            scoreForbiddenDepth++;
+            try {
+                result = Map.of(BOOL, Map.of(MUST_NOT, render(negate.getNegated())));
+            } finally {
+                scoreForbiddenDepth--;
+            }
         }
 
         @Override
@@ -388,6 +415,16 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
 
         @Override
         public void visitGreaterThanOrEquals(Expression<?> leftExpression, Expression<?> rightExpression) {
+            if (leftExpression instanceof FunctionExpression<?> function && TextSearchSupport.SCORE_FUNCTION.equals(function.getName())) {
+                // a minimum relevance score is a request parameter, not a query clause, so it applies to the
+                // whole query and can only be one of its top-level AND conditions
+                if (scoreForbiddenDepth > 0) {
+                    throw new UnsupportedOperationException("A minimum score applies to the whole search request and cannot be combined with OR or negated");
+                }
+                minScore = value(rightExpression, null);
+                result = MATCH_ALL;
+                return;
+            }
             result = range(leftExpression, "gte", rightExpression);
         }
 
