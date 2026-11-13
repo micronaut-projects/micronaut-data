@@ -1,6 +1,7 @@
 package io.micronaut.data.search.opensearch
 
 import io.micronaut.data.exceptions.DataAccessException
+import io.micronaut.data.search.opensearch.transport.OpenSearchAsyncSearchTransport
 import io.micronaut.data.search.opensearch.transport.OpenSearchSearchTransport
 import org.opensearch.client.json.JsonpMapper
 import org.opensearch.client.json.jackson.JacksonJsonpMapper
@@ -14,6 +15,7 @@ import org.opensearch.client.transport.TransportOptions
 import spock.lang.Specification
 
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletionException
 
 import static io.micronaut.data.search.document.conf.DocumentSearchConfiguration.Refresh.NONE
 
@@ -27,6 +29,7 @@ class OpenSearchTransportFailureSpec extends Specification {
 
     FailingTransport fake = new FailingTransport()
     OpenSearchSearchTransport transport = new OpenSearchSearchTransport(new OpenSearchClient(fake))
+    OpenSearchAsyncSearchTransport asyncTransport = new OpenSearchAsyncSearchTransport(fake)
 
     private static OpenSearchException storeError(int status) {
         def cause = ErrorCause.of { it.type("search_phase_execution_exception").reason("Result window is too large") }
@@ -96,6 +99,39 @@ class OpenSearchTransportFailureSpec extends Specification {
         status | message
         409    | "A document with id 1 already exists in index books"
         400    | "Cannot create the document with id 1 in index books: "
+    }
+
+    void "an async create of an existing id says the document exists and other create errors are wrapped"() {
+        given:
+        def failure = storeError(status)
+        fake.failure = failure
+
+        when:
+        asyncTransport.create("books", "1", [title: "Kotlin"], NONE).toCompletableFuture().join()
+
+        then:
+        CompletionException e = thrown()
+        e.cause instanceof DataAccessException
+        e.cause.message.startsWith(message)
+        e.cause.cause.is(failure)
+
+        where:
+        status | message
+        409    | "A document with id 1 already exists in index books"
+        400    | "Cannot create the document with id 1 in index books: "
+    }
+
+    void "an async create failing for another reason passes the failure on"() {
+        given:
+        def failure = new IOException("connection reset")
+        fake.failure = failure
+
+        when:
+        asyncTransport.create("books", "1", [title: "Kotlin"], NONE).toCompletableFuture().join()
+
+        then:
+        CompletionException e = thrown()
+        e.cause.is(failure)
     }
 
     /**

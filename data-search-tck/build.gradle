@@ -9,6 +9,7 @@ dependencies {
 
     api projects.micronautDataModel
     api projects.micronautDataRuntime
+    api mn.reactor
     api mnTest.micronaut.test.spock
     api mnTest.micronaut.test.core
     api(mnSql.jakarta.persistence.api)
