@@ -4,6 +4,7 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Requires
 import io.micronaut.data.event.listeners.PostPersistEventListener
 import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.search.SearchQuery
 import io.micronaut.data.model.runtime.AttributeConverterRegistry
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
 import io.micronaut.data.runtime.convert.DataConversionService
@@ -232,6 +233,13 @@ class StubTransportReactiveSpec extends Specification {
         context.getBean(StubSearchTransport).bodies.last().contains('"track_total_hits":true')
         repository.findByTitleSearch("kotlin").collectList().block()*.title == ["Programming Kotlin"]
         repository.countBySearch("kotlin").block() == 1L
+        // the reactive and async SearchRepository variants run through the reactive criteria operations
+        repository.search("kotlin").block().results().size() == 1
+        repository.search(SearchQuery.of("kotlin")).block().results()*.entity()*.title == ["Programming Kotlin"]
+        repository.search(SearchQuery.of("kotlin"), Pageable.from(0, 5)).block().totalHits() == 1
+        repository.countHits("kotlin").block() == 1L
+        context.getBean(StubAsyncBookRepository).search(SearchQuery.of("kotlin")).get().results().size() == 1
+        context.getBean(StubAsyncBookRepository).countHits("kotlin").get() == 1L
 
         when:
         saved.title = "Programming Scala"
