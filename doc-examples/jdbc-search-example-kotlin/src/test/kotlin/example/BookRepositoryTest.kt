@@ -1,6 +1,7 @@
 package example
 
 import io.micronaut.data.model.search.SearchQuery
+import io.micronaut.data.model.vector.Vector
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import jakarta.inject.Inject
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -21,9 +22,9 @@ class BookRepositoryTest {
     fun setup() {
         bookRepository.deleteAll()
         bookRepository.saveAll(listOf(
-            Book(title = "Cooking with Coffee", description = "Recipes and desserts made with coffee beans", author = "Bean"),
-            Book(title = "Baking Bread", description = "Sourdough and yeast breads for the home baker", author = "Dough"),
-            Book(title = "The Coffee Roaster", description = "Roasting coffee at home, from green beans to espresso", author = "Roast")
+            Book(title = "Cooking with Coffee", description = "Recipes and desserts made with coffee beans", author = "Bean", embedding = Vector.of(1f, 0f, 0f)),
+            Book(title = "Baking Bread", description = "Sourdough and yeast breads for the home baker", author = "Dough", embedding = Vector.of(0.2f, 0.9f, 0f)),
+            Book(title = "The Coffee Roaster", description = "Roasting coffee at home, from green beans to espresso", author = "Roast", embedding = Vector.of(0.9f, 0.1f, 0f))
         ))
     }
 
@@ -52,6 +53,11 @@ class BookRepositoryTest {
         assertEquals(listOf("The Coffee Roaster"), bookService.titlesContainingEveryWord("coffee roaster"))
         assertEquals(listOf<String>(), bookService.titlesContainingEveryWord("coffee beans"))
         assertEquals(2, bookRepository.search(SearchQuery.of("coffee")).totalHits())
+    }
+
+    @Test
+    fun hybridSearch() {
+        assertEquals(listOf("Baking Bread", "Cooking with Coffee", "The Coffee Roaster"), bookService.hybridTitles("bread", Vector.of(1f, 0f, 0f)))
     }
 
     @Test

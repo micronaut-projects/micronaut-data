@@ -1,5 +1,6 @@
 package io.micronaut.data.model.search
 
+import io.micronaut.data.model.vector.Vector
 import spock.lang.Specification
 
 class SearchQuerySpec extends Specification {
@@ -78,6 +79,53 @@ class SearchQuerySpec extends Specification {
         expect:
         SearchQuery.builder("a").fields("x").build() == SearchQuery.builder("a").fields("x").build()
         SearchQuery.builder("a").fields("x").build() != SearchQuery.builder("a").fields("y").build()
+    }
+
+    void "candidates is bounded"() {
+        when:
+        SearchQuery.builder("q").candidates(value)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        where:
+        value << [0, SearchQuery.MAX_CANDIDATES + 1]
+    }
+
+    void "hybrid weights must be finite and not negative"() {
+        when:
+        SearchQuery.builder("a").textWeight(weight)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        SearchQuery.builder("a").vectorWeight(weight)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        where:
+        weight << [-1d, Double.NaN, Double.POSITIVE_INFINITY]
+    }
+
+    void "a hybrid query needs one positive weight"() {
+        when:
+        SearchQuery.builder("a").vector("embedding", Vector.of([1f, 0f] as float[])).textWeight(0).vectorWeight(0).build()
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains("positive textWeight or vectorWeight")
+    }
+
+    void "a zero weight is accepted when the other one is positive or the query is not hybrid"() {
+        given:
+        def vector = Vector.of([1f, 0f] as float[])
+
+        expect:
+        SearchQuery.builder("a").vector("embedding", vector).textWeight(0).build().textWeight == 0d
+        SearchQuery.builder("a").vector("embedding", vector).vectorWeight(0).build().vectorWeight == 0d
+        !SearchQuery.builder("a").textWeight(0).vectorWeight(0).build().hybrid
     }
 
     void "toString leaves the search string out"() {
