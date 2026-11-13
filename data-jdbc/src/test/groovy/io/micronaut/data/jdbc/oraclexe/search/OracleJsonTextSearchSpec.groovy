@@ -30,7 +30,7 @@ class OracleJsonTextSearchSpec extends AbstractTextSearchSpec implements Oracle2
     Set<SearchCapability> capabilities() {
         // the capabilities describe the store, as for OracleTextSearchSpec: Oracle has vector search, so the TCK case
         // expecting UnsupportedSearchFeatureException for a vector on a store without it does not apply
-        return EnumSet.of(SearchCapability.PHRASE, SearchCapability.PREFIX, SearchCapability.FUZZY, SearchCapability.FIELD_SCOPE, SearchCapability.BOOST, SearchCapability.HIGHLIGHT, SearchCapability.VECTOR, SearchCapability.MIN_SCORE)
+        return EnumSet.of(SearchCapability.PHRASE, SearchCapability.PREFIX, SearchCapability.FUZZY, SearchCapability.FIELD_SCOPE, SearchCapability.BOOST, SearchCapability.HIGHLIGHT, SearchCapability.VECTOR, SearchCapability.MIN_SCORE, SearchCapability.HYBRID)
     }
 
     @Override
