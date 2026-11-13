@@ -22,5 +22,6 @@ interface BookRepository : CrudRepository<Book, Long>, SearchRepository<Book, Lo
     fun findBySearchAndAuthor(query: String, author: String): List<Book> // <6>
 
     fun searchByTitleSearch(query: String, minScore: Score): SearchResults<Book> // <7>
+    fun findByTitleSearchFuzzy(query: String): List<Book> // <8>
 }
 // end::repository[]

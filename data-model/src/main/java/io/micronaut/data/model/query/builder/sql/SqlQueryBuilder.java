@@ -1133,11 +1133,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         NamingStrategy namingStrategy = getNamingStrategy(entity);
         List<TextSearchDialect.SearchColumn> columns = new ArrayList<>(fields.size());
         for (PersistentProperty field : fields) {
-            String column = namingStrategy.mappedName(Collections.emptyList(), field);
-            columns.add(new TextSearchDialect.SearchColumn(
-                escape ? quote(column) : column,
-                field.getAnnotationMetadata().enumValue(SearchField.class, SearchField.MEMBER_WEIGHT, SearchWeight.class).orElse(null)
-            ));
+            columns.add(searchColumn(field, table.name(), namingStrategy, escape));
         }
         String language = TextSearchDialect.requireLanguageName(entity.getAnnotationMetadata().stringValue(Searchable.class, Searchable.MEMBER_LANGUAGE)
             .filter(StringUtils::isNotEmpty)
@@ -1146,15 +1142,41 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             .filter(StringUtils::isNotEmpty)
             .map(TextSearchDialect::requireIndexName)
             .orElseGet(() -> "idx_" + prepareNames(table.name()) + "_search");
-        PersistentProperty languageProperty = TextSearchSupport.languageProperty(entity);
-        String languageColumn = null;
-        if (languageProperty != null) {
-            String column = namingStrategy.mappedName(Collections.emptyList(), languageProperty);
-            languageColumn = escape ? quote(column) : column;
-        }
+        String languageColumn = languageColumn(entity, namingStrategy, escape);
         for (String ddl : textSearchDialect.buildSearchIndex(escape ? quote(indexName) : indexName, escapedTableName, columns, language, languageColumn)) {
             addToCollectionIfNotContains(createStatements, ddl);
         }
+    }
+
+    /**
+     * A searched column, with the trigram index of a fuzzy field.
+     */
+    private TextSearchDialect.SearchColumn searchColumn(PersistentProperty field, String tableName, NamingStrategy namingStrategy, boolean escape) {
+        String column = namingStrategy.mappedName(Collections.emptyList(), field);
+        String trigramIndex = null;
+        if (field.getAnnotationMetadata().booleanValue(SearchField.class, SearchField.MEMBER_FUZZY).orElse(false)) {
+            // kept within PostgreSQL's 63 bytes with a hash suffix, so long names do not collide after truncation
+            String name = normalizeAlias("idx_" + prepareNames(tableName) + "_" + prepareNames(column) + "_trgm");
+            trigramIndex = escape ? quote(name) : name;
+        }
+        return new TextSearchDialect.SearchColumn(
+            escape ? quote(column) : column,
+            field.getAnnotationMetadata().enumValue(SearchField.class, SearchField.MEMBER_WEIGHT, SearchWeight.class).orElse(null),
+            trigramIndex
+        );
+    }
+
+    /**
+     * The column of the {@code @Language} property that holds each row's text search configuration, if any.
+     */
+    @Nullable
+    private String languageColumn(PersistentEntity entity, NamingStrategy namingStrategy, boolean escape) {
+        PersistentProperty languageProperty = TextSearchSupport.languageProperty(entity);
+        if (languageProperty == null) {
+            return null;
+        }
+        String column = namingStrategy.mappedName(Collections.emptyList(), languageProperty);
+        return escape ? quote(column) : column;
     }
 
     private static String createTableKeywords(@Nullable SqlTableDistribution distribution) {
