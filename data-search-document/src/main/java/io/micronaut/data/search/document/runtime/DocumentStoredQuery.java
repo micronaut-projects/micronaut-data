@@ -56,7 +56,11 @@ import java.util.Set;
 @Internal
 public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersStoredQuery<E, R> {
 
+    private static final String LIKE_WITH_ESCAPE = "like:";
+    private static final String IGNORE_CASE = "_ignore_case";
+
     private final Map<String, Object> body;
+    private final boolean countProjection;
     private final JsonMapper jsonMapper;
 
     /**
@@ -72,13 +76,16 @@ public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersSt
         super(storedQuery, persistentEntity, conversionService);
         this.jsonMapper = jsonMapper;
         try {
-            this.body = Objects.requireNonNull(jsonMapper.readValue(storedQuery.getQuery(), Argument.mapOf(String.class, Object.class)), "query body");
+            Map<String, Object> parsed = Objects.requireNonNull(jsonMapper.readValue(storedQuery.getQuery(), Argument.mapOf(String.class, Object.class)), "query body");
+            this.countProjection = Boolean.TRUE.equals(parsed.remove(DocumentSearchQueryBuilder.COUNT_MARKER));
+            this.body = parsed;
         } catch (IOException e) {
             throw new IllegalStateException("Cannot parse the search query of " + storedQuery.getName() + ": " + storedQuery.getQuery(), e);
         }
     }
 
     /**
+     * A query projecting a count, such as a Jakarta Data {@code SELECT COUNT(this)}, is marked by the query builder.
      * A {@code @Query} body in the store's own DSL is not recognised as a count by the method matcher, which knows
      * only SQL statements, so a method returning a number counts the documents its body's {@code query} matches:
      * a search hit cannot be mapped to a number anyway.
@@ -87,7 +94,7 @@ public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersSt
      */
     @Override
     public boolean isCount() {
-        return super.isCount() || (isRawQuery() && Number.class.isAssignableFrom(ReflectionUtils.getWrapperType(getResultType())));
+        return countProjection || super.isCount() || (isRawQuery() && Number.class.isAssignableFrom(ReflectionUtils.getWrapperType(getResultType())));
     }
 
     /**
@@ -235,7 +242,19 @@ public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersSt
         if (DocumentSearchQueryBuilder.COSINE_SIMILARITY_HINT.equals(hint)) {
             return value instanceof Number distance ? 1d - distance.doubleValue() : value;
         }
-        return hint == null ? value : wildcard(value, hint.toString());
+        if (hint == null) {
+            return value;
+        }
+        String kind = hint.toString();
+        if (placeholder.get(DocumentSearchQueryBuilder.ESCAPE_HINT) instanceof Map<?, ?> escapePlaceholder
+            && escapePlaceholder.get(DocumentSearchQueryBuilder.QUERY_PARAMETER_PLACEHOLDER) instanceof Number escapeIndex) {
+            // the escape character of a LIKE bound at runtime travels as a parameter of its own
+            Object escape = values.get(escapeIndex.intValue());
+            if (escape != null && !escape.toString().isEmpty()) {
+                kind = LIKE_WITH_ESCAPE + escape.toString().charAt(0) + (kind.contains(IGNORE_CASE) ? IGNORE_CASE : "");
+            }
+        }
+        return wildcard(value, kind);
     }
 
     /**
@@ -308,14 +327,41 @@ public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersSt
     }
 
     private static Object wildcard(@Nullable Object value, String hint) {
+        String kind = hint.replace(IGNORE_CASE, "");
+        if (kind.startsWith("like")) {
+            // like, or like:<escape character>
+            Character escape = kind.length() > LIKE_WITH_ESCAPE.length() ? kind.charAt(LIKE_WITH_ESCAPE.length()) : null;
+            return likeToWildcard(value == null ? "" : value.toString(), escape);
+        }
         String text = value == null ? "" : escapeWildcard(value.toString());
-        return switch (hint.replace("_ignore_case", "")) {
+        return switch (kind) {
             case "starts_with" -> text + "*";
             case "ends_with" -> "*" + text;
             case "contains" -> "*" + text + "*";
-            case "like" -> (value == null ? "" : value.toString()).replace("%", "*").replace("_", "?");
             default -> text;
         };
+    }
+
+    /**
+     * Converts a SQL LIKE pattern into a wildcard pattern: {@code %} and {@code _} become {@code *} and
+     * {@code ?}, the wildcard characters of the pattern's literal text are escaped, and the escape
+     * character makes the next character literal.
+     */
+    static String likeToWildcard(String pattern, @Nullable Character escape) {
+        StringBuilder sb = new StringBuilder(pattern.length() + 8);
+        for (int i = 0; i < pattern.length(); i++) {
+            char c = pattern.charAt(i);
+            if (escape != null && c == escape && i + 1 < pattern.length()) {
+                sb.append(escapeWildcard(String.valueOf(pattern.charAt(++i))));
+            } else if (c == '%') {
+                sb.append('*');
+            } else if (c == '_') {
+                sb.append('?');
+            } else {
+                sb.append(escapeWildcard(String.valueOf(c)));
+            }
+        }
+        return sb.toString();
     }
 
     private static String escapeWildcard(String text) {

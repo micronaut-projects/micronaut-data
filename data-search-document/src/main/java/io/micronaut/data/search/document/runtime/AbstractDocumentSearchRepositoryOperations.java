@@ -17,14 +17,21 @@ package io.micronaut.data.search.document.runtime;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
+import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.model.Embedded;
+import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.annotation.search.Searchable;
 import io.micronaut.data.event.EntityEventContext;
+import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.model.CursoredPage;
 import io.micronaut.data.model.CursoredPageable;
 import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
@@ -33,6 +40,9 @@ import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
+import io.micronaut.data.model.vector.DoubleVector;
+import io.micronaut.data.model.vector.FloatVector;
+import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.model.vector.search.Score;
 import io.micronaut.data.model.vector.search.SearchResult;
 import io.micronaut.data.model.vector.search.SearchResults;
@@ -51,6 +61,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -72,11 +83,11 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
     private static final String DESC = "desc";
     private static final String FROM = "from";
     private static final String SIZE = "size";
+    private static final String SORT = "sort";
     private static final String KNN = "knn";
     private static final String NUM_CANDIDATES = "num_candidates";
     // the hits a request without a size returns, the default of Elasticsearch and OpenSearch
     private static final int DEFAULT_SIZE = 10;
-    private static final Argument<Map<String, Object>> DOCUMENT = Argument.mapOf(String.class, Object.class);
 
     protected final JsonMapper jsonMapper;
     protected final DocumentSearchConfiguration configuration;
@@ -171,6 +182,17 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
     }
 
     /**
+     * Whether a save may replace a document with the same id: Jakarta Data's {@code @Save} inserts or
+     * replaces, while an insert is a create-only write.
+     *
+     * @param annotationMetadata The metadata of the repository method
+     * @return True to write without the create-only check
+     */
+    protected static boolean replacesExisting(io.micronaut.core.annotation.AnnotationMetadata annotationMetadata) {
+        return annotationMetadata.hasAnnotation("jakarta.data.repository.Save");
+    }
+
+    /**
      * The version to delete an entity at: its {@code @Version} property as read, so the store rejects
      * the delete when the document has been updated since. It must be read before the pre-remove event,
      * whose version-generating listener increments the property of a mutable entity in place.
@@ -226,10 +248,12 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
      *
      * @param values The entities
      * @param entity The entity type
+     * @param replace Whether a document without a version replaces one with the same id, as a Jakarta Data
+     *                {@code @Save} does, rather than being a create-only write
      * @param <T> The entity type
      * @return The batch
      */
-    protected final <T> PersistBatch<T> persistBatch(Iterable<T> values, RuntimePersistentEntity<T> entity) {
+    protected final <T> PersistBatch<T> persistBatch(Iterable<T> values, RuntimePersistentEntity<T> entity, boolean replace) {
         PersistBatch<T> batch = new PersistBatch<>(entity);
         for (T value : values) {
             T current = prePersist(value, entity);
@@ -239,7 +263,8 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
                 batch.positions.add(batch.results.size());
                 batch.results.add(current);
                 batch.toIndex.add(current);
-                batch.documents.add(new SearchTransport.BulkDocument(documentId(current, entity), toDocument(current, entity), persistVersion(current, entity)));
+                Long version = persistVersion(current, entity);
+                batch.documents.add(new SearchTransport.BulkDocument(documentId(current, entity), toDocument(current, entity), version, !replace && version == null));
             }
         }
         return batch;
@@ -332,20 +357,144 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
         return (R) value;
     }
 
+    /**
+     * The document of an entity: its persistent properties under their property names, which are the
+     * names the index mapping and the queries use, each value in its JSON form. A property named
+     * {@code isOdd} with an {@code isOdd()} getter is therefore stored as {@code isOdd}, not as the
+     * {@code odd} a JSON mapper derives from the getter. Null values are left out and embedded
+     * objects are written the same way.
+     *
+     * @param value The entity
+     * @param entity The persistent entity
+     * @param <T> The entity type
+     * @return The document
+     */
     protected final <T> Map<String, Object> toDocument(T value, RuntimePersistentEntity<T> entity) {
         try {
-            return Objects.requireNonNull(jsonMapper.readValue(jsonMapper.writeValueAsBytes(value), DOCUMENT));
+            return writeDocument(value, entity);
         } catch (IOException e) {
             throw new DataAccessException("Cannot serialize entity " + entity.getName() + ": " + e.getMessage(), e);
         }
     }
 
+    private <T> Map<String, Object> writeDocument(T value, RuntimePersistentEntity<T> entity) throws IOException {
+        Map<String, Object> document = new LinkedHashMap<>();
+        for (RuntimePersistentProperty<T> property : documentProperties(entity)) {
+            Object propertyValue = property.getProperty().get(value);
+            if (propertyValue == null) {
+                continue;
+            }
+            if (property instanceof Embedded) {
+                RuntimePersistentEntity<Object> embedded = (RuntimePersistentEntity<Object>) ((RuntimeAssociation<T>) property).getAssociatedEntity();
+                document.put(property.getName(), writeDocument(propertyValue, embedded));
+            } else if (propertyValue instanceof String || propertyValue instanceof Number || propertyValue instanceof Boolean) {
+                document.put(property.getName(), propertyValue);
+            } else if (propertyValue instanceof Vector vector) {
+                // a vector is a plain JSON array of numbers, whatever its runtime type
+                document.put(property.getName(), SearchJson.arrayToList(vector.toDoubleArray()));
+            } else {
+                document.put(property.getName(), jsonMapper.readValue(jsonMapper.writeValueAsBytes(propertyValue), Argument.OBJECT_ARGUMENT));
+            }
+        }
+        return document;
+    }
+
     private <T> T fromDocument(Map<String, Object> source, RuntimePersistentEntity<T> entity) {
         try {
-            return Objects.requireNonNull(jsonMapper.readValue(jsonMapper.writeValueAsBytes(source), Argument.of(entity.getIntrospection().getBeanType())));
-        } catch (IOException e) {
+            return readDocument(source, entity);
+        } catch (IOException | RuntimeException e) {
             throw new DataAccessException("Cannot deserialize entity " + entity.getName() + ": " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Reads an entity from its document. The constructor arguments are passed to the constructor and the other
+     * properties set afterwards, so a property the document leaves out, because it was {@code null} when written,
+     * keeps its default, also in a package whose types are non-null by default.
+     */
+    private <T> T readDocument(Map<String, Object> source, RuntimePersistentEntity<T> entity) throws IOException {
+        Map<String, Object> values = new LinkedHashMap<>();
+        for (RuntimePersistentProperty<T> property : documentProperties(entity)) {
+            Object raw = source.get(property.getName());
+            if (raw != null) {
+                values.put(property.getName(), readValue(raw, property));
+            }
+        }
+        BeanIntrospection<T> introspection = entity.getIntrospection();
+        Argument<?>[] constructorArguments = introspection.getConstructorArguments();
+        Object[] arguments = new Object[constructorArguments.length];
+        for (int i = 0; i < constructorArguments.length; i++) {
+            Argument<?> argument = constructorArguments[i];
+            Object value = values.remove(argument.getName());
+            arguments[i] = value == null && argument.isPrimitive() ? primitiveDefault(argument.getType()) : value;
+        }
+        T instance = introspection.instantiate(arguments);
+        for (Map.Entry<String, Object> value : values.entrySet()) {
+            BeanProperty<T, Object> property = introspection.getRequiredProperty(value.getKey(), Object.class);
+            if (property.isReadOnly()) {
+                instance = property.withValue(instance, value.getValue());
+            } else {
+                property.set(instance, value.getValue());
+            }
+        }
+        return instance;
+    }
+
+    private <T> @Nullable Object readValue(Object raw, RuntimePersistentProperty<T> property) throws IOException {
+        if (property instanceof Embedded && raw instanceof Map<?, ?> nested) {
+            RuntimePersistentEntity<Object> embedded = (RuntimePersistentEntity<Object>) ((RuntimeAssociation<T>) property).getAssociatedEntity();
+            return readDocument((Map<String, Object>) nested, embedded);
+        }
+        if (ReflectionUtils.getWrapperType(property.getType()).isInstance(raw) && !(raw instanceof Map) && !(raw instanceof Iterable)) {
+            return raw;
+        }
+        if (Vector.class.isAssignableFrom(property.getType()) && raw instanceof Collection<?> numbers) {
+            return vectorOf((Collection<? extends Number>) numbers, property.getType());
+        }
+        return jsonMapper.readValue(jsonMapper.writeValueAsBytes(raw), property.getArgument());
+    }
+
+    /** The value a primitive constructor argument gets when the document has none, as Java initialises a field. */
+    private Object primitiveDefault(Class<?> type) {
+        if (type == boolean.class) {
+            return false;
+        }
+        if (type == char.class) {
+            return '\0';
+        }
+        return conversionService.convertRequired(0, type);
+    }
+
+    /** A stored JSON array of numbers as the vector type of the property. */
+    private static Vector vectorOf(Collection<? extends Number> numbers, Class<?> type) {
+        Vector vector = Vector.of(numbers);
+        if (type.isInstance(vector)) {
+            return vector;
+        }
+        if (type == FloatVector.class) {
+            return Vector.of(vector.toFloatArray());
+        }
+        if (type == DoubleVector.class) {
+            return Vector.of(vector.toDoubleArray());
+        }
+        return vector;
+    }
+
+    /**
+     * The properties a document holds: the identity, the version and every other persistent property.
+     */
+    private static <T> Collection<RuntimePersistentProperty<T>> documentProperties(RuntimePersistentEntity<T> entity) {
+        Map<String, RuntimePersistentProperty<T>> properties = new LinkedHashMap<>();
+        if (entity.hasIdentity()) {
+            properties.put(entity.getIdentity().getName(), entity.getIdentity());
+        }
+        if (entity.hasVersion()) {
+            properties.put(entity.getVersion().getName(), entity.getVersion());
+        }
+        for (RuntimePersistentProperty<T> property : entity.getPersistentProperties()) {
+            properties.putIfAbsent(property.getName(), property);
+        }
+        return properties.values();
     }
 
     protected final <T> RuntimePersistentProperty<T> requireIdentity(RuntimePersistentEntity<T> entity) {
@@ -398,7 +547,7 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
         } else {
             body = matchAll();
         }
-        applyPageable(body, query.getPageable(), entity);
+        applyPageable(body, query, entity);
         body.put("track_total_hits", true);
         return body;
     }
@@ -413,6 +562,88 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
         return SearchJson.write(Map.of(QUERY, body.getOrDefault(QUERY, Map.of("match_all", Map.of()))));
     }
 
+    /**
+     * Applies the window and the sort of a query: its pageable, or else its limit, such as a Jakarta Data
+     * {@code Limit} parameter, with its sort.
+     */
+    protected final <T> void applyPageable(Map<String, Object> body, io.micronaut.data.model.runtime.PagedQuery<?> query, RuntimePersistentEntity<T> entity) {
+        Pageable pageable = query.getPageable();
+        if (query instanceof PreparedQuery<?, ?> preparedQuery && pageable.isUnpaged()) {
+            Limit limit = preparedQuery.getQueryLimit();
+            if (!limit.isLimited()) {
+                limit = preparedQuery.getParameterInRole(TypeRole.LIMIT, Limit.class).orElse(limit);
+            }
+            if (limit.isLimited()) {
+                if (limit.offset() > 0) {
+                    body.put(FROM, limit.offset());
+                }
+                body.put(SIZE, limit.maxResults());
+            }
+            applyPageable(body, Pageable.UNPAGED.withSort(preparedQuery.getSort()), entity);
+            return;
+        }
+        applyPageable(body, pageable, entity);
+    }
+
+    /**
+     * Windows a single result query. Its pageable and sort decide which hit comes first, a query that declares
+     * its own size, as findFirst does, keeps it, and otherwise a second hit is fetched when unique results are checked.
+     *
+     * @param body The search body
+     * @param query The query
+     * @param entity The entity
+     * @param <T> The entity type
+     * @return Whether the results must be checked for a second hit
+     */
+    protected final <T> boolean applySingleResult(Map<String, Object> body, PreparedQuery<?, ?> query, RuntimePersistentEntity<T> entity) {
+        Object declaredSize = body.get(SIZE);
+        boolean checkUnique = configuration.isUniqueResultOnFindOne() && declaredSize == null;
+        Object size = checkUnique ? 2 : declaredSize == null ? 1 : declaredSize;
+        // set before the pageable, so an unpaged vector search sizes its knn clause for this window
+        body.put(SIZE, size);
+        applyPageable(body, query, entity);
+        body.put(SIZE, size);
+        return checkUnique;
+    }
+
+    /**
+     * The first result of a single result query.
+     *
+     * @param results The results
+     * @param checkUnique Whether a second result is an error
+     * @param query The query
+     * @param <R> The result type
+     * @return The first result or null
+     */
+    protected static <R> @Nullable R singleResult(List<R> results, boolean checkUnique, PreparedQuery<?, ?> query) {
+        if (checkUnique && results.size() > 1) {
+            throw new NonUniqueResultException("Multiple results found for query: " + query.getQuery());
+        }
+        return results.isEmpty() ? null : results.get(0);
+    }
+
+    /**
+     * Adds the sort of a pageable after the query's own {@code OrderBy} or the {@code sort} of a native body,
+     * which take precedence. A declared entry may be an object or a field name, the string form both stores accept.
+     */
+    private <T> void appendSort(Map<String, Object> body, Sort sort, RuntimePersistentEntity<T> entity) {
+        if (!sort.isSorted()) {
+            return;
+        }
+        List<Object> entries = new ArrayList<>(declaredSort(body));
+        entries.addAll(sortEntries(sort.getOrderBy(), entity, false));
+        body.put(SORT, entries);
+    }
+
+    /** The {@code sort} a body declares: a list of entries, or a single entry. */
+    private static List<?> declaredSort(Map<String, Object> body) {
+        Object declared = body.get(SORT);
+        if (declared instanceof List<?> list) {
+            return list;
+        }
+        return declared == null ? List.of() : List.of(declared);
+    }
+
     protected final <T> void applyPageable(Map<String, Object> body, Pageable pageable, RuntimePersistentEntity<T> entity) {
         if (pageable instanceof CursoredPageable cursored) {
             if (containsKnn(body)) {
@@ -423,15 +654,16 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
             applyCursoredPageable(body, cursored, entity);
             return;
         }
-        if (!pageable.isUnpaged()) {
+        if (pageable.isUnpaged()) {
+            // without a size the stores return only their default of 10 hits; a query's own limit stays
+            body.putIfAbsent(SIZE, configuration.getMaxResults());
+        } else {
             body.put(FROM, pageable.getOffset());
             body.put(SIZE, pageable.getSize());
         }
+        // after the window is known, so an unlimited vector search follows the max-results ceiling
         sizeKnn(body, window(body));
-        Sort sort = pageable.getSort();
-        if (sort.isSorted()) {
-            body.put("sort", sortEntries(sort.getOrderBy(), entity, false));
-        }
+        appendSort(body, pageable.getSort(), entity);
     }
 
     /** The field a sort order applies to: the score, or the keyword path of an entity property. */
@@ -495,10 +727,9 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
         List<Sort.Order> orders = cursorOrders(pageable, entity);
         // the method's OrderBy comes first, then the pageable's sort and the id tiebreaker
         List<Map<String, Object>> entries = new ArrayList<>();
-        if (body.get("sort") instanceof List<?> declared) {
-            for (Object entry : declared) {
-                entries.add(pageable.isBackward() ? reversed((Map<String, Object>) entry) : (Map<String, Object>) entry);
-            }
+        for (Object entry : declaredSort(body)) {
+            Map<String, Object> object = sortObject(entry);
+            entries.add(pageable.isBackward() ? reversed(object) : object);
         }
         for (Map<String, Object> entry : sortEntries(orders, entity, pageable.isBackward())) {
             // a field the OrderBy already sorts on is one sort value, not two
@@ -506,7 +737,7 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
                 entries.add(entry);
             }
         }
-        body.put("sort", entries);
+        body.put(SORT, entries);
         if (pageable.getSize() > 0) {
             body.put(SIZE, pageable.getSize());
         }
@@ -520,6 +751,36 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
     }
 
     /** A sort entry with its direction flipped, for a backward cursored page. */
+    /**
+     * A declared sort entry in the object form with an explicit order: a field name, {@code "title"}, or a field
+     * with its order as a string, {@code {"title": "desc"}}, sorts in the stores' default order, descending for
+     * the score and ascending otherwise.
+     */
+    private static Map<String, Object> sortObject(Object entry) {
+        if (entry instanceof String field) {
+            return Map.of(field, Map.of(ORDER, defaultOrder(field)));
+        }
+        if (!(entry instanceof Map<?, ?> map)) {
+            throw new DataAccessException("A sort entry must be a field name or an object, got: " + entry);
+        }
+        Map<String, Object> object = new LinkedHashMap<>();
+        map.forEach((field, options) -> {
+            Map<String, Object> order = new LinkedHashMap<>();
+            if (options instanceof Map<?, ?> declared) {
+                declared.forEach((key, value) -> order.put(String.valueOf(key), value));
+            } else if (options != null) {
+                order.put(ORDER, options);
+            }
+            order.putIfAbsent(ORDER, defaultOrder(String.valueOf(field)));
+            object.put(String.valueOf(field), order);
+        });
+        return object;
+    }
+
+    private static String defaultOrder(String field) {
+        return DocumentSearchQueryBuilder.SCORE_FIELD.equals(field) ? DESC : ASC;
+    }
+
     private static Map<String, Object> reversed(Map<String, Object> entry) {
         Map<String, Object> flipped = new LinkedHashMap<>();
         entry.forEach((field, options) -> {
@@ -546,7 +807,8 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
         List<Map<String, Object>> entries = new ArrayList<>();
         for (Sort.Order order : orders) {
             boolean ascending = order.isAscending() != reversed;
-            entries.add(Map.of(sortField(order, entity), Map.of(ORDER, ascending ? ASC : DESC)));
+            entries.add(Map.of(sortField(order, entity), DocumentSearchQueryBuilder.sortOptions(ascending,
+                order.getNullOrdering() == Sort.Order.NullOrdering.FIRST, order.getNullOrdering() == Sort.Order.NullOrdering.LAST)));
         }
         return entries;
     }

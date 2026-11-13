@@ -121,18 +121,13 @@ public final class DefaultDocumentSearchReactiveRepositoryOperations extends Abs
             }
             Map<String, Object> body = body(preparedQuery, storedQuery);
             if (preparedQuery.getResultType() == SearchResults.class) {
-                applyPageable(body, preparedQuery.getPageable(), entity);
+                applyPageable(body, preparedQuery, entity);
                 // totalHits is exact, not capped at the result window
                 body.put("track_total_hits", true);
                 return search(body, entity).map(hits -> (R) toSearchResults(hits, entity, preparedQuery));
             }
-            // a single result still honours a Sort parameter, which decides which hit comes first
-            applyPageable(body, preparedQuery.getPageable(), entity);
-            body.put("size", 1);
-            return search(body, entity).flatMap(hits -> {
-                List<R> results = toEntities(hits, entity, preparedQuery);
-                return results.isEmpty() ? Mono.empty() : Mono.just(results.get(0));
-            });
+            boolean checkUnique = applySingleResult(body, preparedQuery, entity);
+            return search(body, entity).mapNotNull(hits -> singleResult(toEntities(hits, entity, preparedQuery), checkUnique, preparedQuery));
         });
     }
 
@@ -146,7 +141,7 @@ public final class DefaultDocumentSearchReactiveRepositoryOperations extends Abs
         return Flux.defer(() -> {
             RuntimePersistentEntity<T> entity = runtimeEntityRegistry.getEntity(pagedQuery.getRootEntity());
             Map<String, Object> body = matchAll();
-            applyPageable(body, pagedQuery.getPageable(), entity);
+            applyPageable(body, pagedQuery, entity);
             return search(body, entity).flatMapIterable(hits -> this.<T, T>toEntities(hits, entity, null));
         });
     }
@@ -169,7 +164,7 @@ public final class DefaultDocumentSearchReactiveRepositoryOperations extends Abs
                 return findOne(preparedQuery).flux();
             }
             Map<String, Object> body = body(preparedQuery, storedQuery);
-            applyPageable(body, preparedQuery.getPageable(), entity);
+            applyPageable(body, preparedQuery, entity);
             return search(body, entity).flatMapIterable(hits -> toEntities(hits, entity, preparedQuery));
         });
     }
@@ -188,14 +183,15 @@ public final class DefaultDocumentSearchReactiveRepositoryOperations extends Abs
 
     @Override
     public <T> Mono<T> persist(InsertOperation<T> operation) {
-        return Mono.defer(() -> persistOne(operation.getEntity(), runtimeEntityRegistry.getEntity(operation.getRootEntity())));
+        return Mono.defer(() -> persistOne(operation.getEntity(), runtimeEntityRegistry.getEntity(operation.getRootEntity()),
+            replacesExisting(operation.getAnnotationMetadata())));
     }
 
     @Override
     public <T> Flux<T> persistAll(InsertBatchOperation<T> operation) {
         return Flux.defer(() -> {
             // built per subscription, so listeners run on subscribe and a retry starts from fresh state
-            PersistBatch<T> batch = persistBatch(operation, runtimeEntityRegistry.getEntity(operation.getRootEntity()));
+            PersistBatch<T> batch = persistBatch(operation, runtimeEntityRegistry.getEntity(operation.getRootEntity()), replacesExisting(operation.getAnnotationMetadata()));
             List<List<SearchTransport.BulkDocument>> requests = batch.requests();
             // the requests go in sequence, each written entity getting its id and events when its request returns
             return Flux.range(0, requests.size())
@@ -263,7 +259,7 @@ public final class DefaultDocumentSearchReactiveRepositoryOperations extends Abs
 
     // ---------- helpers
 
-    private <T> Mono<T> persistOne(T value, RuntimePersistentEntity<T> entity) {
+    private <T> Mono<T> persistOne(T value, RuntimePersistentEntity<T> entity, boolean replace) {
         return Mono.defer(() -> {
             T current = prePersist(value, entity);
             if (current == null) {
@@ -274,7 +270,7 @@ public final class DefaultDocumentSearchReactiveRepositoryOperations extends Abs
             String documentId = documentId(current, entity);
             // a create-only write, so saving an entity with the id of an existing document fails instead of
             // replacing it; a versioned entity relies on the external version instead
-            return call(() -> version == null
+            return call(() -> version == null && !replace
                 ? transport.create(indexName(entity), documentId, document, configuration.getRefresh())
                 : transport.index(indexName(entity), documentId, document, version, configuration.getRefresh()))
                 .map(assignedId -> postPersist(current, entity, assignedId));

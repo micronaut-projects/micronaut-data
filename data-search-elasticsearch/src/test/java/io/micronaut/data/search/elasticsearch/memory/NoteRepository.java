@@ -16,6 +16,7 @@
 package io.micronaut.data.search.elasticsearch.memory;
 
 import io.micronaut.data.annotation.Query;
+import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.vector.search.SearchResults;
@@ -46,6 +47,7 @@ public interface NoteRepository extends PageableRepository<Note, String>, Search
     long deleteByTitle(String title);
 
     Page<Note> findByPagesGreaterThan(int pages, Pageable pageable);
+    List<Note> findByPagesGreaterThan(int pages, Limit limit);
 
     List<Note> findByPagesLessThan(int pages, Pageable pageable);
 
@@ -98,6 +100,13 @@ public interface NoteRepository extends PageableRepository<Note, String>, Search
     // a backslash keeps a colon followed by digits literal instead of reading it as a parameter
     @Query("{\"query\": {\"bool\": {\"must\": {\"match\": {\"title\": \":title\"}}, \"filter\": {\"match_phrase\": {\"body\": \"at 10\\:30\"}}}}}")
     List<Note> findTitledAtHalfPastTen(String title);
+
+    // the string form of sort entries, which both stores accept
+    @Query("{\"query\": {\"match_all\": {}}, \"sort\": [\"title.keyword\", {\"pages\": \"desc\"}]}")
+    List<Note> sortedByTitle(Pageable pageable);
+
+    @Query("{\"query\": {\"match_all\": {}}, \"sort\": \"_score\"}")
+    List<Note> sortedByScore(Pageable pageable);
 
     // the stores have no transactions, so this fails at its first call
     @Transactional

@@ -209,9 +209,10 @@ final class OpenSearchRequests {
         List<BulkOperation> operations = new ArrayList<>(documents.size());
         for (SearchTransport.BulkDocument document : documents) {
             Long version = document.version();
-            if (version == null) {
-                // a new document without a version is a create-only write
+            if (document.create()) {
                 operations.add(BulkOperation.of(op -> op.create(c -> c.id(document.id()).document(document.source()))));
+            } else if (version == null) {
+                operations.add(BulkOperation.of(op -> op.index(i -> i.id(document.id()).document(document.source()))));
             } else {
                 operations.add(BulkOperation.of(op -> op.index(i -> i.id(document.id()).document(document.source())
                     .version(version).versionType(VersionType.External))));
