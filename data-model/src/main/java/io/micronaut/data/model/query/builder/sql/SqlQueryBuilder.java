@@ -1116,8 +1116,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             .filter(StringUtils::isNotEmpty)
             .map(TextSearchDialect::requireIndexName)
             .orElseGet(() -> "idx_" + prepareNames(table.name()) + "_search");
-        String ddl = textSearchDialect.buildSearchIndex(escape ? quote(indexName) : indexName, escapedTableName, columns, language);
-        if (ddl != null) {
+        for (String ddl : textSearchDialect.buildSearchIndex(escape ? quote(indexName) : indexName, escapedTableName, columns, language)) {
             addToCollectionIfNotContains(createStatements, ddl);
         }
     }

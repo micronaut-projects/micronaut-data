@@ -21,6 +21,7 @@ import io.micronaut.data.annotation.search.SearchWeight;
 import io.micronaut.data.annotation.search.Searchable;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
+import io.micronaut.data.model.runtime.convert.OracleTextQueryConverter;
 import io.micronaut.data.model.runtime.convert.PostgresTsQueryConverter;
 import io.micronaut.data.model.search.MatchMode;
 import io.micronaut.data.model.search.SearchCapability;
@@ -53,6 +54,7 @@ public interface TextSearchDialect {
      * @param fields The matched field expressions
      * @param queryExpression The query parameter expression
      * @param mode The match mode
+     * @param target Where the entity data lives
      * @param appendExpression Renders a child expression
      * @param appendParameter Renders the query parameter with the given parameter converter class name
      */
@@ -60,6 +62,7 @@ public interface TextSearchDialect {
                          List<Expression<?>> fields,
                          Expression<String> queryExpression,
                          MatchMode mode,
+                         Target target,
                          Consumer<Expression<?>> appendExpression,
                          Function<String, Consumer<Expression<?>>> appendParameter);
 
@@ -70,6 +73,7 @@ public interface TextSearchDialect {
      * @param fields The matched field expressions
      * @param queryExpression The query parameter expression
      * @param mode The match mode
+     * @param target Where the entity data lives
      * @param appendExpression Renders a child expression
      * @param appendParameter Renders the query parameter with the given parameter converter class name
      */
@@ -77,6 +81,7 @@ public interface TextSearchDialect {
                            List<Expression<?>> fields,
                            Expression<String> queryExpression,
                            MatchMode mode,
+                           Target target,
                            Consumer<Expression<?>> appendExpression,
                            Function<String, Consumer<Expression<?>>> appendParameter);
 
@@ -89,6 +94,7 @@ public interface TextSearchDialect {
     static @Nullable TextSearchDialect forDialect(Dialect dialect) {
         return switch (dialect) {
             case POSTGRES -> PostgresTextSearchDialect.INSTANCE;
+            case ORACLE -> OracleTextSearchDialect.INSTANCE;
             default -> null;
         };
     }
@@ -182,11 +188,140 @@ public interface TextSearchDialect {
      * @param escapedTableName The escaped table name
      * @param columns The search field columns, escaped when needed
      * @param language The text search language
-     * @return The {@code CREATE INDEX} statement, or {@code null} when the dialect needs no index
+     * @return The {@code CREATE INDEX} statements, empty when the dialect needs no index
      */
-    @Nullable
-    default String buildSearchIndex(String indexName, String escapedTableName, List<SearchColumn> columns, String language) {
-        return null;
+    default List<String> buildSearchIndex(String indexName, String escapedTableName, List<SearchColumn> columns, String language) {
+        return List.of();
+    }
+
+    /**
+     * The path of a property's keys in the JSON document of a JSON-represented entity. Each step is renamed
+     * when its property declares its key with {@code @SerdeConfig(property)} or {@code @JsonProperty}; a naming
+     * strategy of the serializer, such as {@code @JsonNaming}, is not applied, nor is {@code @MappedProperty},
+     * which names columns rather than JSON keys.
+     *
+     * @param propertyPath A property path of a JSON-represented entity
+     * @return The path of its keys in the JSON document
+     */
+    static String jsonKeyPath(io.micronaut.data.model.PersistentPropertyPath propertyPath) {
+        String path = propertyPath.getPath();
+        List<PersistentProperty> steps = propertyPath.getPropertyPath();
+        java.util.StringJoiner names = new java.util.StringJoiner(".");
+        java.util.StringJoiner keys = new java.util.StringJoiner(".");
+        for (PersistentProperty step : steps) {
+            names.add(step.getName());
+            keys.add(jsonKey(step));
+        }
+        if (path.equals(names.toString())) {
+            return keys.toString();
+        }
+        // a path whose steps are not all listed as associations, such as a joined path: only the leaf is renamed
+        PersistentProperty property = propertyPath.getProperty();
+        String key = jsonKey(property);
+        if (key.equals(property.getName()) || !path.endsWith(property.getName())) {
+            return path;
+        }
+        return path.substring(0, path.length() - property.getName().length()) + key;
+    }
+
+    private static String jsonKey(PersistentProperty property) {
+        return property.getAnnotationMetadata().stringValue("io.micronaut.serde.config.annotation.SerdeConfig", "property")
+            .or(() -> property.getAnnotationMetadata().stringValue("com.fasterxml.jackson.annotation.JsonProperty"))
+            .filter(name -> !name.isEmpty())
+            .orElse(property.getName());
+    }
+
+    /**
+     * Where the searched entity lives: a JSON column for JSON-represented entities, else plain columns.
+     *
+     * @param jsonColumn The JSON column holding the whole entity, or {@code null} for relational entities
+     * @param tableAlias The table alias in the query, or {@code null}
+     * @param labels The {@code CONTAINS} labels of the statement being built, or {@code null} to start at 1
+     */
+    record Target(@Nullable String jsonColumn, @Nullable String tableAlias, @Nullable Labels labels) {
+        /**
+         * A relational target without alias.
+         */
+        public static final Target RELATIONAL = new Target(null, null, null);
+
+        /**
+         * @param jsonColumn The JSON column holding the whole entity, or {@code null} for relational entities
+         * @param tableAlias The table alias in the query, or {@code null}
+         */
+        public Target(@Nullable String jsonColumn, @Nullable String tableAlias) {
+            this(jsonColumn, tableAlias, null);
+        }
+
+        /**
+         * @param labels The labels of the statement being built
+         * @return This target with the statement's labels
+         */
+        public Target withLabels(Labels labels) {
+            return new Target(jsonColumn, tableAlias, labels);
+        }
+    }
+
+    /**
+     * The {@code CONTAINS} labels of one statement. Each text match takes its own range, and its score,
+     * rendered in the select list and the order, reads the same labels: a match is known by its fields
+     * and its query parameter, as each clause holds its own copy of the expressions.
+     *
+     * <p>Two matches with the same key, such as two criteria text matches on one field whose parameters
+     * are both unnamed, still take a range each, as Oracle rejects a label used by two {@code CONTAINS}
+     * calls (ORA-29907); a score with that key reads the range of the first.</p>
+     */
+    final class Labels {
+        private final java.util.Map<String, Integer> bases = new java.util.HashMap<>();
+        private final java.util.Set<String> matched = new java.util.HashSet<>();
+        private int next = 1;
+
+        /**
+         * The first label a score reads: the range of the first match with the same key.
+         *
+         * @param fields The fields of the text match
+         * @param queryExpression The query expression of the text match
+         * @param count The number of labels the match uses
+         * @return The first label of the match
+         */
+        public int base(List<Expression<?>> fields, Expression<?> queryExpression, int count) {
+            return bases.computeIfAbsent(key(fields, queryExpression), k -> allocate(count));
+        }
+
+        /**
+         * The first label of a {@code CONTAINS} call: the range a score with the same key reads when this is
+         * the first match with that key, else a new range.
+         *
+         * @param fields The fields of the text match
+         * @param queryExpression The query expression of the text match
+         * @param count The number of labels the match uses
+         * @return The first label of the match
+         */
+        public int match(List<Expression<?>> fields, Expression<?> queryExpression, int count) {
+            String key = key(fields, queryExpression);
+            if (matched.add(key)) {
+                return base(fields, queryExpression, count);
+            }
+            return allocate(count);
+        }
+
+        private int allocate(int count) {
+            int base = next;
+            next += count;
+            return base;
+        }
+
+        private static String key(List<Expression<?>> fields, Expression<?> queryExpression) {
+            java.util.StringJoiner key = new java.util.StringJoiner(",", "", "|");
+            for (Expression<?> field : fields) {
+                key.add(field instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> path
+                    ? path.getPropertyPath().getPath()
+                    : String.valueOf(field));
+            }
+            String parameter = queryExpression instanceof jakarta.persistence.criteria.ParameterExpression<?> p && p.getName() != null
+                ? p.getName()
+                : "";
+            return key + parameter;
+        }
     }
 
     /**
@@ -214,6 +349,7 @@ public interface TextSearchDialect {
                                     List<Expression<?>> fields,
                                     Expression<String> queryExpression,
                                     MatchMode mode,
+                                    Target target,
                                     Consumer<Expression<?>> appendExpression,
                                     Function<String, Consumer<Expression<?>>> appendParameter) {
             if (mode == MatchMode.FUZZY) {
@@ -230,6 +366,7 @@ public interface TextSearchDialect {
                                       List<Expression<?>> fields,
                                       Expression<String> queryExpression,
                                       MatchMode mode,
+                                      Target target,
                                       Consumer<Expression<?>> appendExpression,
                                       Function<String, Consumer<Expression<?>>> appendParameter) {
             String language = resolveLanguage(fields);
@@ -251,12 +388,12 @@ public interface TextSearchDialect {
         }
 
         @Override
-        public String buildSearchIndex(String indexName, String escapedTableName, List<SearchColumn> columns, String language) {
+        public List<String> buildSearchIndex(String indexName, String escapedTableName, List<SearchColumn> columns, String language) {
             StringBuilder ddl = new StringBuilder("CREATE INDEX IF NOT EXISTS ").append(indexName).append(" ON ").append(escapedTableName).append(" USING GIN (");
             List<SearchWeight> weights = columns.stream().map(SearchColumn::weight).toList();
             List<Consumer<StringBuilder>> renderers = columns.stream().map(c -> (Consumer<StringBuilder>) sb -> sb.append(c.column())).toList();
             appendVector(ddl, renderers, weights, language);
-            return ddl.append(");").toString();
+            return List.of(ddl.append(");").toString());
         }
 
         private void appendVector(StringBuilder query,
@@ -304,6 +441,145 @@ public interface TextSearchDialect {
             if (multiple) {
                 query.append(')');
             }
+        }
+    }
+
+    /**
+     * Oracle Text renderer: one {@code CONTEXT} index per search field, {@code CONTAINS(col, ?, n) > 0}
+     * per field and {@code SCORE(n)} for the relevance, weighted by {@link SearchField#weight()}.
+     *
+     * <p>A search over several fields matches any field with the positive terms and then excludes rows
+     * where any field matches a negated term; a phrase search has no negated terms and renders no exclusion.
+     * The {@link OracleTextQueryConverter} decides at bind time which terms each part holds. JSON-represented entities use
+     * {@code JSON_TEXTCONTAINS(column, '$.path', ?, n)} instead.</p>
+     */
+    enum OracleTextSearchDialect implements TextSearchDialect {
+        INSTANCE;
+
+        private static final String CONTAINS_SUFFIX = ") > 0";
+
+        @Override
+        public void appendTextMatch(StringBuilder query,
+                                    List<Expression<?>> fields,
+                                    Expression<String> queryExpression,
+                                    MatchMode mode,
+                                    Target target,
+                                    Consumer<Expression<?>> appendExpression,
+                                    Function<String, Consumer<Expression<?>>> appendParameter) {
+            Labels labels = target.labels();
+            int base = labels == null ? 1 : labels.match(fields, queryExpression, labelCount(fields, mode));
+            if (fields.size() == 1) {
+                appendContains(query, fields.get(0), base, queryExpression, target, appendExpression,
+                    appendParameter.apply(OracleTextQueryConverter.converterFor(mode, OracleTextQueryConverter.Part.FULL)));
+                return;
+            }
+            Consumer<Expression<?>> positive = appendParameter.apply(OracleTextQueryConverter.converterFor(mode, OracleTextQueryConverter.Part.POSITIVE));
+            if (mode == MatchMode.PHRASE) {
+                // a phrase has no negated terms: a - inside it is part of the phrase
+                query.append('(');
+                appendAnyField(query, fields, base, queryExpression, target, appendExpression, positive);
+                query.append(')');
+                return;
+            }
+            query.append("((");
+            appendAnyField(query, fields, base, queryExpression, target, appendExpression, positive);
+            query.append(") AND NOT (");
+            Consumer<Expression<?>> negated = appendParameter.apply(OracleTextQueryConverter.converterFor(mode, OracleTextQueryConverter.Part.NEGATED));
+            appendAnyField(query, fields, base + fields.size(), queryExpression, target, appendExpression, negated);
+            query.append("))");
+        }
+
+        @Override
+        public void appendSearchScore(StringBuilder query,
+                                      List<Expression<?>> fields,
+                                      Expression<String> queryExpression,
+                                      MatchMode mode,
+                                      Target target,
+                                      Consumer<Expression<?>> appendExpression,
+                                      Function<String, Consumer<Expression<?>>> appendParameter) {
+            Labels labels = target.labels();
+            int base = labels == null ? 1 : labels.base(fields, queryExpression, labelCount(fields, mode));
+            if (fields.size() == 1) {
+                query.append("SCORE(").append(base).append(')');
+                return;
+            }
+            boolean weighted = fields.stream().anyMatch(f -> resolveWeight(f) != null);
+            query.append('(');
+            for (int i = 0; i < fields.size(); i++) {
+                if (i > 0) {
+                    query.append(" + ");
+                }
+                query.append("SCORE(").append(base + i).append(')');
+                if (weighted) {
+                    SearchWeight weight = resolveWeight(fields.get(i));
+                    query.append(" * ").append(weight == null ? 1 : weight.numericWeight());
+                }
+            }
+            query.append(')');
+        }
+
+        @Override
+        public List<String> buildSearchIndex(String indexName, String escapedTableName, List<SearchColumn> columns, String language) {
+            List<String> statements = new java.util.ArrayList<>(columns.size());
+            for (SearchColumn column : columns) {
+                String name = indexName.endsWith("\"")
+                    ? indexName.substring(0, indexName.length() - 1) + "_" + column.column().replace("\"", "") + "\""
+                    : indexName + "_" + column.column();
+                statements.add("CREATE INDEX " + name + " ON " + escapedTableName + " (" + column.column()
+                    + ") INDEXTYPE IS CTXSYS.CONTEXT PARAMETERS ('SYNC (ON COMMIT)');");
+            }
+            return statements;
+        }
+
+        /**
+         * The number of labels a match takes from the statement's labels, so two matches in one statement
+         * never share a label: one for a single field; for several fields one per field for the positive
+         * terms and, unless the match is a phrase, one per field for the negated ones.
+         */
+        private static int labelCount(List<Expression<?>> fields, MatchMode mode) {
+            if (fields.size() == 1) {
+                return 1;
+            }
+            return mode == MatchMode.PHRASE ? fields.size() : 2 * fields.size();
+        }
+
+        private void appendAnyField(StringBuilder query,
+                                    List<Expression<?>> fields,
+                                    int firstLabel,
+                                    Expression<String> queryExpression,
+                                    Target target,
+                                    Consumer<Expression<?>> appendExpression,
+                                    Consumer<Expression<?>> appendQuery) {
+            for (int i = 0; i < fields.size(); i++) {
+                if (i > 0) {
+                    query.append(" OR ");
+                }
+                appendContains(query, fields.get(i), firstLabel + i, queryExpression, target, appendExpression, appendQuery);
+            }
+        }
+
+        private void appendContains(StringBuilder query,
+                                    Expression<?> field,
+                                    int label,
+                                    Expression<String> queryExpression,
+                                    Target target,
+                                    Consumer<Expression<?>> appendExpression,
+                                    Consumer<Expression<?>> appendQuery) {
+            if (target.jsonColumn() != null && field instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath) {
+                query.append("JSON_TEXTCONTAINS(");
+                if (target.tableAlias() != null) {
+                    query.append(target.tableAlias()).append('.');
+                }
+                query.append(target.jsonColumn()).append(",'$.").append(TextSearchDialect.jsonKeyPath(propertyPath.getPropertyPath())).append("',");
+                appendQuery.accept(queryExpression);
+                query.append(',').append(label).append(')');
+                return;
+            }
+            query.append("CONTAINS(");
+            appendExpression.accept(field);
+            query.append(',');
+            appendQuery.accept(queryExpression);
+            query.append(',').append(label).append(CONTAINS_SUFFIX);
         }
     }
 }
