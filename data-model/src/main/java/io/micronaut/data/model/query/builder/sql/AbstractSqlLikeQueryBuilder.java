@@ -85,6 +85,8 @@ import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.BindingParameter;
+import io.micronaut.data.model.search.MatchMode;
+import io.micronaut.data.model.search.TextSearchSupport;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.GeneratedEntityUpdateQueryDefinition;
 import io.micronaut.data.model.query.builder.QueryBuilder;
@@ -122,6 +124,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -2785,6 +2788,15 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         @Override
+        public void visitTextMatch(List<Expression<?>> fields, Expression<String> queryExpression, MatchMode mode) {
+            TextSearchDialect dialect = TextSearchDialect.forDialect(getDialect());
+            if (dialect == null) {
+                throw new UnsupportedOperationException("Full-text search is not supported by dialect: " + getDialect());
+            }
+            dialect.appendTextMatch(query, fields, queryExpression, mode, this::appendExpression, this::appendConvertedParameter);
+        }
+
+        @Override
         public void visitNear(Expression<?> leftExpression, Expression<?> geometryExpression, Expression<? extends Number> distanceExpression) {
             switch (getDialect()) {
                 case ORACLE -> {
@@ -3127,6 +3139,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 dialect.appendVectorScore(query, left, right, expression -> appendExpression(expression, expression == right ? left : null));
                 return;
             }
+            if (TextSearchSupport.SCORE_FUNCTION.equals(functionName)) {
+                appendSearchScore(expressions);
+                return;
+            }
             String aggregateFunction = getDistinctAggregateFunction(functionName);
             if (aggregateFunction != null) {
                 if (expressions.size() != 1) {
@@ -3156,6 +3172,47 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             query.append(AS_CLAUSE);
             query.append(getCastDbType(type, getDialectOptions()));
             query.append(CLOSE_BRACKET);
+        }
+
+        /**
+         * Renders the arguments of the synthetic {@link TextSearchSupport#SCORE_FUNCTION} as the dialect's
+         * relevance score. The arguments are the field expressions, the query parameter and a literal
+         * holding the {@link MatchMode} name.
+         *
+         * @param expressions The function arguments
+         */
+        protected final void appendSearchScore(List<Expression<?>> expressions) {
+            TextSearchDialect dialect = TextSearchDialect.forDialect(getDialect());
+            if (dialect == null) {
+                throw new UnsupportedOperationException("Full-text search is not supported by dialect: " + getDialect());
+            }
+            if (expressions.size() < 3) {
+                throw new IllegalStateException("Search score expects fields, a query and a match mode");
+            }
+            List<Expression<?>> fields = expressions.subList(0, expressions.size() - 2);
+            @SuppressWarnings("unchecked")
+            Expression<String> queryExpression = (Expression<String>) expressions.get(expressions.size() - 2);
+            Expression<?> modeExpression = expressions.get(expressions.size() - 1);
+            MatchMode mode = modeExpression instanceof LiteralExpression<?> literal && literal.getValue() != null
+                ? MatchMode.valueOf(literal.getValue().toString())
+                : MatchMode.ANY;
+            dialect.appendSearchScore(query, fields, queryExpression, mode, this::appendExpression, this::appendConvertedParameter);
+        }
+
+        /**
+         * Creates a renderer that binds a parameter expression with the given parameter converter.
+         *
+         * @param converterClassName The converter class name
+         * @return The renderer
+         */
+        protected final Consumer<Expression<?>> appendConvertedParameter(String converterClassName) {
+            return expression -> {
+                if (!(expression instanceof BindingParameter bindingParameter)) {
+                    throw new IllegalStateException("A full-text search query must be a parameter, got: " + expression);
+                }
+                BindingParameter converted = context -> TextSearchDialect.withConverter(bindingParameter.bind(context), converterClassName);
+                queryState.pushParameter(converted, newBindingContext(null));
+            };
         }
 
         protected final void appendBindingParameter(BindingParameter bindingParameter,
@@ -3907,6 +3964,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 appendVectorScore(expressions.get(0), expressions.get(1));
                 return;
             }
+            if (TextSearchSupport.SCORE_FUNCTION.equals(functionName)) {
+                appendSearchScore(expressions);
+                return;
+            }
             String aggregateFunction = getDistinctAggregateFunction(functionName);
             if (aggregateFunction != null) {
                 if (expressions.size() != 1) {
@@ -3970,6 +4031,39 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     parameterBoundProperty = null;
                 }
             });
+        }
+
+        private void appendSearchScore(List<Expression<?>> expressions) {
+            TextSearchDialect dialect = TextSearchDialect.forDialect(getDialect());
+            if (dialect == null) {
+                throw new UnsupportedOperationException("Full-text search is not supported by dialect: " + getDialect());
+            }
+            if (expressions.size() < 3) {
+                throw new IllegalStateException("Search score expects fields, a query and a match mode");
+            }
+            List<Expression<?>> fields = expressions.subList(0, expressions.size() - 2);
+            @SuppressWarnings("unchecked")
+            Expression<String> queryExpression = (Expression<String>) expressions.get(expressions.size() - 2);
+            Expression<?> modeExpression = expressions.get(expressions.size() - 1);
+            MatchMode mode = modeExpression instanceof LiteralExpression<?> literal && literal.getValue() != null
+                ? MatchMode.valueOf(literal.getValue().toString())
+                : MatchMode.ANY;
+            String currentColumnAlias = columnAlias;
+            boolean currentNestedExpression = isNestedExpression;
+            columnAlias = null;
+            isNestedExpression = true;
+            try {
+                dialect.appendSearchScore(query, fields, queryExpression, mode, this::appendExpression, converterClassName -> expression -> {
+                    if (!(expression instanceof BindingParameter bindingParameter)) {
+                        throw new IllegalStateException("A full-text search query must be a parameter, got: " + expression);
+                    }
+                    BindingParameter converted = context -> TextSearchDialect.withConverter(bindingParameter.bind(context), converterClassName);
+                    queryState.pushParameter(converted, newBindingContext(null));
+                });
+            } finally {
+                columnAlias = currentColumnAlias;
+                isNestedExpression = currentNestedExpression;
+            }
         }
 
         private void appendExpression(Expression<?> expression) {

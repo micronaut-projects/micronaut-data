@@ -29,6 +29,9 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NearPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.TextMatchPredicate;
+import io.micronaut.data.model.search.MatchMode;
+import io.micronaut.data.model.search.TextSearchSupport;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BetweenPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
@@ -68,6 +71,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -1357,6 +1361,25 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     @Override
     public Predicate arrayContains(Expression<?> x, Expression<?> y) {
         return predicate(x, y, PredicateBinaryOp.ARRAY_CONTAINS);
+    }
+
+    @Override
+    public Predicate textMatch(Expression<?> field, Expression<String> query, MatchMode mode) {
+        return new TextMatchPredicate(List.of(field), query, mode);
+    }
+
+    @Override
+    public Predicate textMatch(List<Expression<?>> fields, Expression<String> query, MatchMode mode) {
+        return new TextMatchPredicate(fields, query, mode);
+    }
+
+    @Override
+    public Expression<Double> searchScore(List<Expression<?>> fields, Expression<String> query, MatchMode mode) {
+        List<Expression<?>> args = new ArrayList<>(fields.size() + 2);
+        args.addAll(fields);
+        args.add(query);
+        args.add(new LiteralExpression<>(mode.name()));
+        return new FunctionExpression<>(TextSearchSupport.SCORE_FUNCTION, args, Double.class);
     }
 
     @Override

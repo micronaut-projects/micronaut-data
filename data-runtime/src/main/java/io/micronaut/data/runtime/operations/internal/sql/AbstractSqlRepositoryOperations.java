@@ -981,6 +981,10 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      */
     @Nullable
     protected final ScoringFunction resolveVectorScoringFunction(SqlStoredQuery<?, ?> preparedQuery) {
+        if (preparedQuery.isTextSearch()) {
+            // A relevance rank, not a vector distance: nothing to normalize
+            return null;
+        }
         if (preparedQuery instanceof DefaultSqlPreparedQuery<?, ?> sqlPreparedQuery) {
             return sqlPreparedQuery.getVectorScoringFunction();
         }

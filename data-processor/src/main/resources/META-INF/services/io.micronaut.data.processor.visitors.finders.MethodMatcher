@@ -15,3 +15,4 @@ io.micronaut.data.processor.visitors.finders.SaveMethodMatcher
 io.micronaut.data.processor.visitors.finders.VectorSearchMethodMatcher
 io.micronaut.data.processor.visitors.finders.ProcedureMethodMatcher
 io.micronaut.data.processor.visitors.finders.JakartaDataQueryMethodMatcher
+io.micronaut.data.processor.visitors.finders.SearchRepositoryMethodMatcher

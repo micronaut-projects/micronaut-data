@@ -31,6 +31,7 @@ import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.Embedded;
+import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
@@ -47,6 +48,8 @@ import io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.VectorScoringDialectSupport;
+import io.micronaut.data.model.search.MatchMode;
+import io.micronaut.data.model.search.TextSearchSupport;
 import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.model.vector.search.SearchResults;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
@@ -100,6 +103,7 @@ import java.util.stream.Collectors;
 @Experimental
 public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
 
+    private static final String NEGATION = "Not";
     // The operators are only matched between two words to avoid splitting property names like "origin" or "android"
     private static final Pattern LOGICAL_OPERATOR_PATTERN = Pattern.compile("(?<=\\w)(?:And|Or)(?=\\p{Upper})");
     private static final Pattern AND_OPERATOR_PATTERN = Pattern.compile("(?<=\\w)And(?=\\p{Upper})");
@@ -629,7 +633,10 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         PersistentPropertyPath embeddedSelection = findEmbeddedSelection(query);
         boolean dto = result.isDto() && embeddedSelection == null;
         ClassElement declaredReturnType = unwrapReactiveReturnType(matchContext.getReturnType());
-        applySearchResultsProjectionIfNeeded(matchContext, cb, query, declaredReturnType);
+        boolean textScoreProjected = applySearchResultsProjectionIfNeeded(matchContext, cb, query, declaredReturnType);
+        // the query leaves the order to the Pageable or Sort parameter, which falls back to the score when unsorted
+        boolean scoreOrderedWhenUnsorted = textScoreProjected
+            && (matchContext.hasParameterInRole(TypeRole.SORT) || matchContext.hasParameterInRole(TypeRole.PAGEABLE));
         applyDtoProjectionIfNeeded(matchContext, query, result, persistentEntity, resultType, dto);
 
         final AnnotationMetadata annotationMetadata = matchContext.getMethodElement();
@@ -650,6 +657,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             .optimisticLock(optimisticLock)
             .resultDataType(embeddedSelection != null ? DataType.ENTITY : null)
             .optionalEmbeddedProjection(embeddedSelection != null && isOptional(embeddedSelection))
+            .scoreOrderedWhenUnsorted(scoreOrderedWhenUnsorted)
             .queryResult(queryResult)
             .countQueryResult(countQueryResult);
     }
@@ -676,23 +684,34 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         return returnType.getFirstTypeArgument().orElse(returnType);
     }
 
-    private void applySearchResultsProjectionIfNeeded(MethodMatchContext matchContext,
-                                                      SourcePersistentEntityCriteriaBuilder cb,
-                                                      SourcePersistentEntityCriteriaQuery<?> query,
-                                                      ClassElement declaredReturnType) {
+    /**
+     * Projects the entity and its score for a {@code SearchResults} finder.
+     *
+     * @return True if the projected score is a text search relevance score
+     */
+    private boolean applySearchResultsProjectionIfNeeded(MethodMatchContext matchContext,
+                                                         SourcePersistentEntityCriteriaBuilder cb,
+                                                         SourcePersistentEntityCriteriaQuery<?> query,
+                                                         ClassElement declaredReturnType) {
         if (!declaredReturnType.getName().equals(SearchResults.class.getName())) {
-            return;
+            return false;
         }
         List<MethodNameParser.Match> predicateMatches = matches.stream().filter(m -> m.id() == QueryMatchId.PREDICATE).toList();
         if (predicateMatches.isEmpty()) {
-            throw new MatchFailedException("SearchResults query must include a Near, Within, or Between predicate");
+            throw new MatchFailedException("SearchResults query must include a Near, Within, Between or Search predicate");
         }
+        Root<?> root = query.getRoots().iterator().next();
         VectorPredicate vectorPredicate = resolveVectorPredicate(predicateMatches);
         if (vectorPredicate == null) {
-            throw new MatchFailedException("Unable to resolve vector property for SearchResults query");
+            TextPredicate textPredicate = resolveTextPredicate(((PersistentEntityRoot<?>) root).getPersistentEntity(), predicateMatches);
+            if (textPredicate == null) {
+                throw new MatchFailedException("Unable to resolve a vector or text search property for SearchResults query");
+            }
+            Expression<Double> scoreExpr = textScoreExpression(matchContext, cb, (PersistentEntityRoot<Object>) root, textPredicate);
+            query.multiselect(root, scoreExpr.alias(TextSearchSupport.SCORE_ALIAS));
+            return true;
         }
 
-        Root<?> root = query.getRoots().iterator().next();
         ParameterElement vectorElement = resolveVectorPredicateParameter(matchContext, vectorPredicate);
         String vectorPropertyName = vectorPredicate.propertyName();
         io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<Object> vectorPropertyExpression = findProperty((PersistentEntityRoot<Object>) root, vectorPropertyName);
@@ -706,6 +725,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         ParameterExpression<Vector> vectorParameter = cb.parameter(vectorElement, propertyPath);
         Expression<Double> scoreExpr = cb.function(VectorScoringDialectSupport.SCORE_FUNCTION, Double.class, vectorPropertyExpression, vectorParameter);
         query.multiselect(root, scoreExpr.alias("mn_score"));
+        return false;
     }
 
     private void applyVectorScoreOrderIfNeeded(MethodMatchContext matchContext,
@@ -721,6 +741,13 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         }
         VectorPredicate vectorPredicate = resolveVectorPredicate(predicateMatches);
         if (vectorPredicate == null) {
+            if (!unwrapReactiveReturnType(matchContext.getReturnType()).getName().equals(SearchResults.class.getName())) {
+                return;
+            }
+            TextPredicate textPredicate = resolveTextPredicate(root.getPersistentEntity(), predicateMatches);
+            if (textPredicate != null) {
+                query.orderBy(cb.desc(textScoreExpression(matchContext, cb, root, textPredicate)));
+            }
             return;
         }
         String vectorPropertyName = vectorPredicate.propertyName();
@@ -737,6 +764,63 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         ParameterExpression<Vector> vectorParameter = scb.parameter(vectorElement, propertyPath);
         Expression<Double> scoreExpr = cb.function(VectorScoringDialectSupport.SCORE_FUNCTION, Double.class, vectorPropertyExpression, vectorParameter);
         query.orderBy(cb.asc(scoreExpr));
+    }
+
+    /**
+     * Builds the relevance score expression of the text predicate, binding the same query parameter the
+     * predicate uses so the SQL renders one {@code to_tsquery(?)} per occurrence.
+     */
+    private Expression<Double> textScoreExpression(MethodMatchContext matchContext,
+                                                   PersistentEntityCriteriaBuilder cb,
+                                                   PersistentEntityRoot<Object> root,
+                                                   TextPredicate textPredicate) {
+        List<ParameterElement> parameters = matchContext.getParametersNotInRole();
+        if (textPredicate.parameterIndex() >= parameters.size()) {
+            throw new ProcessingException(matchContext.getMethodElement(), "Text search predicate requires a String parameter");
+        }
+        ParameterElement queryElement = parameters.get(textPredicate.parameterIndex());
+        List<Expression<?>> fields;
+        if (textPredicate.propertyName().isEmpty()) {
+            fields = Restrictions.Search.searchFields(root);
+        } else {
+            io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<Object> property = findProperty(root, textPredicate.propertyName());
+            if (property == null) {
+                throw new MatchFailedException("Unable to resolve search property path for SearchResults query: " + textPredicate.propertyName());
+            }
+            fields = List.of(property);
+        }
+        SourcePersistentEntityCriteriaBuilder scb = (SourcePersistentEntityCriteriaBuilder) cb;
+        ParameterExpression<String> queryParameter = scb.parameter(queryElement, null);
+        return cb.searchScore(fields, queryParameter, textPredicate.mode());
+    }
+
+    /**
+     * Resolves the first text search predicate of a {@code SearchResults} finder, the one its results are
+     * scored and ordered by. A negated search predicate, such as {@code TitleNotSearch}, cannot rank the
+     * results and is skipped; a finder whose only search predicates are negated is rejected.
+     */
+    @SuppressWarnings("StringSplitter")
+    private @Nullable TextPredicate resolveTextPredicate(PersistentEntity entity, List<MethodNameParser.Match> predicateMatches) {
+        String predicate = predicateMatches.getFirst().part();
+        int parameterIndex = 0;
+        boolean negated = false;
+        for (String part : LOGICAL_OPERATOR_PATTERN.split(predicate)) {
+            TextSearchSupport.SearchKeyword keyword = isPropertyEndingInSearchKeyword(entity, part) ? null : TextSearchSupport.parseKeyword(part);
+            if (keyword != null) {
+                String keywordProperty = keyword.propertyName();
+                if (!keywordProperty.endsWith(NEGATION)) {
+                    // the property name is empty, never null, for a keyword without a property
+                    String propertyName = Objects.requireNonNull(NameUtils.decapitalize(keywordProperty));
+                    return new TextPredicate(propertyName, keyword.mode(), parameterIndex);
+                }
+                negated = true;
+            }
+            parameterIndex += requiredParameters(part);
+        }
+        if (negated) {
+            throw new MatchFailedException("A SearchResults finder cannot score its results by a negated search predicate: add a search predicate without Not to rank by, or return a List");
+        }
+        return null;
     }
 
     private ParameterElement resolveVectorPredicateParameter(MethodMatchContext matchContext, VectorPredicate vectorPredicate) {
@@ -909,6 +993,9 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
     }
 
     private record VectorPredicate(String propertyName, int parameterIndex) {
+    }
+
+    private record TextPredicate(String propertyName, MatchMode mode, int parameterIndex) {
     }
 
 }

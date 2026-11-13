@@ -28,8 +28,8 @@ import org.jspecify.annotations.Nullable;
 import java.util.List;
 
 /**
- * Matcher for vector-search repository methods that start with {@code search...} and return
- * {@link SearchResults}. Methods that start with {@code search...} but do not return
+ * Matcher for vector-search and full-text search repository methods that start with {@code search...}
+ * and return {@link SearchResults}. Methods that start with {@code search...} but do not return
  * {@link SearchResults} are handled by {@link FindMethodMatcher} instead.
  */
 @Internal
