@@ -36,6 +36,29 @@ class SearchQuerySpec extends Specification {
         SearchQuery.of("coffee").fields.empty
     }
 
+    void "fuzzy without an edit distance uses the store default"() {
+        when:
+        def query = SearchQuery.builder("coffe").fuzzy().build()
+
+        then:
+        query.mode == MatchMode.FUZZY
+        query.fuzziness == 0
+    }
+
+    void "an edit distance of 0 matches the terms without edits"() {
+        when:
+        def query = SearchQuery.builder("coffee").fuzzy(0).build()
+
+        then:
+        query.mode == MatchMode.ANY
+        query.fuzziness == 0
+        query == SearchQuery.of("coffee")
+
+        and: "the last of fuzzy and mode decides the mode"
+        SearchQuery.builder("coffe").fuzzy(0).fuzzy(2).build().mode == MatchMode.FUZZY
+        SearchQuery.builder("coffe").fuzzy(0).fuzzy(2).build().fuzziness == 2
+    }
+
     void "a fuzzy edit distance outside 0 to 2 is rejected"() {
         when:
         SearchQuery.builder("coffe").fuzzy(maxEdits)
@@ -90,6 +113,17 @@ class SearchQuerySpec extends Specification {
 
         where:
         value << [0, SearchQuery.MAX_CANDIDATES + 1]
+    }
+
+    void "a boost must be a finite number above 0"() {
+        when:
+        SearchQuery.builder("a").boost("title", boost)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        where:
+        boost << [0d, -1d, Double.NaN, Double.POSITIVE_INFINITY]
     }
 
     void "hybrid weights must be finite and not negative"() {

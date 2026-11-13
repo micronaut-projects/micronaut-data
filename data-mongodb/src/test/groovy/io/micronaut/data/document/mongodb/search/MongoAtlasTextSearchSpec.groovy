@@ -42,7 +42,7 @@ class MongoAtlasTextSearchSpec extends AbstractTextSearchSpec implements MongoAt
     Set<SearchCapability> capabilities() {
         return EnumSet.of(SearchCapability.PHRASE, SearchCapability.PREFIX, SearchCapability.FUZZY,
                 SearchCapability.FIELD_SCOPE, SearchCapability.HIGHLIGHT, SearchCapability.MIN_SCORE,
-                SearchCapability.VECTOR, SearchCapability.HYBRID)
+                SearchCapability.VECTOR, SearchCapability.HYBRID, SearchCapability.BOOST, SearchCapability.FUZZINESS)
     }
 
     void "fuzzy matching tolerates one edit"() {
