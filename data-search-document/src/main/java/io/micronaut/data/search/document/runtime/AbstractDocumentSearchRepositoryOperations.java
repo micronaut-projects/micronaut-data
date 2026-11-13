@@ -70,6 +70,12 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
     private static final String ORDER = "order";
     private static final String ASC = "asc";
     private static final String DESC = "desc";
+    private static final String FROM = "from";
+    private static final String SIZE = "size";
+    private static final String KNN = "knn";
+    private static final String NUM_CANDIDATES = "num_candidates";
+    // the hits a request without a size returns, the default of Elasticsearch and OpenSearch
+    private static final int DEFAULT_SIZE = 10;
     private static final Argument<Map<String, Object>> DOCUMENT = Argument.mapOf(String.class, Object.class);
 
     protected final JsonMapper jsonMapper;
@@ -409,13 +415,19 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
 
     protected final <T> void applyPageable(Map<String, Object> body, Pageable pageable, RuntimePersistentEntity<T> entity) {
         if (pageable instanceof CursoredPageable cursored) {
+            if (containsKnn(body)) {
+                // the k nearest neighbours are the documents search_after pages through, and the position of a
+                // cursor in that window is unknown, so no k covers the next page
+                throw new UnsupportedOperationException("Cursored paging is not supported for a vector search in a document search store, use a Pageable with an offset");
+            }
             applyCursoredPageable(body, cursored, entity);
             return;
         }
         if (!pageable.isUnpaged()) {
-            body.put("from", pageable.getOffset());
-            body.put("size", pageable.getSize());
+            body.put(FROM, pageable.getOffset());
+            body.put(SIZE, pageable.getSize());
         }
+        sizeKnn(body, window(body));
         Sort sort = pageable.getSort();
         if (sort.isSorted()) {
             body.put("sort", sortEntries(sort.getOrderBy(), entity, false));
@@ -432,6 +444,47 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
             throw new DataAccessException("Cannot sort on unknown property: " + order.getProperty());
         }
         return DocumentSearchQueryBuilder.keywordPath(path);
+    }
+
+    /** The end of the window of hits a request returns: its {@code from} plus its {@code size}, or the stores' default size. */
+    private static int window(Map<String, Object> body) {
+        long from = body.get(FROM) instanceof Number number ? number.longValue() : 0;
+        long size = body.get(SIZE) instanceof Number number ? number.longValue() : DEFAULT_SIZE;
+        return (int) Math.min(Integer.MAX_VALUE, from + size);
+    }
+
+    /** Whether a request holds a {@code knn} query. */
+    private static boolean containsKnn(Object node) {
+        if (node instanceof Map<?, ?> map) {
+            return map.containsKey(KNN) || map.values().stream().anyMatch(AbstractDocumentSearchRepositoryOperations::containsKnn);
+        }
+        return node instanceof List<?> list && list.stream().anyMatch(AbstractDocumentSearchRepositoryOperations::containsKnn);
+    }
+
+    /**
+     * A {@code knn} clause compiled with the method's limit returns at most {@code k} hits, so a page beyond
+     * that window would be empty: {@code k} and {@code num_candidates} grow to cover the requested window,
+     * up to the {@value DocumentSearchQueryBuilder#MAX_KNN_CANDIDATES} the stores accept.
+     */
+    @SuppressWarnings("unchecked")
+    private static void sizeKnn(Object node, int window) {
+        int k = Math.min(window, DocumentSearchQueryBuilder.MAX_KNN_CANDIDATES);
+        if (node instanceof Map<?, ?> map) {
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                if (KNN.equals(entry.getKey()) && entry.getValue() instanceof Map<?, ?> knn && knn.get("k") instanceof Number current && current.intValue() < k) {
+                    Map<String, Object> clause = (Map<String, Object>) knn;
+                    int candidates = Math.max(k * 10, knn.get(NUM_CANDIDATES) instanceof Number c ? c.intValue() : 0);
+                    clause.put("k", k);
+                    clause.put(NUM_CANDIDATES, Math.min(candidates, DocumentSearchQueryBuilder.MAX_KNN_CANDIDATES));
+                } else {
+                    sizeKnn(entry.getValue(), window);
+                }
+            }
+        } else if (node instanceof List<?> list) {
+            for (Object item : list) {
+                sizeKnn(item, window);
+            }
+        }
     }
 
     /**
@@ -455,7 +508,7 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
         }
         body.put("sort", entries);
         if (pageable.getSize() > 0) {
-            body.put("size", pageable.getSize());
+            body.put(SIZE, pageable.getSize());
         }
         int sortValues = entries.size();
         pageable.cursor().ifPresent(cursor -> {
