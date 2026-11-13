@@ -1,6 +1,7 @@
 from typing import Annotated
 
 from jakarta.inject import Inject
+from micronaut.data.model.search import SearchQuery
 from micronaut.test.extensions.junit5.annotation import MicronautTest
 from org.junit.jupiter.api import BeforeEach, Test
 
@@ -41,3 +42,9 @@ class BookRepositorySpec:
         assert len(self.repository.findByDescriptionSearchPhrase("beans coffee")) == 0
         assert len(self.repository.findByTitleSearchPrefix("coff")) == 2
         assert len(self.repository.findBySearchAndAuthor("coffee", "Bean")) == 1
+
+    @Test
+    def programmaticSearchQuery(self):
+        assert self.service.titles_containing_every_word("coffee roaster") == ["The Coffee Roaster"]
+        assert self.service.titles_containing_every_word("coffee beans") == []
+        assert self.repository.search(SearchQuery.of("coffee")).totalHits() == 2
