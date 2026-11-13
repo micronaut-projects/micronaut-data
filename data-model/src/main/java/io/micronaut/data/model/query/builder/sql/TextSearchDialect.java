@@ -129,6 +129,22 @@ public interface TextSearchDialect {
     }
 
     /**
+     * Checks that a search index name is a plain SQL identifier, as it is written into the {@code CREATE INDEX}
+     * statement: a letter or underscore followed by letters, digits and underscores. A quote or a semicolon would
+     * otherwise change the generated statement.
+     *
+     * @param indexName The index name
+     * @return The index name
+     * @throws IllegalArgumentException When the name holds any other character
+     */
+    static String requireIndexName(String indexName) {
+        if (!indexName.matches("[A-Za-z_]\\w*")) {
+            throw new IllegalArgumentException("A search index name must be an identifier of letters, digits and underscores: " + indexName);
+        }
+        return indexName;
+    }
+
+    /**
      * @param field A field expression
      * @return The persistent property it refers to, or {@code null}
      */
@@ -165,6 +181,30 @@ public interface TextSearchDialect {
                 return converterClassName;
             }
         };
+    }
+
+    /**
+     * Renders the DDL of the index backing full-text search on the given columns, if the dialect
+     * has one.
+     *
+     * @param indexName The escaped index name
+     * @param escapedTableName The escaped table name
+     * @param columns The search field columns, escaped when needed
+     * @param language The text search language
+     * @return The {@code CREATE INDEX} statement, or {@code null} when the dialect needs no index
+     */
+    @Nullable
+    default String buildSearchIndex(String indexName, String escapedTableName, List<SearchColumn> columns, String language) {
+        return null;
+    }
+
+    /**
+     * A search field column for DDL rendering.
+     *
+     * @param column The column name, escaped when needed
+     * @param weight The declared weight, or {@code null}
+     */
+    record SearchColumn(String column, @Nullable SearchWeight weight) {
     }
 
     /**
@@ -219,30 +259,51 @@ public interface TextSearchDialect {
             query.append(')');
         }
 
+        @Override
+        public String buildSearchIndex(String indexName, String escapedTableName, List<SearchColumn> columns, String language) {
+            StringBuilder ddl = new StringBuilder("CREATE INDEX IF NOT EXISTS ").append(indexName).append(" ON ").append(escapedTableName).append(" USING GIN (");
+            List<SearchWeight> weights = columns.stream().map(SearchColumn::weight).toList();
+            List<Consumer<StringBuilder>> renderers = columns.stream().map(c -> (Consumer<StringBuilder>) sb -> sb.append(c.column())).toList();
+            appendVector(ddl, renderers, weights, language);
+            return ddl.append(");").toString();
+        }
+
         private void appendVector(StringBuilder query,
                                   List<Expression<?>> fields,
                                   String language,
                                   Consumer<Expression<?>> appendExpression) {
-            boolean multiple = fields.size() > 1;
+            List<SearchWeight> weights = fields.stream().map(TextSearchDialect::resolveWeight).toList();
+            List<Consumer<StringBuilder>> renderers = fields.stream().map(f -> (Consumer<StringBuilder>) sb -> appendExpression.accept(f)).toList();
+            appendVector(query, renderers, weights, language);
+        }
+
+        /**
+         * Renders the combined {@code tsvector} of the fields; the same shape is used by the query and
+         * by the expression index so PostgreSQL can match them.
+         */
+        private static void appendVector(StringBuilder query,
+                                         List<Consumer<StringBuilder>> fieldRenderers,
+                                         List<SearchWeight> weights,
+                                         String language) {
+            boolean multiple = fieldRenderers.size() > 1;
             if (multiple) {
                 query.append('(');
             }
-            for (int i = 0; i < fields.size(); i++) {
-                Expression<?> field = fields.get(i);
+            for (int i = 0; i < fieldRenderers.size(); i++) {
                 if (i > 0) {
                     query.append(" || ");
                 }
-                SearchWeight weight = resolveWeight(field);
+                SearchWeight weight = weights.get(i);
                 if (weight != null) {
                     query.append("setweight(");
                 }
                 query.append("to_tsvector('").append(language).append("',");
                 if (multiple) {
                     query.append("coalesce(");
-                    appendExpression.accept(field);
+                    fieldRenderers.get(i).accept(query);
                     query.append(",''))");
                 } else {
-                    appendExpression.accept(field);
+                    fieldRenderers.get(i).accept(query);
                     query.append(')');
                 }
                 if (weight != null) {
