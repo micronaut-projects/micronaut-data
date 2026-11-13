@@ -558,7 +558,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     private Stream<PersistentPropertyPath> idProperties(PersistentProperty property) {
         List<PersistentPropertyPath> paths = new ArrayList<>();
         PersistentEntityUtils.traversePersistentProperties(property, (associations, persistentProperty) -> {
-            paths.add(new PersistentPropertyPath(associations, property));
+            paths.add(new PersistentPropertyPath(associations, persistentProperty));
         });
         return paths.stream();
     }
@@ -566,7 +566,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
     private Stream<Map.Entry<PersistentProperty, Object>> idPropertiesWithValues(PersistentProperty property, Object value) {
         List<Map.Entry<PersistentProperty, Object>> values = new ArrayList<>();
         PersistentEntityUtils.traversePersistentProperties(property, (associations, persistentProperty) -> {
-            values.add(new AbstractMap.SimpleEntry<>(persistentProperty, new PersistentPropertyPath(associations, property).getPropertyValue(value)));
+            values.add(new AbstractMap.SimpleEntry<>(persistentProperty, new PersistentPropertyPath(associations, persistentProperty).getPropertyValue(value)));
         });
         return values.stream();
     }
