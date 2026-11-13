@@ -16,15 +16,24 @@
 package io.micronaut.data.search.opensearch.transport;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.search.document.conf.DocumentSearchConfiguration;
 import io.micronaut.data.search.document.runtime.BulkResponses;
 import io.micronaut.data.search.document.runtime.SearchTransport;
-import jakarta.json.JsonNumber;
-import jakarta.json.stream.JsonParser;
 import org.jspecify.annotations.Nullable;
+import jakarta.json.JsonNumber;
+import jakarta.json.JsonString;
+import jakarta.json.JsonValue;
+import jakarta.json.stream.JsonParser;
 import org.opensearch.client.json.JsonData;
 import org.opensearch.client.json.JsonpMapper;
+import org.opensearch.client.opensearch._types.FieldValue;
+import org.opensearch.client.opensearch._types.OpenSearchException;
 import org.opensearch.client.opensearch._types.Refresh;
+import org.opensearch.client.opensearch._types.VersionType;
+import org.opensearch.client.opensearch.core.DeleteRequest;
+import org.opensearch.client.opensearch.core.IndexRequest;
 import org.opensearch.client.opensearch._types.SortOptions;
 import org.opensearch.client.opensearch._types.query_dsl.Query;
 import org.opensearch.client.opensearch.core.BulkRequest;
@@ -42,6 +51,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.CompletionException;
 
 /**
  * Translates the JSON request bodies of the document search store into OpenSearch client requests,
@@ -82,13 +93,98 @@ final class OpenSearchRequests {
         if (highlight != null) {
             request.highlight(JsonData.of(highlightWithFieldMap(highlight), mapper).to(Highlight.class, mapper));
         }
+        if (Boolean.TRUE.equals(parsed.get("version"))) {
+            request.version(true);
+        }
+        Double minScore = scalar(mapper, parsed.get("min_score"), Double.class);
+        if (minScore != null) {
+            request.minScore(minScore);
+        }
+        if (parsed.get("search_after") instanceof List<?> after) {
+            List<FieldValue> values = new ArrayList<>(after.size());
+            for (Object value : after) {
+                values.add(fieldValue(value));
+            }
+            request.searchAfter(values);
+        }
         return request.build();
+    }
+
+    static FieldValue fieldValue(Object value) {
+        if (value instanceof Long || value instanceof Integer || value instanceof Short || value instanceof Byte) {
+            return FieldValue.of(((Number) value).longValue());
+        }
+        if (value instanceof Number number) {
+            return FieldValue.of(number.doubleValue());
+        }
+        if (value instanceof Boolean bool) {
+            return FieldValue.of(bool);
+        }
+        return FieldValue.of(String.valueOf(value));
+    }
+
+    static List<Object> sortValues(List<FieldValue> sort) {
+        if (sort == null || sort.isEmpty()) {
+            return List.of();
+        }
+        List<Object> values = new ArrayList<>(sort.size());
+        for (FieldValue value : sort) {
+            values.add(value._get());
+        }
+        return values;
+    }
+
+    static <T> IndexRequest.Builder<T> indexRequest(IndexRequest.Builder<T> builder, String index, @Nullable String id, T source, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
+        builder.index(index).id(id).document(source).refresh(refresh(refresh));
+        if (version != null) {
+            builder.version(version).versionType(VersionType.External);
+        }
+        return builder;
+    }
+
+    /**
+     * A delete checked against the version the entity was read at: {@code external_gte} accepts that
+     * version and rejects the delete when the stored document is newer.
+     */
+    static DeleteRequest.Builder deleteRequest(DeleteRequest.Builder builder, String index, String id, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
+        builder.index(index).id(id).refresh(refresh(refresh));
+        if (version != null) {
+            builder.version(version).versionType(VersionType.ExternalGte);
+        }
+        return builder;
+    }
+
+    /**
+     * Maps a version conflict (HTTP 409) to {@link OptimisticLockException} and the other errors of the
+     * store and the I/O failures to {@link DataAccessException}; other runtime failures pass through.
+     */
+    static RuntimeException conflictOrFailure(Throwable error, @Nullable String id) {
+        return conflictOrFailure(error, id, "request");
+    }
+
+    /**
+     * Maps a version conflict (HTTP 409) to {@link OptimisticLockException} and the other errors of the
+     * store and the I/O failures to {@link DataAccessException} naming the operation; other runtime
+     * failures pass through. The status is read like {@link OpenSearchAsyncSearchTransport#status(Throwable)},
+     * as the async client reports a store response as the exception of its HTTP transport.
+     */
+    static RuntimeException conflictOrFailure(Throwable error, @Nullable String id, String operation) {
+        Throwable cause = error instanceof CompletionException && error.getCause() != null ? error.getCause() : error;
+        if (OpenSearchAsyncSearchTransport.status(cause) == 409) {
+            String reason = cause instanceof OpenSearchException openSearchException ? openSearchException.error().reason() : cause.getMessage();
+            return new OptimisticLockException("Document " + id + " was modified concurrently: " + reason, cause);
+        }
+        if (cause instanceof RuntimeException runtime && !(cause instanceof OpenSearchException)) {
+            return runtime;
+        }
+        return new DataAccessException("OpenSearch " + operation + " failed: " + cause.getMessage(), cause);
     }
 
     static SearchTransport.SearchHits toHits(SearchResponse<Map> response) {
         List<SearchTransport.SearchHit> hits = new ArrayList<>(response.hits().hits().size());
         for (Hit<Map> hit : response.hits().hits()) {
-            hits.add(new SearchTransport.SearchHit(hit.id(), hit.score(), hit.source() == null ? Map.of() : (Map<String, Object>) hit.source(), hit.highlight()));
+            hits.add(new SearchTransport.SearchHit(hit.id(), hit.score(), hit.source() == null ? Map.of() : (Map<String, Object>) hit.source(),
+                hit.highlight(), hit.version(), sortValues(hit.sort())));
         }
         long total = response.hits().total() == null ? hits.size() : response.hits().total().value();
         Float maxScore = response.hits().maxScore();
@@ -98,19 +194,74 @@ final class OpenSearchRequests {
     static BulkRequest bulkRequest(String index, List<SearchTransport.BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
         List<BulkOperation> operations = new ArrayList<>(documents.size());
         for (SearchTransport.BulkDocument document : documents) {
-            operations.add(BulkOperation.of(op -> op.create(c -> c.id(document.id()).document(document.source()))));
+            Long version = document.version();
+            if (version == null) {
+                // a new document without a version is a create-only write
+                operations.add(BulkOperation.of(op -> op.create(c -> c.id(document.id()).document(document.source()))));
+            } else {
+                operations.add(BulkOperation.of(op -> op.index(i -> i.id(document.id()).document(document.source())
+                    .version(version).versionType(VersionType.External))));
+            }
         }
         return BulkRequest.of(b -> b.index(index).operations(operations).refresh(refresh(refresh)));
     }
 
     static List<String> bulkIds(BulkResponse response) {
-        return BulkResponses.ids("OpenSearch", response.items(), item -> item.error() == null ? null : item.error().reason(), BulkResponseItem::id);
+        return BulkResponses.ids("OpenSearch", response.items(), item -> item.error() == null ? null : item.error().reason(), BulkResponseItem::id, BulkResponseItem::status);
     }
 
     static Map<String, Object> parse(JsonpMapper mapper, String body) {
         try (JsonParser parser = mapper.jsonProvider().createParser(new StringReader(body))) {
-            return (Map<String, Object>) JsonData.from(parser, mapper).to(Map.class, mapper);
+            return (Map<String, Object>) Objects.requireNonNull(plain(JsonData.from(parser, mapper).to(Map.class, mapper)));
         }
+    }
+
+    /**
+     * Turns the JSON-P values the mapper leaves in a parsed body into plain Java values, so the
+     * rewritten clauses serialize as JSON again instead of as beans.
+     *
+     * @param value The parsed value
+     * @return The plain value
+     */
+    @Nullable
+    static Object plain(@Nullable Object value) {
+        if (value instanceof JsonValue json) {
+            return switch (json.getValueType()) {
+                case OBJECT -> {
+                    Map<String, Object> map = new LinkedHashMap<>();
+                    json.asJsonObject().forEach((key, member) -> map.put(key, plain(member)));
+                    yield map;
+                }
+                case ARRAY -> {
+                    List<Object> list = new ArrayList<>();
+                    for (JsonValue item : json.asJsonArray()) {
+                        list.add(plain(item));
+                    }
+                    yield list;
+                }
+                case STRING -> ((JsonString) json).getString();
+                case NUMBER -> {
+                    JsonNumber number = (JsonNumber) json;
+                    yield number.isIntegral() ? (Object) number.longValue() : (Object) number.doubleValue();
+                }
+                case TRUE -> Boolean.TRUE;
+                case FALSE -> Boolean.FALSE;
+                case NULL -> null;
+            };
+        }
+        if (value instanceof Map<?, ?> map) {
+            Map<String, Object> copy = new LinkedHashMap<>();
+            map.forEach((key, member) -> copy.put(String.valueOf(key), plain(member)));
+            return copy;
+        }
+        if (value instanceof List<?> list) {
+            List<Object> copy = new ArrayList<>(list.size());
+            for (Object item : list) {
+                copy.add(plain(item));
+            }
+            return copy;
+        }
+        return value;
     }
 
     static Query query(JsonpMapper mapper, Map<String, Object> body) {
@@ -171,6 +322,9 @@ final class OpenSearchRequests {
         }
         if (value instanceof Number number && type == Integer.class) {
             return type.cast(number.intValue());
+        }
+        if (value instanceof Number number && type == Double.class) {
+            return type.cast(number.doubleValue());
         }
         return JsonData.of(value, mapper).to(type, mapper);
     }

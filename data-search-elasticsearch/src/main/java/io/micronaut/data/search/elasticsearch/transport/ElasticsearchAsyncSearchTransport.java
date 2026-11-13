@@ -17,10 +17,14 @@ package io.micronaut.data.search.elasticsearch.transport;
 
 import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
+import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.OpType;
 import co.elastic.clients.elasticsearch._types.Refresh;
+import co.elastic.clients.elasticsearch._types.VersionType;
+import co.elastic.clients.elasticsearch.core.IndexRequest;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
+import co.elastic.clients.elasticsearch.core.DeleteRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
 import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
@@ -28,6 +32,8 @@ import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.transport.TransportException;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.data.search.document.conf.DocumentSearchConfiguration;
 import io.micronaut.data.search.document.runtime.AsyncSearchTransport;
@@ -42,6 +48,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 
 /**
@@ -75,7 +82,8 @@ public final class ElasticsearchAsyncSearchTransport implements AsyncSearchTrans
     static SearchTransport.SearchHits toHits(SearchResponse<Map> response) {
         List<SearchTransport.SearchHit> hits = new ArrayList<>(response.hits().hits().size());
         for (Hit<Map> hit : response.hits().hits()) {
-            hits.add(new SearchTransport.SearchHit(hit.id(), hit.score(), hit.source() == null ? Map.of() : (Map<String, Object>) hit.source(), hit.highlight()));
+            hits.add(new SearchTransport.SearchHit(hit.id(), hit.score(), hit.source() == null ? Map.of() : (Map<String, Object>) hit.source(),
+                hit.highlight(), hit.version(), sortValues(hit.sort())));
         }
         long total = response.hits().total() == null ? hits.size() : response.hits().total().value();
         return new SearchTransport.SearchHits(hits, total, response.hits().maxScore());
@@ -88,7 +96,71 @@ public final class ElasticsearchAsyncSearchTransport implements AsyncSearchTrans
 
     @Override
     public CompletionStage<String> index(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh) {
-        return client.index(i -> i.index(index).id(id).document(source).refresh(refresh(refresh))).thenApply(response -> response.id());
+        return index(index, id, source, null, refresh);
+    }
+
+    @Override
+    public CompletionStage<String> index(String index, @Nullable String id, Map<String, Object> source, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
+        return client.index(i -> indexRequest(i, index, id, source, version, refresh))
+            .handle((response, error) -> {
+                if (error != null) {
+                    throw conflictOrFailure(error, id);
+                }
+                return response.id();
+            });
+    }
+
+    static <T> IndexRequest.Builder<T> indexRequest(IndexRequest.Builder<T> builder, String index, @Nullable String id, T source, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
+        builder.index(index).id(id).document(source).refresh(refresh(refresh));
+        if (version != null) {
+            builder.version(version).versionType(VersionType.External);
+        }
+        return builder;
+    }
+
+    /**
+     * Maps a version conflict (HTTP 409) to {@link OptimisticLockException} and the other errors of the
+     * store and the I/O failures to {@link DataAccessException}; other runtime failures pass through.
+     */
+    static RuntimeException conflictOrFailure(Throwable error, @Nullable String id) {
+        return conflictOrFailure(error, id, "request");
+    }
+
+    /**
+     * Maps a version conflict (HTTP 409) to {@link OptimisticLockException} and the other errors of the
+     * store and the I/O failures to {@link DataAccessException} naming the operation; other runtime
+     * failures pass through. The status is read like {@link #status(Throwable)}, as the async client
+     * reports a store response as the exception of its low-level HTTP client.
+     */
+    static RuntimeException conflictOrFailure(Throwable error, @Nullable String id, String operation) {
+        Throwable cause = error instanceof CompletionException && error.getCause() != null ? error.getCause() : error;
+        if (status(cause) == 409) {
+            String reason = cause instanceof ElasticsearchException elasticsearchException ? elasticsearchException.error().reason() : cause.getMessage();
+            return new OptimisticLockException("Document " + id + " was modified concurrently: " + reason, cause);
+        }
+        if (cause instanceof RuntimeException runtime && !(cause instanceof ElasticsearchException)) {
+            return runtime;
+        }
+        return new DataAccessException("Elasticsearch " + operation + " failed: " + cause.getMessage(), cause);
+    }
+
+    static List<Object> sortValues(List<FieldValue> sort) {
+        if (sort == null || sort.isEmpty()) {
+            return List.of();
+        }
+        List<Object> values = new ArrayList<>(sort.size());
+        for (FieldValue value : sort) {
+            values.add(value._get());
+        }
+        return values;
+    }
+
+    @Override
+    public CompletionStage<Optional<SearchTransport.SearchHit>> getHit(String index, String id) {
+        return client.get(g -> g.index(index).id(id), Map.class)
+            .thenApply(response -> response.found()
+                ? Optional.of(new SearchTransport.SearchHit(id, null, (Map<String, Object>) response.source(), Map.of(), response.version(), List.of()))
+                : Optional.empty());
     }
 
     @Override
@@ -97,15 +169,22 @@ public final class ElasticsearchAsyncSearchTransport implements AsyncSearchTrans
     }
 
     static BulkRequest bulkRequest(String index, List<SearchTransport.BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
-        List<BulkOperation> operations = new ArrayList<>(documents.size());
-        for (SearchTransport.BulkDocument document : documents) {
-            operations.add(BulkOperation.of(op -> op.create(c -> c.id(document.id()).document(document.source()))));
-        }
+        List<BulkOperation> operations = documents.stream().map(ElasticsearchAsyncSearchTransport::indexOperation).toList();
         return BulkRequest.of(b -> b.index(index).operations(operations).refresh(refresh(refresh)));
     }
 
+    /** One index operation of a bulk request; a versioned document is written with external versioning. */
+    private static BulkOperation indexOperation(SearchTransport.BulkDocument document) {
+        Long version = document.version();
+        if (version == null) {
+            // a new document without a version is a create-only write
+            return BulkOperation.of(op -> op.create(c -> c.id(document.id()).document(document.source())));
+        }
+        return BulkOperation.of(op -> op.index(i -> i.id(document.id()).document(document.source()).version(version).versionType(VersionType.External)));
+    }
+
     static List<String> bulkIds(BulkResponse response) {
-        return BulkResponses.ids("Elasticsearch", response.items(), item -> item.error() == null ? null : item.error().reason(), BulkResponseItem::id);
+        return BulkResponses.ids("Elasticsearch", response.items(), item -> item.error() == null ? null : item.error().reason(), BulkResponseItem::id, BulkResponseItem::status);
     }
 
     @Override
@@ -149,6 +228,29 @@ public final class ElasticsearchAsyncSearchTransport implements AsyncSearchTrans
     @Override
     public CompletionStage<Boolean> delete(String index, String id, DocumentSearchConfiguration.Refresh refresh) {
         return client.delete(d -> d.index(index).id(id).refresh(refresh(refresh))).thenApply(response -> response.result().jsonValue().equals("deleted"));
+    }
+
+    @Override
+    public CompletionStage<Boolean> delete(String index, String id, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
+        return client.delete(d -> deleteRequest(d, index, id, version, refresh))
+            .handle((response, error) -> {
+                if (error != null) {
+                    throw conflictOrFailure(error, id);
+                }
+                return response.result().jsonValue().equals("deleted");
+            });
+    }
+
+    /**
+     * A delete checked against the version the entity was read at: {@code external_gte} accepts that
+     * version and rejects the delete when the stored document is newer.
+     */
+    static DeleteRequest.Builder deleteRequest(DeleteRequest.Builder builder, String index, String id, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
+        builder.index(index).id(id).refresh(refresh(refresh));
+        if (version != null) {
+            builder.version(version).versionType(VersionType.ExternalGte);
+        }
+        return builder;
     }
 
     @Override

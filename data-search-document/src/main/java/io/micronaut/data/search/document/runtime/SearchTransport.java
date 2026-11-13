@@ -61,8 +61,29 @@ public interface SearchTransport {
     String index(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh);
 
     /**
+     * Indexes a document with an external version: the store rejects the request with
+     * {@link io.micronaut.data.exceptions.OptimisticLockException} when it already holds the document at
+     * that version or a later one.
+     *
+     * @param index The index name
+     * @param id The document id, or {@code null} to let the store assign one
+     * @param source The document
+     * @param version The external version, or {@code null} for an unconditional write
+     * @param refresh The refresh policy
+     * @return The document id
+     */
+    default String index(String index, @Nullable String id, Map<String, Object> source, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
+        if (version != null) {
+            throw new UnsupportedOperationException("Versioned writes are not supported by " + getClass().getName());
+        }
+        return index(index, id, source, refresh);
+    }
+
+    /**
      * Indexes several new documents in one request, each a create-only write like
-     * {@link #create(String, String, Map, DocumentSearchConfiguration.Refresh)}. The default sends one
+     * {@link #create(String, String, Map, DocumentSearchConfiguration.Refresh)}, or, for a document with
+     * a version, an externally versioned write like
+     * {@link #index(String, String, Map, Long, DocumentSearchConfiguration.Refresh)}. The default sends one
      * request per document and stops at the first failure.
      *
      * @param index The index name
@@ -70,12 +91,16 @@ public interface SearchTransport {
      * @param refresh The refresh policy
      * @return The document ids, in the same order
      * @throws BulkIndexException When the store rejected some of the documents and wrote the others
+     * @throws io.micronaut.data.exceptions.OptimisticLockException When a rejected document conflicted with
+     * the stored version; its cause is the {@link BulkIndexException} holding the ids of the written documents
      */
     default List<String> bulkIndex(String index, List<BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
         List<String> ids = new java.util.ArrayList<>(documents.size());
         for (BulkDocument document : documents) {
             try {
-                ids.add(create(index, document.id(), document.source(), refresh));
+                ids.add(document.version() == null
+                    ? create(index, document.id(), document.source(), refresh)
+                    : index(index, document.id(), document.source(), document.version(), refresh));
             } catch (RuntimeException e) {
                 throw BulkResponses.stopped(ids, documents.size(), e);
             }
@@ -128,6 +153,19 @@ public interface SearchTransport {
     Map<String, Object> get(String index, String id);
 
     /**
+     * Reads a document with its version.
+     *
+     * @param index The index name
+     * @param id The document id
+     * @return The hit, or {@code null} when not found
+     */
+    @Nullable
+    default SearchHit getHit(String index, String id) {
+        Map<String, Object> source = get(index, id);
+        return source == null ? null : new SearchHit(id, null, source);
+    }
+
+    /**
      * Deletes a document by id.
      *
      * @param index The index
@@ -136,6 +174,23 @@ public interface SearchTransport {
      * @return Whether a document was deleted
      */
     boolean delete(String index, String id, DocumentSearchConfiguration.Refresh refresh);
+
+    /**
+     * Deletes a document only if the store holds it at the given external version or an earlier one.
+     *
+     * @param index The index
+     * @param id The id
+     * @param version The version the entity was read at, or {@code null} for an unconditional delete
+     * @param refresh The refresh policy
+     * @return Whether a document was deleted
+     * @throws io.micronaut.data.exceptions.OptimisticLockException When the stored document is newer
+     */
+    default boolean delete(String index, String id, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
+        if (version != null) {
+            throw new UnsupportedOperationException("Versioned deletes are not supported by " + getClass().getName());
+        }
+        return delete(index, id, refresh);
+    }
 
     /**
      * Deletes the documents matching a query.
@@ -166,8 +221,17 @@ public interface SearchTransport {
      *
      * @param id The document id, or {@code null} to let the store assign one
      * @param source The document
+     * @param version The external version, or {@code null} for an unconditional write
      */
-    record BulkDocument(@Nullable String id, Map<String, Object> source) {
+    record BulkDocument(@Nullable String id, Map<String, Object> source, @Nullable Long version) {
+
+        /**
+         * @param id The document id, or {@code null}
+         * @param source The document
+         */
+        public BulkDocument(@Nullable String id, Map<String, Object> source) {
+            this(id, source, null);
+        }
     }
 
     /**
@@ -177,20 +241,27 @@ public interface SearchTransport {
      * @param score The relevance score, or {@code null} when the search was not scored
      * @param source The document
      * @param highlights The highlighted fragments by field, empty when none were requested
+     * @param version The document version, or {@code null} when it was not requested
+     * @param sort The sort values of the hit, empty when the search was not sorted
      */
-    record SearchHit(String id, @Nullable Double score, Map<String, Object> source, Map<String, List<String>> highlights) {
+    record SearchHit(String id,
+                     @Nullable Double score,
+                     Map<String, Object> source,
+                     Map<String, List<String>> highlights,
+                     @Nullable Long version,
+                     List<Object> sort) {
 
         public SearchHit {
             highlights = highlights == null ? Map.of() : highlights;
+            sort = sort == null ? List.of() : sort;
         }
 
-        /**
-         * @param id The document id
-         * @param score The score
-         * @param source The document
-         */
         public SearchHit(String id, @Nullable Double score, Map<String, Object> source) {
-            this(id, score, source, Map.of());
+            this(id, score, source, Map.of(), null, List.of());
+        }
+
+        public SearchHit(String id, @Nullable Double score, Map<String, Object> source, Map<String, List<String>> highlights) {
+            this(id, score, source, highlights, null, List.of());
         }
     }
 

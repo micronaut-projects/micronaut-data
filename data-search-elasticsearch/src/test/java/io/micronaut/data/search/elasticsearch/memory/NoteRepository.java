@@ -21,6 +21,7 @@ import io.micronaut.data.model.vector.search.SearchResults;
 import io.micronaut.data.repository.PageableRepository;
 import io.micronaut.data.repository.SearchRepository;
 import io.micronaut.data.search.elasticsearch.annotation.ElasticsearchRepository;
+import io.micronaut.transaction.annotation.Transactional;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -46,6 +47,8 @@ public interface NoteRepository extends PageableRepository<Note, String>, Search
     Page<Note> findByPagesGreaterThan(int pages, Pageable pageable);
 
     List<Note> findByPagesLessThan(int pages, Pageable pageable);
+
+    List<Note> findByPagesLessThanOrderByTitleDesc(int pages, Pageable pageable);
 
     Stream<Note> findByBody(String body);
 
@@ -83,4 +86,8 @@ public interface NoteRepository extends PageableRepository<Note, String>, Search
     Note findFirstByPagesGreaterThan(int pages, io.micronaut.data.model.Sort sort);
 
     List<Note> findByTitleNotEqual(String title);
+
+    // the stores have no transactions, so this fails at its first call
+    @Transactional
+    long countByBody(String body);
 }

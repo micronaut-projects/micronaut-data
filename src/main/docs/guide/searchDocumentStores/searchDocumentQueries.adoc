@@ -29,7 +29,23 @@ A api:data.model.search.SearchQuery[] passed to `search(SearchQuery)` builds the
 
 == Paging and sorting
 
-`Pageable` and `Sort` parameters set `from`, `size` and `sort`; a `Page` is built with `track_total_hits` so its total is exact. Sorting on an analysed search field sorts on its `keyword` sub-field. Without a sort the store returns hits in `_score` order, so an unsorted `Pageable` or `Sort` of a `SearchResults` method keeps the relevance order, best match first, as on SQL and MongoDB; a `Pageable` or `Sort` with orders replaces it. Cursored pagination is not supported yet.
+`Pageable` and `Sort` parameters set `from`, `size` and `sort`; a `Page` is built with `track_total_hits` so its total is exact. Sorting on an analysed search field sorts on its `keyword` sub-field. Without a sort the store returns hits in `_score` order, so an unsorted `Pageable` or `Sort` of a `SearchResults` method keeps the relevance order, best match first, as on SQL and MongoDB; a `Pageable` or `Sort` with orders replaces it.
+
+A `CursoredPageable` pages with `search_after`: the request sorts by the pageable's sort with the entity id appended as a tiebreaker, and each hit's sort values become its cursor, so `CursoredPage.nextPageable()` and `previousPageable()` continue the scan without `from`, which the stores cap at 10,000 documents. A backward page reverses the sort and restores the order of the results.
+
+The tiebreaker sorts on the id held in the document source, so it needs that field to be a `keyword` and present in every document. Both hold for an index Micronaut Data creates and documents it writes. An index created by an earlier snapshot of this module, or by other tooling, may map the id as `text`, and then the first cursored query fails with `Fielddata is disabled on text fields`; documents written without the id in their source sort without a tiebreaker, so pages can skip or repeat documents with equal sort values. The mapping of an existing field cannot be changed: create a new index with the current mapping and reindex the documents into it, writing the id into the source, before using cursored paging.
+
+== Optimistic locking and transactions
+
+A `@Version` property maps to the document version. Micronaut Data writes with external versioning: a new entity is indexed at version `0`, an update increments the property and indexes with that version, and the store rejects the write with api:data.exceptions.OptimisticLockException[] when it already holds the document at that version or a later one. A delete is sent with the version the entity was read at, before the delete event increments it, using `external_gte`, so the store rejects it when the document has been updated since. Reads take the version from the hit, so the property always reflects the stored document.
+
+External versioning checks that the written version is greater than the stored one, not that the stored version is the one the entity was read at, which has some consequences:
+
+- Saving a new entity whose id is already used by a versioned document fails with an `OptimisticLockException`, not with the `DataAccessException` saying that the document exists, as both writes are at version `0`. The same holds for a while after a delete, as long as the store keeps the deleted version (`index.gc_deletes`, 60 seconds by default).
+- A version set by the application is sent as it is: updating an entity whose version was raised by hand, or deserialised from a client with a higher value, overwrites the stored document without a conflict. Do not accept the version from untrusted input.
+- A versioned entity whose `@Version` property is `null` is written and deleted without a version check. The version-generating listener prevents this for updates and deletes, which fail on a `null` version, so it only happens when that listener does not run.
+
+Elasticsearch and OpenSearch have no transactions. A repository method annotated with `@Transactional` fails at its first call with a configuration error naming the missing `TransactionOperations`; writes are visible according to the `refresh` policy and cannot be rolled back.
 
 == Reactive and async repositories
 
@@ -50,4 +66,5 @@ Saving an entity whose id is already used by a document fails with a `DataAccess
 == Limitations
 
 - Joins, `@Where`, update queries (`updateBy...`) and subqueries are not supported; update entities with `update(...)`.
+- `@Transactional` is not supported; see above.
 - Highlighting, aggregations and the raw query DSL are not exposed yet.
