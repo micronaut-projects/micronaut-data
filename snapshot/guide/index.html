@@ -12764,6 +12764,18 @@ interface PhoneRepository extends CrudRepository&lt;Phone, Integer&gt; {
 </tr>
 </table>
 </div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+When an application uses both Micronaut Data JDBC and Micronaut Data R2DBC, a JDBC data source and an R2DBC connection factory can share a name, and each repository uses the one matching its type. <code>@Transactional</code>, however, looks up the transaction manager by name only, so a shared name can fail with a <code>NonUniqueBeanException</code>. Give the JDBC data source and the R2DBC connection factory distinct names if you use <code>@Transactional</code>.
+</td>
+</tr>
+</table>
+</div>
 <div class="paragraph">
 <p>The entity to treat as the root entity for the purposes of querying is established either from the method signature or from the generic type parameter specified to the <a href="../api/io/micronaut/data/repository/GenericRepository.html">GenericRepository</a> interface.</p>
 </div>
