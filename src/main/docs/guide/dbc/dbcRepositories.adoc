@@ -33,6 +33,8 @@ interface PhoneRepository extends CrudRepository<Phone, Integer> {
 <1> @JdbcRepository with a specific dialect and data source configuration 'inventoryDataSource'
 <2> @Transactional annotation, pointing to the data source configuration 'inventoryDataSource'
 
+NOTE: When an application uses both Micronaut Data JDBC and Micronaut Data R2DBC, a JDBC data source and an R2DBC connection factory can share a name, and each repository uses the one matching its type. `@Transactional`, however, looks up the transaction manager by name only, so a shared name can fail with a `NonUniqueBeanException`. Give the JDBC data source and the R2DBC connection factory distinct names if you use `@Transactional`.
+
 
 The entity to treat as the root entity for the purposes of querying is established either from the method signature or from the generic type parameter specified to the api:data.repository.GenericRepository[] interface.
 
