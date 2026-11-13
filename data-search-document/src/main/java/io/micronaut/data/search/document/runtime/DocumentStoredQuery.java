@@ -18,6 +18,7 @@ package io.micronaut.data.search.document.runtime;
 import io.micronaut.aop.InvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
@@ -35,10 +36,12 @@ import org.jspecify.annotations.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * A stored query whose JSON body is parsed once and whose parameter placeholders are replaced per
@@ -76,6 +79,70 @@ public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersSt
     }
 
     /**
+     * A {@code @Query} body in the store's own DSL is not recognised as a count by the method matcher, which knows
+     * only SQL statements, so a method returning a number counts the documents its body's {@code query} matches:
+     * a search hit cannot be mapped to a number anyway.
+     *
+     * @return Whether the query is a count
+     */
+    @Override
+    public boolean isCount() {
+        return super.isCount() || (isRawQuery() && Number.class.isAssignableFrom(ReflectionUtils.getWrapperType(getResultType())));
+    }
+
+    /**
+     * Replaces every JSON string value of a request body that is exactly {@code ":name"} for a parameter name with
+     * the parameter's value, converted with the JSON mapper like the bound values of a {@code @Query} method, so a
+     * value cannot change the structure of the body.
+     *
+     * @param body The parsed request body
+     * @param parameters The parameter values by name, without the colon
+     * @param jsonMapper The JSON mapper that writes the documents
+     * @return A copy of the body with the parameters replaced
+     * @throws IllegalArgumentException if a parameter is not referenced in the body
+     */
+    static Map<String, Object> bindNamed(Map<String, Object> body, Map<String, ?> parameters, JsonMapper jsonMapper) {
+        if (parameters.isEmpty()) {
+            return body;
+        }
+        Map<String, Object> named = new LinkedHashMap<>();
+        for (Map.Entry<String, ?> parameter : parameters.entrySet()) {
+            named.put(":" + parameter.getKey(), toJsonValue(normalize(parameter.getValue()), jsonMapper));
+        }
+        Set<String> used = new HashSet<>();
+        Map<String, Object> bound = (Map<String, Object>) Objects.requireNonNull(bindNamed(body, named, used));
+        for (String name : parameters.keySet()) {
+            if (!used.contains(":" + name)) {
+                throw new IllegalArgumentException("The parameter " + name + " is not referenced as the JSON string \":" + name + "\" in the request body");
+            }
+        }
+        return bound;
+    }
+
+    @Nullable
+    private static Object bindNamed(@Nullable Object node, Map<String, Object> named, Set<String> used) {
+        if (node instanceof String string && named.containsKey(string)) {
+            used.add(string);
+            return named.get(string);
+        }
+        if (node instanceof Map<?, ?> map) {
+            Map<String, Object> copy = new LinkedHashMap<>();
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                copy.put(String.valueOf(entry.getKey()), bindNamed(entry.getValue(), named, used));
+            }
+            return copy;
+        }
+        if (node instanceof Collection<?> collection) {
+            List<Object> copy = new ArrayList<>(collection.size());
+            for (Object item : collection) {
+                copy.add(bindNamed(item, named, used));
+            }
+            return copy;
+        }
+        return node;
+    }
+
+    /**
      * Builds the request body for an invocation, replacing every parameter placeholder with its bound value.
      *
      * @param invocationContext The invocation context
@@ -86,7 +153,54 @@ public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersSt
     public Map<String, Object> bodyFor(@Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity, Binder binder) {
         CollectingBinder collecting = new CollectingBinder(binder);
         bindParameters(collecting, invocationContext, entity, null);
-        return (Map<String, Object>) Objects.requireNonNull(replace(body, collecting.values));
+        Map<String, Object> named = Map.of();
+        if (isRawQuery()) {
+            // a @Query body in the store's own DSL names its parameters as ":name" string values
+            named = new LinkedHashMap<>();
+            List<QueryParameterBinding> bindings = getQueryBindings();
+            for (int i = 0; i < bindings.size() && i < collecting.values.size(); i++) {
+                String name = parameterName(bindings.get(i), invocationContext);
+                if (name != null) {
+                    named.put(":" + name, collecting.values.get(i));
+                }
+            }
+        }
+        return (Map<String, Object>) Objects.requireNonNull(replace(body, collecting.values, named));
+    }
+
+    @Nullable
+    private static String parameterName(QueryParameterBinding binding, @Nullable InvocationContext<?, ?> invocationContext) {
+        if (binding.getName() != null) {
+            return binding.getName();
+        }
+        int index = binding.getParameterIndex();
+        if (invocationContext != null && index >= 0 && index < invocationContext.getArguments().length) {
+            return invocationContext.getArguments()[index].getName();
+        }
+        return null;
+    }
+
+    @Nullable
+    private Object replace(@Nullable Object node, List<Object> values, Map<String, Object> named) {
+        if (node instanceof String string && named.containsKey(string)) {
+            // a named parameter is a bound value, converted like a placeholder after its vector or score is normalized
+            return toJsonValue(normalize(named.get(string)));
+        }
+        if (node instanceof Map<?, ?> map && !map.containsKey(DocumentSearchQueryBuilder.QUERY_PARAMETER_PLACEHOLDER)) {
+            Map<String, Object> copy = new LinkedHashMap<>();
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                copy.put(String.valueOf(entry.getKey()), replace(entry.getValue(), values, named));
+            }
+            return copy;
+        }
+        if (node instanceof Collection<?> collection && !named.isEmpty()) {
+            List<Object> copy = new ArrayList<>(collection.size());
+            for (Object item : collection) {
+                copy.add(replace(item, values, named));
+            }
+            return copy;
+        }
+        return replace(node, values);
     }
 
     @Nullable
@@ -168,16 +282,21 @@ public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersSt
      */
     @Nullable
     private Object toJsonValue(@Nullable Object value) {
+        return toJsonValue(value, jsonMapper);
+    }
+
+    @Nullable
+    private static Object toJsonValue(@Nullable Object value, JsonMapper jsonMapper) {
         if (value == null || value instanceof String || value instanceof Number || value instanceof Boolean) {
             return value;
         }
         if (value.getClass().isArray()) {
-            return toJsonValue(SearchJson.arrayToList(value));
+            return toJsonValue(SearchJson.arrayToList(value), jsonMapper);
         }
         if (value instanceof Collection<?> collection) {
             List<Object> converted = new ArrayList<>(collection.size());
             for (Object item : collection) {
-                converted.add(toJsonValue(item));
+                converted.add(toJsonValue(item, jsonMapper));
             }
             return converted;
         }

@@ -12,6 +12,7 @@ import io.micronaut.data.search.document.conf.DocumentSearchConfiguration
 import io.micronaut.data.search.document.query.SearchJson
 import io.micronaut.data.search.document.runtime.BulkIndexException
 import io.micronaut.data.search.document.runtime.DocumentSearchRepositoryOperations
+import io.micronaut.data.search.document.runtime.SearchQueryExecutor
 import io.micronaut.data.search.elasticsearch.Meeting
 import io.micronaut.data.search.elasticsearch.MeetingRepository
 import io.micronaut.json.JsonMapper
@@ -283,6 +284,74 @@ class DocumentSearchOperationsSpec extends Specification {
         notes.findAll().size() == 2
     }
 
+    void "a @Query method returning a number counts the documents its body's query matches"() {
+        given:
+        notes.saveAll([new Note("Coffee", "Roasting beans", 120), new Note("Bread", "Sourdough", 0)])
+
+        expect:
+        notes.countMatchingTitle("Coffee") == 2L
+        jsonMapper.readValue(transport.lastBody(), Map) == [query: [match: [title: "Coffee"]]]
+        notes.countMatchingTitleBoxed("Coffee") == 2L
+        transport.bodies.every { !it.contains('"size"') }
+    }
+
+    void "a backslash before a colon in a @Query body keeps the colon literal"() {
+        when:
+        notes.findTitledAtHalfPastTen("Coffee")
+
+        then:
+        jsonMapper.readValue(transport.lastBody(), Map).query.bool.filter == [match_phrase: [body: "at 10:30"]]
+        jsonMapper.readValue(transport.lastBody(), Map).query.bool.must == [match: [title: "Coffee"]]
+    }
+
+    void "the SearchQueryExecutor binds parameters as JSON values that cannot change the body"() {
+        given:
+        def executor = context.getBean(SearchQueryExecutor)
+        notes.saveAll([new Note("Coffee", "Roasting beans", 120), new Note("Bread", "Sourdough", 0)])
+        def injection = 'x"}}, "size": 10000, "query": {"match_all": {}}, "x": {"y": "'
+        def body = '{"query": {"bool": {"must": {"match": {"title": ":title"}}, "filter": {"terms": {"pages": ":pages"}}}}}'
+
+        when:
+        def results = executor.search(Note, body, [title: injection, pages: [120, 0]])
+        def sent = jsonMapper.readValue(transport.lastBody(), Map)
+
+        then: "the value stays one string, a list becomes an array and the total is exact"
+        results.results().size() == 2
+        sent.query.bool.must == [match: [title: injection]]
+        sent.query.bool.filter == [terms: [pages: [120, 0]]]
+        sent.track_total_hits == true
+        !sent.containsKey("size")
+
+        when:
+        def found = executor.find(Note, body, [title: "Coffee", pages: [120]])
+
+        then:
+        found*.title == ["Coffee", "Bread"]
+        jsonMapper.readValue(transport.lastBody(), Map).query.bool.must == [match: [title: "Coffee"]]
+        !jsonMapper.readValue(transport.lastBody(), Map).containsKey("track_total_hits")
+
+        when:
+        def count = executor.count(Note, body, [title: "Coffee", pages: [120]])
+
+        then:
+        count == 2L
+        jsonMapper.readValue(transport.lastBody(), Map).query.bool.must == [match: [title: "Coffee"]]
+
+        when: "a body that sets track_total_hits keeps it"
+        executor.search(Note, '{"query": {"match_all": {}}, "track_total_hits": false, "size": 1}')
+
+        then:
+        jsonMapper.readValue(transport.lastBody(), Map).track_total_hits == false
+        jsonMapper.readValue(transport.lastBody(), Map).size == 1
+
+        when: "a parameter the body does not reference"
+        executor.find(Note, '{"query": {"match": {"title": ":title"}}}', [titel: "Coffee"])
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains('":titel"')
+    }
+
     void "a single result finder returns null without hits"() {
         expect:
         notes.getByTitle("Nothing") == null
@@ -466,6 +535,12 @@ class DocumentSearchOperationsSpec extends Specification {
 
         then:
         query().terms.priority == ["urgent", "routine"]
+
+        when: "a named parameter of a @Query body"
+        meetings.startingBefore(start)
+
+        then:
+        query().range.startsAt.lt == document.startsAt
     }
 
     private Map<String, Object> query() {

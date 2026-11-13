@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.search.opensearch;
 
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.CursoredPage;
 import io.micronaut.data.model.CursoredPageable;
 import io.micronaut.data.repository.CrudRepository;
@@ -39,4 +40,7 @@ public interface MeetingRepository extends CrudRepository<Meeting, String> {
     List<Meeting> findByPriorityInList(List<Meeting.Priority> priorities);
 
     CursoredPage<Meeting> findByPriority(Meeting.Priority priority, CursoredPageable pageable);
+
+    @Query("{\"query\": {\"range\": {\"startsAt\": {\"lt\": \":time\"}}}}")
+    List<Meeting> startingBefore(ZonedDateTime time);
 }

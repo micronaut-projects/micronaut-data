@@ -28,6 +28,28 @@ The search string uses the portable grammar and is converted to Lucene `simple_q
 
 A api:data.model.search.SearchQuery[] passed to `search(SearchQuery)` builds the same `simple_query_string` request at runtime, as described in the <<sqlTextSearch, SQL full-text search section>>: its `fields` select the fields to search, with their declared weights as boosts, and its `mode` selects the operator and the prefix or fuzzy suffix, and its `highlight` properties are requested in the `highlight` clause, with `number_of_fragments: 1` and a `fragment_size` of 100 characters, and returned through `SearchResult.highlights()` with the default `<em>` tags, at most one fragment per property.
 
+== Native queries
+
+A repository method annotated with ann:data.annotation.Query[] runs its value as the store's own request body, for the parts of the query DSL the portable API does not cover. Method parameters are referenced as JSON string values named `":parameter"`, which are replaced by the bound value with its JSON type, so a `List` argument becomes an array and a `Vector` a number array. Every JSON string that is exactly `":name"` for a method parameter is replaced, wherever it appears in the body, so a literal string of that form needs another spelling.
+
+The body is scanned for parameters at compile time like a SQL `@Query`: a colon followed by a letter or a digit is read as a parameter reference anywhere in the body, inside JSON string values too, and the name ends at the first character that is not a letter or a digit. So:
+
+- Put a space after a JSON colon that a number follows (`"size": 5`), as `:5` would be read as a parameter name.
+- Escape a colon inside a string value with a backslash, written `\\:` in a Java string literal: a time such as `"10\\:30"` or a date such as `"2024-01-01T00\\:00\\:00"` reaches the store as `10:30` and `2024-01-01T00:00:00`. Unescaped, the compilation fails with `No method parameter found for named Query parameter: 30`. A doubled colon (`::`) is not an escape and stays in the body.
+- Name the referenced method parameters with letters and digits only: `":min_pages"` refers to a parameter named `min`.
+
+The method returns a `List` or `Optional` of the entity or a api:data.model.vector.search.SearchResults[] with scores and highlights, and takes a `Pageable` whose `from`, `size` and `sort` are added to the body. A method that returns a number (`long`, `Long`, `int`, or a `Mono<Long>` of a reactive repository) counts the documents the body's `query` matches through the count API; the other keys of the body are not sent. A body without a `size` and a method without a `Pageable` return the store's default of 10 hits, so set `size` in the body to get more.
+
+[source,java]
+----
+@Query("{\"query\": {\"bool\": {\"must\": {\"match\": {\"title\": \":title\"}}, \"filter\": {\"range\": {\"pages\": {\"gte\": \":minPages\"}}}}}}")
+SearchResults<Book> longBooksAbout(String title, int minPages);
+----
+
+The same body can be run without a repository method through the api:data.search.document.runtime.SearchQueryExecutor[] bean of the store (qualified by the store name): `search(Class, body, parameters)` returns `SearchResults`, `find(Class, body, parameters)` the entities and `count(Class, body, parameters)` the count of the documents the body's `query` matches. The `parameters` map holds the runtime values by name, without the colon, and each JSON string value of the body that is exactly `":name"` is replaced by its value converted to JSON, as for a `@Query` method; pass every runtime value this way rather than concatenating it into the body, where a value holding a quote would rewrite the request. A parameter that the body does not reference fails with `IllegalArgumentException`. The body is not scanned for colons, so no escaping is needed, and overloads without the map run a body that has no parameters. The executor sends the body's own `size`, so a body without one returns the store's default of 10 hits, and `search` adds `track_total_hits: true` unless the body sets it, so `SearchResults.totalHits()` is exact. Aggregations and facets have no portable result type and stay with the store client. The OpenSearch transport rebuilds the body as a typed request key by key, so it rejects with a `DataAccessException` any top-level key it does not map, such as `aggs` or `_source`, which Elasticsearch passes through; a body meant for both stores sticks to the keys the error lists, such as `query`, `sort`, `from`, `size` and `highlight`.
+
+Elasticsearch sends the body as it is. The OpenSearch transport rebuilds the request from its typed client and forwards `query`, `sort`, `from`, `size`, `track_total_hits`, `highlight`, `version`, `min_score` and `search_after`; a body with any other top-level key fails with a `DataAccessException` naming the key rather than running without it. Bound values become JSON values of their own type, so a placeholder must not stand in `script`, `runtime_mappings` or `script_fields`, where it would become code.
+
 == Vector and hybrid search
 
 A derived method with the `Near` keyword on a vector property, `searchByEmbeddingNear(Vector vector, Score maxDistance)`, renders a `knn` query with the maximum cosine distance turned into the store's similarity threshold. Its `k`, the number of nearest neighbours the store returns, covers the hits the request asks for: the method's limit, or the end of the page of a `Pageable` passed at runtime. A method with neither returns the stores' default of 10 hits, as any request without a size does, so declare a limit (`findTop50By...`) or pass a `Pageable` to get more. `k` and `num_candidates` are capped at 10,000, the most Elasticsearch accepts, so a vector search returns at most the 10,000 nearest neighbours and a page beyond them is empty.
@@ -76,4 +98,4 @@ Saving an entity whose id is already used by a document fails with a `DataAccess
 
 - Joins, `@Where`, update queries (`updateBy...`) and subqueries are not supported; update entities with `update(...)`.
 - `@Transactional` is not supported; see above.
-- Aggregations and the raw query DSL are not exposed yet.
+- Aggregations are not exposed yet; run them with the store client.
