@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.search.tck.entities;
 
-import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.search.SearchField;
@@ -23,17 +23,20 @@ import io.micronaut.data.annotation.search.SearchWeight;
 import io.micronaut.data.annotation.search.Searchable;
 import org.jspecify.annotations.Nullable;
 
+import java.util.UUID;
+
 /**
- * A book with a searchable title and description.
+ * A book with a searchable title and description. The id is a client-generated UUID so every
+ * backend, including document stores, can assign it.
  */
 @MappedEntity("search_book")
 @Searchable(language = "english")
 public class Book {
 
     @Id
-    @GeneratedValue
+    @AutoPopulated
     @Nullable
-    private Long id;
+    private UUID id;
 
     @SearchField(weight = SearchWeight.HIGH)
     private String title;
@@ -53,11 +56,11 @@ public class Book {
     }
 
     @Nullable
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(@Nullable Long id) {
+    public void setId(@Nullable UUID id) {
         this.id = id;
     }
 

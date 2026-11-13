@@ -86,6 +86,9 @@ import io.micronaut.data.runtime.operations.internal.SyncCascadeOperations;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Named;
+import io.micronaut.data.model.vector.search.SearchResult;
+import io.micronaut.data.model.vector.search.SearchResults;
+import org.bson.codecs.Codec;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonValue;
@@ -372,6 +375,17 @@ final class DefaultMongoRepositoryOperations extends AbstractMongoRepositoryOper
         MongoDatabase database = getDatabase(preparedQuery);
         Class<T> type = preparedQuery.getRootEntity();
         Class<R> resultType = preparedQuery.getResultType();
+        if (resultType == SearchResults.class) {
+            RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
+            Codec<T> codec = getCollection(database, persistentEntity, type).getCodecRegistry().get(type);
+            List<SearchResult<T>> results = new ArrayList<>();
+            try (MongoCursor<BsonDocument> cursor = aggregate(clientSession, preparedQuery, BsonDocument.class).iterator()) {
+                while (cursor.hasNext()) {
+                    results.add(toSearchResult(cursor.next(), codec, preparedQuery.getAnnotationMetadata(), persistentEntity));
+                }
+            }
+            return (R) SearchResults.of(results);
+        }
         if (!resultType.isAssignableFrom(type)) {
             BsonDocument result = aggregate(clientSession, preparedQuery, BsonDocument.class).first();
             return convertResult(preparedQuery, database.getCodecRegistry(), resultType, result, preparedQuery.isDtoProjection());

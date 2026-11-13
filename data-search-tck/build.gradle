@@ -5,7 +5,7 @@ plugins {
 
 dependencies {
     annotationProcessor mn.micronaut.inject.java
-    annotationProcessor projects.micronautDataProcessor
+    annotationProcessor projects.micronautDataDocumentProcessor
 
     api projects.micronautDataModel
     api projects.micronautDataRuntime
