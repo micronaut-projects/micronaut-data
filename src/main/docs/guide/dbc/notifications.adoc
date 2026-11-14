@@ -1,8 +1,9 @@
 Micronaut Data JDBC lets an application react to committed database changes through
-ann:data.annotation.ChangeListener[]. The listener contract is described below;
-the available notification capabilities and database setup depend on the database and JDBC driver.
+ann:data.annotation.ChangeListener[]. Oracle and PostgreSQL share the listener contract described below;
+the available notification capabilities and database setup differ.
 
-See <<oracleQueryNotifications, Oracle Change Notifications>> for prerequisites, examples, and configuration.
+See <<oracleQueryNotifications, Oracle Change Notifications>> or
+<<postgresChangeNotifications, PostgreSQL Change Notifications>> for prerequisites, examples, and configuration.
 
 JDBC change listeners are enabled by default. To disable them, for example in tests using H2 or another database
 without a notification provider, set the following in the test environment's configuration:
@@ -39,9 +40,12 @@ snippet::example.notification.LibraryCache[project-base="doc-examples/jdbc-examp
 <1> Annotate the method with ann:data.annotation.ChangeListener[]. Its `ChangeEvent<Library>` parameter identifies
 `Library` as the persistent entity and provides the operation, optional current entity, and optional provider metadata.
 
-A complete listener also requires a provider-specific notification annotation, such as
-ann:data.jdbc.annotation.OracleChangeNotification[]. Missing provider configuration is rejected at compilation time.
-The database-specific sections show complete examples.
+A complete listener also requires a database-specific notification annotation:
+ann:data.jdbc.annotation.OracleChangeNotification[] for Oracle Database or
+ann:data.jdbc.annotation.PostgresChangeNotification[] for PostgreSQL.
+Omitting this annotation causes a compilation error.
+
+See the database-specific sections for complete examples.
 
 The listener uses the `default` datasource unless another datasource is specified through the `dataSource`
 attribute, for example `@ChangeListener(dataSource = "library")`.
