@@ -1,6 +1,6 @@
 [versions]
-micronaut = "5.2.22"
-micronaut-platform = "5.2.5"
+micronaut = "5.2.23"
+micronaut-platform = "5.2.6"
 micronaut-docs = "3.0.0"
 micronaut-gradle-plugin = "5.0.2"
 micronaut-testresources = "4.3.1"
@@ -43,7 +43,7 @@ h2gis = "2.2.5"
 
 # Gradle plugins
 
-ksp-gradle-plugin = "2.3.13"
+ksp-gradle-plugin = "2.3.14"
 kotlin-gradle-plugin = "2.4.21"
 jmh-gradle-plugin = "0.7.4"
 spring-boot-gradle-plugin = "4.1.2"
@@ -58,7 +58,7 @@ antlr = "4.13.2"
 
 jackson-override = "2.23.0"
 micrometer-override = "1.17.2"
-commons-lang3 = "3.21.0"
+commons-lang3 = "3.22.0"
 guava = "33.7.2-jre"
 
 [libraries]
