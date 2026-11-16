@@ -1719,6 +1719,10 @@ entity has a generated identity.</div>
 </dd>
 <dt><a href="io/micronaut/data/mongodb/operations/options/MongoFindOptions.html#batchSize(java.lang.Integer)" class="member-name-link">batchSize(Integer)</a> - Method in class io.micronaut.data.mongodb.operations.options.<a href="io/micronaut/data/mongodb/operations/options/MongoFindOptions.html" title="class in io.micronaut.data.mongodb.operations.options">MongoFindOptions</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/ChangeListenerMethod.html#beanDefinition()" class="member-name-link">beanDefinition()</a> - Method in record class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/ChangeListenerMethod.html" title="class in io.micronaut.data.jdbc.notification">ChangeListenerMethod</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/data/jdbc/notification/ChangeListenerMethod.html#param-beanDefinition"><code>beanDefinition</code></a> record component.</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/mapper/BeanIntrospectionMapper.html" class="type-name-link" title="interface in io.micronaut.data.runtime.mapper">BeanIntrospectionMapper&lt;D,<wbr>R&gt;</a> - Interface in <a href="io/micronaut/data/runtime/mapper/package-summary.html">io.micronaut.data.runtime.mapper</a></dt>
 <dd>
 <div class="block">A <a href="io/micronaut/data/runtime/mapper/TypeMapper.html" title="interface in io.micronaut.data.runtime.mapper"><code>TypeMapper</code></a> that maps objects using a compile time computed <code>BeanIntrospection</code>.</div>
@@ -2840,6 +2844,76 @@ underlying transaction API such as JTA.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/Challenge_.html#%3Cinit%3E()" class="member-name-link">Challenge_()</a> - Constructor for class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Challenge_.html" title="class in io.micronaut.data.tck.entities">Challenge_</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/notification/ChangeEvent.html" class="type-name-link" title="interface in io.micronaut.data.notification">ChangeEvent&lt;E&gt;</a> - Interface in <a href="io/micronaut/data/notification/package-summary.html">io.micronaut.data.notification</a></dt>
+<dd>
+<div class="block">A database change or subscription lifecycle notification for a persistent entity type.</div>
+</dd>
+<dt><a href="io/micronaut/data/notification/ChangeEventMetadata.html" class="type-name-link" title="interface in io.micronaut.data.notification">ChangeEventMetadata</a> - Interface in <a href="io/micronaut/data/notification/package-summary.html">io.micronaut.data.notification</a></dt>
+<dd>
+<div class="block">Marker interface for database-provider-specific change event metadata.</div>
+</dd>
+<dt><a href="io/micronaut/data/annotation/ChangeListener.html" class="type-name-link" title="annotation interface in io.micronaut.data.annotation">ChangeListener</a> - Annotation Interface in <a href="io/micronaut/data/annotation/package-summary.html">io.micronaut.data.annotation</a></dt>
+<dd>
+<div class="block">Marks a method that receives database change events for a persistent entity.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/ChangeListenerEntityLoadingInterceptor.html" class="type-name-link" title="class in io.micronaut.data.jdbc.notification">ChangeListenerEntityLoadingInterceptor</a> - Class in <a href="io/micronaut/data/jdbc/notification/package-summary.html">io.micronaut.data.jdbc.notification</a></dt>
+<dd>
+<div class="block">Materializes provider-deferred entity state before change-listener execution.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/ChangeListenerEntityLoadingInterceptor.html#%3Cinit%3E()" class="member-name-link">ChangeListenerEntityLoadingInterceptor()</a> - Constructor for class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/ChangeListenerEntityLoadingInterceptor.html" title="class in io.micronaut.data.jdbc.notification">ChangeListenerEntityLoadingInterceptor</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/ChangeListenerException.html" class="type-name-link" title="class in io.micronaut.data.jdbc.notification">ChangeListenerException</a> - Exception Class in <a href="io/micronaut/data/jdbc/notification/package-summary.html">io.micronaut.data.jdbc.notification</a></dt>
+<dd>
+<div class="block">An unhandled failure while resolving a change listener, loading its entity, or invoking it.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/ChangeListenerException.html#%3Cinit%3E(java.lang.String,java.lang.String,io.micronaut.inject.ExecutableMethod,io.micronaut.data.notification.ChangeEvent,java.lang.Exception)" class="member-name-link">ChangeListenerException(String, String, ExecutableMethod, ChangeEvent, Exception)</a> - Constructor for exception class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/ChangeListenerException.html" title="class in io.micronaut.data.jdbc.notification">ChangeListenerException</a></dt>
+<dd>
+<div class="block">Creates a failure with the listener and event context.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/ChangeListenerExceptionHandler.html" class="type-name-link" title="interface in io.micronaut.data.jdbc.notification">ChangeListenerExceptionHandler</a> - Interface in <a href="io/micronaut/data/jdbc/notification/package-summary.html">io.micronaut.data.jdbc.notification</a></dt>
+<dd>
+<div class="block">Handles change-listener failures after configured retry and recovery advice completes.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/ChangeListenerMethod.html" class="type-name-link" title="class in io.micronaut.data.jdbc.notification">ChangeListenerMethod</a> - Record Class in <a href="io/micronaut/data/jdbc/notification/package-summary.html">io.micronaut.data.jdbc.notification</a></dt>
+<dd>
+<div class="block">Executable <code>@ChangeListener</code> method collected for notification registration.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/ChangeListenerMethod.html#%3Cinit%3E(io.micronaut.inject.BeanDefinition,io.micronaut.inject.ExecutableMethod,io.micronaut.core.type.Argument)" class="member-name-link">ChangeListenerMethod(BeanDefinition, ExecutableMethod, Argument)</a> - Constructor for record class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/ChangeListenerMethod.html" title="class in io.micronaut.data.jdbc.notification">ChangeListenerMethod</a></dt>
+<dd>
+<div class="block">Creates an instance of a <code>ChangeListenerMethod</code> record class.</div>
+</dd>
+<dt><a href="io/micronaut/data/intercept/annotation/ChangeListenerProvider.html" class="type-name-link" title="annotation interface in io.micronaut.data.intercept.annotation">ChangeListenerProvider</a> - Annotation Interface in <a href="io/micronaut/data/intercept/annotation/package-summary.html">io.micronaut.data.intercept.annotation</a></dt>
+<dd>
+<div class="block">Identifies a provider-specific configuration annotation for a change listener.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/ChangeListenerRegistry.html" class="type-name-link" title="class in io.micronaut.data.jdbc.notification">ChangeListenerRegistry</a> - Class in <a href="io/micronaut/data/jdbc/notification/package-summary.html">io.micronaut.data.jdbc.notification</a></dt>
+<dd>
+<div class="block">Collects methods annotated with <a href="io/micronaut/data/annotation/ChangeListener.html" title="annotation interface in io.micronaut.data.annotation"><code>ChangeListener</code></a> and groups them by datasource.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/ChangeListenerRegistry.html#%3Cinit%3E()" class="member-name-link">ChangeListenerRegistry()</a> - Constructor for class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/ChangeListenerRegistry.html" title="class in io.micronaut.data.jdbc.notification">ChangeListenerRegistry</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/visitors/ChangeListenerVisitor.html" class="type-name-link" title="class in io.micronaut.data.processor.visitors">ChangeListenerVisitor</a> - Class in <a href="io/micronaut/data/processor/visitors/package-summary.html">io.micronaut.data.processor.visitors</a></dt>
+<dd>
+<div class="block">Validates direct and composed database-neutral change-listener declarations at compile time.</div>
+</dd>
+<dt><a href="io/micronaut/data/processor/visitors/ChangeListenerVisitor.html#%3Cinit%3E()" class="member-name-link">ChangeListenerVisitor()</a> - Constructor for class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/ChangeListenerVisitor.html" title="class in io.micronaut.data.processor.visitors">ChangeListenerVisitor</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/ChangeNotificationProvider.html" class="type-name-link" title="interface in io.micronaut.data.jdbc.notification">ChangeNotificationProvider</a> - Interface in <a href="io/micronaut/data/jdbc/notification/package-summary.html">io.micronaut.data.jdbc.notification</a></dt>
+<dd>
+<div class="block">Database-specific implementation of JDBC change notifications.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/ChangeNotificationQueue.html" class="type-name-link" title="class in io.micronaut.data.jdbc.notification">ChangeNotificationQueue</a> - Class in <a href="io/micronaut/data/jdbc/notification/package-summary.html">io.micronaut.data.jdbc.notification</a></dt>
+<dd>
+<div class="block">Queues one listener's callbacks for sequential delivery on a dedicated daemon thread.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/ChangeNotificationQueue.html#%3Cinit%3E(java.lang.String,int)" class="member-name-link">ChangeNotificationQueue(String, int)</a> - Constructor for class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/ChangeNotificationQueue.html" title="class in io.micronaut.data.jdbc.notification">ChangeNotificationQueue</a></dt>
+<dd>
+<div class="block">Creates an empty queue without starting its worker.</div>
+</dd>
+<dt><a href="io/micronaut/data/notification/ChangeOperation.html" class="type-name-link" title="enum class in io.micronaut.data.notification">ChangeOperation</a> - Enum Class in <a href="io/micronaut/data/notification/package-summary.html">io.micronaut.data.notification</a></dt>
+<dd>
+<div class="block">The operation reported by a database change notification provider.</div>
+</dd>
 <dt><a href="io/micronaut/data/tck/entities/Product.html#changePrice(java.math.BigDecimal)" class="member-name-link">changePrice(BigDecimal)</a> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Product.html" title="class in io.micronaut.data.tck.entities">Product</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jq/JQLexer.html#channelNames" class="member-name-link">channelNames</a> - Static variable in class io.micronaut.data.jq.<a href="io/micronaut/data/jq/JQLexer.html" title="class in io.micronaut.data.jq">JQLexer</a></dt>
@@ -3806,6 +3880,10 @@ including Oracle OUT parameters.</div>
 <dt><a href="io/micronaut/data/connection/SynchronousConnectionManager.html#complete(io.micronaut.data.connection.ConnectionStatus)" class="member-name-link">complete(ConnectionStatus)</a> - Method in interface io.micronaut.data.connection.<a href="io/micronaut/data/connection/SynchronousConnectionManager.html" title="interface in io.micronaut.data.connection">SynchronousConnectionManager</a></dt>
 <dd>
 <div class="block">Completes the connection.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/ChangeNotificationQueue.html#completion()" class="member-name-link">completion()</a> - Method in class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/ChangeNotificationQueue.html" title="class in io.micronaut.data.jdbc.notification">ChangeNotificationQueue</a></dt>
+<dd>
+<div class="block">Observes completion without closing admission or discarding waiting work.</div>
 </dd>
 <dt><a href="io/micronaut/data/tck/jdbc/entities/upsert/CompositeClinic.html" class="type-name-link" title="class in io.micronaut.data.tck.jdbc.entities.upsert">CompositeClinic</a> - Class in <a href="io/micronaut/data/tck/jdbc/entities/upsert/package-summary.html">io.micronaut.data.tck.jdbc.entities.upsert</a></dt>
 <dd>&nbsp;</dd>
@@ -5321,6 +5399,10 @@ declared in the <a href="io/micronaut/data/intercept/package-summary.html"><code
 <dd>
 <div class="block">Parent configuration interface.</div>
 </dd>
+<dt><a href="io/micronaut/data/annotation/ChangeListener.html#dataSource()" class="member-name-link">dataSource()</a> - Element in annotation interface io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/ChangeListener.html" title="annotation interface in io.micronaut.data.annotation">ChangeListener</a></dt>
+<dd>
+<div class="block">Gets the datasource selected for database change notifications.</div>
+</dd>
 <dt><a href="io/micronaut/data/jdbc/annotation/JdbcRepository.html#dataSource()" class="member-name-link">dataSource()</a> - Element in annotation interface io.micronaut.data.jdbc.annotation.<a href="io/micronaut/data/jdbc/annotation/JdbcRepository.html" title="annotation interface in io.micronaut.data.jdbc.annotation">JdbcRepository</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/r2dbc/annotation/R2dbcRepository.html#dataSource()" class="member-name-link">dataSource()</a> - Element in annotation interface io.micronaut.data.r2dbc.annotation.<a href="io/micronaut/data/r2dbc/annotation/R2dbcRepository.html" title="annotation interface in io.micronaut.data.r2dbc.annotation">R2dbcRepository</a></dt>
@@ -5609,6 +5691,15 @@ implementing <a href="io/micronaut/data/intercept/FindPageInterceptor.html" titl
 </dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/query/DefaultBindableParametersStoredQuery.html#%3Cinit%3E(io.micronaut.data.model.runtime.StoredQuery,io.micronaut.data.model.runtime.RuntimePersistentEntity,io.micronaut.core.convert.ConversionService)" class="member-name-link">DefaultBindableParametersStoredQuery(StoredQuery, RuntimePersistentEntity, ConversionService)</a> - Constructor for class io.micronaut.data.runtime.operations.internal.query.<a href="io/micronaut/data/runtime/operations/internal/query/DefaultBindableParametersStoredQuery.html" title="class in io.micronaut.data.runtime.operations.internal.query">DefaultBindableParametersStoredQuery</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/DefaultChangeEvent.html" class="type-name-link" title="class in io.micronaut.data.jdbc.notification">DefaultChangeEvent&lt;E&gt;</a> - Record Class in <a href="io/micronaut/data/jdbc/notification/package-summary.html">io.micronaut.data.jdbc.notification</a></dt>
+<dd>
+<div class="block">Default change-event implementation used by providers when entity state is already available or
+intentionally unavailable.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/DefaultChangeEvent.html#%3Cinit%3E(io.micronaut.data.notification.ChangeOperation,E,io.micronaut.data.notification.ChangeEventMetadata)" class="member-name-link">DefaultChangeEvent(ChangeOperation, E, ChangeEventMetadata)</a> - Constructor for record class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/DefaultChangeEvent.html" title="class in io.micronaut.data.jdbc.notification">DefaultChangeEvent</a></dt>
+<dd>
+<div class="block">Creates a change event.</div>
+</dd>
 <dt><a href="io/micronaut/data/connection/DefaultConnectionDefinition.html" class="type-name-link" title="class in io.micronaut.data.connection">DefaultConnectionDefinition</a> - Record Class in <a href="io/micronaut/data/connection/package-summary.html">io.micronaut.data.connection</a></dt>
 <dd>
 <div class="block">Default implementation of the <a href="io/micronaut/data/connection/ConnectionDefinition.html" title="interface in io.micronaut.data.connection"><code>ConnectionDefinition</code></a> interface.</div>
@@ -6464,6 +6555,15 @@ propagation behavior.</div>
 </dd>
 <dt><a href="io/micronaut/data/runtime/intercept/reactive/DefaultUpdateReturningOneReactiveInterceptor.html#%3Cinit%3E(io.micronaut.data.operations.RepositoryOperations)" class="member-name-link">DefaultUpdateReturningOneReactiveInterceptor(RepositoryOperations)</a> - Constructor for class io.micronaut.data.runtime.intercept.reactive.<a href="io/micronaut/data/runtime/intercept/reactive/DefaultUpdateReturningOneReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultUpdateReturningOneReactiveInterceptor</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/DeferredChangeEvent.html" class="type-name-link" title="class in io.micronaut.data.jdbc.notification">DeferredChangeEvent&lt;E&gt;</a> - Class in <a href="io/micronaut/data/jdbc/notification/package-summary.html">io.micronaut.data.jdbc.notification</a></dt>
+<dd>
+<div class="block">Internal change event whose entity state is materialized by listener AOP advice immediately
+before listener invocation.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/DeferredChangeEvent.html#%3Cinit%3E(io.micronaut.data.notification.ChangeOperation,io.micronaut.data.notification.ChangeEventMetadata,java.util.function.Supplier)" class="member-name-link">DeferredChangeEvent(ChangeOperation, ChangeEventMetadata, Supplier)</a> - Constructor for class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/DeferredChangeEvent.html" title="class in io.micronaut.data.jdbc.notification">DeferredChangeEvent</a></dt>
+<dd>
+<div class="block">Creates a deferred event.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/schema/sql/SqlSequenceMapping.html#definedName()" class="member-name-link">definedName()</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlSequenceMapping.html" title="class in io.micronaut.data.model.schema.sql">SqlSequenceMapping</a></dt>
 <dd>
 <div class="block">Returns the value of the <a href="./io/micronaut/data/model/schema/sql/SqlSequenceMapping.html#param-definedName"><code>definedName</code></a> record component.</div>
@@ -6624,6 +6724,10 @@ method as a parameter-based automatic query method which deletes entities.</div>
 <dt><a href="io/micronaut/data/model/runtime/StoredQuery.OperationType.html#DELETE" class="member-name-link">DELETE</a> - Enum constant in enum class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/StoredQuery.OperationType.html" title="enum class in io.micronaut.data.model.runtime">StoredQuery.OperationType</a></dt>
 <dd>
 <div class="block">A delete operation.</div>
+</dd>
+<dt><a href="io/micronaut/data/notification/ChangeOperation.html#DELETE" class="member-name-link">DELETE</a> - Enum constant in enum class io.micronaut.data.notification.<a href="io/micronaut/data/notification/ChangeOperation.html" title="enum class in io.micronaut.data.notification">ChangeOperation</a></dt>
+<dd>
+<div class="block">A row was deleted.</div>
 </dd>
 <dt><a href="io/micronaut/data/jq/JQLexer.html#DELETE" class="member-name-link">DELETE</a> - Static variable in class io.micronaut.data.jq.<a href="io/micronaut/data/jq/JQLexer.html" title="class in io.micronaut.data.jq">JQLexer</a></dt>
 <dd>&nbsp;</dd>
@@ -7230,6 +7334,11 @@ when sorting by this attribute.</div>
 <dt><a href="io/micronaut/transaction/impl/InternalTransaction.html#discardConnectionSynchronizations()" class="member-name-link">discardConnectionSynchronizations()</a> - Method in interface io.micronaut.transaction.impl.<a href="io/micronaut/transaction/impl/InternalTransaction.html" title="interface in io.micronaut.transaction.impl">InternalTransaction</a></dt>
 <dd>
 <div class="block">Discards the connection synchronizations bound to this transaction without executing them.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/ChangeNotificationQueue.html#discardPending()" class="member-name-link">discardPending()</a> - Method in class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/ChangeNotificationQueue.html" title="class in io.micronaut.data.jdbc.notification">ChangeNotificationQueue</a></dt>
+<dd>
+<div class="block">Discards all waiting callbacks and clears pending reconciliation without interrupting the
+running callback.</div>
 </dd>
 <dt><a href="io/micronaut/data/tck/entities/Discount.html" class="type-name-link" title="class in io.micronaut.data.tck.entities">Discount</a> - Class in <a href="io/micronaut/data/tck/entities/package-summary.html">io.micronaut.data.tck.entities</a></dt>
 <dd>&nbsp;</dd>
@@ -7981,6 +8090,19 @@ Globally Distributed Database, for reference data that queries of sharded tables
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/sql/DefaultSqlPreparedQuery.html#enhancePageable(io.micronaut.data.model.CursoredPageable,io.micronaut.data.model.PersistentEntity)" class="member-name-link">enhancePageable(CursoredPageable, PersistentEntity)</a> - Static method in class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/DefaultSqlPreparedQuery.html" title="class in io.micronaut.data.runtime.operations.internal.sql">DefaultSqlPreparedQuery</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/ChangeNotificationQueue.html#enqueue(java.lang.Runnable,java.lang.Runnable)" class="member-name-link">enqueue(Runnable, Runnable)</a> - Method in class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/ChangeNotificationQueue.html" title="class in io.micronaut.data.jdbc.notification">ChangeNotificationQueue</a></dt>
+<dd>
+<div class="block">Queues data processing, or replaces waiting data with a reconciliation callback when the
+limit is reached.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/ChangeNotificationQueue.html#enqueueFinal(java.lang.Runnable)" class="member-name-link">enqueueFinal(Runnable)</a> - Method in class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/ChangeNotificationQueue.html" title="class in io.micronaut.data.jdbc.notification">ChangeNotificationQueue</a></dt>
+<dd>
+<div class="block">Replaces waiting work with one final callback and closes admission.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/ChangeNotificationQueue.html#enqueueInvalidation(java.lang.Runnable)" class="member-name-link">enqueueInvalidation(Runnable)</a> - Method in class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/ChangeNotificationQueue.html" title="class in io.micronaut.data.jdbc.notification">ChangeNotificationQueue</a></dt>
+<dd>
+<div class="block">Replaces all waiting work, including a queued reconciliation callback, with the supplied callback.</div>
+</dd>
 <dt><a href="io/micronaut/data/jq/JQBaseListener.html#enterAggregate_argument(io.micronaut.data.jq.JQParser.Aggregate_argumentContext)" class="member-name-link">enterAggregate_argument(JQParser.Aggregate_argumentContext)</a> - Method in class io.micronaut.data.jq.<a href="io/micronaut/data/jq/JQBaseListener.html" title="class in io.micronaut.data.jq">JQBaseListener</a></dt>
 <dd>
 <div class="block">Enter a parse tree produced by <a href="io/micronaut/data/jq/JQParser.html#aggregate_argument()"><code>JQParser.aggregate_argument()</code></a>.</div>
@@ -8520,9 +8642,17 @@ Globally Distributed Database, for reference data that queries of sharded tables
 <div class="deprecation-comment">Not used</div>
 </div>
 </dd>
+<dt><a href="io/micronaut/data/jdbc/notification/DefaultChangeEvent.html#entity()" class="member-name-link">entity()</a> - Method in record class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/DefaultChangeEvent.html" title="class in io.micronaut.data.jdbc.notification">DefaultChangeEvent</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/DeferredChangeEvent.html#entity()" class="member-name-link">entity()</a> - Method in class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/DeferredChangeEvent.html" title="class in io.micronaut.data.jdbc.notification">DeferredChangeEvent</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/vector/search/SearchResult.html#entity()" class="member-name-link">entity()</a> - Method in record class io.micronaut.data.model.vector.search.<a href="io/micronaut/data/model/vector/search/SearchResult.html" title="class in io.micronaut.data.model.vector.search">SearchResult</a></dt>
 <dd>
 <div class="block">Returns the value of the <a href="./io/micronaut/data/model/vector/search/SearchResult.html#param-entity"><code>entity</code></a> record component.</div>
+</dd>
+<dt><a href="io/micronaut/data/notification/ChangeEvent.html#entity()" class="member-name-link">entity()</a> - Method in interface io.micronaut.data.notification.<a href="io/micronaut/data/notification/ChangeEvent.html" title="interface in io.micronaut.data.notification">ChangeEvent</a></dt>
+<dd>
+<div class="block">Returns the entity state associated with this event, when it is available.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/DataType.html#ENTITY" class="member-name-link">ENTITY</a> - Enum constant in enum class io.micronaut.data.model.<a href="io/micronaut/data/model/DataType.html" title="enum class in io.micronaut.data.model">DataType</a></dt>
 <dd>
@@ -8554,6 +8684,10 @@ Globally Distributed Database, for reference data that queries of sharded tables
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/mappers/jpa/jx/EntityAnnotationMapper.html#%3Cinit%3E()" class="member-name-link">EntityAnnotationMapper()</a> - Constructor for class io.micronaut.data.processor.mappers.jpa.jx.<a href="io/micronaut/data/processor/mappers/jpa/jx/EntityAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa.jx">EntityAnnotationMapper</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/ChangeListenerMethod.html#entityArgument()" class="member-name-link">entityArgument()</a> - Method in record class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/ChangeListenerMethod.html" title="class in io.micronaut.data.jdbc.notification">ChangeListenerMethod</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/data/jdbc/notification/ChangeListenerMethod.html#param-entityArgument"><code>entityArgument</code></a> record component.</div>
+</dd>
 <dt><a href="io/micronaut/data/tck/metamodel/ExpectedMetamodel.html#entityClass()" class="member-name-link">entityClass()</a> - Method in record class io.micronaut.data.tck.metamodel.<a href="io/micronaut/data/tck/metamodel/ExpectedMetamodel.html" title="class in io.micronaut.data.tck.metamodel">ExpectedMetamodel</a></dt>
 <dd>
 <div class="block">Returns the value of the <code>entityClass</code> record component.</div>
@@ -8683,6 +8817,10 @@ together with the entity in the same query, overriding the fetch type declared o
 </dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/UpdateMethodMatcher.html#entityUpdate(java.util.List,io.micronaut.inject.ast.ParameterElement,io.micronaut.inject.ast.ParameterElement,boolean)" class="member-name-link">entityUpdate(List, ParameterElement, ParameterElement, boolean)</a> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/UpdateMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">UpdateMethodMatcher</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/DefaultChangeEvent.html#entityValue()" class="member-name-link">entityValue()</a> - Method in record class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/DefaultChangeEvent.html" title="class in io.micronaut.data.jdbc.notification">DefaultChangeEvent</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/data/jdbc/notification/DefaultChangeEvent.html#param-entityValue"><code>entityValue</code></a> record component.</div>
+</dd>
 <dt><a href="io/micronaut/data/tck/entities/EntityWithIdClass.html" class="type-name-link" title="class in io.micronaut.data.tck.entities">EntityWithIdClass</a> - Class in <a href="io/micronaut/data/tck/entities/package-summary.html">io.micronaut.data.tck.entities</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/EntityWithIdClass.html#%3Cinit%3E()" class="member-name-link">EntityWithIdClass()</a> - Constructor for class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/EntityWithIdClass.html" title="class in io.micronaut.data.tck.entities">EntityWithIdClass</a></dt>
@@ -8771,6 +8909,14 @@ together with the entity in the same query, overriding the fetch type declared o
 </dd>
 <dt><a href="io/micronaut/data/intercept/RepositoryMethodKey.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in class io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/ChangeListenerMethod.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/ChangeListenerMethod.html" title="class in io.micronaut.data.jdbc.notification">ChangeListenerMethod</a></dt>
+<dd>
+<div class="block">Indicates whether some other object is "equal to" this one.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/DefaultChangeEvent.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/DefaultChangeEvent.html" title="class in io.micronaut.data.jdbc.notification">DefaultChangeEvent</a></dt>
+<dd>
+<div class="block">Indicates whether some other object is "equal to" this one.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/AbstractPersistentEntity.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in class io.micronaut.data.model.<a href="io/micronaut/data/model/AbstractPersistentEntity.html" title="class in io.micronaut.data.model">AbstractPersistentEntity</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/geo/GeometryCollection.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class io.micronaut.data.model.geo.<a href="io/micronaut/data/model/geo/GeometryCollection.html" title="class in io.micronaut.data.model.geo">GeometryCollection</a></dt>
@@ -13422,6 +13568,8 @@ driver-specific values.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/jdbc/DataSourceTransactionManager.html#getDataSource()" class="member-name-link">getDataSource()</a> - Method in class io.micronaut.transaction.jdbc.<a href="io/micronaut/transaction/jdbc/DataSourceTransactionManager.html" title="class in io.micronaut.transaction.jdbc">DataSourceTransactionManager</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/ChangeListenerException.html#getDataSourceName()" class="member-name-link">getDataSourceName()</a> - Method in exception class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/ChangeListenerException.html" title="class in io.micronaut.data.jdbc.notification">ChangeListenerException</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.html#getDataTransformerReadValue(java.lang.String,io.micronaut.data.model.PersistentProperty)" class="member-name-link">getDataTransformerReadValue(String, PersistentProperty)</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder</a></dt>
 <dd>
 <div class="block">Returns transformed value if the data transformer id defined.</div>
@@ -13684,6 +13832,8 @@ if there is no timeout specified at the transaction level, in seconds.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/MatchFailedException.html#getElement()" class="member-name-link">getElement()</a> - Method in exception class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/MatchFailedException.html" title="class in io.micronaut.data.processor.visitors">MatchFailedException</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/visitors/OracleChangeNotificationVisitor.html#getElementType()" class="member-name-link">getElementType()</a> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/OracleChangeNotificationVisitor.html" title="class in io.micronaut.data.processor.visitors">OracleChangeNotificationVisitor</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/jdbc/entities/upsert/CustomerProfile.html#getEmail()" class="member-name-link">getEmail()</a> - Method in class io.micronaut.data.tck.jdbc.entities.upsert.<a href="io/micronaut/data/tck/jdbc/entities/upsert/CustomerProfile.html" title="class in io.micronaut.data.tck.jdbc.entities.upsert">CustomerProfile</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/jdbc/entities/upsert/CustomerProfileUuid.html#getEmail()" class="member-name-link">getEmail()</a> - Method in class io.micronaut.data.tck.jdbc.entities.upsert.<a href="io/micronaut/data/tck/jdbc/entities/upsert/CustomerProfileUuid.html" title="class in io.micronaut.data.tck.jdbc.entities.upsert">CustomerProfileUuid</a></dt>
@@ -13795,6 +13945,8 @@ if there is no timeout specified at the transaction level, in seconds.</div>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/predicate/LikePredicate.html#getEscapeChar()" class="member-name-link">getEscapeChar()</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.predicate.<a href="io/micronaut/data/model/jpa/criteria/impl/predicate/LikePredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">LikePredicate</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/SampleData.html#getEtag()" class="member-name-link">getEtag()</a> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/SampleData.html" title="class in io.micronaut.data.tck.entities">SampleData</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/ChangeListenerException.html#getEvent()" class="member-name-link">getEvent()</a> - Method in exception class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/ChangeListenerException.html" title="class in io.micronaut.data.jdbc.notification">ChangeListenerException</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/services/JakartaDataTrainEventListener.html#getEvents()" class="member-name-link">getEvents()</a> - Method in class io.micronaut.data.tck.services.<a href="io/micronaut/data/tck/services/JakartaDataTrainEventListener.html" title="class in io.micronaut.data.tck.services">JakartaDataTrainEventListener</a></dt>
 <dd>&nbsp;</dd>
@@ -14529,6 +14681,16 @@ depending on the property converter.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/jdbc/entities/geo/GeometryEntityWkt.html#getLineString()" class="member-name-link">getLineString()</a> - Method in class io.micronaut.data.tck.jdbc.entities.geo.<a href="io/micronaut/data/tck/jdbc/entities/geo/GeometryEntityWkt.html" title="class in io.micronaut.data.tck.jdbc.entities.geo">GeometryEntityWkt</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/ChangeListenerException.html#getListenerMethod()" class="member-name-link">getListenerMethod()</a> - Method in exception class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/ChangeListenerException.html" title="class in io.micronaut.data.jdbc.notification">ChangeListenerException</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/ChangeListenerRegistry.html#getListeners()" class="member-name-link">getListeners()</a> - Method in class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/ChangeListenerRegistry.html" title="class in io.micronaut.data.jdbc.notification">ChangeListenerRegistry</a></dt>
+<dd>
+<div class="block">Returns an immutable snapshot of all listener methods grouped by datasource.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/ChangeListenerRegistry.html#getListeners(java.lang.String)" class="member-name-link">getListeners(String)</a> - Method in class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/ChangeListenerRegistry.html" title="class in io.micronaut.data.jdbc.notification">ChangeListenerRegistry</a></dt>
+<dd>
+<div class="block">Returns an immutable snapshot of the listener methods for the given datasource.</div>
+</dd>
 <dt><a href="io/micronaut/data/document/tck/entities/BasicTypes.html#getLocalDate()" class="member-name-link">getLocalDate()</a> - Method in class io.micronaut.data.document.tck.entities.<a href="io/micronaut/data/document/tck/entities/BasicTypes.html" title="class in io.micronaut.data.document.tck.entities">BasicTypes</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/BasicTypes.html#getLocalDate()" class="member-name-link">getLocalDate()</a> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/BasicTypes.html" title="class in io.micronaut.data.tck.entities">BasicTypes</a></dt>
@@ -14631,6 +14793,14 @@ depending on the property converter.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#getMaxPageSize()" class="member-name-link">getMaxPageSize()</a> - Method in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">DataConfiguration.PageableConfiguration</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/oracle/OracleNotificationConfiguration.RegistrationRecoveryConfiguration.html#getMaxRetries()" class="member-name-link">getMaxRetries()</a> - Method in class io.micronaut.data.jdbc.notification.oracle.<a href="io/micronaut/data/jdbc/notification/oracle/OracleNotificationConfiguration.RegistrationRecoveryConfiguration.html" title="class in io.micronaut.data.jdbc.notification.oracle">OracleNotificationConfiguration.RegistrationRecoveryConfiguration</a></dt>
+<dd>
+<div class="block">Returns the number of retries after the initial recovery attempt.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/oracle/OracleNotificationConfiguration.RegistrationRecoveryConfiguration.html#getMaxRetryDelay()" class="member-name-link">getMaxRetryDelay()</a> - Method in class io.micronaut.data.jdbc.notification.oracle.<a href="io/micronaut/data/jdbc/notification/oracle/OracleNotificationConfiguration.RegistrationRecoveryConfiguration.html" title="class in io.micronaut.data.jdbc.notification.oracle">OracleNotificationConfiguration.RegistrationRecoveryConfiguration</a></dt>
+<dd>
+<div class="block">Returns the maximum delay before a recovery retry.</div>
+</dd>
 <dt><a href="io/micronaut/data/mongodb/operations/options/MongoAggregationOptions.html#getMaxTimeMS()" class="member-name-link">getMaxTimeMS()</a> - Method in class io.micronaut.data.mongodb.operations.options.<a href="io/micronaut/data/mongodb/operations/options/MongoAggregationOptions.html" title="class in io.micronaut.data.mongodb.operations.options">MongoAggregationOptions</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/mongodb/operations/options/MongoFindOptions.html#getMaxTimeMS()" class="member-name-link">getMaxTimeMS()</a> - Method in class io.micronaut.data.mongodb.operations.options.<a href="io/micronaut/data/mongodb/operations/options/MongoFindOptions.html" title="class in io.micronaut.data.mongodb.operations.options">MongoFindOptions</a></dt>
@@ -15388,6 +15558,10 @@ pagination.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jakarta/tck/runtime/TestClassVisitor.html#getOrder()" class="member-name-link">getOrder()</a> - Method in class io.micronaut.data.jakarta.tck.runtime.<a href="io/micronaut/data/jakarta/tck/runtime/TestClassVisitor.html" title="class in io.micronaut.data.jakarta.tck.runtime">TestClassVisitor</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/ChangeListenerEntityLoadingInterceptor.html#getOrder()" class="member-name-link">getOrder()</a> - Method in class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/ChangeListenerEntityLoadingInterceptor.html" title="class in io.micronaut.data.jdbc.notification">ChangeListenerEntityLoadingInterceptor</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/visitors/ChangeListenerVisitor.html#getOrder()" class="member-name-link">getOrder()</a> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/ChangeListenerVisitor.html" title="class in io.micronaut.data.processor.visitors">ChangeListenerVisitor</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/AbstractSpecificationMethodMatcher.html#getOrder()" class="member-name-link">getOrder()</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/AbstractSpecificationMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractSpecificationMethodMatcher</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/JakartaDataQueryMethodMatcher.html#getOrder()" class="member-name-link">getOrder()</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/JakartaDataQueryMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">JakartaDataQueryMethodMatcher</a></dt>
@@ -15407,6 +15581,8 @@ pagination.</div>
 <dt><a href="io/micronaut/data/processor/visitors/GenerateJakartaDataMetamodelVisitor.html#getOrder()" class="member-name-link">getOrder()</a> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/GenerateJakartaDataMetamodelVisitor.html" title="class in io.micronaut.data.processor.visitors">GenerateJakartaDataMetamodelVisitor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/MappedEntityVisitor.html#getOrder()" class="member-name-link">getOrder()</a> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/MappedEntityVisitor.html" title="class in io.micronaut.data.processor.visitors">MappedEntityVisitor</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/visitors/OracleChangeNotificationVisitor.html#getOrder()" class="member-name-link">getOrder()</a> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/OracleChangeNotificationVisitor.html" title="class in io.micronaut.data.processor.visitors">OracleChangeNotificationVisitor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/interceptor/TransactionalEventInterceptor.html#getOrder()" class="member-name-link">getOrder()</a> - Method in class io.micronaut.transaction.interceptor.<a href="io/micronaut/transaction/interceptor/TransactionalEventInterceptor.html" title="class in io.micronaut.transaction.interceptor">TransactionalEventInterceptor</a></dt>
 <dd>&nbsp;</dd>
@@ -16154,6 +16330,10 @@ i.e.</div>
 <dd>
 <div class="block">Find <a href="io/micronaut/data/repository/jpa/criteria/QuerySpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria"><code>QuerySpecification</code></a> in context.</div>
 </dd>
+<dt><a href="io/micronaut/data/jdbc/notification/oracle/OracleNotificationConfiguration.html#getQueueCapacity()" class="member-name-link">getQueueCapacity()</a> - Method in class io.micronaut.data.jdbc.notification.oracle.<a href="io/micronaut/data/jdbc/notification/oracle/OracleNotificationConfiguration.html" title="class in io.micronaut.data.jdbc.notification.oracle">OracleNotificationConfiguration</a></dt>
+<dd>
+<div class="block">Returns the limit for waiting notifications per listener.</div>
+</dd>
 <dt><a href="io/micronaut/data/r2dbc/config/DataR2dbcConfiguration.html#getR2dbcOperations()" class="member-name-link">getR2dbcOperations()</a> - Method in class io.micronaut.data.r2dbc.config.<a href="io/micronaut/data/r2dbc/config/DataR2dbcConfiguration.html" title="class in io.micronaut.data.r2dbc.config">DataR2dbcConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/SampleData.html#getRating()" class="member-name-link">getRating()</a> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/SampleData.html" title="class in io.micronaut.data.tck.entities">SampleData</a></dt>
@@ -16173,6 +16353,8 @@ i.e.</div>
 <dt><a href="io/micronaut/data/tck/entities/Jurisdiction.html#getRegionCode()" class="member-name-link">getRegionCode()</a> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Jurisdiction.html" title="class in io.micronaut.data.tck.entities">Jurisdiction</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/Country.html#getRegions()" class="member-name-link">getRegions()</a> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Country.html" title="class in io.micronaut.data.tck.entities">Country</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/oracle/OracleNotificationConfiguration.html#getRegistrationRecovery()" class="member-name-link">getRegistrationRecovery()</a> - Method in class io.micronaut.data.jdbc.notification.oracle.<a href="io/micronaut/data/jdbc/notification/oracle/OracleNotificationConfiguration.html" title="class in io.micronaut.data.jdbc.notification.oracle">OracleNotificationConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html#getReplaceOptions(io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">getReplaceOptions(AnnotationMetadata)</a> - Method in class io.micronaut.data.mongodb.operations.<a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations</a></dt>
 <dd>&nbsp;</dd>
@@ -16422,6 +16604,14 @@ i.e.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html#getResultType()" class="member-name-link">getResultType()</a> - Method in interface io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/oracle/OracleNotificationConfiguration.RegistrationRecoveryConfiguration.html#getRetryDelay()" class="member-name-link">getRetryDelay()</a> - Method in class io.micronaut.data.jdbc.notification.oracle.<a href="io/micronaut/data/jdbc/notification/oracle/OracleNotificationConfiguration.RegistrationRecoveryConfiguration.html" title="class in io.micronaut.data.jdbc.notification.oracle">OracleNotificationConfiguration.RegistrationRecoveryConfiguration</a></dt>
+<dd>
+<div class="block">Returns the initial retry delay.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/oracle/OracleNotificationConfiguration.RegistrationRecoveryConfiguration.html#getRetryDelayMultiplier()" class="member-name-link">getRetryDelayMultiplier()</a> - Method in class io.micronaut.data.jdbc.notification.oracle.<a href="io/micronaut/data/jdbc/notification/oracle/OracleNotificationConfiguration.RegistrationRecoveryConfiguration.html" title="class in io.micronaut.data.jdbc.notification.oracle">OracleNotificationConfiguration.RegistrationRecoveryConfiguration</a></dt>
+<dd>
+<div class="block">Returns the multiplier applied to the delay after each retry.</div>
+</dd>
 <dt><a href="io/micronaut/data/mongodb/operations/options/MongoFindOptions.html#getReturnKey()" class="member-name-link">getReturnKey()</a> - Method in class io.micronaut.data.mongodb.operations.options.<a href="io/micronaut/data/mongodb/operations/options/MongoFindOptions.html" title="class in io.micronaut.data.mongodb.operations.options">MongoFindOptions</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/MatchContext.html#getReturnType()" class="member-name-link">getReturnType()</a> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a></dt>
@@ -16888,7 +17078,11 @@ i.e.</div>
 <dd>
 <div class="block">Supported Jakarta annotation names.</div>
 </dd>
+<dt><a href="io/micronaut/data/processor/visitors/ChangeListenerVisitor.html#getSupportedAnnotationNames()" class="member-name-link">getSupportedAnnotationNames()</a> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/ChangeListenerVisitor.html" title="class in io.micronaut.data.processor.visitors">ChangeListenerVisitor</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/GenerateJakartaDataMetamodelVisitor.html#getSupportedAnnotationNames()" class="member-name-link">getSupportedAnnotationNames()</a> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/GenerateJakartaDataMetamodelVisitor.html" title="class in io.micronaut.data.processor.visitors">GenerateJakartaDataMetamodelVisitor</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/visitors/OracleChangeNotificationVisitor.html#getSupportedAnnotationNames()" class="member-name-link">getSupportedAnnotationNames()</a> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/OracleChangeNotificationVisitor.html" title="class in io.micronaut.data.processor.visitors">OracleChangeNotificationVisitor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/validation/SqlTableMappingValidator.html#getSupportedDialect()" class="member-name-link">getSupportedDialect()</a> - Method in interface io.micronaut.data.model.query.builder.sql.validation.<a href="io/micronaut/data/model/query/builder/sql/validation/SqlTableMappingValidator.html" title="interface in io.micronaut.data.model.query.builder.sql.validation">SqlTableMappingValidator</a></dt>
 <dd>
@@ -17342,6 +17536,8 @@ without dialect-specific quoting applied.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/jpa/metamodel/visitor/JpaMetamodelProcessorVisitor.html#getVisitorKind()" class="member-name-link">getVisitorKind()</a> - Method in class io.micronaut.data.processor.jpa.metamodel.visitor.<a href="io/micronaut/data/processor/jpa/metamodel/visitor/JpaMetamodelProcessorVisitor.html" title="class in io.micronaut.data.processor.jpa.metamodel.visitor">JpaMetamodelProcessorVisitor</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/visitors/ChangeListenerVisitor.html#getVisitorKind()" class="member-name-link">getVisitorKind()</a> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/ChangeListenerVisitor.html" title="class in io.micronaut.data.processor.visitors">ChangeListenerVisitor</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/EmbeddableVisitor.html#getVisitorKind()" class="member-name-link">getVisitorKind()</a> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/EmbeddableVisitor.html" title="class in io.micronaut.data.processor.visitors">EmbeddableVisitor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/EntityEventVisitor.html#getVisitorKind()" class="member-name-link">getVisitorKind()</a> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/EntityEventVisitor.html" title="class in io.micronaut.data.processor.visitors">EntityEventVisitor</a></dt>
@@ -17349,6 +17545,8 @@ without dialect-specific quoting applied.</div>
 <dt><a href="io/micronaut/data/processor/visitors/GenerateJakartaDataMetamodelVisitor.html#getVisitorKind()" class="member-name-link">getVisitorKind()</a> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/GenerateJakartaDataMetamodelVisitor.html" title="class in io.micronaut.data.processor.visitors">GenerateJakartaDataMetamodelVisitor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/MappedEntityVisitor.html#getVisitorKind()" class="member-name-link">getVisitorKind()</a> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/MappedEntityVisitor.html" title="class in io.micronaut.data.processor.visitors">MappedEntityVisitor</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/visitors/OracleChangeNotificationVisitor.html#getVisitorKind()" class="member-name-link">getVisitorKind()</a> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/OracleChangeNotificationVisitor.html" title="class in io.micronaut.data.processor.visitors">OracleChangeNotificationVisitor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/RepositoryTypeElementVisitor.html#getVisitorKind()" class="member-name-link">getVisitorKind()</a> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/RepositoryTypeElementVisitor.html" title="class in io.micronaut.data.processor.visitors">RepositoryTypeElementVisitor</a></dt>
 <dd>&nbsp;</dd>
@@ -17567,6 +17765,14 @@ without dialect-specific quoting applied.</div>
 </dd>
 <dt><a href="io/micronaut/data/intercept/RepositoryMethodKey.html#hashCode()" class="member-name-link">hashCode()</a> - Method in class io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/ChangeListenerMethod.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/ChangeListenerMethod.html" title="class in io.micronaut.data.jdbc.notification">ChangeListenerMethod</a></dt>
+<dd>
+<div class="block">Returns a hash code value for this object.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/DefaultChangeEvent.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/DefaultChangeEvent.html" title="class in io.micronaut.data.jdbc.notification">DefaultChangeEvent</a></dt>
+<dd>
+<div class="block">Returns a hash code value for this object.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/AbstractPersistentEntity.html#hashCode()" class="member-name-link">hashCode()</a> - Method in class io.micronaut.data.model.<a href="io/micronaut/data/model/AbstractPersistentEntity.html" title="class in io.micronaut.data.model">AbstractPersistentEntity</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/geo/GeometryCollection.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class io.micronaut.data.model.geo.<a href="io/micronaut/data/model/geo/GeometryCollection.html" title="class in io.micronaut.data.model.geo">GeometryCollection</a></dt>
@@ -18973,6 +19179,10 @@ preserving the original exception despite the overriding TransactionSystemExcept
 <dd>
 <div class="block">An insert operation.</div>
 </dd>
+<dt><a href="io/micronaut/data/notification/ChangeOperation.html#INSERT" class="member-name-link">INSERT</a> - Enum constant in enum class io.micronaut.data.notification.<a href="io/micronaut/data/notification/ChangeOperation.html" title="enum class in io.micronaut.data.notification">ChangeOperation</a></dt>
+<dd>
+<div class="block">A row was inserted.</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.SaveOperation.html#INSERT" class="member-name-link">INSERT</a> - Enum constant in enum class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.SaveOperation.html" title="enum class in io.micronaut.data.runtime.intercept">AbstractQueryInterceptor.SaveOperation</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/intercept/annotation/DataMethod.OperationType.html#INSERT_RETURNING" class="member-name-link">INSERT_RETURNING</a> - Enum constant in enum class io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/DataMethod.OperationType.html" title="enum class in io.micronaut.data.intercept.annotation">DataMethod.OperationType</a></dt>
@@ -19169,6 +19379,11 @@ persistence - for example a Jackson <code>@JsonCreator</code> that builds a valu
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/connection/interceptor/ConnectableInterceptor.html#intercept(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(MethodInvocationContext)</a> - Method in class io.micronaut.data.connection.interceptor.<a href="io/micronaut/data/connection/interceptor/ConnectableInterceptor.html" title="class in io.micronaut.data.connection.interceptor">ConnectableInterceptor</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/ChangeListenerEntityLoadingInterceptor.html#intercept(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(MethodInvocationContext)</a> - Method in class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/ChangeListenerEntityLoadingInterceptor.html" title="class in io.micronaut.data.jdbc.notification">ChangeListenerEntityLoadingInterceptor</a></dt>
+<dd>
+<div class="block">Materializes a deferred notification entity before proceeding to transaction and async
+advice and the listener.</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/DataIntroductionAdvice.html#intercept(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(MethodInvocationContext)</a> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DataIntroductionAdvice.html" title="class in io.micronaut.data.runtime.intercept">DataIntroductionAdvice</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/interceptor/TransactionalEventInterceptor.html#intercept(io.micronaut.aop.MethodInvocationContext)" class="member-name-link">intercept(MethodInvocationContext)</a> - Method in class io.micronaut.transaction.interceptor.<a href="io/micronaut/transaction/interceptor/TransactionalEventInterceptor.html" title="class in io.micronaut.transaction.interceptor">TransactionalEventInterceptor</a></dt>
@@ -19497,6 +19712,11 @@ persistence - for example a Jackson <code>@JsonCreator</code> that builds a valu
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/repositories/IntervalRepository.html" class="type-name-link" title="interface in io.micronaut.data.tck.repositories">IntervalRepository</a> - Interface in <a href="io/micronaut/data/tck/repositories/package-summary.html">io.micronaut.data.tck.repositories</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/notification/ChangeOperation.html#INVALIDATE" class="member-name-link">INVALIDATE</a> - Enum constant in enum class io.micronaut.data.notification.<a href="io/micronaut/data/notification/ChangeOperation.html" title="enum class in io.micronaut.data.notification">ChangeOperation</a></dt>
+<dd>
+<div class="block">The provider cannot identify one affected row, or the listener should refresh or reconcile its
+view of the registered data.</div>
+</dd>
 <dt><a href="io/micronaut/transaction/exceptions/InvalidIsolationLevelException.html" class="type-name-link" title="class in io.micronaut.transaction.exceptions">InvalidIsolationLevelException</a> - Exception Class in <a href="io/micronaut/transaction/exceptions/package-summary.html">io.micronaut.transaction.exceptions</a></dt>
 <dd>
 <div class="block">Exception that gets thrown when an invalid isolation level is specified,
@@ -19641,7 +19861,9 @@ transaction manager implementation doesn't support timeouts.</div>
 <dt><a href="io/micronaut/data/jakarta/tck/runtime/package-summary.html">io.micronaut.data.jakarta.tck.runtime</a> - package io.micronaut.data.jakarta.tck.runtime</dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jdbc/annotation/package-summary.html">io.micronaut.data.jdbc.annotation</a> - package io.micronaut.data.jdbc.annotation</dt>
-<dd>&nbsp;</dd>
+<dd>
+<div class="block">Annotations specific to JDBC repositories.</div>
+</dd>
 <dt><a href="io/micronaut/data/jdbc/config/package-summary.html">io.micronaut.data.jdbc.config</a> - package io.micronaut.data.jdbc.config</dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jdbc/convert/package-summary.html">io.micronaut.data.jdbc.convert</a> - package io.micronaut.data.jdbc.convert</dt>
@@ -19651,6 +19873,14 @@ transaction manager implementation doesn't support timeouts.</div>
 <dt><a href="io/micronaut/data/jdbc/mapper/package-summary.html">io.micronaut.data.jdbc.mapper</a> - package io.micronaut.data.jdbc.mapper</dt>
 <dd>
 <div class="block">Classes specific to SQL mapping.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/package-summary.html">io.micronaut.data.jdbc.notification</a> - package io.micronaut.data.jdbc.notification</dt>
+<dd>
+<div class="block">JDBC implementations of the database-neutral change-notification contracts.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/oracle/package-summary.html">io.micronaut.data.jdbc.notification.oracle</a> - package io.micronaut.data.jdbc.notification.oracle</dt>
+<dd>
+<div class="block">Oracle Continuous Query Notification provider implementation and infrastructure.</div>
 </dd>
 <dt><a href="io/micronaut/data/jdbc/operations/package-summary.html">io.micronaut.data.jdbc.operations</a> - package io.micronaut.data.jdbc.operations</dt>
 <dd>&nbsp;</dd>
@@ -19764,6 +19994,10 @@ transaction manager implementation doesn't support timeouts.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/mongodb/transaction/package-summary.html">io.micronaut.data.mongodb.transaction</a> - package io.micronaut.data.mongodb.transaction</dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/notification/package-summary.html">io.micronaut.data.notification</a> - package io.micronaut.data.notification</dt>
+<dd>
+<div class="block">Database-neutral change-event contracts for notification providers.</div>
+</dd>
 <dt><a href="io/micronaut/data/operations/package-summary.html">io.micronaut.data.operations</a> - package io.micronaut.data.operations</dt>
 <dd>
 <div class="block">Runtime interfaces for implementations to implement.</div>
@@ -20883,6 +21117,10 @@ is switched to read-only with <a href="https://docs.oracle.com/en/java/javase/25
 <dt><a href="io/micronaut/data/model/runtime/convert/vector/VectorTypeConverter.html#isSparseSupported()" class="member-name-link">isSparseSupported()</a> - Method in interface io.micronaut.data.model.runtime.convert.vector.<a href="io/micronaut/data/model/runtime/convert/vector/VectorTypeConverter.html" title="interface in io.micronaut.data.model.runtime.convert.vector">VectorTypeConverter</a></dt>
 <dd>
 <div class="block">Whether this converter is designed for sparse vectors.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/ChangeNotificationQueue.html#isStopped()" class="member-name-link">isStopped()</a> - Method in class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/ChangeNotificationQueue.html" title="class in io.micronaut.data.jdbc.notification">ChangeNotificationQueue</a></dt>
+<dd>
+<div class="block">Reports whether admission is closed.</div>
 </dd>
 <dt><a href="io/micronaut/data/connection/support/DefaultConnectionStatus.html#isSupplied()" class="member-name-link">isSupplied()</a> - Method in class io.micronaut.data.connection.support.<a href="io/micronaut/data/connection/support/DefaultConnectionStatus.html" title="class in io.micronaut.data.connection.support">DefaultConnectionStatus</a></dt>
 <dd>&nbsp;</dd>
@@ -23410,6 +23648,18 @@ current persistence context.</div>
 <dd>
 <div class="block">The member name that holds the table alias.</div>
 </dd>
+<dt><a href="io/micronaut/data/jdbc/notification/DefaultChangeEvent.html#metadata()" class="member-name-link">metadata()</a> - Method in record class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/DefaultChangeEvent.html" title="class in io.micronaut.data.jdbc.notification">DefaultChangeEvent</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/data/jdbc/notification/DefaultChangeEvent.html#param-metadata"><code>metadata</code></a> record component.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/DefaultChangeEvent.html#metadata(java.lang.Class)" class="member-name-link">metadata(Class)</a> - Method in record class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/DefaultChangeEvent.html" title="class in io.micronaut.data.jdbc.notification">DefaultChangeEvent</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/DeferredChangeEvent.html#metadata(java.lang.Class)" class="member-name-link">metadata(Class)</a> - Method in class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/DeferredChangeEvent.html" title="class in io.micronaut.data.jdbc.notification">DeferredChangeEvent</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/notification/ChangeEvent.html#metadata(java.lang.Class)" class="member-name-link">metadata(Class)</a> - Method in interface io.micronaut.data.notification.<a href="io/micronaut/data/notification/ChangeEvent.html" title="interface in io.micronaut.data.notification">ChangeEvent</a></dt>
+<dd>
+<div class="block">Finds provider-specific metadata of the requested type.</div>
+</dd>
 <dt><a href="io/micronaut/data/tck/entities/Metadata.html" class="type-name-link" title="class in io.micronaut.data.tck.entities">Metadata</a> - Record Class in <a href="io/micronaut/data/tck/entities/package-summary.html">io.micronaut.data.tck.entities</a></dt>
 <dd>
 <div class="block">The Json Duality View metadata.</div>
@@ -23428,6 +23678,10 @@ current persistence context.</div>
 </dd>
 <dt><a href="io/micronaut/data/processor/visitors/MetamodelTypes.html#%3Cinit%3E()" class="member-name-link">MetamodelTypes()</a> - Constructor for class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/MetamodelTypes.html" title="class in io.micronaut.data.processor.visitors">MetamodelTypes</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/ChangeListenerMethod.html#method()" class="member-name-link">method()</a> - Method in record class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/ChangeListenerMethod.html" title="class in io.micronaut.data.jdbc.notification">ChangeListenerMethod</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/data/jdbc/notification/ChangeListenerMethod.html#param-method"><code>method</code></a> record component.</div>
+</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/DeleteMethodMatcher.html#METHOD_PATTERN" class="member-name-link">METHOD_PATTERN</a> - Static variable in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/DeleteMethodMatcher.html" title="class in io.micronaut.data.processor.visitors.finders">DeleteMethodMatcher</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/MethodCandidate.html" class="type-name-link" title="interface in io.micronaut.data.processor.visitors.finders">MethodCandidate</a> - Interface in <a href="io/micronaut/data/processor/visitors/finders/package-summary.html">io.micronaut.data.processor.visitors.finders</a></dt>
@@ -24114,6 +24368,10 @@ that delegates to <a href="io/micronaut/data/connection/ConnectionOperations.htm
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/intercept/annotation/DataMethodQueryParameter.html#name()" class="member-name-link">name()</a> - Element in annotation interface io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/DataMethodQueryParameter.html" title="annotation interface in io.micronaut.data.intercept.annotation">DataMethodQueryParameter</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/annotation/OracleChangeNotification.Property.html#name()" class="member-name-link">name()</a> - Element in annotation interface io.micronaut.data.jdbc.annotation.<a href="io/micronaut/data/jdbc/annotation/OracleChangeNotification.Property.html" title="annotation interface in io.micronaut.data.jdbc.annotation">OracleChangeNotification.Property</a></dt>
+<dd>
+<div class="block">Gets the Oracle JDBC registration property name.</div>
+</dd>
 <dt><a href="io/micronaut/data/jpa/annotation/EntityGraph.html#name()" class="member-name-link">name()</a> - Element in annotation interface io.micronaut.data.jpa.annotation.<a href="io/micronaut/data/jpa/annotation/EntityGraph.html" title="annotation interface in io.micronaut.data.jpa.annotation">EntityGraph</a></dt>
 <dd>
 <div class="block">Specifies the name of the entity graph.</div>
@@ -25221,6 +25479,16 @@ when sorting by this attribute.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/r2dbc/connection/DefaultR2dbcReactorConnectionOperations.html#openConnection(io.micronaut.data.connection.ConnectionDefinition)" class="member-name-link">openConnection(ConnectionDefinition)</a> - Method in class io.micronaut.data.r2dbc.connection.<a href="io/micronaut/data/r2dbc/connection/DefaultR2dbcReactorConnectionOperations.html" title="class in io.micronaut.data.r2dbc.connection">DefaultR2dbcReactorConnectionOperations</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/DefaultChangeEvent.html#operation()" class="member-name-link">operation()</a> - Method in record class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/DefaultChangeEvent.html" title="class in io.micronaut.data.jdbc.notification">DefaultChangeEvent</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/data/jdbc/notification/DefaultChangeEvent.html#param-operation"><code>operation</code></a> record component.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/DeferredChangeEvent.html#operation()" class="member-name-link">operation()</a> - Method in class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/DeferredChangeEvent.html" title="class in io.micronaut.data.jdbc.notification">DeferredChangeEvent</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/notification/ChangeEvent.html#operation()" class="member-name-link">operation()</a> - Method in interface io.micronaut.data.notification.<a href="io/micronaut/data/notification/ChangeEvent.html" title="interface in io.micronaut.data.notification">ChangeEvent</a></dt>
+<dd>
+<div class="block">Returns the operation reported by the notification provider.</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/OperationContext.html" class="type-name-link" title="class in io.micronaut.data.runtime.operations.internal">OperationContext</a> - Class in <a href="io/micronaut/data/runtime/operations/internal/package-summary.html">io.micronaut.data.runtime.operations.internal</a></dt>
 <dd>
 <div class="block">The operation context.</div>
@@ -25337,6 +25605,28 @@ when sorting by this attribute.</div>
 <dd>
 <div class="block">Transaction definition property used to store Oracle sessionless transaction mode.</div>
 </dd>
+<dt><a href="io/micronaut/data/jdbc/notification/oracle/OracleChangeEventMetadata.html" class="type-name-link" title="interface in io.micronaut.data.jdbc.notification.oracle">OracleChangeEventMetadata</a> - Interface in <a href="io/micronaut/data/jdbc/notification/oracle/package-summary.html">io.micronaut.data.jdbc.notification.oracle</a></dt>
+<dd>
+<div class="block">Oracle-specific metadata for a row-level Continuous Query Notification event.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/oracle/OracleChangeListenerQuery.html" class="type-name-link" title="annotation interface in io.micronaut.data.jdbc.notification.oracle">OracleChangeListenerQuery</a> - Annotation Interface in <a href="io/micronaut/data/jdbc/notification/oracle/package-summary.html">io.micronaut.data.jdbc.notification.oracle</a></dt>
+<dd>
+<div class="block">Internal, compile-time generated Oracle ROWID reload query for a change listener.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/annotation/OracleChangeNotification.html" class="type-name-link" title="annotation interface in io.micronaut.data.jdbc.annotation">OracleChangeNotification</a> - Annotation Interface in <a href="io/micronaut/data/jdbc/annotation/package-summary.html">io.micronaut.data.jdbc.annotation</a></dt>
+<dd>
+<div class="block">Configures Continuous Query Notification for a method annotated with <a href="io/micronaut/data/annotation/ChangeListener.html" title="annotation interface in io.micronaut.data.annotation"><code>ChangeListener</code></a>.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/annotation/OracleChangeNotification.Property.html" class="type-name-link" title="annotation interface in io.micronaut.data.jdbc.annotation">OracleChangeNotification.Property</a> - Annotation Interface in <a href="io/micronaut/data/jdbc/annotation/package-summary.html">io.micronaut.data.jdbc.annotation</a></dt>
+<dd>
+<div class="block">An Oracle JDBC Continuous Query Notification registration property.</div>
+</dd>
+<dt><a href="io/micronaut/data/processor/visitors/OracleChangeNotificationVisitor.html" class="type-name-link" title="class in io.micronaut.data.processor.visitors">OracleChangeNotificationVisitor</a> - Class in <a href="io/micronaut/data/processor/visitors/package-summary.html">io.micronaut.data.processor.visitors</a></dt>
+<dd>
+<div class="block">Processes <code>@OracleChangeNotification</code> methods during compilation.</div>
+</dd>
+<dt><a href="io/micronaut/data/processor/visitors/OracleChangeNotificationVisitor.html#%3Cinit%3E()" class="member-name-link">OracleChangeNotificationVisitor()</a> - Constructor for class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/OracleChangeNotificationVisitor.html" title="class in io.micronaut.data.processor.visitors">OracleChangeNotificationVisitor</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/SqlSchemaNames.html#oracleCreateSchemaStatement(java.lang.String)" class="member-name-link">oracleCreateSchemaStatement(String)</a> - Static method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlSchemaNames.html" title="class in io.micronaut.data.model.query.builder.sql">SqlSchemaNames</a></dt>
 <dd>
 <div class="block">Builds the Oracle statement that creates a schema.</div>
@@ -25349,6 +25639,20 @@ when sorting by this attribute.</div>
 <dd>
 <div class="block">Builds the Oracle statement that creates a schema from an identifier that is already rendered, such as one
 that contains property placeholders resolved later.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/oracle/OracleNotificationConfiguration.html" class="type-name-link" title="class in io.micronaut.data.jdbc.notification.oracle">OracleNotificationConfiguration</a> - Class in <a href="io/micronaut/data/jdbc/notification/oracle/package-summary.html">io.micronaut.data.jdbc.notification.oracle</a></dt>
+<dd>
+<div class="block">Global listener delivery settings for Oracle Database notifications.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/oracle/OracleNotificationConfiguration.html#%3Cinit%3E()" class="member-name-link">OracleNotificationConfiguration()</a> - Constructor for class io.micronaut.data.jdbc.notification.oracle.<a href="io/micronaut/data/jdbc/notification/oracle/OracleNotificationConfiguration.html" title="class in io.micronaut.data.jdbc.notification.oracle">OracleNotificationConfiguration</a></dt>
+<dd>
+<div class="block">Creates configuration with default recovery settings.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/oracle/OracleNotificationConfiguration.html#%3Cinit%3E(io.micronaut.data.jdbc.notification.oracle.OracleNotificationConfiguration.RegistrationRecoveryConfiguration)" class="member-name-link">OracleNotificationConfiguration(OracleNotificationConfiguration.RegistrationRecoveryConfiguration)</a> - Constructor for class io.micronaut.data.jdbc.notification.oracle.<a href="io/micronaut/data/jdbc/notification/oracle/OracleNotificationConfiguration.html" title="class in io.micronaut.data.jdbc.notification.oracle">OracleNotificationConfiguration</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/oracle/OracleNotificationConfiguration.RegistrationRecoveryConfiguration.html" class="type-name-link" title="class in io.micronaut.data.jdbc.notification.oracle">OracleNotificationConfiguration.RegistrationRecoveryConfiguration</a> - Class in <a href="io/micronaut/data/jdbc/notification/oracle/package-summary.html">io.micronaut.data.jdbc.notification.oracle</a></dt>
+<dd>
+<div class="block">Global settings for recreating unavailable Oracle Database notification registrations.</div>
 </dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/sql/OracleReturningMetadata.html" class="type-name-link" title="class in io.micronaut.data.runtime.operations.internal.sql">OracleReturningMetadata</a> - Record Class in <a href="io/micronaut/data/runtime/operations/internal/sql/package-summary.html">io.micronaut.data.runtime.operations.internal.sql</a></dt>
 <dd>
@@ -26734,6 +27038,14 @@ of position parameters.</div>
 <dd>
 <div class="block">The prefix to use.</div>
 </dd>
+<dt><a href="io/micronaut/data/jdbc/notification/oracle/OracleNotificationConfiguration.html#PREFIX" class="member-name-link">PREFIX</a> - Static variable in class io.micronaut.data.jdbc.notification.oracle.<a href="io/micronaut/data/jdbc/notification/oracle/OracleNotificationConfiguration.html" title="class in io.micronaut.data.jdbc.notification.oracle">OracleNotificationConfiguration</a></dt>
+<dd>
+<div class="block">Configuration prefix for Oracle notifications.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/oracle/OracleNotificationConfiguration.RegistrationRecoveryConfiguration.html#PREFIX" class="member-name-link">PREFIX</a> - Static variable in class io.micronaut.data.jdbc.notification.oracle.<a href="io/micronaut/data/jdbc/notification/oracle/OracleNotificationConfiguration.RegistrationRecoveryConfiguration.html" title="class in io.micronaut.data.jdbc.notification.oracle">OracleNotificationConfiguration.RegistrationRecoveryConfiguration</a></dt>
+<dd>
+<div class="block">Configuration prefix for registration recovery.</div>
+</dd>
 <dt><a href="io/micronaut/data/mongodb/conf/MongoDataConfiguration.html#PREFIX" class="member-name-link">PREFIX</a> - Static variable in class io.micronaut.data.mongodb.conf.<a href="io/micronaut/data/mongodb/conf/MongoDataConfiguration.html" title="class in io.micronaut.data.mongodb.conf">MongoDataConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#PREFIX" class="member-name-link">PREFIX</a> - Static variable in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">DataConfiguration.PageableConfiguration</a></dt>
@@ -27069,6 +27381,11 @@ this interface is used as a marker to decide on the primary operations to lookup
 <dd>
 <div class="block">An interceptor that does execute the procedure and returns one result.</div>
 </dd>
+<dt><a href="io/micronaut/data/jdbc/notification/ChangeListenerRegistry.html#process(io.micronaut.inject.BeanDefinition,io.micronaut.inject.ExecutableMethod)" class="member-name-link">process(BeanDefinition, ExecutableMethod)</a> - Method in class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/ChangeListenerRegistry.html" title="class in io.micronaut.data.jdbc.notification">ChangeListenerRegistry</a></dt>
+<dd>
+<div class="block">Records a discovered listener method and its entity type under the datasource specified by
+<a href="io/micronaut/data/annotation/ChangeListener.html#dataSource()"><code>ChangeListener.dataSource()</code></a>, using <code>default</code> when no datasource is specified.</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/event/EntityEventRegistry.html#process(io.micronaut.inject.BeanDefinition,io.micronaut.inject.ExecutableMethod)" class="member-name-link">process(BeanDefinition, ExecutableMethod)</a> - Method in class io.micronaut.data.runtime.event.<a href="io/micronaut/data/runtime/event/EntityEventRegistry.html" title="class in io.micronaut.data.runtime.event">EntityEventRegistry</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jakarta/tck/TCKArchiveProcessor.html#process(org.jboss.shrinkwrap.api.Archive,org.jboss.arquillian.test.spi.TestClass)" class="member-name-link">process(Archive, TestClass)</a> - Method in class io.micronaut.data.jakarta.tck.<a href="io/micronaut/data/jakarta/tck/TCKArchiveProcessor.html" title="class in io.micronaut.data.jakarta.tck">TCKArchiveProcessor</a></dt>
@@ -27286,6 +27603,10 @@ this interface is used as a marker to decide on the primary operations to lookup
 <dt><a href="io/micronaut/data/connection/DefaultConnectionDefinition.html#propagationBehavior()" class="member-name-link">propagationBehavior()</a> - Method in record class io.micronaut.data.connection.<a href="io/micronaut/data/connection/DefaultConnectionDefinition.html" title="class in io.micronaut.data.connection">DefaultConnectionDefinition</a></dt>
 <dd>
 <div class="block">Returns the value of the <a href="./io/micronaut/data/connection/DefaultConnectionDefinition.html#param-propagationBehavior"><code>propagationBehavior</code></a> record component.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/annotation/OracleChangeNotification.html#properties()" class="member-name-link">properties()</a> - Element in annotation interface io.micronaut.data.jdbc.annotation.<a href="io/micronaut/data/jdbc/annotation/OracleChangeNotification.html" title="annotation interface in io.micronaut.data.jdbc.annotation">OracleChangeNotification</a></dt>
+<dd>
+<div class="block">Oracle JDBC Continuous Query Notification registration properties for this listener.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/query/builder/QueryBuilder.UpdateQueryDefinition.html#propertiesToUpdate()" class="member-name-link">propertiesToUpdate()</a> - Method in interface io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/QueryBuilder.UpdateQueryDefinition.html" title="interface in io.micronaut.data.model.query.builder">QueryBuilder.UpdateQueryDefinition</a></dt>
 <dd>&nbsp;</dd>
@@ -28669,6 +28990,10 @@ which is the case for an optional embedded projection none of whose columns is s
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/Country_.html#REGIONS" class="member-name-link">REGIONS</a> - Static variable in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Country_.html" title="class in io.micronaut.data.tck.entities">Country_</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/ChangeNotificationProvider.html#register(java.lang.String,io.micronaut.data.jdbc.operations.JdbcRepositoryOperations,java.util.List)" class="member-name-link">register(String, JdbcRepositoryOperations, List)</a> - Method in interface io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/ChangeNotificationProvider.html" title="interface in io.micronaut.data.jdbc.notification">ChangeNotificationProvider</a></dt>
+<dd>
+<div class="block">Registers all discovered listener methods for one datasource.</div>
+</dd>
 <dt><a href="io/micronaut/data/jakarta/tck/TckExtension.html#register(org.jboss.arquillian.core.spi.LoadableExtension.ExtensionBuilder)" class="member-name-link">register(LoadableExtension.ExtensionBuilder)</a> - Method in class io.micronaut.data.jakarta.tck.<a href="io/micronaut/data/jakarta/tck/TckExtension.html" title="class in io.micronaut.data.jakarta.tck">TckExtension</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/impl/AbstractInternalTransaction.html#registerConnectionSynchronization(io.micronaut.data.connection.ConnectionSynchronization)" class="member-name-link">registerConnectionSynchronization(ConnectionSynchronization)</a> - Method in class io.micronaut.transaction.impl.<a href="io/micronaut/transaction/impl/AbstractInternalTransaction.html" title="class in io.micronaut.transaction.impl">AbstractInternalTransaction</a></dt>
@@ -28712,6 +29037,8 @@ which is the case for an optional embedded projection none of whose columns is s
 <dt><a href="io/micronaut/data/tck/entities/Registration.html" class="type-name-link" title="class in io.micronaut.data.tck.entities">Registration</a> - Class in <a href="io/micronaut/data/tck/entities/package-summary.html">io.micronaut.data.tck.entities</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/Registration.html#%3Cinit%3E()" class="member-name-link">Registration()</a> - Constructor for class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Registration.html" title="class in io.micronaut.data.tck.entities">Registration</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/oracle/OracleNotificationConfiguration.RegistrationRecoveryConfiguration.html#%3Cinit%3E()" class="member-name-link">RegistrationRecoveryConfiguration()</a> - Constructor for class io.micronaut.data.jdbc.notification.oracle.<a href="io/micronaut/data/jdbc/notification/oracle/OracleNotificationConfiguration.RegistrationRecoveryConfiguration.html" title="class in io.micronaut.data.jdbc.notification.oracle">OracleNotificationConfiguration.RegistrationRecoveryConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/support/AbstractConversionContext.html#reject(java.lang.Exception)" class="member-name-link">reject(Exception)</a> - Method in class io.micronaut.data.runtime.support.<a href="io/micronaut/data/runtime/support/AbstractConversionContext.html" title="class in io.micronaut.data.runtime.support">AbstractConversionContext</a></dt>
 <dd>&nbsp;</dd>
@@ -29571,6 +29898,10 @@ it again when the transactional boundary completes successfully.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html#round(jakarta.persistence.criteria.Expression,java.lang.Integer)" class="member-name-link">round(Expression, Integer)</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractCriteriaBuilder</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/oracle/OracleChangeEventMetadata.html#rowId()" class="member-name-link">rowId()</a> - Method in interface io.micronaut.data.jdbc.notification.oracle.<a href="io/micronaut/data/jdbc/notification/oracle/OracleChangeEventMetadata.html" title="interface in io.micronaut.data.jdbc.notification.oracle">OracleChangeEventMetadata</a></dt>
+<dd>
+<div class="block">Returns the row-location hint supplied by Oracle Database for this notification.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/schema/sql/SqlDbType.html#ROWID" class="member-name-link">ROWID</a> - Enum constant in enum class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlDbType.html" title="enum class in io.micronaut.data.model.schema.sql">SqlDbType</a></dt>
 <dd>
 <div class="block">A type code representing the generic SQL type <code>ROWID</code>.</div>
@@ -30034,6 +30365,10 @@ savepoints in a generic fashion.</div>
 </dd>
 <dt><a href="io/micronaut/data/annotation/sql/JoinTable.html#schema()" class="member-name-link">schema()</a> - Element in annotation interface io.micronaut.data.annotation.sql.<a href="io/micronaut/data/annotation/sql/JoinTable.html" title="annotation interface in io.micronaut.data.annotation.sql">JoinTable</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/oracle/OracleChangeEventMetadata.html#schema()" class="member-name-link">schema()</a> - Method in interface io.micronaut.data.jdbc.notification.oracle.<a href="io/micronaut/data/jdbc/notification/oracle/OracleChangeEventMetadata.html" title="interface in io.micronaut.data.jdbc.notification.oracle">OracleChangeEventMetadata</a></dt>
+<dd>
+<div class="block">Returns the schema (table owner) reported by Oracle Database.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.ParentTable.html#schema()" class="member-name-link">schema()</a> - Method in record class io.micronaut.data.model.schema.sql.<a href="io/micronaut/data/model/schema/sql/SqlTableDistribution.ParentTable.html" title="class in io.micronaut.data.model.schema.sql">SqlTableDistribution.ParentTable</a></dt>
 <dd>
 <div class="block">Returns the value of the <a href="./io/micronaut/data/model/schema/sql/SqlTableDistribution.ParentTable.html#param-schema"><code>schema</code></a> record component.</div>
@@ -30168,6 +30503,10 @@ savepoints in a generic fashion.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/Vehicle_.html#secondRegistration" class="member-name-link">secondRegistration</a> - Static variable in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Vehicle_.html" title="class in io.micronaut.data.tck.entities">Vehicle_</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/annotation/OracleChangeNotification.html#select()" class="member-name-link">select()</a> - Element in annotation interface io.micronaut.data.jdbc.annotation.<a href="io/micronaut/data/jdbc/annotation/OracleChangeNotification.html" title="annotation interface in io.micronaut.data.jdbc.annotation">OracleChangeNotification</a></dt>
+<dd>
+<div class="block">The select list to register for Query Result Change Notification.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntitySubquery.html#select(jakarta.persistence.criteria.Expression)" class="member-name-link">select(Expression)</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntitySubquery.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntitySubquery</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/PersistentEntitySubquery.html#select(jakarta.persistence.criteria.Expression)" class="member-name-link">select(Expression)</a> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntitySubquery.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntitySubquery</a></dt>
@@ -31332,6 +31671,14 @@ as rollback-only.</div>
 <dd>
 <div class="block">Sets the max results value.</div>
 </dd>
+<dt><a href="io/micronaut/data/jdbc/notification/oracle/OracleNotificationConfiguration.RegistrationRecoveryConfiguration.html#setMaxRetries(int)" class="member-name-link">setMaxRetries(int)</a> - Method in class io.micronaut.data.jdbc.notification.oracle.<a href="io/micronaut/data/jdbc/notification/oracle/OracleNotificationConfiguration.RegistrationRecoveryConfiguration.html" title="class in io.micronaut.data.jdbc.notification.oracle">OracleNotificationConfiguration.RegistrationRecoveryConfiguration</a></dt>
+<dd>
+<div class="block">Sets the number of retries after the initial recovery attempt.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/oracle/OracleNotificationConfiguration.RegistrationRecoveryConfiguration.html#setMaxRetryDelay(java.time.Duration)" class="member-name-link">setMaxRetryDelay(Duration)</a> - Method in class io.micronaut.data.jdbc.notification.oracle.<a href="io/micronaut/data/jdbc/notification/oracle/OracleNotificationConfiguration.RegistrationRecoveryConfiguration.html" title="class in io.micronaut.data.jdbc.notification.oracle">OracleNotificationConfiguration.RegistrationRecoveryConfiguration</a></dt>
+<dd>
+<div class="block">Sets the upper bound for every retry delay, including the first retry.</div>
+</dd>
 <dt><a href="io/micronaut/data/tck/entities/Food.html#setMeal(io.micronaut.data.tck.entities.Meal)" class="member-name-link">setMeal(Meal)</a> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Food.html" title="class in io.micronaut.data.tck.entities">Food</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/SampleData.html#setMemo(byte%5B%5D)" class="member-name-link">setMemo(byte[])</a> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/SampleData.html" title="class in io.micronaut.data.tck.entities">SampleData</a></dt>
@@ -31714,6 +32061,10 @@ as rollback-only.</div>
 <dd>
 <div class="block">Sets the indicator telling whether query metrics will be enabled for Azure Cosmos Db query requests.</div>
 </dd>
+<dt><a href="io/micronaut/data/jdbc/notification/oracle/OracleNotificationConfiguration.html#setQueueCapacity(int)" class="member-name-link">setQueueCapacity(int)</a> - Method in class io.micronaut.data.jdbc.notification.oracle.<a href="io/micronaut/data/jdbc/notification/oracle/OracleNotificationConfiguration.html" title="class in io.micronaut.data.jdbc.notification.oracle">OracleNotificationConfiguration</a></dt>
+<dd>
+<div class="block">Sets the limit for waiting notifications per listener.</div>
+</dd>
 <dt><a href="io/micronaut/data/tck/entities/SampleData.html#setRating(java.lang.Double)" class="member-name-link">setRating(Double)</a> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/SampleData.html" title="class in io.micronaut.data.tck.entities">SampleData</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/support/DefaultTransactionDefinition.html#setReadOnly(boolean)" class="member-name-link">setReadOnly(boolean)</a> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/DefaultTransactionDefinition.html" title="class in io.micronaut.transaction.support">DefaultTransactionDefinition</a></dt>
@@ -31738,6 +32089,14 @@ as rollback-only.</div>
 </dd>
 <dt><a href="io/micronaut/transaction/recovery/RecoverableTransactionContext.html#setResult(java.lang.Object)" class="member-name-link">setResult(Object)</a> - Method in class io.micronaut.transaction.recovery.<a href="io/micronaut/transaction/recovery/RecoverableTransactionContext.html" title="class in io.micronaut.transaction.recovery">RecoverableTransactionContext</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/oracle/OracleNotificationConfiguration.RegistrationRecoveryConfiguration.html#setRetryDelay(java.time.Duration)" class="member-name-link">setRetryDelay(Duration)</a> - Method in class io.micronaut.data.jdbc.notification.oracle.<a href="io/micronaut/data/jdbc/notification/oracle/OracleNotificationConfiguration.RegistrationRecoveryConfiguration.html" title="class in io.micronaut.data.jdbc.notification.oracle">OracleNotificationConfiguration.RegistrationRecoveryConfiguration</a></dt>
+<dd>
+<div class="block">Sets the delay before the first retry of a failed recovery attempt.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/oracle/OracleNotificationConfiguration.RegistrationRecoveryConfiguration.html#setRetryDelayMultiplier(int)" class="member-name-link">setRetryDelayMultiplier(int)</a> - Method in class io.micronaut.data.jdbc.notification.oracle.<a href="io/micronaut/data/jdbc/notification/oracle/OracleNotificationConfiguration.RegistrationRecoveryConfiguration.html" title="class in io.micronaut.data.jdbc.notification.oracle">OracleNotificationConfiguration.RegistrationRecoveryConfiguration</a></dt>
+<dd>
+<div class="block">Sets the multiplier applied to the delay after each retry.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaInsert.html#setReturning()" class="member-name-link">setReturning()</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaInsert.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityCriteriaInsert</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaInsert.html#setReturning()" class="member-name-link">setReturning()</a> - Method in interface io.micronaut.data.model.jpa.criteria.<a href="io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaInsert.html" title="interface in io.micronaut.data.model.jpa.criteria">PersistentEntityCriteriaInsert</a></dt>
@@ -33339,6 +33698,10 @@ and materialize an instance using column naming conventions mapped by the entity
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jakarta/tck/TckDeployableContainer.html#stop()" class="member-name-link">stop()</a> - Method in class io.micronaut.data.jakarta.tck.<a href="io/micronaut/data/jakarta/tck/TckDeployableContainer.html" title="class in io.micronaut.data.jakarta.tck">TckDeployableContainer</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/ChangeNotificationQueue.html#stop()" class="member-name-link">stop()</a> - Method in class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/ChangeNotificationQueue.html" title="class in io.micronaut.data.jdbc.notification">ChangeNotificationQueue</a></dt>
+<dd>
+<div class="block">Stops admission, discards waiting work, and wakes an idle worker.</div>
+</dd>
 <dt><a href="io/micronaut/data/cosmos/config/StorageUpdatePolicy.html" class="type-name-link" title="enum class in io.micronaut.data.cosmos.config">StorageUpdatePolicy</a> - Enum Class in <a href="io/micronaut/data/cosmos/config/package-summary.html">io.micronaut.data.cosmos.config</a></dt>
 <dd>
 <div class="block">This enum is used to tell how we should handle database and containers during startup.</div>
@@ -33602,6 +33965,10 @@ are the same.</div>
 <dd>
 <div class="block">Does support providing an instance of this converter class.</div>
 </dd>
+<dt><a href="io/micronaut/data/jdbc/notification/ChangeNotificationProvider.html#supports(java.sql.Connection)" class="member-name-link">supports(Connection)</a> - Method in interface io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/ChangeNotificationProvider.html" title="interface in io.micronaut.data.jdbc.notification">ChangeNotificationProvider</a></dt>
+<dd>
+<div class="block">Determines whether this provider supports the database exposed by a connection.</div>
+</dd>
 <dt><a href="io/micronaut/transaction/TransactionDefinition.Propagation.html#SUPPORTS" class="member-name-link">SUPPORTS</a> - Enum constant in enum class io.micronaut.transaction.<a href="io/micronaut/transaction/TransactionDefinition.Propagation.html" title="enum class in io.micronaut.transaction">TransactionDefinition.Propagation</a></dt>
 <dd>
 <div class="block">Join the current transaction if one is active; otherwise run without a transaction.</div>
@@ -33745,6 +34112,10 @@ it.</div>
 </dl>
 <h2 class="title" id="I:T">T</h2>
 <dl class="index">
+<dt><a href="io/micronaut/data/jdbc/notification/oracle/OracleChangeEventMetadata.html#table()" class="member-name-link">table()</a> - Method in interface io.micronaut.data.jdbc.notification.oracle.<a href="io/micronaut/data/jdbc/notification/oracle/OracleChangeEventMetadata.html" title="interface in io.micronaut.data.jdbc.notification.oracle">OracleChangeEventMetadata</a></dt>
+<dd>
+<div class="block">Returns the unqualified table name reported by Oracle Database.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/SqlSchemaUtils.html#TABLE_CATALOG_COLUMN" class="member-name-link">TABLE_CATALOG_COLUMN</a> - Static variable in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlSchemaUtils.html" title="class in io.micronaut.data.model.query.builder.sql">SqlSchemaUtils</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/SqlSchemaUtils.html#TABLE_NAME_COLUMN" class="member-name-link">TABLE_NAME_COLUMN</a> - Static variable in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlSchemaUtils.html" title="class in io.micronaut.data.model.query.builder.sql">SqlSchemaUtils</a></dt>
@@ -33915,6 +34286,10 @@ vector index.</div>
 <dt><a href="io/micronaut/data/runtime/multitenancy/TenantResolver.html" class="type-name-link" title="interface in io.micronaut.data.runtime.multitenancy">TenantResolver</a> - Interface in <a href="io/micronaut/data/runtime/multitenancy/package-summary.html">io.micronaut.data.runtime.multitenancy</a></dt>
 <dd>
 <div class="block">The tenant resolver for multi-tenancy.</div>
+</dd>
+<dt><a href="io/micronaut/data/notification/ChangeOperation.html#TERMINATED" class="member-name-link">TERMINATED</a> - Enum constant in enum class io.micronaut.data.notification.<a href="io/micronaut/data/notification/ChangeOperation.html" title="enum class in io.micronaut.data.notification">ChangeOperation</a></dt>
+<dd>
+<div class="block">The subscription has permanently stopped delivering notifications.</div>
 </dd>
 <dt><a href="io/micronaut/data/tck/tests/AbstractJakartaDataTest.html#testAbs()" class="member-name-link">testAbs()</a> - Method in class io.micronaut.data.tck.tests.<a href="io/micronaut/data/tck/tests/AbstractJakartaDataTest.html" title="class in io.micronaut.data.tck.tests">AbstractJakartaDataTest</a></dt>
 <dd>&nbsp;</dd>
@@ -34590,6 +34965,14 @@ or none if timeouts are not supported.</div>
 <dt><a href="io/micronaut/data/document/tck/entities/ShipmentId.html#toString()" class="member-name-link">toString()</a> - Method in class io.micronaut.data.document.tck.entities.<a href="io/micronaut/data/document/tck/entities/ShipmentId.html" title="class in io.micronaut.data.document.tck.entities">ShipmentId</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/document/tck/services/TxEventsService.NewBookEvent.html#toString()" class="member-name-link">toString()</a> - Method in record class io.micronaut.data.document.tck.services.<a href="io/micronaut/data/document/tck/services/TxEventsService.NewBookEvent.html" title="class in io.micronaut.data.document.tck.services">TxEventsService.NewBookEvent</a></dt>
+<dd>
+<div class="block">Returns a string representation of this record class.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/ChangeListenerMethod.html#toString()" class="member-name-link">toString()</a> - Method in record class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/ChangeListenerMethod.html" title="class in io.micronaut.data.jdbc.notification">ChangeListenerMethod</a></dt>
+<dd>
+<div class="block">Returns a string representation of this record class.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/DefaultChangeEvent.html#toString()" class="member-name-link">toString()</a> - Method in record class io.micronaut.data.jdbc.notification.<a href="io/micronaut/data/jdbc/notification/DefaultChangeEvent.html" title="class in io.micronaut.data.jdbc.notification">DefaultChangeEvent</a></dt>
 <dd>
 <div class="block">Returns a string representation of this record class.</div>
 </dd>
@@ -36069,6 +36452,10 @@ in an unexpected rollback.</div>
 <dd>
 <div class="block">An update operation.</div>
 </dd>
+<dt><a href="io/micronaut/data/notification/ChangeOperation.html#UPDATE" class="member-name-link">UPDATE</a> - Enum constant in enum class io.micronaut.data.notification.<a href="io/micronaut/data/notification/ChangeOperation.html" title="enum class in io.micronaut.data.notification">ChangeOperation</a></dt>
+<dd>
+<div class="block">A row was updated.</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.SaveOperation.html#UPDATE" class="member-name-link">UPDATE</a> - Enum constant in enum class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.SaveOperation.html" title="enum class in io.micronaut.data.runtime.intercept">AbstractQueryInterceptor.SaveOperation</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jq/JQLexer.html#UPDATE" class="member-name-link">UPDATE</a> - Static variable in class io.micronaut.data.jq.<a href="io/micronaut/data/jq/JQLexer.html" title="class in io.micronaut.data.jq">JQLexer</a></dt>
@@ -36831,6 +37218,10 @@ the normal update lifecycle is invoked.</div>
 or <a href="io/micronaut/data/annotation/By.html#ID">"id(this)"</a> to indicate the unique identifier field or property
 of the entity.</div>
 </dd>
+<dt><a href="io/micronaut/data/annotation/ChangeListener.html#value()" class="member-name-link">value()</a> - Element in annotation interface io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/ChangeListener.html" title="annotation interface in io.micronaut.data.annotation">ChangeListener</a></dt>
+<dd>
+<div class="block">Gets the datasource selected for database change notifications.</div>
+</dd>
 <dt><a href="io/micronaut/data/annotation/ConvertException.html#value()" class="member-name-link">value()</a> - Element in annotation interface io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/ConvertException.html" title="annotation interface in io.micronaut.data.annotation">ConvertException</a></dt>
 <dd>
 <div class="block">The exception converter class that will be retried from the bean context.</div>
@@ -36945,6 +37336,12 @@ followed by the second, and so forth.</div>
 <dt><a href="io/micronaut/data/intercept/annotation/DataMethodQueryParameter.html#value()" class="member-name-link">value()</a> - Element in annotation interface io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/DataMethodQueryParameter.html" title="annotation interface in io.micronaut.data.intercept.annotation">DataMethodQueryParameter</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jdbc/annotation/JdbcRepository.html#value()" class="member-name-link">value()</a> - Element in annotation interface io.micronaut.data.jdbc.annotation.<a href="io/micronaut/data/jdbc/annotation/JdbcRepository.html" title="annotation interface in io.micronaut.data.jdbc.annotation">JdbcRepository</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/annotation/OracleChangeNotification.Property.html#value()" class="member-name-link">value()</a> - Element in annotation interface io.micronaut.data.jdbc.annotation.<a href="io/micronaut/data/jdbc/annotation/OracleChangeNotification.Property.html" title="annotation interface in io.micronaut.data.jdbc.annotation">OracleChangeNotification.Property</a></dt>
+<dd>
+<div class="block">Gets the Oracle JDBC registration property value.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/notification/oracle/OracleChangeListenerQuery.html#value()" class="member-name-link">value()</a> - Element in annotation interface io.micronaut.data.jdbc.notification.oracle.<a href="io/micronaut/data/jdbc/notification/oracle/OracleChangeListenerQuery.html" title="annotation interface in io.micronaut.data.jdbc.notification.oracle">OracleChangeListenerQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jpa/annotation/EntityGraph.html#value()" class="member-name-link">value()</a> - Element in annotation interface io.micronaut.data.jpa.annotation.<a href="io/micronaut/data/jpa/annotation/EntityGraph.html" title="annotation interface in io.micronaut.data.jpa.annotation">EntityGraph</a></dt>
 <dd>
@@ -37195,6 +37592,10 @@ followed by the second, and so forth.</div>
 <div class="block">Returns the enum constant of this class with the specified name.</div>
 </dd>
 <dt><a href="io/micronaut/data/mongodb/conf/MongoDataConfiguration.DriverType.html#valueOf(java.lang.String)" class="member-name-link">valueOf(String)</a> - Static method in enum class io.micronaut.data.mongodb.conf.<a href="io/micronaut/data/mongodb/conf/MongoDataConfiguration.DriverType.html" title="enum class in io.micronaut.data.mongodb.conf">MongoDataConfiguration.DriverType</a></dt>
+<dd>
+<div class="block">Returns the enum constant of this class with the specified name.</div>
+</dd>
+<dt><a href="io/micronaut/data/notification/ChangeOperation.html#valueOf(java.lang.String)" class="member-name-link">valueOf(String)</a> - Static method in enum class io.micronaut.data.notification.<a href="io/micronaut/data/notification/ChangeOperation.html" title="enum class in io.micronaut.data.notification">ChangeOperation</a></dt>
 <dd>
 <div class="block">Returns the enum constant of this class with the specified name.</div>
 </dd>
@@ -37503,6 +37904,11 @@ the order they are declared.</div>
 <div class="block">Returns the value of the <a href="./io/micronaut/data/model/vector/SparseFloatVector.html#param-values"><code>values</code></a> record component.</div>
 </dd>
 <dt><a href="io/micronaut/data/mongodb/conf/MongoDataConfiguration.DriverType.html#values()" class="member-name-link">values()</a> - Static method in enum class io.micronaut.data.mongodb.conf.<a href="io/micronaut/data/mongodb/conf/MongoDataConfiguration.DriverType.html" title="enum class in io.micronaut.data.mongodb.conf">MongoDataConfiguration.DriverType</a></dt>
+<dd>
+<div class="block">Returns an array containing the constants of this enum class, in
+the order they are declared.</div>
+</dd>
+<dt><a href="io/micronaut/data/notification/ChangeOperation.html#values()" class="member-name-link">values()</a> - Static method in enum class io.micronaut.data.notification.<a href="io/micronaut/data/notification/ChangeOperation.html" title="enum class in io.micronaut.data.notification">ChangeOperation</a></dt>
 <dd>
 <div class="block">Returns an array containing the constants of this enum class, in
 the order they are declared.</div>
@@ -38163,8 +38569,16 @@ the order they are declared.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jakarta/tck/runtime/TestClassVisitor.html#visitMethod(io.micronaut.inject.ast.MethodElement,io.micronaut.inject.visitor.VisitorContext)" class="member-name-link">visitMethod(MethodElement, VisitorContext)</a> - Method in class io.micronaut.data.jakarta.tck.runtime.<a href="io/micronaut/data/jakarta/tck/runtime/TestClassVisitor.html" title="class in io.micronaut.data.jakarta.tck.runtime">TestClassVisitor</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/visitors/ChangeListenerVisitor.html#visitMethod(io.micronaut.inject.ast.MethodElement,io.micronaut.inject.visitor.VisitorContext)" class="member-name-link">visitMethod(MethodElement, VisitorContext)</a> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/ChangeListenerVisitor.html" title="class in io.micronaut.data.processor.visitors">ChangeListenerVisitor</a></dt>
+<dd>
+<div class="block">Validates the database-neutral method contract and its persistent entity event type.</div>
+</dd>
 <dt><a href="io/micronaut/data/processor/visitors/EntityEventVisitor.html#visitMethod(io.micronaut.inject.ast.MethodElement,io.micronaut.inject.visitor.VisitorContext)" class="member-name-link">visitMethod(MethodElement, VisitorContext)</a> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/EntityEventVisitor.html" title="class in io.micronaut.data.processor.visitors">EntityEventVisitor</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/processor/visitors/OracleChangeNotificationVisitor.html#visitMethod(io.micronaut.inject.ast.MethodElement,io.micronaut.inject.visitor.VisitorContext)" class="member-name-link">visitMethod(MethodElement, VisitorContext)</a> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/OracleChangeNotificationVisitor.html" title="class in io.micronaut.data.processor.visitors">OracleChangeNotificationVisitor</a></dt>
+<dd>
+<div class="block">Validates Oracle notification settings and generates the entity reload query at compilation time.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.SqlPredicateVisitor.html#visitNear(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">visitNear(Expression, Expression, Expression)</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.SqlPredicateVisitor.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder.SqlPredicateVisitor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/impl/AdvancedPredicateVisitor.html#visitNear(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression)" class="member-name-link">visitNear(Expression, Expression, Expression)</a> - Method in interface io.micronaut.data.model.query.impl.<a href="io/micronaut/data/model/query/impl/AdvancedPredicateVisitor.html" title="interface in io.micronaut.data.model.query.impl">AdvancedPredicateVisitor</a></dt>
@@ -38265,6 +38679,10 @@ the order they are declared.</div>
 <dd>
 <div class="block">A SQL condition that restricts the rows of the root table exposed by the view, for example
 <code>@.country = 'US'</code>.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/annotation/OracleChangeNotification.html#where()" class="member-name-link">where()</a> - Element in annotation interface io.micronaut.data.jdbc.annotation.<a href="io/micronaut/data/jdbc/annotation/OracleChangeNotification.html" title="annotation interface in io.micronaut.data.jdbc.annotation">OracleChangeNotification</a></dt>
+<dd>
+<div class="block">The predicate to register for Query Result Change Notification.</div>
 </dd>
 <dt><a href="io/micronaut/data/repository/jpa/criteria/DeleteSpecification.html#where(io.micronaut.data.repository.jpa.criteria.DeleteSpecification)" class="member-name-link">where(DeleteSpecification)</a> - Static method in interface io.micronaut.data.repository.jpa.criteria.<a href="io/micronaut/data/repository/jpa/criteria/DeleteSpecification.html" title="interface in io.micronaut.data.repository.jpa.criteria">DeleteSpecification</a></dt>
 <dd>

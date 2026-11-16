@@ -51,6 +51,8 @@ io.micronaut.data.jdbc.config
 io.micronaut.data.jdbc.convert
 io.micronaut.data.jdbc.exceptions
 io.micronaut.data.jdbc.mapper
+io.micronaut.data.jdbc.notification
+io.micronaut.data.jdbc.notification.oracle
 io.micronaut.data.jdbc.operations
 io.micronaut.data.jdbc.runtime
 io.micronaut.data.jpa.annotation
@@ -91,6 +93,7 @@ io.micronaut.data.mongodb.operations.options
 io.micronaut.data.mongodb.repository
 io.micronaut.data.mongodb.session
 io.micronaut.data.mongodb.transaction
+io.micronaut.data.notification
 io.micronaut.data.operations
 io.micronaut.data.operations.async
 io.micronaut.data.operations.reactive

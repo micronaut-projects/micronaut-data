@@ -273,6 +273,10 @@
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-dbcProcedures"><a href="#dbcProcedures"><strong>4.11</strong><span>Procedures</span></a></div>
         
+        <div class="toc-item" style="margin-left:10px" id="toc-item-notifications"><a href="#notifications"><strong>4.12</strong><span>Notifications</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-oracleQueryNotifications"><a href="#oracleQueryNotifications"><strong>4.12.1</strong><span>Oracle Change Notifications</span></a></div>
+        
         <div class="toc-item" style="margin-left:0px" id="toc-item-hibernate"><a href="#hibernate"><strong>5</strong><span>Micronaut Data JPA Hibernate</span></a></div>
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-hibernateJpaAnnotations"><a href="#hibernateJpaAnnotations"><strong>5.1</strong><span>JPA Annotations</span></a></div>
@@ -20252,6 +20256,1486 @@ fun calculateSum(bookId: @NonNull Long): Long</code></pre>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">@Procedure
 Long calculateSum(@NonNull Long bookId);</code></pre>
+</div>
+</div>
+
+<h2 id="notifications"><a class="anchor" href="#notifications"></a>4.12 Notifications</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/5.3.x/src/main/docs/guide/dbc/notifications.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Micronaut Data JDBC lets an application react to committed database changes through
+<a href="../api/io/micronaut/data/annotation/ChangeListener.html">@ChangeListener</a>. The listener contract is described below;
+the available notification capabilities and database setup depend on the database and JDBC driver.</p>
+</div>
+<div class="paragraph">
+<p>See <a href="#oracleQueryNotifications">Oracle Change Notifications</a> for prerequisites, examples, and configuration.</p>
+</div>
+<div class="paragraph">
+<p>JDBC change listeners are enabled by default. To disable them, for example in tests using H2 or another database
+without a notification provider, set the following in the test environment&#8217;s configuration:</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.data.jdbc.notifications.enabled=false</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut:
+  data:
+    jdbc:
+      notifications:
+        enabled: false</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[micronaut.data.jdbc.notifications]
+enabled = false</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut {
+  data {
+    jdbc {
+      notifications {
+        enabled = false
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  micronaut {
+    data {
+      jdbc {
+        notifications {
+          enabled = false
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "micronaut": {
+    "data": {
+      "jdbc": {
+        "notifications": {
+          "enabled": false
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>When disabled, change listener methods receive no database notifications from any JDBC datasource. This allows the
+application to run against databases that do not support notifications.</p>
+</div>
+<div class="sect1">
+<h2 id="notificationListenerRequirements">Declaring a Listener</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The listener must be a Micronaut bean and must be proxyable; in particular,
+do not declare the listener class or listener method <code>final</code>.
+Micronaut Data validates the listener contract at compilation time. A method annotated with
+<a href="../api/io/micronaut/data/annotation/ChangeListener.html">@ChangeListener</a> must:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>be a non-private, non-static instance method;</p>
+</li>
+<li>
+<p>return <code>void</code>;</p>
+</li>
+<li>
+<p>declare exactly one <code>ChangeEvent&lt;E&gt;</code> parameter; and</p>
+</li>
+<li>
+<p>use a concrete Micronaut Data persistent entity type for <code>E</code>.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The following excerpt shows the common annotation and method signature; the method body is omitted:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">    @ChangeListener // <b class="conum">(1)</b>
+    void onLibraryChanged(ChangeEvent&lt;Library&gt; event) {
+    }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">    @ChangeListener // <b class="conum">(1)</b>
+    void onLibraryChanged(ChangeEvent&lt;Library&gt; event) {
+    }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">    @ChangeListener // <b class="conum">(1)</b>
+    open fun onLibraryChanged(event: ChangeEvent&lt;Library&gt;) {
+    }</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">    @ChangeListener # <b class="conum">(1)</b>
+    def onLibraryChanged(self, event: ChangeEvent[Library]) -&gt; None:
+        pass</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Annotate the method with <a href="../api/io/micronaut/data/annotation/ChangeListener.html">@ChangeListener</a>. Its <code>ChangeEvent&lt;Library&gt;</code> parameter identifies
+<code>Library</code> as the persistent entity and provides the operation, optional current entity, and optional provider metadata.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>A complete listener also requires a provider-specific notification annotation, such as
+<a href="../api/io/micronaut/data/jdbc/annotation/OracleChangeNotification.html">@OracleChangeNotification</a>. Missing provider configuration is rejected at compilation time.
+The database-specific sections show complete examples.</p>
+</div>
+<div class="paragraph">
+<p>The listener uses the <code>default</code> datasource unless another datasource is specified through the <code>dataSource</code>
+attribute, for example <code>@ChangeListener(dataSource = "library")</code>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="notificationChangeEvents">Handling Change Events</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><a href="../api/io/micronaut/data/notification/ChangeEvent.html">ChangeEvent</a> provides:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>operation()</code>&#8201;&#8212;&#8201;the <a href="../api/io/micronaut/data/notification/ChangeOperation.html">ChangeOperation</a> reported for the event;</p>
+</li>
+<li>
+<p><code>entity()</code>&#8201;&#8212;&#8201;the current entity state, when it is available; and</p>
+</li>
+<li>
+<p><code>metadata(Class)</code>&#8201;&#8212;&#8201;provider-specific metadata, when it is available.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The possible <code>ChangeOperation</code> values are:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>INSERT</code>&#8201;&#8212;&#8201;a row was inserted;</p>
+</li>
+<li>
+<p><code>UPDATE</code>&#8201;&#8212;&#8201;a row was updated;</p>
+</li>
+<li>
+<p><code>DELETE</code>&#8201;&#8212;&#8201;a row was deleted;</p>
+</li>
+<li>
+<p><code>INVALIDATE</code>&#8201;&#8212;&#8201;application state may need refreshing without individual row details; and</p>
+</li>
+<li>
+<p><code>TERMINATED</code>&#8201;&#8212;&#8201;notifications have permanently stopped for the listener.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>An <code>INVALIDATE</code> event indicates that application state may be outdated without identifying individual changed rows.
+Refresh the affected state, for example by reloading a cache or rerunning a query.</p>
+</div>
+<div class="paragraph">
+<p>On <code>TERMINATED</code>, stop relying on notifications to maintain application state. For example, clear and disable
+the cache and read directly from the database. This provider lifecycle event has no entity or table metadata.
+Handle <code>TERMINATED</code> explicitly, separately from <code>INVALIDATE</code>, and keep notification-backed caches disabled after
+handling it. The database-specific sections describe when termination occurs.</p>
+</div>
+<div class="paragraph">
+<p>Event metadata is optional; check whether it is present before accessing it. The database-specific sections describe
+the available metadata and the conditions that produce invalidations.</p>
+</div>
+<div class="sect2">
+<h3 id="notificationEntityLoading">Entity Loading</h3>
+<div class="paragraph">
+<p>For <code>INSERT</code> and <code>UPDATE</code>, Micronaut Data reloads and maps the complete entity before invoking the listener.
+The entity reflects database state at reload time. It does not represent a historical snapshot of the commit
+that produced the notification. Another transaction can change or delete the row before it is loaded.
+If no row is found, <code>entity()</code> is empty, even for an insert or update event.</p>
+</div>
+<div class="paragraph">
+<p>For <code>DELETE</code>, <code>entity()</code> is empty because the row has been removed. Database-specific metadata, when available,
+identifies the deleted row.</p>
+</div>
+<div class="paragraph">
+<p>For <code>INVALIDATE</code>, <code>entity()</code> is empty because the event does not describe an individual row. Refresh the affected
+application state, for example by reloading a cache or rerunning a query.</p>
+</div>
+<div class="paragraph">
+<p>The database-specific sections describe the available row identifiers and how Micronaut Data uses them
+to reload entities for <code>INSERT</code> and <code>UPDATE</code> events.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="notificationDeliveryAndConcurrency">Delivery and Concurrency</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Each listener has a dedicated worker and a bounded queue. Entity loading and listener invocation execute
+sequentially in the order notifications enter that queue. Different listeners can execute concurrently, so protect
+state shared between listeners or with other application threads. Queue order does not establish a global order
+across database connections or listeners.</p>
+</div>
+<div class="paragraph">
+<p>These guarantees require synchronous listener execution. <code>@Async</code> schedules the listener body on another executor;
+the listener worker orders entity loading and submission, but does not wait for async work to finish.</p>
+</div>
+<div class="paragraph">
+<p>Change notifications are delivered only after the database transaction commits. If the transaction is rolled back,
+its changes do not produce notifications. Listener execution is separate from the transaction that made the changes.</p>
+</div>
+<div class="paragraph">
+<p>Use notifications to refresh application state or maintain caches. Micronaut Data change notifications do not provide
+a complete history of database writes, a stored event history that applications can read or replay, automatic redelivery
+after a listener fails, or unique event identifiers for detecting duplicates. Listener code should tolerate repeated
+notifications and refresh its state when it receives <code>INVALIDATE</code> or when application checks show that a refresh is needed.</p>
+</div>
+<div class="paragraph">
+<p>Oracle&#8217;s <code>NTF_QOS_RELIABLE</code> option can queue notifications during connection interruptions, as described in
+<a href="#oracleQueryNotifications">Oracle Change Notifications</a>. This database feature does not let applications request
+replay of previously processed notifications.</p>
+</div>
+<div class="paragraph">
+<p>When a listener queue reaches its limit, waiting data notifications and the new submission are replaced with
+one <code>INVALIDATE</code> callback. A callback already running finishes first. Further data notifications are covered by
+that pending refresh until it starts. Notifications arriving during the refresh are queued normally and can cause
+another invalidation if the queue reaches its limit again.</p>
+</div>
+<div class="paragraph">
+<p>Reconciliation after recovery also replaces waiting work. This prevents older queued row changes from being
+delivered after that refresh. Reconciliation does not replay discarded row notifications.
+The database-specific sections describe queue capacities and how notifications are grouped.</p>
+</div>
+<div class="paragraph">
+<p>Your listener should handle <code>INVALIDATE</code> by refreshing the affected application state, even if it normally processes
+individual row changes. Application shutdown discards waiting callbacks and allows running work to finish.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="notificationTransactionsAndRetries">Transactions, Retry, and Recovery</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>An <a href="../api/io/micronaut/transaction/annotation/Transactional.html">@Transactional</a> listener executes in a new transaction. It cannot participate in
+or roll back the original database transaction because that transaction has already committed before the
+notification is delivered.
+Entity loading runs before the listener&#8217;s transaction starts. <code>@Transactional</code> applies to listener execution,
+not to the preceding entity load.</p>
+</div>
+<div class="paragraph">
+<p><a href="https://docs.micronaut.io/latest/api/io/micronaut/retry/annotation/Retryable.html">@Retryable</a> and <a href="https://docs.micronaut.io/latest/api/io/micronaut/retry/annotation/Recoverable.html">@Recoverable</a>
+can be applied to the listener method. <code>@Retryable</code> can retry entity loading and, for listeners without <code>@Async</code>,
+listener execution:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>if loading an inserted or updated row fails, loading can be retried;</p>
+</li>
+<li>
+<p>if loading succeeds but listener code fails, later attempts reuse the entity already loaded for that event; and</p>
+</li>
+<li>
+<p>if the method is transactional, its transaction starts after loading succeeds; failed listener attempts are rolled back before retrying.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Because a callback can run more than once, listener work should be idempotent. A recovery method can handle a failure
+after all retry attempts are exhausted, but recovery does not replay the database notification or restore the
+transaction that caused it. Database connection and registration recovery are configured separately in the
+database-specific sections.</p>
+</div>
+<div class="paragraph">
+<p>With <code>@Async</code>, entity loading still runs on the listener worker before listener execution is scheduled on the async
+executor. Loading failures can be retried. Failures during async listener execution cannot reach retry or recovery handling
+because the listener invocation has already returned. The subscription&#8217;s queue ordering and shutdown tracking cover loading and
+submission, not completion of the async listener work. Use the dedicated listener worker without <code>@Async</code> when listener
+retries, ordered completion, and subscription shutdown tracking are required.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="notificationCallbackFailures">Handling Listener Failures</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If entity loading or synchronous listener execution fails, the retry and recovery behavior described in
+<a href="#notificationTransactionsAndRetries">Transactions, Retry, and Recovery</a> applies when configured. If neither is
+configured, or the failure remains unhandled after retry and recovery, Micronaut Data passes it to
+<a href="../api/io/micronaut/data/jdbc/notification/ChangeListenerExceptionHandler.html">ChangeListenerExceptionHandler</a>. The default handler logs the listener method,
+datasource, operation, and available database-specific details.</p>
+</div>
+<div class="paragraph">
+<p>Register a <code>@Singleton</code> bean implementing <code>ChangeListenerExceptionHandler</code> to replace the default handler.
+Its <code>handle(ChangeListenerException)</code> method receives the original cause through <code>getCause()</code>, the datasource
+through <code>getDataSourceName()</code>, the executable listener method through <code>getListenerMethod()</code>, and the failed
+event through <code>getEvent()</code>. The event retains any available provider metadata, including row identifiers.
+Entity state can be unavailable when loading fails.</p>
+</div>
+<div class="paragraph">
+<p>The handler runs on the listener worker and can be invoked concurrently for different listeners.
+If a custom handler throws a runtime exception, Micronaut Data logs both failures and continues processing.
+Failures during an <code>@Async</code> listener body are handled by its async executor, as described above.</p>
+</div>
+<div class="paragraph">
+<p>The original database change remains committed even if entity loading or the listener fails. The notification
+is not automatically redelivered, and subsequent notifications continue to be processed.</p>
+</div>
+<div class="paragraph">
+<p>If the listener is transactional, its own transaction can be rolled back on failure. This rollback affects work
+performed by the listener and does not undo the original database change.</p>
+</div>
+</div>
+</div>
+
+<h2 id="oracleQueryNotifications"><a class="anchor" href="#oracleQueryNotifications"></a>4.12.1 Oracle Change Notifications</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/5.3.x/src/main/docs/guide/dbc/notifications/oracleQueryNotifications.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Micronaut Data JDBC supports Oracle Continuous Query Notification (CQN), also known as Database Change Notification (DCN),
+so applications can react when committed database changes affect an entity table or registered query result.</p>
+</div>
+<div class="paragraph">
+<p>Micronaut Data exposes a database-neutral listener contract through <a href="../api/io/micronaut/data/annotation/ChangeListener.html">@ChangeListener</a> and
+Oracle Database registration options through <a href="../api/io/micronaut/data/jdbc/annotation/OracleChangeNotification.html">@OracleChangeNotification</a>.
+When Oracle Database reports a change, the listener receives an <a href="../api/io/micronaut/data/notification/ChangeEvent.html">ChangeEvent</a> containing
+the reported operation, optional current entity state, and optional provider-specific metadata.</p>
+</div>
+<div class="sect1">
+<h2 id="_prerequisites">Prerequisites</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Query notifications require Micronaut Data JDBC and Oracle JDBC 23.26.3.0.0 or later:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"com.oracle.database.jdbc:ojdbc11")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;com.oracle.database.jdbc&lt;/groupId&gt;
+    &lt;artifactId&gt;ojdbc11&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="pyronaut">[tool.pyronaut.dependencies]
+runtime = [
+    <span class="hljs-string">"com.oracle.database.jdbc:ojdbc11"</span>,
+]</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="paragraph">
+<p>Micronaut Data checks the JDBC driver version during application startup before creating notification registrations.
+An older or unrecognized driver version causes startup to fail with an error identifying the detected and required versions.</p>
+</div>
+<div class="paragraph">
+<p>The default client-initiated notification connection requires Oracle Database 19c or later.
+For an older database with CQN support, set the <code>DCN_CLIENT_INIT_CONNECTION</code> registration property to <code>false</code>
+and configure server-initiated delivery. The database server must be able to reach the application&#8217;s notification
+listener address and port. See the registration properties below and the
+<a href="https://docs.oracle.com/en/database/oracle/oracle-database/26/jjdbc/continuos-query-notification.html">Oracle CQN documentation</a>.</p>
+</div>
+<div class="paragraph">
+<p>The datasource user must have Oracle Database&#8217;s <code>CHANGE NOTIFICATION</code> privilege. A database administrator can grant it with:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">GRANT CHANGE NOTIFICATION TO application_user;</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_declaring_a_listener">Declaring a Listener</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The following listener uses Object Change Notification to observe the complete mapped <code>LIBRARY</code> table.</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Singleton
+class LibraryCache {
+    @ChangeListener // <b class="conum">(1)</b>
+    @OracleChangeNotification // <b class="conum">(2)</b>
+    void onLibraryChanged(ChangeEvent&lt;Library&gt; event) {
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">@Singleton
+class LibraryCache {
+    @ChangeListener // <b class="conum">(1)</b>
+    @OracleChangeNotification // <b class="conum">(2)</b>
+    void onLibraryChanged(ChangeEvent&lt;Library&gt; event) {
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@Singleton
+open class LibraryCache(private val repository: LibraryRepository) {
+    @ChangeListener // <b class="conum">(1)</b>
+    @OracleChangeNotification // <b class="conum">(2)</b>
+    open fun onLibraryChanged(event: ChangeEvent&lt;Library&gt;) {
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@Singleton
+class LibraryCache:
+    @ChangeListener # <b class="conum">(1)</b>
+    @OracleChangeNotification # <b class="conum">(2)</b>
+    def onLibraryChanged(self, event: ChangeEvent[Library]) -&gt; None:
+        pass</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Declare <a href="../api/io/micronaut/data/annotation/ChangeListener.html">@ChangeListener</a> on a listener method accepting a <code>ChangeEvent&lt;Library&gt;</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Also annotate the method with <a href="../api/io/micronaut/data/jdbc/annotation/OracleChangeNotification.html">@OracleChangeNotification</a> to register it for Oracle change
+notifications. The annotation is required even when you use its default settings. For <code>INSERT</code> and <code>UPDATE</code> events,
+Micronaut Data uses the reported <code>ROWID</code> to load the current entity.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Follow the shared <a href="#notificationListenerRequirements">listener requirements</a>, including the method signature
+and datasource selection.</p>
+</div>
+<div class="paragraph">
+<p>Listener methods inherited from separately compiled base classes are supported.</p>
+</div>
+<div class="paragraph">
+<p>Micronaut Data creates an Oracle Database registration for each listener method during application startup.
+The registration normally remains active for the application’s lifetime, and Micronaut Data attempts to unregister
+it during application shutdown.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_handling_change_events">Handling Change Events</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>See <a href="#notificationChangeEvents">Handling Change Events</a> for the common event API and invalidation handling.</p>
+</div>
+<div class="paragraph">
+<p>Oracle Database row events include <a href="../api/io/micronaut/data/jdbc/notification/oracle/OracleChangeEventMetadata.html">OracleChangeEventMetadata</a>, a read-only interface exposing:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>rowId()</code>&#8201;&#8212;&#8201;the row-location hint reported by Oracle Database;</p>
+</li>
+<li>
+<p><code>schema()</code>&#8201;&#8212;&#8201;the reported schema (table owner), or <code>null</code> when the reported table name is unqualified; and</p>
+</li>
+<li>
+<p><code>table()</code>&#8201;&#8212;&#8201;the reported unqualified table name.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><code>schema()</code> and <code>table()</code> return names as reported by Oracle Database, including capitalization and special characters.</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">void onLibraryChanged(ChangeEvent&lt;Library&gt; event) {
+    if (!cacheEnabled) {
+        return;
+    }
+    event.metadata(OracleChangeEventMetadata.class) // <b class="conum">(1)</b>
+        .ifPresent(metadata -&gt; LOG.debug("Changed library table: {}.{}, ROWID: {}",
+            Objects.requireNonNullElse(metadata.schema(), "&lt;unknown&gt;"), metadata.table(), metadata.rowId()));
+    switch (event.operation()) {
+        case INSERT, UPDATE -&gt; event.entity().ifPresent(library -&gt; libraries.put(library.id(), library)); // <b class="conum">(2)</b>
+        case DELETE, INVALIDATE -&gt; refreshCache(); // <b class="conum">(3)</b>
+        case TERMINATED -&gt; {
+            cacheEnabled = false; // <b class="conum">(4)</b>
+            libraries.clear();
+        }
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">void onLibraryChanged(ChangeEvent&lt;Library&gt; event) {
+    if (!cacheEnabled) {
+        return
+    }
+    event.metadata(OracleChangeEventMetadata).ifPresent { metadata -&gt; // <b class="conum">(1)</b>
+        LOG.debug("Changed library table: {}.{}, ROWID: {}",
+            metadata.schema() ?: "&lt;unknown&gt;", metadata.table(), metadata.rowId())
+    }
+    switch (event.operation()) {
+        case ChangeOperation.INSERT:
+        case ChangeOperation.UPDATE:
+            event.entity().ifPresent { library -&gt; libraries.put(library.id(), library) } // <b class="conum">(2)</b>
+            break
+        case ChangeOperation.DELETE:
+        case ChangeOperation.INVALIDATE: // <b class="conum">(3)</b>
+            refreshCache()
+            break
+        case ChangeOperation.TERMINATED:
+            cacheEnabled = false // <b class="conum">(4)</b>
+            libraries.clear()
+            break
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">open fun onLibraryChanged(event: ChangeEvent&lt;Library&gt;) {
+    if (!cacheEnabled) {
+        return
+    }
+    event.metadata(OracleChangeEventMetadata::class.java).ifPresent { metadata -&gt; // <b class="conum">(1)</b>
+        log.debug("Changed library table: {}.{}, ROWID: {}",
+            metadata.schema() ?: "&lt;unknown&gt;", metadata.table(), metadata.rowId())
+    }
+    when (event.operation()) {
+        ChangeOperation.INSERT, ChangeOperation.UPDATE -&gt;
+            event.entity().ifPresent { library -&gt; libraries[library.id!!] = library } // <b class="conum">(2)</b>
+        ChangeOperation.DELETE, ChangeOperation.INVALIDATE -&gt; refreshCache() // <b class="conum">(3)</b>
+        ChangeOperation.TERMINATED -&gt; {
+            cacheEnabled = false // <b class="conum">(4)</b>
+            libraries.clear()
+        }
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def onLibraryChanged(self, event: ChangeEvent[Library]) -&gt; None:
+    pass
+    metadata = event.metadata(OracleChangeEventMetadata).orElse(None) # <b class="conum">(1)</b>
+    if metadata is not None:
+        schema = metadata.schema()
+        self.log.debug("Changed library table: {}.{}, ROWID: {}",
+            schema if schema is not None else "&lt;unknown&gt;", metadata.table(), metadata.rowId())
+    if not self.cacheEnabled.get():
+        return
+    if event.operation() in (ChangeOperation.INSERT, ChangeOperation.UPDATE):
+        library = event.entity().orElse(None) # <b class="conum">(2)</b>
+        if library is not None:
+            self.libraries.get().put(library.id, library)
+    elif event.operation() in (ChangeOperation.DELETE, ChangeOperation.INVALIDATE): # <b class="conum">(3)</b>
+        self.refreshCache()
+    elif event.operation() == ChangeOperation.TERMINATED:
+        self.cacheEnabled.set(False) # <b class="conum">(4)</b>
+        self.libraries.get().clear()</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Read Oracle-specific metadata only when present. It provides the reported table identity and <code>ROWID</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>For <code>INSERT</code> and <code>UPDATE</code>, update the cache with the current entity when it is available.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Refresh the complete cache for <code>DELETE</code> and <code>INVALIDATE</code>. A delete event has no entity ID;
+do not interpret the Oracle Database <code>ROWID</code> as an entity ID.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>For <code>TERMINATED</code>, disable and clear the cache. Later callbacks are ignored.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>After the cache is disabled, read directly from the database instead.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Synchronize cache access when it is shared with other application threads or listeners.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>For <code>INSERT</code> and <code>UPDATE</code>, Oracle Database supplies a <code>ROWID</code>, which Micronaut Data uses to reload the entity.
+See <a href="#notificationEntityLoading">Entity Loading</a> for current-state semantics and cases where <code>entity()</code> is empty.
+For <code>DELETE</code>, Micronaut Data does not reload the row. The entity is empty, and Oracle Database <code>ROWID</code> metadata is retained.</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>A <code>ROWID</code> is a location hint, not a stable entity identifier. Oracle can reuse it after a committed delete,
+and it can change during row movement, including partition-key updates, table shrinking, and Flashback Table.
+A deferred reload for an <code>INSERT</code> or <code>UPDATE</code> can therefore return a different row or no row.</p>
+</div>
+<div class="paragraph">
+<p>When identity matters, compare the reloaded entity&#8217;s primary key with an independently known expected id.
+CQN metadata does not include the original primary key. If that comparison is unavailable, invalidate or
+reconcile the relevant application state instead of treating the event as proof that a particular entity changed.</p>
+</div>
+<div class="paragraph">
+<p>See Oracle&#8217;s documentation on <a href="https://docs.oracle.com/en/database/oracle/oracle-database/26/sqlrf/ROWID-Pseudocolumn.html">ROWID reuse</a>
+and <a href="https://docs.oracle.com/en/database/oracle/oracle-database/26/cncpt/logical-storage-structures.html">row movement</a>.</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Entities with <a href="../api/io/micronaut/data/annotation/Where.html">@Where</a> clauses are not supported by Oracle notification listeners and cause a
+compilation error. These clauses filter ROWID reloads without filtering the notification registration query, which can
+hide rows needed to reconcile cached state. For QRCN, use the <code>where</code> member of
+<a href="../api/io/micronaut/data/jdbc/annotation/OracleChangeNotification.html">@OracleChangeNotification</a> to filter the registered result.</p>
+</div>
+<div class="paragraph">
+<p>Oracle Database can report that the registered data changed without usable row details. This includes an <code>ALL_ROWS</code> or
+full-table notification, an <code>ALTER</code> or <code>DROP</code> operation, a missing <code>ROWID</code>, and, for a query notification, a change to
+a dependent table that cannot be represented as the listener entity.
+When a notification requires invalidation, the listener receives one <code>INVALIDATE</code> event with no entity or row-specific
+metadata instead of individual row events from that notification. The application
+decides whether to refresh a cache, rerun a query, or take another appropriate action.
+Micronaut Data also delivers <code>INVALIDATE</code> after it replaces a registration whose notification connection failed,
+so the listener can reconcile changes that may have been missed during recovery.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_object_change_notification">Object Change Notification</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The default <a href="../api/io/micronaut/data/jdbc/annotation/OracleChangeNotification.html">@OracleChangeNotification</a> configuration registers the entity&#8217;s mapped table.
+Each affected row for which Oracle Database supplies a <code>ROWID</code> is delivered as an <code>INSERT</code>, <code>UPDATE</code>, or <code>DELETE</code> event.
+If a notification reports a table that does not match the entity mapping, the listener receives <code>INVALIDATE</code> and
+Micronaut Data logs a warning with the reported and mapped table names.</p>
+</div>
+<div class="paragraph">
+<p>Micronaut Data automatically requests row identifiers with <code>DCN_NOTIFY_ROWIDS</code>. Do not configure <code>DCN_NOTIFY_CHANGELAG</code>
+to a non-zero value: grouping changes with a lag prevents Oracle Database from supplying the row-level operation and
+<code>ROWID</code> details required by this API. A non-zero DCN_NOTIFY_CHANGELAG value is rejected at compilation time when supplied
+through the annotation, or during registration when supplied through datasource properties.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_query_result_change_notification">Query Result Change Notification</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Query Result Change Notification (QRCN) registers a query result instead of the complete mapped table.
+Enable it with the Oracle JDBC <code>DCN_QUERY_CHANGE_NOTIFICATION</code> registration property, then use <code>select</code> and <code>where</code>
+to describe the result:</p>
+</div>
+<div class="paragraph">
+<p>This example caches only the names of libraries with a capacity of at least 10,000.</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@ChangeListener
+@OracleChangeNotification(
+    select = "id, name", // <b class="conum">(1)</b>
+    where = "capacity &gt;= 10000", // <b class="conum">(2)</b>
+    properties = @OracleChangeNotification.Property(
+        name = "DCN_QUERY_CHANGE_NOTIFICATION",
+        value = "true" // <b class="conum">(3)</b>
+    )
+)
+void onLibraryChanged(ChangeEvent&lt;Library&gt; event) {
+    if (!cacheEnabled) {
+        return;
+    }
+    switch (event.operation()) {
+        case INSERT, UPDATE -&gt; event.entity().ifPresent(library -&gt; {
+            if (library.capacity() &gt;= 10000) {
+                libraryNames.put(library.id(), library.name());
+            } else {
+                libraryNames.remove(library.id());
+            }
+        });
+        case DELETE, INVALIDATE -&gt; refreshCache();
+        case TERMINATED -&gt; {
+            cacheEnabled = false;
+            libraryNames.clear();
+        }
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">@ChangeListener
+@OracleChangeNotification(
+    select = "id, name", // <b class="conum">(1)</b>
+    where = "capacity &gt;= 10000", // <b class="conum">(2)</b>
+    properties = @OracleChangeNotification.Property(
+        name = "DCN_QUERY_CHANGE_NOTIFICATION",
+        value = "true" // <b class="conum">(3)</b>
+    )
+)
+void onLibraryChanged(ChangeEvent&lt;Library&gt; event) {
+    if (!cacheEnabled) {
+        return
+    }
+    switch (event.operation()) {
+        case ChangeOperation.INSERT:
+        case ChangeOperation.UPDATE:
+            event.entity().ifPresent { library -&gt;
+                if (library.capacity() &gt;= 10000) {
+                    libraryNames.put(library.id(), library.name())
+                } else {
+                    libraryNames.remove(library.id())
+                }
+            }
+            break
+        case ChangeOperation.DELETE:
+        case ChangeOperation.INVALIDATE:
+            refreshCache()
+            break
+        case ChangeOperation.TERMINATED:
+            cacheEnabled = false
+            libraryNames.clear()
+            break
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@ChangeListener
+@OracleChangeNotification(
+    select = "id, name", // <b class="conum">(1)</b>
+    where = "capacity &gt;= 10000", // <b class="conum">(2)</b>
+    properties = [
+        OracleChangeNotification.Property(
+            name = "DCN_QUERY_CHANGE_NOTIFICATION",
+            value = "true" // <b class="conum">(3)</b>
+        )
+    ]
+)
+open fun onLibraryChanged(event: ChangeEvent&lt;Library&gt;) {
+    if (!cacheEnabled) {
+        return
+    }
+    when (event.operation()) {
+        ChangeOperation.INSERT, ChangeOperation.UPDATE -&gt; event.entity().ifPresent { library -&gt;
+            if (library.capacity &gt;= 10000) {
+                libraryNames[library.id!!] = library.name
+            } else {
+                libraryNames.remove(library.id!!)
+            }
+        }
+        ChangeOperation.DELETE, ChangeOperation.INVALIDATE -&gt; refreshCache()
+        ChangeOperation.TERMINATED -&gt; {
+            cacheEnabled = false
+            libraryNames.clear()
+        }
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@ChangeListener
+@OracleChangeNotification(
+    select="id, name", # <b class="conum">(1)</b>
+    where="capacity &gt;= 10000", # <b class="conum">(2)</b>
+    properties=[
+        OracleChangeNotification.Property(
+            name="DCN_QUERY_CHANGE_NOTIFICATION",
+            value="true" # <b class="conum">(3)</b>
+        ),
+    ]
+)
+def onLibraryChanged(self, event: ChangeEvent[Library]) -&gt; None:
+    if not self.cacheEnabled.get():
+        return
+    if event.operation() in (ChangeOperation.INSERT, ChangeOperation.UPDATE):
+        library = event.entity().orElse(None)
+        if library is not None:
+            if library.capacity &gt;= 10000:
+                self.libraryNames.get().put(library.id, library.name)
+            else:
+                self.libraryNames.get().remove(library.id)
+    elif event.operation() in (ChangeOperation.DELETE, ChangeOperation.INVALIDATE):
+        self.refreshCache()
+    elif event.operation() == ChangeOperation.TERMINATED:
+        self.cacheEnabled.set(False)
+        self.libraryNames.get().clear()</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Select the columns whose result changes should produce notifications. This controls the result registered with
+Oracle Database, not an entity projection: Micronaut Data still reloads the complete entity by <code>ROWID</code> for inserts and updates.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Restrict the registered result with an Oracle SQL predicate. Here, only libraries with a capacity of at least 10,000 match.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Enable QRCN with <code>DCN_QUERY_CHANGE_NOTIFICATION=true</code>. The <code>select</code> and <code>where</code> settings require this property.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>The example stores names keyed by library ID, matching the registered <code>id, name</code> selection.
+For <code>INSERT</code> and <code>UPDATE</code>, it uses the reloaded entity&#8217;s ID to update the name, or removes the entry if the library no longer matches
+the capacity filter. Renaming replaces the previous value, and different libraries can share the same name.
+<code>DELETE</code> events have no reloaded entity from which to obtain a library ID, so the cache refreshes the directory.
+<code>INVALIDATE</code> also triggers a refresh to reconcile the registered result.
+Changes to unselected fields, such as email, do not affect the cached names and do not require a notification.</p>
+</div>
+<div class="paragraph">
+<p>The <code>select</code> value must be <code>*</code> or a comma-separated list of mapped database column identifiers.
+Aggregate functions, expressions, aliases, literals, empty selections, and unmapped columns are rejected at compilation time.
+If a property uses <code>@MappedProperty</code>, specify its mapped database column name rather than its Java property name.
+Unquoted identifiers follow Oracle Database&#8217;s case-insensitive identifier rules; quoted identifiers must match the rendered mapped column name exactly.</p>
+</div>
+<div class="paragraph">
+<p>The <code>where</code> value is appended as Oracle SQL. Micronaut Data verifies at compilation time that <code>select</code> or <code>where</code> is
+used only when QRCN is enabled; Oracle Database determines whether the completed query is eligible for registration when the application starts.</p>
+</div>
+<div class="paragraph">
+<p>Use literal values for <code>select</code>, <code>where</code>, and registration property names and values. Configuration placeholders such as
+<code>${notification.filter}</code> are rejected at compilation time. The entity&#8217;s mapped table and schema names
+must also use literal values; for example, <code>@MappedEntity(schema = "${app.schema}")</code> is not supported for
+Oracle notification listeners.</p>
+</div>
+<div class="paragraph">
+<p>QRCN queries may depend on other tables, including tables in another schema.
+The datasource user must have <code>SELECT</code> privileges on every table referenced by the registered query, including dependent
+tables in <code>where</code> subqueries.
+If a notification reports a change only to a table identified as a dependent table, Micronaut Data cannot reload it as the listener’s entity type.
+The listener therefore receives an <code>INVALIDATE</code> event instead of a row-level event.</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+When the entity does not declare an explicit schema, notification tables are matched by table name alone.
+Micronaut Data does not resolve the entity table&#8217;s schema from the database. A notification for a same-named table
+in another schema can therefore be processed as a change to the entity table. For example, a QRCN query rooted in
+<code>APP.BOOK</code> that depends on <code>OTHER.BOOK</code> can deliver <code>DELETE</code> instead of <code>INVALIDATE</code> for a deletion from <code>OTHER.BOOK</code>.
+Declare the entity&#8217;s schema explicitly, for example with <code>@MappedEntity(value = "BOOK", schema = "APP")</code>,
+so notification matching compares both schema and table name.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_oracle_registration_properties">Oracle Registration Properties</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Use <code>OracleChangeNotification.Property</code> to pass Oracle JDBC registration properties by name and value,
+as shown by <code>DCN_QUERY_CHANGE_NOTIFICATION</code> in the preceding example. Micronaut Data sets
+<code>DCN_CLIENT_INIT_CONNECTION</code> to <code>true</code> by default, so the JDBC driver initiates its notification connection.
+Set it to <code>false</code> to use server-initiated notification connections.</p>
+</div>
+<div class="paragraph">
+<p>For server-initiated mode, Oracle Database must be able to reach the JDBC driver&#8217;s notification listener at
+<code>NTF_LOCAL_HOST:NTF_LOCAL_TCP_PORT</code>. Configure firewalls, NAT, and container networking or port mappings so the
+advertised host and port are reachable from the database server.</p>
+</div>
+<div class="paragraph">
+<p>To enable a one-shot registration, add a property named <code>NTF_QOS_PURGE_ON_NTFN</code> with the value <code>true</code>.</p>
+</div>
+<div class="paragraph">
+<p><code>NTF_QOS_PURGE_ON_NTFN</code> makes each registration one-shot: Oracle Database removes it after its first data notification,
+and Micronaut Data stops receiving further notifications for that listener.</p>
+</div>
+<div class="paragraph">
+<p>Micronaut Data validates requested properties before passing them to Oracle JDBC. It always enables <code>DCN_NOTIFY_ROWIDS</code>
+and defaults <code>NTF_TIMEOUT</code> to <code>0</code>, so registrations do not expire unless a timeout is configured.
+The table covers the Oracle JDBC properties relevant to CQN registration, ordered by status.
+<strong>Supported</strong> means the option can be used with this feature, subject to the constraints described below.
+<strong>Restricted</strong> means only the stated value is accepted.
+<strong>Driver-managed</strong> means Micronaut Data passes the option to JDBC without implementing additional behavior for it.
+<strong>Unsupported</strong> means registration fails validation if the property is configured.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 28.5714%;">
+<col style="width: 14.2857%;">
+<col style="width: 57.1429%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Status</th>
+<th class="tableblock halign-left valign-top">Purpose and constraint</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>DCN_CLIENT_INIT_CONNECTION</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Supported</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Selects the notification connection direction. Micronaut Data defaults to <code>true</code> (client-initiated); set <code>false</code> for server-initiated delivery.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>DCN_QUERY_CHANGE_NOTIFICATION</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Supported</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Set <code>true</code> for QRCN or leave <code>false</code> for Object Change Notification. <code>select</code> and <code>where</code> require QRCN.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>NTF_QOS_RELIABLE</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Supported</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Requests persistent notification queuing in Oracle Database. Micronaut Data lets the driver handle client-initiated reconnect attempts; a terminal driver failure starts framework recovery. Oracle Database&#8217;s lazy cleanup of disconnected ordinary registrations does not apply to reliable registrations.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>NTF_QOS_PURGE_ON_NTFN</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Supported</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Makes a registration one-shot. Oracle Database removes it after its first data notification, and the listener receives no further notifications.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>NTF_TIMEOUT</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Supported</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the registration lifetime in seconds. The default is <code>0</code> (no configured expiry). A positive value causes Oracle Database to expire the registration; Micronaut Data does not renew it, so the listener becomes unavailable when it expires.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>DCN_NOTIFY_ROWIDS</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Restricted</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Must be <code>true</code>; row identifiers are needed to reload affected entities.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>DCN_NOTIFY_CHANGELAG</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Restricted</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Must be <code>0</code>; a non-zero lag removes the row-level details needed by the listener API.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>NTF_GROUPING_CLASS</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Restricted</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Only <code>NTF_GROUPING_CLASS_NONE</code> is accepted. Time-based notification grouping is unsupported.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>DCN_PULL_NOTIFICATIONS</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Restricted</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Only <code>false</code> is accepted. AQ pull delivery does not invoke the listener callback.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>DCN_USE_HOST_CONNECTION_ADDR_INFO</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Driver-managed</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">For a client-initiated connection, selects the address used when connecting to Oracle Database. <code>false</code> asks the driver to use the address returned by the server.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>NTF_LOCAL_HOST</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Driver-managed</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Advertises the local host address for server-initiated callbacks. It must identify the machine running the JDBC driver, not a different receiver.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>NTF_LOCAL_TCP_PORT</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Driver-managed</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Selects the local listening port for server-initiated callbacks.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>NTF_USE_SSL</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Driver-managed</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Requests SSL for the driver&#8217;s notification listener connection; Micronaut Data does not configure its certificates or trust settings.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>NTF_CONNECTION_RETRY_COUNT</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Driver-managed</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the driver&#8217;s maximum connection retry count for a disrupted client-initiated notification connection.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>DCN_BEST_EFFORT</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Driver-managed</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Allows eligible complex QRCN queries at the cost of possible extra notifications; it has no effect in object notification mode.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>DCN_IGNORE_INSERTOP</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Driver-managed</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Asks Oracle Database to omit insert notifications.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>DCN_IGNORE_UPDATEOP</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Driver-managed</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Asks Oracle Database to omit update notifications.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>DCN_IGNORE_DELETEOP</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Driver-managed</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Asks Oracle Database to omit delete notifications.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>DCN_CLIENT_INIT_REGID</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Unsupported</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Reuses an existing reliable registration. Reusing existing registrations is not supported by Micronaut Data.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>NTF_GROUPING_VALUE</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Unsupported</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the time interval for grouped notifications.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>NTF_GROUPING_TYPE</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Unsupported</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Chooses summary or last-event grouping output.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>NTF_GROUPING_START_TIME</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Unsupported</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets when notification grouping starts.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>NTF_GROUPING_REPEAT_TIME</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Unsupported</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets how often notification grouping repeats.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>DCN_PULL_QUEUE_NAME</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Unsupported</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Names the AQ queue used by pull delivery, which this listener API does not implement.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>These restrictions apply to annotation properties and to datasource-level <code>oracle.jdbc.dcnOptions</code>.
+Micronaut Data also checks the effective options reported by the created JDBC registration.
+Oracle JDBC options intended for AQ or JMS registrations are outside the CQN property list above.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_registration_lifetime_and_recovery">Registration Lifetime and Recovery</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>By default, <code>NTF_TIMEOUT=0</code>, so the registration has no configured expiration time. It normally remains active until
+application shutdown or until Oracle Database deregisters it.</p>
+</div>
+<div class="paragraph">
+<p>Set <code>NTF_TIMEOUT</code> to a positive number to have Oracle Database expire the registration after that many seconds,
+even if the application is still running. A one-shot registration configured with <code>NTF_QOS_PURGE_ON_NTFN</code> ends after
+its first data notification.</p>
+</div>
+<div class="paragraph">
+<p>If Oracle Database deregisters a registration or a registered QRCN query, the affected listener stops receiving notifications.
+Micronaut Data sends a final <code>TERMINATED</code> event to the listener and does not create a replacement registration.
+The application must correct the database or registration condition and restart the application if a new registration is required.
+A one-shot data notification remains the final notification for a registration purged by <code>NTF_QOS_PURGE_ON_NTFN</code>;
+it does not cause an additional <code>TERMINATED</code> event.</p>
+</div>
+<div class="paragraph">
+<p>Micronaut Data attempts to create a replacement registration when the JDBC driver reports that the registration has failed.</p>
+</div>
+<div class="paragraph">
+<p>When Oracle Database reports a database-wide shutdown, Micronaut Data also starts registration recovery, unless both
+client-initiated delivery and <code>NTF_QOS_RELIABLE</code> are enabled. With those settings, the JDBC driver first attempts to
+reconnect; Micronaut Data starts recovery if the driver reports a registration failure. Oracle Database can queue reliable
+notifications for delivery after reconnection.</p>
+</div>
+<div class="paragraph">
+<p>A shutdown affecting only one Oracle RAC instance does not start registration recovery.</p>
+</div>
+<div class="paragraph">
+<p>After successful recovery, Micronaut Data sends an <code>INVALIDATE</code> event so the listener can refresh potentially outdated data.
+The <code>INVALIDATE</code> event after recovery replaces waiting notifications in the listener queue.</p>
+</div>
+<div class="paragraph">
+<p>Micronaut Data attempts to unregister the old registration during recovery. If cleanup fails, it retries during later
+recovery attempts and shutdown, even if a replacement registration was created successfully. Cleanup remains best effort
+if the database is unavailable during shutdown.</p>
+</div>
+<div class="paragraph">
+<p>If the initial replacement attempt fails, Micronaut Data retries without a limit by default until recovery succeeds or the application shuts down. The first retry waits
+one second; each subsequent delay doubles, up to a maximum of sixty seconds.
+Configure registration recovery globally for all Oracle notification listeners and datasources:</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.data.jdbc.notifications.oracle.registration-recovery.max-retries=-1
+micronaut.data.jdbc.notifications.oracle.registration-recovery.retry-delay=1s
+micronaut.data.jdbc.notifications.oracle.registration-recovery.retry-delay-multiplier=2
+micronaut.data.jdbc.notifications.oracle.registration-recovery.max-retry-delay=60s</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut:
+  data:
+    jdbc:
+      notifications:
+        oracle:
+          registration-recovery:
+            max-retries: -1 # <b class="conum">(1)</b>
+            retry-delay: 1s # <b class="conum">(2)</b>
+            retry-delay-multiplier: 2 # <b class="conum">(3)</b>
+            max-retry-delay: 60s # <b class="conum">(4)</b></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[micronaut.data.jdbc.notifications.oracle.registration-recovery]
+max-retries = -1
+retry-delay = "1s"
+retry-delay-multiplier = 2
+max-retry-delay = "60s"</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut {
+  data {
+    jdbc {
+      notifications {
+        oracle {
+          registrationRecovery {
+            maxRetries = -1
+            retryDelay = "1s"
+            retryDelayMultiplier = 2
+            maxRetryDelay = "60s"
+          }
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  micronaut {
+    data {
+      jdbc {
+        notifications {
+          oracle {
+            registration-recovery {
+              max-retries = -1
+              retry-delay = "1s"
+              retry-delay-multiplier = 2
+              max-retry-delay = "60s"
+            }
+          }
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "micronaut": {
+    "data": {
+      "jdbc": {
+        "notifications": {
+          "oracle": {
+            "registration-recovery": {
+              "max-retries": -1,
+              "retry-delay": "1s",
+              "retry-delay-multiplier": 2,
+              "max-retry-delay": "60s"
+            }
+          }
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The maximum number of retries after the initial recovery attempt. The default, <code>-1</code>, allows unlimited retries.
+Set it to <code>0</code> to make only the initial attempt.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The delay before the first retry, subject to the maximum delay below. The default is <code>1s</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>The multiplier used to calculate each delay from the previous one. It must be an integer of at least <code>1</code>;
+set it to <code>1</code> for a fixed delay. The default is <code>2</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>The maximum delay between recovery attempts. This limit also applies to the first retry. The default is <code>60s</code>.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Both delays must be positive and accept duration values such as <code>500ms</code>, <code>10s</code>, or <code>1m</code>.
+The default retry delays are <code>1s</code>, <code>2s</code>, <code>4s</code>, <code>8s</code>, <code>16s</code>, <code>32s</code>, then <code>60s</code> for every subsequent retry.
+These settings control creating a replacement registration, not listener-method retries through <code>@Retryable</code>
+or the JDBC driver&#8217;s notification-connection retries.</p>
+</div>
+<div class="paragraph">
+<p>Notifications remain unavailable during recovery. If a configured retry limit is exhausted or another recovery retry
+cannot be scheduled, automatic recovery stops and the application must be restarted to restore notifications.
+Micronaut Data sends a final <code>TERMINATED</code> event in these cases. The listener should stop using notification-backed caches
+rather than refresh them and expect further updates. Termination does not create a replacement registration.
+Termination discards waiting notifications and delivers <code>TERMINATED</code> on the listener&#8217;s dedicated worker after any
+listener invocation already in progress finishes. Further notifications are ignored. Application shutdown suppresses delivery.
+Delivery is best effort if the worker is unavailable; applications that require independent detection
+of notification loss should also use their own consistency checks. Changes can be missed while a non-reliable registration
+is unavailable. Micronaut Data cannot detect a silently lost notification connection unless the JDBC driver reports the failure.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_delivery_and_concurrency">Delivery and Concurrency</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>See <a href="#notificationDeliveryAndConcurrency">Delivery and Concurrency</a> for shared threading requirements,
+delivery limitations, queue order, and overflow reconciliation.</p>
+</div>
+<div class="paragraph">
+<p>Recovery or deregistration discards waiting data notifications. Registration recovery and query deregistration cleanup
+use the configured blocking executor.</p>
+</div>
+<div class="paragraph">
+<p>By default, each listener queue has a limit of <code>1000</code> waiting notifications, excluding the notification currently being processed.
+Configure <code>micronaut.data.jdbc.notifications.oracle.queue-capacity</code> to change this limit globally for all Oracle
+notification listeners and datasources. The value must be an integer of at least <code>1</code>:</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.data.jdbc.notifications.oracle.queue-capacity=2000</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut:
+  data:
+    jdbc:
+      notifications:
+        oracle:
+          queue-capacity: 2000</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[micronaut.data.jdbc.notifications.oracle]
+queue-capacity = 2000</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut {
+  data {
+    jdbc {
+      notifications {
+        oracle {
+          queueCapacity = 2000
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  micronaut {
+    data {
+      jdbc {
+        notifications {
+          oracle {
+            queue-capacity = 2000
+          }
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "micronaut": {
+    "data": {
+      "jdbc": {
+        "notifications": {
+          "oracle": {
+            "queue-capacity": 2000
+          }
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>The limit counts whole Oracle notifications; one notification may contain changes to many rows. Individual row changes
+within one notification are delivered sequentially. Each listener performs at most one entity reload at a time;
+listeners still share the datasource&#8217;s connection pool.</p>
+</div>
+<div class="paragraph">
+<p>A single transaction, such as a bulk update, can produce one Oracle Database notification containing several row descriptions.
+The application receives one listener invocation for each affected row unless the notification requires an <code>INVALIDATE</code> event.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_transactions_retry_and_recovery">Transactions, Retry, and Recovery</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The shared <a href="#notificationTransactionsAndRetries">transaction and retry guidance</a> explains how to apply
+<code>@Transactional</code>, <code>@Retryable</code>, and <code>@Recoverable</code> to listener methods.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_startup_shutdown_and_failures">Startup, Shutdown, and Failures</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Micronaut Data creates notification registrations during application startup, after generated schema creation has completed.</p>
+</div>
+<div class="paragraph">
+<p>If any listener registration fails, startup fails with a <code>DataAccessException</code> that identifies the datasource and listener method.
+Micronaut Data attempts to unregister registrations already created for that datasource during the same startup attempt;
+cleanup failures are attached to the startup exception. If the datasource has no supported notification provider,
+startup instead fails with an <code>IllegalStateException</code>.</p>
+</div>
+<div class="paragraph">
+<p>See <a href="#notificationCallbackFailures">Handling Listener Failures</a> for handling of entity-loading and listener errors.
+Oracle listener failure logs include the listener method, operation, table, and <code>ROWID</code> when available.</p>
+</div>
+<div class="paragraph">
+<p>During graceful shutdown, Micronaut Data stops accepting new notifications and stops automatic registration recovery.
+It attempts to unregister its registrations and waits for cleanup, registration recovery already in progress, and
+listener invocations already running to complete, within the application&#8217;s graceful-shutdown timeout.</p>
+</div>
+<div class="paragraph">
+<p>Notifications waiting to be handled, including invalidation after registration recovery, are discarded when shutdown begins.
+A replacement registration created during shutdown is cleaned up without activating it or notifying the listener.
+Listener invocations already running are allowed to finish; the shutdown timeout does not forcibly terminate listener code or JDBC
+operations. Registration cleanup is best effort: database unavailability or shutdown timeout can prevent it from
+completing. When graceful shutdown is disabled, closing the application context still waits for cleanup before
+datasources and executors are destroyed. This wait uses <code>micronaut.lifecycle.graceful-shutdown.grace-period</code>
+(15 seconds by default), including running listener invocations and recovery. If the deadline expires, context destruction
+continues and registrations may remain in Oracle Database. Cleanup, recovery, and running listener invocations share this timeout.</p>
+</div>
+<div class="paragraph">
+<p>An abrupt process or host failure cannot run that cleanup. Oracle Database automatically cleans up ordinary
+(non-reliable) registrations after their owning client has permanently disconnected. Registrations become eligible
+for cleanup when the application terminates unexpectedly or the database instance or pluggable database (PDB)
+is shut down.</p>
+</div>
+<div class="paragraph">
+<p>Cleanup is not immediate. Oracle Database retains disconnected registrations for a period that allows the application
+to reuse them and supports transparent registration failover during database patching. After that period, cleanup
+remains lazy: Oracle Database removes a registration when it generates a notification for it and finds no connected
+client. A registration whose client remains disconnected will eventually be removed, but there is no fixed cleanup
+deadline. This automatic cleanup does not apply to registrations created with <code>NTF_QOS_RELIABLE</code> enabled.</p>
+</div>
+<div class="paragraph">
+<p>Reliable registrations without a configured timeout may remain in Oracle Database if application cleanup cannot
+complete. An administrator must explicitly unregister abandoned reliable registrations.</p>
+</div>
+<div class="paragraph">
+<p>Micronaut Data does not reuse or remove registrations left by a previous application instance during startup,
+because it cannot safely distinguish an abandoned registration from one owned by another healthy instance using
+the same Oracle Database user and datasource.</p>
+</div>
+<div class="paragraph">
+<p>To inspect registrations, connect to the same pluggable database as the application using the registration-owning user,
+then query <a href="https://docs.oracle.com/en/database/oracle/oracle-database/26/refrn/USER_CHANGE_NOTIFICATION_REGS.html"><code>USER_CHANGE_NOTIFICATION_REGS</code></a>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">SELECT DISTINCT regid, callback, table_name
+FROM user_change_notification_regs
+ORDER BY regid, table_name;</code></pre>
+</div>
+</div>
 </div>
 </div>
 
