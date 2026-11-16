@@ -1,5 +1,6 @@
 io.micronaut.data.processor.graph.visitors.GroovyDynamicAttributesVisitor
 io.micronaut.data.processor.graph.visitors.GraphDtoVisitor
+io.micronaut.data.processor.graph.visitors.GraphNonBlockingVisitor
 io.micronaut.data.graph.processor.visitors.GraphIdentityVisitor
 io.micronaut.data.processor.graph.visitors.GraphConverterSerdeVisitor
 io.micronaut.data.graph.processor.visitors.GraphRelationshipVisitor

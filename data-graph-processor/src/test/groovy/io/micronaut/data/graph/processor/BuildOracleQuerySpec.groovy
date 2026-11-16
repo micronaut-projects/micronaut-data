@@ -501,6 +501,52 @@ interface MentorRepository extends GenericRepository<Person, String> {
         e.message.contains('NOT EXISTS outside GRAPH_TABLE')
     }
 
+    @Unroll
+    void "a non-blocking repository rejects a method returning #description"() {
+        when:
+        buildRepository('test.BlockingRepository', """
+$MOVIES
+
+@TestNonBlockingRepository(graph = "movies")
+interface BlockingRepository extends $parent {
+    $method
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("so the method [$name] must return a reactive or asynchronous type")
+
+        where:
+        description     | parent                               | method                                  | name
+        'a list'        | 'GenericRepository<Movie, String>'   | 'List<Movie> findByReleased(int year);' | 'findByReleased'
+        'an entity'     | 'GenericRepository<Movie, String>'   | 'Movie findById(String id);'            | 'findById'
+        'a number'      | 'GenericRepository<Movie, String>'   | 'long countByReleased(int year);'       | 'countByReleased'
+        'an optional'   | 'GenericRepository<Movie, String>'   | 'Optional<Movie> find(String title);'   | 'find'
+        'nothing'       | 'GenericRepository<Movie, String>'   | 'void deleteById(String id);'           | 'deleteById'
+        'an entity too' | 'CrudRepository<Movie, String>'      | ''                                      | 'findById'
+    }
+
+    void "a non-blocking repository accepts reactive and asynchronous methods"() {
+        when:
+        def definition = buildRepository('test.ReactiveRepository', """
+$MOVIES
+
+@TestNonBlockingRepository(graph = "movies")
+interface ReactiveRepository extends io.micronaut.data.repository.reactive.ReactorCrudRepository<Movie, String> {
+    reactor.core.publisher.Flux<Movie> findByReleased(int year);
+    org.reactivestreams.Publisher<Movie> findByTitle(String title);
+    java.util.concurrent.CompletableFuture<Long> countByReleased(int year);
+    default String name() {
+        return "movies";
+    }
+}
+""")
+
+        then:
+        definition != null
+    }
+
     void "test two relationships sharing an edge table fail the build"() {
         when:
         buildRepository('test.FollowerRepository', """
