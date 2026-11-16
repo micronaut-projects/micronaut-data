@@ -1,0 +1,22 @@
+plugins {
+    id "io.micronaut.build.internal.data-micronaut-benchmark"
+}
+
+dependencies {
+    annotationProcessor projects.micronautDataGraphProcessor
+    implementation projects.micronautDataGraphRuntime
+
+    jmh projects.micronautDataGraphRuntime
+    jmh mn.micronaut.runtime
+}
+
+jmh {
+    includes = ['GraphMapping']
+    fork = 1
+    warmupIterations = 3
+    warmup = '1s'
+    iterations = 5
+    timeOnIteration = '1s'
+    benchmarkMode = ['thrpt']
+    timeUnit = 's'
+}
