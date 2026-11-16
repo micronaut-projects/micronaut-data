@@ -1,0 +1,12 @@
+{
+  "reflection": [
+    {
+      "type": "oracle.jdbc.OracleConnection",
+      "fields": [
+        {
+          "name": "CONNECTION_PROPERTY_TRANSACTION_PRIORITY"
+        }
+      ]
+    }
+  ]
+}

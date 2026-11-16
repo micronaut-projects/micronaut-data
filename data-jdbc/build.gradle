@@ -43,6 +43,7 @@ dependencies {
     testImplementation mnValidation.micronaut.validation
     testImplementation mnValidation.micronaut.validation.processor
     testImplementation mn.micronaut.http.client
+    testImplementation mn.micronaut.retry
 
     testImplementation(mnTestResources.testcontainers.mysql)
     testImplementation(mnTestResources.testcontainers.mariadb)
@@ -64,6 +65,7 @@ dependencies {
     testRuntimeOnly mnSql.postgresql
     testRuntimeOnly mnSql.mssql.jdbc
     testRuntimeOnly mn.snakeyaml
+    testRuntimeOnly mnTest.mockito.core
     testRuntimeOnly libs.h2gis
 
     testResourcesService mnSql.mariadb.java.client
