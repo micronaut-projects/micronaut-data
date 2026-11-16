@@ -3,7 +3,6 @@ package example;
 import io.micronaut.aop.InterceptorBean;
 import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.core.annotation.Order;
 import io.micronaut.core.order.Ordered;
 import io.micronaut.data.annotation.ChangeListener;
 import io.micronaut.data.annotation.Repository;
@@ -37,10 +36,14 @@ class ChangeEventRecorder implements MethodInterceptor<Object, Object> {
 
     /** Counts real repository calls independently of reads performed by listener workers. */
     @Singleton
-    @Order(Ordered.HIGHEST_PRECEDENCE)
     @InterceptorBean(Repository.class)
     static class RepositoryReadCounter implements MethodInterceptor<Object, Object> {
         private final ThreadLocal<Map<String, Integer>> calls = ThreadLocal.withInitial(HashMap::new);
+
+        @Override
+        public int getOrder() {
+            return Ordered.HIGHEST_PRECEDENCE;
+        }
 
         @Override
         public @Nullable Object intercept(MethodInvocationContext<Object, Object> context) {

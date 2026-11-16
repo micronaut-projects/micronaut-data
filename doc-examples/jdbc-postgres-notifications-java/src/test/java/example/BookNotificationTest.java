@@ -9,6 +9,7 @@ import io.micronaut.data.notification.ChangeOperation;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.micronaut.test.extensions.junit5.annotation.TestResourcesScope;
 import jakarta.inject.Inject;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
@@ -26,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @MicronautTest(transactional = false)
+@TestResourcesScope("postgres-book-notifications-java")
 class BookNotificationTest {
     @Inject DataSource dataSource;
     @Inject BookCatalog catalog;
