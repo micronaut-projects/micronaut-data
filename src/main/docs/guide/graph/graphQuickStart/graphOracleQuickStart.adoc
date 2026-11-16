@@ -20,6 +20,8 @@ A property graph in Oracle Database is defined over tables. This graph has accou
 include::doc-examples/oracle-graph-example-java/src/test/sql/bank-graph.sql[tag=graph]
 ----
 
+TIP: With schema generation enabled, the tables and the property graph are created from the entities, see <<graphOracle, Generating the schema>>.
+
 Annotate a class with ann:data.graph.annotation.Node[] to map the vertices of a label to their vertex table:
 
 snippet::example.Account[project-base="doc-examples/oracle-graph-example", source="main", tags="account", languages="java,kotlin,groovy,python"]
