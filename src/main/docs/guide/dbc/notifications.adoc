@@ -1,0 +1,180 @@
+Micronaut Data JDBC lets an application react to committed database changes through
+ann:data.annotation.ChangeListener[]. The listener contract is described below;
+the available notification capabilities and database setup depend on the database and JDBC driver.
+
+See <<oracleQueryNotifications, Oracle Change Notifications>> for prerequisites, examples, and configuration.
+
+JDBC change listeners are enabled by default. To disable them, for example in tests using H2 or another database
+without a notification provider, set the following in the test environment's configuration:
+
+[configuration]
+----
+micronaut:
+  data:
+    jdbc:
+      notifications:
+        enabled: false
+----
+
+When disabled, change listener methods receive no database notifications from any JDBC datasource. This allows the
+application to run against databases that do not support notifications.
+
+[[notificationListenerRequirements]]
+== Declaring a Listener
+
+The listener must be a Micronaut bean and must be proxyable; in particular,
+do not declare the listener class or listener method `final`.
+Micronaut Data validates the listener contract at compilation time. A method annotated with
+ann:data.annotation.ChangeListener[] must:
+
+* be a non-private, non-static instance method;
+* return `void`;
+* declare exactly one `ChangeEvent<E>` parameter; and
+* use a concrete Micronaut Data persistent entity type for `E`.
+
+The following excerpt shows the common annotation and method signature; the method body is omitted:
+
+snippet::example.notification.LibraryCache[project-base="doc-examples/jdbc-example-records", source="main", tags="listener-signature", languages="java,groovy,kotlin,python"]
+
+<1> Annotate the method with ann:data.annotation.ChangeListener[]. Its `ChangeEvent<Library>` parameter identifies
+`Library` as the persistent entity and provides the operation, optional current entity, and optional provider metadata.
+
+A complete listener also requires a provider-specific notification annotation, such as
+ann:data.jdbc.annotation.OracleChangeNotification[]. Missing provider configuration is rejected at compilation time.
+The database-specific sections show complete examples.
+
+The listener uses the `default` datasource unless another datasource is specified through the `dataSource`
+attribute, for example `@ChangeListener(dataSource = "library")`.
+
+[[notificationChangeEvents]]
+== Handling Change Events
+
+api:data.notification.ChangeEvent[] provides:
+
+* `operation()` -- the api:data.notification.ChangeOperation[] reported for the event;
+* `entity()` -- the current entity state, when it is available; and
+* `metadata(Class)` -- provider-specific metadata, when it is available.
+
+The possible `ChangeOperation` values are:
+
+* `INSERT` -- a row was inserted;
+* `UPDATE` -- a row was updated;
+* `DELETE` -- a row was deleted;
+* `INVALIDATE` -- application state may need refreshing without individual row details; and
+* `TERMINATED` -- notifications have permanently stopped for the listener.
+
+An `INVALIDATE` event indicates that application state may be outdated without identifying individual changed rows.
+Refresh the affected state, for example by reloading a cache or rerunning a query.
+
+On `TERMINATED`, stop relying on notifications to maintain application state. For example, clear and disable
+the cache and read directly from the database. This provider lifecycle event has no entity or table metadata.
+Handle `TERMINATED` explicitly, separately from `INVALIDATE`, and keep notification-backed caches disabled after
+handling it. The database-specific sections describe when termination occurs.
+
+Event metadata is optional; check whether it is present before accessing it. The database-specific sections describe
+the available metadata and the conditions that produce invalidations.
+
+[[notificationEntityLoading]]
+=== Entity Loading
+
+For `INSERT` and `UPDATE`, Micronaut Data reloads and maps the complete entity before invoking the listener.
+The entity reflects database state at reload time. It does not represent a historical snapshot of the commit
+that produced the notification. Another transaction can change or delete the row before it is loaded.
+If no row is found, `entity()` is empty, even for an insert or update event.
+
+For `DELETE`, `entity()` is empty because the row has been removed. Database-specific metadata, when available,
+identifies the deleted row.
+
+For `INVALIDATE`, `entity()` is empty because the event does not describe an individual row. Refresh the affected
+application state, for example by reloading a cache or rerunning a query.
+
+The database-specific sections describe the available row identifiers and how Micronaut Data uses them
+to reload entities for `INSERT` and `UPDATE` events.
+
+[[notificationDeliveryAndConcurrency]]
+== Delivery and Concurrency
+
+Each listener has a dedicated worker and a bounded queue. Entity loading and listener invocation execute
+sequentially in the order notifications enter that queue. Different listeners can execute concurrently, so protect
+state shared between listeners or with other application threads. Queue order does not establish a global order
+across database connections or listeners.
+
+These guarantees require synchronous listener execution. `@Async` schedules the listener body on another executor;
+the listener worker orders entity loading and submission, but does not wait for async work to finish.
+
+Change notifications are delivered only after the database transaction commits. If the transaction is rolled back,
+its changes do not produce notifications. Listener execution is separate from the transaction that made the changes.
+
+Use notifications to refresh application state or maintain caches. Micronaut Data change notifications do not provide
+a complete history of database writes, a stored event history that applications can read or replay, automatic redelivery
+after a listener fails, or unique event identifiers for detecting duplicates. Listener code should tolerate repeated
+notifications and refresh its state when it receives `INVALIDATE` or when application checks show that a refresh is needed.
+
+Oracle's `NTF_QOS_RELIABLE` option can queue notifications during connection interruptions, as described in
+<<oracleQueryNotifications, Oracle Change Notifications>>. This database feature does not let applications request
+replay of previously processed notifications.
+
+When a listener queue reaches its limit, waiting data notifications and the new submission are replaced with
+one `INVALIDATE` callback. A callback already running finishes first. Further data notifications are covered by
+that pending refresh until it starts. Notifications arriving during the refresh are queued normally and can cause
+another invalidation if the queue reaches its limit again.
+
+Reconciliation after recovery also replaces waiting work. This prevents older queued row changes from being
+delivered after that refresh. Reconciliation does not replay discarded row notifications.
+The database-specific sections describe queue capacities and how notifications are grouped.
+
+Your listener should handle `INVALIDATE` by refreshing the affected application state, even if it normally processes
+individual row changes. Application shutdown discards waiting callbacks and allows running work to finish.
+
+[[notificationTransactionsAndRetries]]
+== Transactions, Retry, and Recovery
+
+An ann:transaction.annotation.Transactional[] listener executes in a new transaction. It cannot participate in
+or roll back the original database transaction because that transaction has already committed before the
+notification is delivered.
+Entity loading runs before the listener's transaction starts. `@Transactional` applies to listener execution,
+not to the preceding entity load.
+
+link:{micronautapi}retry/annotation/Retryable.html[@Retryable] and link:{micronautapi}retry/annotation/Recoverable.html[@Recoverable]
+can be applied to the listener method. `@Retryable` can retry entity loading and, for listeners without `@Async`,
+listener execution:
+
+* if loading an inserted or updated row fails, loading can be retried;
+* if loading succeeds but listener code fails, later attempts reuse the entity already loaded for that event; and
+* if the method is transactional, its transaction starts after loading succeeds; failed listener attempts are rolled back before retrying.
+
+Because a callback can run more than once, listener work should be idempotent. A recovery method can handle a failure
+after all retry attempts are exhausted, but recovery does not replay the database notification or restore the
+transaction that caused it. Database connection and registration recovery are configured separately in the
+database-specific sections.
+
+With `@Async`, entity loading still runs on the listener worker before listener execution is scheduled on the async
+executor. Loading failures can be retried. Failures during async listener execution cannot reach retry or recovery handling
+because the listener invocation has already returned. The subscription's queue ordering and shutdown tracking cover loading and
+submission, not completion of the async listener work. Use the dedicated listener worker without `@Async` when listener
+retries, ordered completion, and subscription shutdown tracking are required.
+
+[[notificationCallbackFailures]]
+== Handling Listener Failures
+
+If entity loading or synchronous listener execution fails, the retry and recovery behavior described in
+<<notificationTransactionsAndRetries, Transactions, Retry, and Recovery>> applies when configured. If neither is
+configured, or the failure remains unhandled after retry and recovery, Micronaut Data passes it to
+api:data.jdbc.notification.ChangeListenerExceptionHandler[]. The default handler logs the listener method,
+datasource, operation, and available database-specific details.
+
+Register a `@Singleton` bean implementing `ChangeListenerExceptionHandler` to replace the default handler.
+Its `handle(ChangeListenerException)` method receives the original cause through `getCause()`, the datasource
+through `getDataSourceName()`, the executable listener method through `getListenerMethod()`, and the failed
+event through `getEvent()`. The event retains any available provider metadata, including row identifiers.
+Entity state can be unavailable when loading fails.
+
+The handler runs on the listener worker and can be invoked concurrently for different listeners.
+If a custom handler throws a runtime exception, Micronaut Data logs both failures and continues processing.
+Failures during an `@Async` listener body are handled by its async executor, as described above.
+
+The original database change remains committed even if entity loading or the listener fails. The notification
+is not automatically redelivered, and subsequent notifications continue to be processed.
+
+If the listener is transactional, its own transaction can be rolled back on failure. This rollback affects work
+performed by the listener and does not undo the original database change.
