@@ -6,16 +6,24 @@ import io.micronaut.data.graph.tck.entities.Article
 import io.micronaut.data.graph.tck.entities.Colleague
 import io.micronaut.data.graph.tck.entities.Collaboration
 import io.micronaut.data.graph.tck.entities.Friend
+import io.micronaut.data.graph.tck.entities.Milestone
 import io.micronaut.data.graph.tck.entities.Movie
 import io.micronaut.data.graph.tck.entities.Person
 import io.micronaut.data.graph.tck.entities.Role
+import io.micronaut.data.graph.tck.entities.Step
 import io.micronaut.data.graph.tck.repositories.ArticleRepository
 import io.micronaut.data.graph.tck.repositories.ColleagueRepository
 import io.micronaut.data.graph.tck.repositories.FriendRepository
+import io.micronaut.data.graph.tck.repositories.MilestoneRepository
 import io.micronaut.data.graph.tck.repositories.MovieRepository
+import io.micronaut.data.graph.tck.repositories.MovieSpecificationRepository
 import io.micronaut.data.graph.tck.repositories.PersonRepository
+import io.micronaut.data.graph.tck.repositories.StepRepository
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
+import io.micronaut.data.repository.jpa.criteria.DeleteSpecification
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
+import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
 import io.micronaut.transaction.TransactionOperations
 import spock.lang.Requires
 import spock.lang.Specification
@@ -47,6 +55,36 @@ abstract class AbstractGraphRepositorySpec extends Specification {
      * @return The repository
      */
     ArticleRepository getArticleRepository() {
+        null
+    }
+
+    /**
+     * The repository of an immutable entity whose identifier the entity events populate, or null if the
+     * implementation does not write relationships.
+     *
+     * @return The repository
+     */
+    StepRepository getStepRepository() {
+        null
+    }
+
+    /**
+     * The repository of an immutable entity with an assigned identifier and a {@code @Version} property, or null if
+     * the implementation does not write relationships.
+     *
+     * @return The repository
+     */
+    MilestoneRepository getMilestoneRepository() {
+        null
+    }
+
+    /**
+     * The repository of movies queried with criteria specifications, or null if the implementation does not
+     * support them.
+     *
+     * @return The repository
+     */
+    MovieSpecificationRepository getMovieSpecificationRepository() {
         null
     }
 
@@ -588,6 +626,273 @@ abstract class AbstractGraphRepositorySpec extends Specification {
 
         then:
         !articleRepository.existsById("graphs")
+    }
+
+    @Requires({ instance.articleRepository != null })
+    void "saveAll and updateAll write many versioned nodes"() {
+        when:
+        def saved = articleRepository.saveAll([new Article("a", "A"), new Article("b", "B"), new Article("c", "C")])
+
+        then:
+        saved*.version == [0L, 0L, 0L]
+        articleRepository.count() == 3
+
+        when:
+        def loaded = articleRepository.findAll().sort { it.slug }
+        def stale = articleRepository.findById("b").get()
+        loaded.each { it.title = it.title.toLowerCase() }
+        def updated = articleRepository.updateAll(loaded)
+
+        then:
+        updated*.version == [1L, 1L, 1L]
+        articleRepository.findAll()*.title.sort() == ["a", "b", "c"]
+
+        when: "one node of a batch was changed since it was read"
+        def again = articleRepository.findAll().sort { it.slug }
+        again.each { it.title = it.title.toUpperCase() }
+        again[1] = stale
+        articleRepository.updateAll(again)
+
+        then: "no node of the batch is updated"
+        thrown(OptimisticLockException)
+        articleRepository.findAll().sort { it.slug }.collect { [it.title, it.version] } == [["a", 1L], ["b", 1L], ["c", 1L]]
+
+        when: "one node of a batch of new nodes has the identifier of an existing node"
+        articleRepository.saveAll([new Article("d", "D"), new Article("b", "Other"), new Article("e", "E")])
+
+        then: "no node of the batch is inserted and the existing node is kept"
+        thrown(EntityExistsException)
+        articleRepository.count() == 3
+        with(articleRepository.findById("b").get()) {
+            title == "b"
+            version == 1L
+        }
+    }
+
+    @Requires({ instance.supportsCypher() })
+    void "saveAll writes an instance passed twice once"() {
+        given:
+        def ada = new Person("Ada Lovelace", 1815)
+
+        when:
+        def saved = personRepository.saveAll([ada, new Person("Grace Hopper", 1906), ada])
+
+        then:
+        saved.size() == 3
+        saved[0].id != null
+        saved[0].id == saved[2].id
+        personRepository.count() == 2
+    }
+
+    @Requires({ instance.supportsRelationshipWrites() && instance.supportsCypher() })
+    void "saveAll and updateAll write relationship entities by their identifiers"() {
+        given:
+        def ada = new Colleague("Ada")
+        def grace = new Colleague("Grace")
+        ada.colleagues = [new Collaboration("compiler", grace), new Collaboration("cobol", grace)]
+
+        when: "two new relationships link the same nodes"
+        def saved = colleagueRepository.saveAll([ada, new Colleague("Lin")]).toList()
+        def ids = saved[0].colleagues*.id
+
+        then:
+        ids.every { it != null }
+        ids.toSet().size() == 2
+        colleagueRepository.countCollaborations() == 2
+
+        when: "one of them is written again with its identifier, and a new one is added"
+        def again = new Collaboration("cobol-60", grace)
+        again.id = ids[1]
+        saved[0].colleagues = [saved[0].colleagues[0], again, new Collaboration("flow-matic", grace)]
+        def updated = colleagueRepository.updateAll(saved).toList()
+
+        then: "the saved one is updated and the other is created"
+        updated[0].colleagues[1].id == ids[1]
+        colleagueRepository.countCollaborations() == 3
+        colleagueRepository.findByColleaguesProject("cobol").isEmpty()
+        colleagueRepository.findByColleaguesProject("cobol-60")*.name.sort() == ["Ada", "Grace"]
+        colleagueRepository.findByColleaguesProject("flow-matic")*.name.sort() == ["Ada", "Grace"]
+    }
+
+    @Requires({ instance.stepRepository != null })
+    void "saveAll links records in a batch to the nodes of the batch"() {
+        given: "records that the entity events replace, which refer to the instances passed to saveAll"
+        def last = new Step(null, "last", null)
+        def middle = new Step(null, "middle", last)
+        def first = new Step(null, "first", middle)
+        def batch = [first: first, middle: middle, last: last]
+
+        when:
+        def saved = stepRepository.saveAll(order.collect { batch[it] }).collectEntries { [it.name(), it] }
+
+        then: "no node is created twice"
+        stepRepository.count() == 3
+        saved*.value*.id().toSet().size() == 3
+        !saved*.value*.id().contains(null)
+
+        and: "the returned references are complete, wherever they are in the batch"
+        saved.first.next().id() == saved.middle.id()
+        saved.first.next().next().id() == saved.last.id()
+        saved.middle.next().id() == saved.last.id()
+
+        where:
+        order << [["first", "middle", "last"], ["last", "middle", "first"], ["middle", "first", "last"]]
+    }
+
+    @Requires({ instance.milestoneRepository != null })
+    void "saveAll and updateAll link records with assigned identifiers and versions"() {
+        given:
+        def last = new Milestone("last", null, null)
+        def middle = new Milestone("middle", null, last)
+        def first = new Milestone("first", null, middle)
+
+        when: "the related records are also in the batch, so none is inserted twice"
+        def saved = milestoneRepository.saveAll([first, middle, last])
+
+        then:
+        milestoneRepository.count() == 3
+        saved*.version() == [0L, 0L, 0L]
+        saved[0].next().next().version() == 0L
+
+        when: "the results are saved again, so none is updated twice"
+        def updated = milestoneRepository.updateAll(saved)
+
+        then:
+        updated*.version() == [1L, 1L, 1L]
+        updated[0].next().version() == 1L
+        updated[0].next().next().version() == 1L
+        milestoneRepository.findById("first").get().version() == 1L
+    }
+
+    @Requires({ instance.supportsRelationshipWrites() && instance.supportsCypher() })
+    void "saveAll links mutable entities to the nodes of the batch"() {
+        given:
+        def last = new Person("Ada Lovelace", 1815)
+        def middle = new Person("Grace Hopper", 1906)
+        middle.mentor = last
+        def first = new Person("Katherine Johnson", 1918)
+        first.mentor = middle
+
+        when:
+        def saved = personRepository.saveAll([first, middle, last])
+
+        then:
+        personRepository.count() == 3
+        saved[0].mentor.is(saved[1])
+        saved[0].mentor.mentor.id == saved[2].id
+        saved[2].id != null
+    }
+
+    @Requires({ instance.articleRepository != null })
+    void "a batch of mutable entities that repeats an identifier conflicts as sequential saves do"() {
+        when: "two new instances have one identifier"
+        transactionOperations.executeWrite { articleRepository.saveAll([new Article("a", "First"), new Article("a", "Second"), new Article("b", "B")]) }
+
+        then:
+        thrown(EntityExistsException)
+        articleRepository.count() == 0
+
+        when: "two copies of one node have the version they were read with"
+        articleRepository.saveAll([new Article("a", "A"), new Article("b", "B")])
+        def copy = articleRepository.findById("a").get()
+        def other = articleRepository.findById("a").get()
+        copy.title = "First"
+        other.title = "Second"
+        def third = articleRepository.findById("b").get()
+        transactionOperations.executeWrite { articleRepository.updateAll([copy, other, third]) }
+
+        then:
+        thrown(OptimisticLockException)
+        with(articleRepository.findById("a").get()) {
+            title == "A"
+            version == 0L
+        }
+    }
+
+    @Requires({ instance.milestoneRepository != null })
+    void "a batch of records that repeats an identifier conflicts as sequential saves do"() {
+        when: "two new instances have one identifier"
+        transactionOperations.executeWrite { milestoneRepository.saveAll([new Milestone("a", null, null), new Milestone("a", null, null), new Milestone("b", null, null)]) }
+
+        then:
+        thrown(EntityExistsException)
+        milestoneRepository.count() == 0
+
+        when: "two copies of one node have the version they were read with"
+        milestoneRepository.saveAll([new Milestone("a", null, null), new Milestone("b", null, null)])
+        def copy = milestoneRepository.findById("a").get()
+        transactionOperations.executeWrite { milestoneRepository.updateAll([copy, new Milestone("a", copy.version(), null)]) }
+
+        then:
+        thrown(OptimisticLockException)
+        milestoneRepository.findById("a").get().version() == 0L
+    }
+
+    private static PredicateSpecification<Movie> releasedAfter(int year) {
+        return { root, cb -> cb.greaterThan(root.get("released"), year) } as PredicateSpecification<Movie>
+    }
+
+    @Requires({ instance.movieSpecificationRepository != null })
+    void "find nodes with criteria specifications"() {
+        given:
+        saveMovies()
+        def specs = movieSpecificationRepository
+
+        expect:
+        specs.findAll(releasedAfter(1995))*.title.sort() == ["The Matrix", "The Matrix Reloaded"]
+        specs.findAll(releasedAfter(1995), Sort.of(Sort.Order.desc("released")))*.title == ["The Matrix Reloaded", "The Matrix"]
+        specs.findOne({ root, cb -> cb.equal(root.get("title"), "Speed") } as PredicateSpecification<Movie>).get().released == 1994
+        !specs.findOne({ root, cb -> cb.equal(root.get("title"), "Jaws") } as PredicateSpecification<Movie>).present
+        specs.count(releasedAfter(1995)) == 2
+        specs.count((PredicateSpecification<Movie>) null) == 3
+        specs.exists(releasedAfter(2000))
+        !specs.exists(releasedAfter(2010))
+        specs.findAll(PredicateSpecification.where(releasedAfter(1990))
+            .and({ root, cb -> cb.lessThan(root.get("released"), 2000) } as PredicateSpecification<Movie>))*.title.sort() == ["Speed", "The Matrix"]
+
+        when:
+        def page = specs.findAll(releasedAfter(1990), Pageable.from(0, 2, Sort.of(Sort.Order.asc("released"))))
+
+        then:
+        page.content*.title == ["Speed", "The Matrix"]
+        page.totalSize == 3
+    }
+
+    @Requires({ instance.movieSpecificationRepository != null && instance.supportsRelationshipWrites() })
+    void "criteria specifications follow relationships"() {
+        given:
+        saveMovies()
+
+        expect:
+        movieSpecificationRepository.findAll({ root, cb ->
+            cb.equal(root.join("directors").get("name"), "Lana Wachowski")
+        } as PredicateSpecification<Movie>)*.title.sort() == ["The Matrix", "The Matrix Reloaded"]
+    }
+
+    @Requires({ instance.movieSpecificationRepository != null })
+    void "update and delete nodes with criteria specifications"() {
+        given:
+        saveMovies()
+
+        when:
+        def updated = movieSpecificationRepository.updateAll({ root, query, cb ->
+            query.set("votes", 10L)
+            cb.greaterThan(root.get("released"), 1995)
+        } as UpdateSpecification<Movie>)
+
+        then:
+        updated == 2
+        movieRepository.findById("The Matrix").get().votes == 10L
+        movieRepository.findById("Speed").get().votes == null
+
+        when:
+        def deleted = movieSpecificationRepository.deleteAll({ root, query, cb ->
+            cb.lessThan(root.get("released"), 2000)
+        } as DeleteSpecification<Movie>)
+
+        then:
+        deleted == 2
+        movieRepository.findAll()*.title == ["The Matrix Reloaded"]
     }
 
     @Requires({ instance.articleRepository != null })

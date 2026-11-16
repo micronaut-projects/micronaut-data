@@ -14,6 +14,9 @@ class MovieRepositorySpec extends AbstractNeo4jSpec {
     @Inject
     PersonRepository personRepository
 
+    @Inject
+    MovieSpecificationRepository movieSpecificationRepository
+
     void setup() {
         // tag::save[]
         def keanu = new Person(name: "Keanu Reeves", born: 1964)
@@ -85,5 +88,17 @@ class MovieRepositorySpec extends AbstractNeo4jSpec {
         movieRepository.findTitleByReleasedGreaterThanOrderByTitle(1990) == ["Speed", "The Matrix", "The Matrix Reloaded"]
         movieRepository.findByReleasedBetween(1990, 2000).size() == 2
         movieRepository.findMoviesActedInBy("Keanu Reeves")*.title == ["Speed", "The Matrix", "The Matrix Reloaded"]
+    }
+
+    void "specifications"() {
+        when:
+        // tag::useSpecifications[]
+        def recent = movieSpecificationRepository.findAll(MovieSpecifications.releasedAfter(1995)) // <1>
+        def byLana = movieSpecificationRepository.count(MovieSpecifications.directedBy("Lana Wachowski")) // <2>
+        // end::useSpecifications[]
+
+        then:
+        recent*.title.sort() == ["The Matrix", "The Matrix Reloaded"]
+        byLana == 2
     }
 }
