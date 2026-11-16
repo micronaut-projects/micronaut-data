@@ -22,7 +22,7 @@ import io.micronaut.core.annotation.Internal;
  * everything else are kept, before the query is scanned for keywords and parameters.
  *
  * <p>In Cypher a quote inside a literal is escaped with a backslash and a line comment opens with {@code //}.
- * In SQL and PGQL a quote is doubled instead, and a line comment opens with {@code --} as well. Block comments
+ * In SQL a quote is doubled instead, and a line comment opens with {@code --} as well. Block comments
  * open with {@code /*} in both.</p>
  *
  * @author graemerocher
@@ -59,7 +59,7 @@ public final class LiteralMasker {
      * Masks a query.
      *
      * @param query The query
-     * @param sql   Whether the query is SQL or PGQL, where {@code --} opens a comment and a quote is doubled rather
+     * @param sql   Whether the query is SQL, where {@code --} opens a comment and a quote is doubled rather
      *              than escaped with a backslash, instead of Cypher
      * @return The query with the content of its literals and comments replaced by spaces
      */
