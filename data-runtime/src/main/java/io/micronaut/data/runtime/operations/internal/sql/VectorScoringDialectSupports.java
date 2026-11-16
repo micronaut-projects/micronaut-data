@@ -53,7 +53,9 @@ final class VectorScoringDialectSupports {
             return EnumSet.of(
                 ScoringFunction.COSINE,
                 ScoringFunction.L2_EUCLIDEAN,
-                ScoringFunction.DOT
+                ScoringFunction.DOT,
+                ScoringFunction.HAMMING,
+                ScoringFunction.JACCARD
             );
         }
 
@@ -64,13 +66,24 @@ final class VectorScoringDialectSupports {
 
         @Override
         public String adaptQueryForScoringFunction(String query, ScoringFunction selected) {
+            // pgvector defines Hamming and Jaccard distance for bit operands only, and the others for numeric operands only
+            boolean binaryFunction = selected == ScoringFunction.HAMMING || selected == ScoringFunction.JACCARD;
+            if (binaryFunction && query.contains("<=>")) {
+                throw new IllegalArgumentException("Scoring function " + selected + " is only supported for binary vectors on PostgreSQL");
+            }
+            if (!binaryFunction && query.contains("<~>")) {
+                throw new IllegalArgumentException("Scoring function " + selected + " is not supported for binary vectors on PostgreSQL. Use HAMMING or JACCARD.");
+            }
             String operator = switch (selected) {
                 case COSINE -> "<=>";
                 case L2_EUCLIDEAN -> "<->";
                 case DOT -> "<#>";
+                case HAMMING -> "<~>";
+                case JACCARD -> "<%>";
                 default -> throw new IllegalArgumentException("Scoring function " + selected + " is not supported for PostgreSQL");
             };
-            return query.replace("<=>", operator);
+            // derived queries default to cosine distance, or to Hamming distance for bit vectors
+            return query.replace("<=>", operator).replace("<~>", operator);
         }
     }
 

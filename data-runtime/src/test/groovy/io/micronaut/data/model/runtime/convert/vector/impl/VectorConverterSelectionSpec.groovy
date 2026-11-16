@@ -5,6 +5,7 @@ import io.micronaut.data.model.runtime.convert.DatabaseType
 import io.micronaut.data.model.runtime.convert.DataAccessType
 import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter
+import io.micronaut.data.model.vector.BinaryVector
 import io.micronaut.data.model.vector.FloatVector
 import io.micronaut.data.model.vector.SparseFloatVector
 import io.micronaut.data.model.vector.Vector
@@ -153,6 +154,92 @@ class VectorConverterSelectionSpec extends Specification {
 
         then:
         persisted == "pg-dense:[1.0, 2.0]"
+    }
+
+    def "selects the binary converter over a generic converter registered first"() {
+        given:
+        def conv = new DefaultBinaryVectorAttributeConverter([new PostgresDenseConverter(), new PostgresBinaryConverter()])
+        def ctx = Stub(DatabaseTypeConversionContext) {
+            getDatabaseType() >> DatabaseType.POSTGRES
+        }
+        def reader = Mock(ResultReader<Object, Object>)
+        def vector = BinaryVector.of(true, false, true, false, false, false, false, false)
+
+        when:
+        def persisted = conv.convertToPersistedValue(vector, ctx)
+        def read = conv.convertToEntityValue(persisted, ctx)
+        conv.readFromResultSet(ctx, reader, new Object(), "embedding")
+
+        then:
+        persisted == new PostgresBits(vector.data())
+        read == vector
+        1 * reader.getRequiredValue(_, "embedding", PostgresBits) >> null
+        0 * reader.getRequiredValue(_, _, String)
+    }
+
+    def "a generic vector property holding a binary vector keeps the generic converter, registered #order"() {
+        given:
+        def conv = new DefaultVectorAttributeConverter(converters)
+        def ctx = Stub(DatabaseTypeConversionContext) {
+            getDatabaseType() >> DatabaseType.POSTGRES
+        }
+        def reader = Mock(ResultReader<Object, Object>)
+
+        when:
+        def persisted = conv.convertToPersistedValue(BinaryVector.of(true, false, true, false, false, false, false, false), ctx)
+        conv.readFromResultSet(ctx, reader, new Object(), "embedding")
+
+        then: "the value is written and read as the numeric vector that the property is mapped to"
+        persisted == "pg-dense:[1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0]"
+        1 * reader.getRequiredValue(_, "embedding", String) >> null
+        0 * reader.getRequiredValue(_, _, PostgresBits)
+
+        where:
+        order         | converters
+        "binary first" | [new PostgresBinaryConverter(), new PostgresDenseConverter()]
+        "binary last"  | [new PostgresDenseConverter(), new PostgresBinaryConverter()]
+    }
+
+    /**
+     * Stands in for pgvector's PGbit.
+     */
+    private static record PostgresBits(byte[] data) {
+        @Override
+        boolean equals(Object o) {
+            return o instanceof PostgresBits other && Arrays.equals(data, other.data)
+        }
+
+        @Override
+        int hashCode() {
+            return Arrays.hashCode(data)
+        }
+    }
+
+    private static final class PostgresBinaryConverter implements VectorTypeConverter<PostgresBits> {
+        @Override
+        PostgresBits convert(Vector vector) {
+            return new PostgresBits(((BinaryVector) vector).data())
+        }
+
+        @Override
+        Vector convert(PostgresBits object, Class<Vector> targetType) {
+            return new BinaryVector(object.data())
+        }
+
+        @Override
+        Set<Class<? extends Vector>> supportedVectorTypes() {
+            return [BinaryVector] as Set
+        }
+
+        @Override
+        DatabaseType databaseType() {
+            return DatabaseType.POSTGRES
+        }
+
+        @Override
+        Class<PostgresBits> getPersistedType() {
+            return PostgresBits
+        }
     }
 
     private static class OracleFloatConverter implements VectorTypeConverter<Object> {

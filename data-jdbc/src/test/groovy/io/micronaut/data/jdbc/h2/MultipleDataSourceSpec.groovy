@@ -2,6 +2,7 @@ package io.micronaut.data.jdbc.h2
 
 import io.micronaut.context.annotation.Property
 import io.micronaut.context.event.ApplicationEventPublisher
+import io.micronaut.data.annotation.Repository
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.jdbc.runtime.JdbcOperations
 import io.micronaut.data.model.query.builder.sql.Dialect
@@ -37,6 +38,14 @@ class MultipleDataSourceSpec extends Specification {
     OtherPersonRepository otherPersonRepository
     @Inject
     DbService service
+    @Inject
+    DefaultRepositoryService defaultRepositoryService
+    @Inject
+    OtherRepositoryService otherRepositoryService
+    @Inject
+    DefaultRepositoryFieldService defaultRepositoryFieldService
+    @Inject
+    OtherRepositoryFieldService otherRepositoryFieldService
 
     void cleanup() {
         personRepository.deleteAll()
@@ -75,6 +84,63 @@ class MultipleDataSourceSpec extends Specification {
             service.save()
         then:
             noExceptionThrown()
+    }
+
+    void "test the data source of a constructor injection point is not taken from another one with the same name"() {
+        when:
+            defaultRepositoryService.repo.save(new Person(name: "Fred"))
+            otherRepositoryService.repo.save(new Person(name: "Joe"))
+
+        then:
+            personRepository.findAll().collect { it.name } == ["Fred"]
+            otherPersonRepository.findAll().collect { it.name } == ["Joe"]
+    }
+
+    void "test the data source of a field injection point is not taken from another one with the same name"() {
+        when:
+            defaultRepositoryFieldService.repo.save(new Person(name: "Fred"))
+            otherRepositoryFieldService.repo.save(new Person(name: "Joe"))
+
+        then:
+            personRepository.findAll().collect { it.name } == ["Fred"]
+            otherPersonRepository.findAll().collect { it.name } == ["Joe"]
+    }
+
+    @Singleton
+    static class DefaultRepositoryService {
+
+        final H2PersonRepository repo
+
+        DefaultRepositoryService(H2PersonRepository repo) {
+            this.repo = repo
+        }
+    }
+
+    @Singleton
+    static class OtherRepositoryService {
+
+        final H2PersonRepository repo
+
+        // Same name and type as the parameter of DefaultRepositoryService: only @Repository tells them apart
+        OtherRepositoryService(@Repository("other") H2PersonRepository repo) {
+            this.repo = repo
+        }
+    }
+
+    @Singleton
+    static class DefaultRepositoryFieldService {
+
+        @Inject
+        protected H2PersonRepository repo
+    }
+
+    @Singleton
+    static class OtherRepositoryFieldService {
+
+        // Same name and type as the field of DefaultRepositoryFieldService: only @Repository tells them apart
+        @Inject
+        @Repository("other")
+        protected H2PersonRepository repo
     }
 
     @Singleton

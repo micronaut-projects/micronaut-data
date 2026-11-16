@@ -4,6 +4,7 @@ import io.micronaut.data.model.DataType
 import io.micronaut.data.model.runtime.convert.DataAccessType
 import io.micronaut.data.model.runtime.convert.DatabaseType
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter
+import io.micronaut.data.model.vector.BinaryVector
 import io.micronaut.data.model.vector.SparseFloatVector
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.vector.Vector
@@ -115,6 +116,45 @@ class VectorParameterBinderSpec extends Specification {
         then:
         prepared.dataType() == DataType.OBJECT
         prepared.value() == "pg-dense:[1.0, 2.0]"
+    }
+
+    void "binder prefers the binary converter over a generic converter registered first"() {
+        given:
+        def binder = VectorParameterBinder.create([new PostgresDenseVectorTypeConverter(), new PostgresBinaryVectorTypeConverter()])
+
+        when:
+        def prepared = binder.bind(Dialect.POSTGRES, DataType.OBJECT, BinaryVector.of(true, false, true, false, false, false, false, false))
+
+        then:
+        prepared.value() == [(byte) 0xA0] as byte[]
+    }
+
+    private static final class PostgresBinaryVectorTypeConverter implements VectorTypeConverter<byte[]> {
+
+        @Override
+        byte[] convert(Vector vector) {
+            return ((BinaryVector) vector).data()
+        }
+
+        @Override
+        Vector convert(byte[] object, Class<Vector> targetType) {
+            return new BinaryVector(object)
+        }
+
+        @Override
+        Set<Class<? extends Vector>> supportedVectorTypes() {
+            return [BinaryVector] as Set
+        }
+
+        @Override
+        DatabaseType databaseType() {
+            return DatabaseType.POSTGRES
+        }
+
+        @Override
+        Class<byte[]> getPersistedType() {
+            return byte[]
+        }
     }
 
     private static class OracleTestVectorTypeConverter implements VectorTypeConverter<String> {

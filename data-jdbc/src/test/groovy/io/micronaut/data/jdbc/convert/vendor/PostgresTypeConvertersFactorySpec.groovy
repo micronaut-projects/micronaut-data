@@ -1,5 +1,6 @@
 package io.micronaut.data.jdbc.convert.vendor
 
+import io.micronaut.data.model.vector.BinaryVector
 import com.pgvector.PGsparsevec
 import com.pgvector.PGvector
 import io.micronaut.core.convert.ConversionService
@@ -106,5 +107,40 @@ class PostgresTypeConvertersFactorySpec extends Specification {
         sparse.indices().toList() == [0, 3]
         sparse.values().toList() == [1.5f, -2f]
         sparse.toFloatArray().toList() == [1.5f, 0f, 0f, -2f, 0f]
+    }
+
+    def "BinaryVector round-trips through PGbit with the most significant bit first"() {
+        given:
+        def f = new PostgresTypeConvertersFactory()
+        def vector = new BinaryVector([(byte) 0xA0, (byte) 0x01] as byte[])
+
+        when:
+        def bit = f.fromBinaryVectorToPgBit().convert(vector, Object, null).get()
+
+        then:
+        bit.value == '1010000000000001'
+        f.fromPgObjectToBinaryVector().convert(bit, BinaryVector, null).get() == vector
+    }
+
+    def "a bit value read as a plain PGobject converts to BinaryVector"() {
+        given:
+        def f = new PostgresTypeConvertersFactory()
+        def pg = new PGobject(type: 'bit', value: '1111111100000000')
+
+        expect:
+        f.fromPgObjectToBinaryVector().convert(pg, BinaryVector, null).get() == new BinaryVector([(byte) 0xFF, (byte) 0x00] as byte[])
+        f.fromPgObjectToPgBit().convert(pg, Object, null).get().length() == 16
+    }
+
+    def "a bit value that is not a whole number of bytes is rejected"() {
+        given:
+        def f = new PostgresTypeConvertersFactory()
+
+        when:
+        f.fromPgObjectToBinaryVector().convert(new PGobject(type: 'bit', value: '101'), BinaryVector, null)
+
+        then:
+        IllegalArgumentException e = thrown()
+        e.message.contains('3 bits')
     }
 }

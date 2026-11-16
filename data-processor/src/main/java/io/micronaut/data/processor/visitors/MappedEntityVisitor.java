@@ -19,21 +19,26 @@ import io.micronaut.core.annotation.AnnotationClassValue;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.Duplicated;
 import io.micronaut.data.annotation.EmbeddedNaming;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.Indexes;
 import io.micronaut.data.annotation.InstantiateWithDefaultConstructor;
 import io.micronaut.data.annotation.JsonSubView;
 import io.micronaut.data.annotation.JsonView;
+import io.micronaut.data.annotation.JsonViewGenerated;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.Sharded;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.annotation.sql.JoinColumn;
 import io.micronaut.data.annotation.sql.JoinColumns;
+import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
@@ -74,6 +79,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
      */
     public static final int POSITION = 100;
 
+    private static final String JAVA_POSTPONE_EXCEPTION = "io.micronaut.annotation.processing.PostponeToNextRoundException";
     private static final String JSON_VIEW_ANNOTATION = "io.micronaut.data.annotation.JsonView";
     private static final String JSON_SUB_VIEW_ANNOTATION = "io.micronaut.data.annotation.JsonSubView";
     private static final String JSON_CREATOR_ANNOTATION = "com.fasterxml.jackson.annotation.JsonCreator";
@@ -170,6 +176,23 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         if (entity.hasAnnotation(JSON_VIEW_ANNOTATION) || entity.hasAnnotation(JSON_SUB_VIEW_ANNOTATION)) {
             validateJsonView(entity, context);
         }
+        validateDistribution(entity, context);
+    }
+
+    private void validateDistribution(SourcePersistentEntity entity, VisitorContext context) {
+        if (!entity.hasAnnotation(Sharded.class) && !entity.hasAnnotation(Duplicated.class)) {
+            return;
+        }
+        SourcePersistentEntity parent = entity.stringValue(Sharded.class, "parent")
+            .filter(parentName -> !"void".equals(parentName))
+            .flatMap(context::getClassElement)
+            .map(entityResolver)
+            .orElse(null);
+        try {
+            SqlSchemaUtils.validateTableDistribution(entity, parent);
+        } catch (MappingException e) {
+            throw new ProcessingException(entity.getClassElement(), e.getMessage());
+        }
     }
 
     /**
@@ -249,8 +272,16 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
     }
 
     private static boolean isPostponement(RuntimeException e) {
-        // the Java processor's PostponeToNextRoundException is not on this module's classpath
-        return e instanceof ElementPostponedToNextRoundException || e.getClass().getSimpleName().equals("PostponeToNextRoundException");
+        if (e instanceof ElementPostponedToNextRoundException) {
+            return true;
+        }
+        // the Java processor's PostponeToNextRoundException is not on this module's classpath,
+        // so resolve it through the loader of the thrown exception
+        try {
+            return Class.forName(JAVA_POSTPONE_EXCEPTION, false, e.getClass().getClassLoader()).isInstance(e);
+        } catch (ClassNotFoundException | LinkageError _) {
+            return false;
+        }
     }
 
     private static boolean isJsonCreator(MethodElement element) {
@@ -386,6 +417,22 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
                 for (SourcePersistentProperty property : entity.getPersistentProperties()) {
                     validateJsonViewProperty(property, entityType);
                 }
+                validateJsonViewHiddenFields(entity, entityType);
+            }
+        }
+    }
+
+    /**
+     * Validates that the hidden fields of a JSON view are properties of the defined entity.
+     *
+     * @param entity The JSON view
+     * @param entityType The type of the defined entity
+     */
+    private void validateJsonViewHiddenFields(SourcePersistentEntity entity, ClassElement entityType) {
+        String[] hidden = entity.hasAnnotation(JsonView.class) ? entity.stringValues(JsonView.class, "hidden") : entity.stringValues(JsonSubView.class, "hidden");
+        for (String hiddenPropertyName : hidden) {
+            if (entityType.findField(hiddenPropertyName).isEmpty()) {
+                throw new ProcessingException(entity.getClassElement(), "Json View hidden field " + hiddenPropertyName + " doesn't exist in the defined entity class " + entityType.getSimpleName());
             }
         }
     }
@@ -398,6 +445,14 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
      * @param entityType The type of the defined entity
      */
     private void validateJsonViewProperty(SourcePersistentProperty property, ClassElement entityType) {
+        if (property.getAnnotationMetadata().hasAnnotation(JsonViewGenerated.class)) {
+            boolean hasPath = property.getAnnotationMetadata().stringValue(JsonViewGenerated.class, "path").isPresent();
+            boolean hasSql = property.getAnnotationMetadata().stringValue(JsonViewGenerated.class, "sql").isPresent();
+            if (hasPath == hasSql) {
+                throw new ProcessingException(property.getPropertyElement(), "Json View generated field " + property.getName() + " must specify exactly one of path or sql");
+            }
+            return;
+        }
         if (property.getDataType() == DataType.OBJECT
                 || property.getAnnotationMetadata().stringValue(MappedProperty.class).isPresent()
                 || (property instanceof Association association && association.getKind() == Relation.Kind.EMBEDDED)

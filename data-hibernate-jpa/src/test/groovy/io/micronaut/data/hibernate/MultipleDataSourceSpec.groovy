@@ -20,6 +20,7 @@ import io.micronaut.data.annotation.Repository
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import spock.lang.Specification
 
 @MicronautTest(packages = "io.micronaut.data.tck.entities", transactional = false)
@@ -37,6 +38,13 @@ class MultipleDataSourceSpec extends Specification {
     @Inject PersonCrudRepository personRepository
     @Repository('other')
     @Inject PersonCrudRepository otherPersonRepository
+    @Inject DefaultRepositoryService defaultRepositoryService
+    @Inject OtherRepositoryService otherRepositoryService
+
+    void cleanup() {
+        personRepository.deleteAll()
+        otherPersonRepository.deleteAll()
+    }
 
     void "test multiple data sources"() {
         when:
@@ -52,5 +60,36 @@ class MultipleDataSourceSpec extends Specification {
 
         then:
         otherPersonRepository.findAll().toList()[0].name == "Joe"
+    }
+
+    void "test the data source of an injection point is not taken from another one with the same name"() {
+        when:
+        defaultRepositoryService.repo.save(new Person(name: "Fred"))
+        otherRepositoryService.repo.save(new Person(name: "Joe"))
+
+        then:
+        personRepository.findAll().collect { it.name } == ["Fred"]
+        otherPersonRepository.findAll().collect { it.name } == ["Joe"]
+    }
+
+    @Singleton
+    static class DefaultRepositoryService {
+
+        final PersonCrudRepository repo
+
+        DefaultRepositoryService(PersonCrudRepository repo) {
+            this.repo = repo
+        }
+    }
+
+    @Singleton
+    static class OtherRepositoryService {
+
+        final PersonCrudRepository repo
+
+        // Same name and type as the parameter of DefaultRepositoryService: only @Repository tells them apart
+        OtherRepositoryService(@Repository("other") PersonCrudRepository repo) {
+            this.repo = repo
+        }
     }
 }

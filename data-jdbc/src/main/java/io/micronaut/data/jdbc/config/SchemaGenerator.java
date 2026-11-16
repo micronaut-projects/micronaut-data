@@ -64,6 +64,7 @@ import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -279,7 +280,7 @@ public class SchemaGenerator {
         } else {
             switch (configuration.getSchemaGenerate()) {
                 case CREATE_DROP:
-                    for (PersistentEntity entity : entities) {
+                    for (PersistentEntity entity : SqlSchemaUtils.orderForDrop(entities)) {
                         try {
                             String[] statements = builder.buildDropTableStatements(entity);
                             for (String sql : statements) {
@@ -305,8 +306,10 @@ public class SchemaGenerator {
                             DataSettings.QUERY_LOG.debug("Executing CREATE statement: \n{}", stmt);
                         }
                         try {
-                            try (PreparedStatement ps = connection.prepareStatement(stmt)) {
-                                ps.executeUpdate();
+                            // DDL has no parameters, a plain statement avoids the driver parsing it for bind markers,
+                            // which the Oracle driver gets wrong for some duality view definitions
+                            try (Statement s = connection.createStatement()) {
+                                s.execute(stmt);
                             }
                         } catch (SQLException e) {
                             if (DataSettings.QUERY_LOG.isWarnEnabled()) {

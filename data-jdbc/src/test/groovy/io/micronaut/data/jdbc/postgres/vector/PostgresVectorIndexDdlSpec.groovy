@@ -1,5 +1,6 @@
 package io.micronaut.data.jdbc.postgres.vector
 
+import io.micronaut.data.model.vector.BinaryVector
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.VectorIndex
@@ -122,4 +123,124 @@ class PostgresVectorIndexDdlSpec extends Specification {
         ctx.close()
     }
 
+    @MappedEntity("binary_embedding_hnsw")
+    static class BinaryHnswEntity {
+        Long id
+
+        @VectorStorage(length = 16)
+        @VectorIndex(vectorIndexType = VectorIndexType.HNSW)
+        BinaryVector embedding
+    }
+
+    @MappedEntity("binary_embedding_jaccard")
+    static class BinaryJaccardEntity {
+        Long id
+
+        @VectorStorage(length = 16)
+        @VectorIndex(vectorIndexType = VectorIndexType.HNSW, distanceType = VectorIndexType.DistanceType.JACCARD)
+        BinaryVector embedding
+    }
+
+    @MappedEntity("binary_embedding_jaccard_ivf")
+    static class BinaryJaccardIvfEntity {
+        Long id
+
+        @VectorStorage(length = 16)
+        @VectorIndex(vectorIndexType = VectorIndexType.IVF, distanceType = VectorIndexType.DistanceType.JACCARD)
+        BinaryVector embedding
+    }
+
+    @MappedEntity("binary_embedding_unsized")
+    static class BinaryUnsizedEntity {
+        Long id
+
+        BinaryVector embedding
+    }
+
+    @MappedEntity("numeric_embedding_hamming")
+    static class NumericHammingEntity {
+        Long id
+
+        @VectorStorage(length = 16)
+        @VectorIndex(vectorIndexType = VectorIndexType.HNSW, distanceType = VectorIndexType.DistanceType.HAMMING)
+        Vector embedding
+    }
+
+    @MappedEntity("numeric_embedding_jaccard")
+    static class NumericJaccardEntity {
+        Long id
+
+        @VectorStorage(length = 16)
+        @VectorIndex(vectorIndexType = VectorIndexType.HNSW, distanceType = VectorIndexType.DistanceType.JACCARD)
+        Vector embedding
+    }
+
+    @MappedEntity("binary_embedding_cosine")
+    static class BinaryCosineEntity {
+        Long id
+
+        @VectorStorage(length = 16)
+        @VectorIndex(vectorIndexType = VectorIndexType.HNSW, distanceType = VectorIndexType.DistanceType.COSINE)
+        BinaryVector embedding
+    }
+
+    def "a binary distance is rejected on a numeric vector column"() {
+        when:
+        statementsFor(entity)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains("on binary vectors only")
+
+        where:
+        entity << [NumericHammingEntity, NumericJaccardEntity]
+    }
+
+    def "a numeric distance is rejected on a binary vector column"() {
+        when:
+        statementsFor(BinaryCosineEntity)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains("doesn't support distance type COSINE on binary vectors")
+    }
+
+    def "binary vectors use bit columns and the bit operator classes"() {
+        when:
+        String[] statements = statementsFor(type)
+
+        then:
+        statements.any { it.contains(column) }
+        statements.any { it.contains("CREATE INDEX") && it.toLowerCase().contains("using hnsw") && it.contains(operatorClass) }
+
+        where:
+        type                | column                    | operatorClass
+        BinaryHnswEntity    | '"embedding" bit(16)'     | 'bit_hamming_ops'
+        BinaryJaccardEntity | '"embedding" bit(16)'     | 'bit_jaccard_ops'
+    }
+
+    def "a binary vector without a length uses bit varying"() {
+        expect:
+        statementsFor(BinaryUnsizedEntity).any { it.contains('"embedding" bit varying') }
+    }
+
+    def "Jaccard distance needs an HNSW index"() {
+        when:
+        statementsFor(BinaryJaccardIvfEntity)
+
+        then:
+        IllegalArgumentException e = thrown()
+        e.message.contains('HNSW')
+    }
+
+    private static String[] statementsFor(Class<?> type) {
+        ApplicationContext ctx = ApplicationContext.run()
+        try {
+            List<DefinitionProvider> providers = new ArrayList<>(ctx.getBeansOfType(SqlColumnDefinitionProvider))
+            providers.addAll(ctx.getBeansOfType(SqlIndexDefinitionProvider))
+            return new SqlQueryBuilder(Dialect.POSTGRES).buildCreateTableStatements(new RuntimePersistentEntity<>(type), providers)
+        } finally {
+            ctx.close()
+        }
+    }
 }

@@ -317,6 +317,127 @@ interface VectorDocRepository extends CrudRepository<VectorDoc, Long> {
             "MYSQL"    | " LIMIT 2"       | "DISTANCE("
     }
 
+    @Unroll
+    void "test #dialect binary vector search uses the dialect's Hamming distance"() {
+        given:
+            def repository = buildRepository('test.BinaryDocRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.vector.BinaryVector;
+import io.micronaut.data.model.vector.search.SearchResults;
+import io.micronaut.data.annotation.VectorStorage;
+
+@MappedEntity
+class BinaryDoc {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    @VectorStorage(length = 16)
+    private BinaryVector embedding;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public BinaryVector getEmbedding() {
+        return embedding;
+    }
+
+    public void setEmbedding(BinaryVector embedding) {
+        this.embedding = embedding;
+    }
+}
+
+@JdbcRepository(dialect = Dialect.${dialect})
+interface BinaryDocRepository extends CrudRepository<BinaryDoc, Long> {
+    SearchResults<BinaryDoc> searchTop2ByEmbeddingNear(BinaryVector vector, Double maxDistance);
+}
+"""
+            )
+
+        when:
+            String query = getQuery(repository.getRequiredMethod(
+                    "searchTop2ByEmbeddingNear",
+                    Class.forName("io.micronaut.data.model.vector.BinaryVector"),
+                    Double
+            ))
+
+        then:
+            query.contains(scoreToken)
+            !query.contains(" <=> ")
+
+        where:
+            dialect    | scoreToken
+            "POSTGRES" | " <~> "
+            "ORACLE"   | ",HAMMING)"
+    }
+
+    @Unroll
+    void "test #dialect vector search binds every query vector to the mapped property"() {
+        given:
+            def repository = buildRepository('test.GenericVectorDocRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.vector.Vector;
+import io.micronaut.data.model.vector.search.SearchResults;
+import io.micronaut.data.annotation.VectorStorage;
+
+@MappedEntity
+class GenericVectorDoc {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    @VectorStorage(length = 8)
+    private Vector embedding;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Vector getEmbedding() {
+        return embedding;
+    }
+
+    public void setEmbedding(Vector embedding) {
+        this.embedding = embedding;
+    }
+}
+
+@JdbcRepository(dialect = Dialect.${dialect})
+interface GenericVectorDocRepository extends CrudRepository<GenericVectorDoc, Long> {
+    SearchResults<GenericVectorDoc> searchTop2ByEmbeddingNear(Vector vector, Double maxDistance);
+}
+"""
+            )
+
+        when:
+            def method = repository.getRequiredMethod(
+                    "searchTop2ByEmbeddingNear",
+                    Class.forName("io.micronaut.data.model.vector.Vector"),
+                    Double
+            )
+            String[] indexes = getParameterBindingIndexes(method)
+            String[] paths = getParameterPropertyPaths(method)
+            def vectorPaths = (0..<indexes.length).findAll { indexes[it] == "0" }.collect { paths[it] }
+
+        then: "the select, where and order by clauses each bind the query vector"
+            vectorPaths.size() == 3
+            vectorPaths.every { it == "embedding" }
+
+        where:
+            dialect << ["POSTGRES", "ORACLE", "MYSQL"]
+    }
+
     void "test #dialect approximate vector top search"() {
         given:
             def repository = buildRepository('test.ApproxVectorDocRepository', """

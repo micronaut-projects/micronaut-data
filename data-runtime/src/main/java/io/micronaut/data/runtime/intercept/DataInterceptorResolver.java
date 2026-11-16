@@ -37,8 +37,6 @@ import io.micronaut.data.operations.PrimaryRepositoryOperations;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.RepositoryOperationsRegistry;
 import io.micronaut.data.runtime.multitenancy.DataSourceTenantResolver;
-import io.micronaut.inject.ArgumentInjectionPoint;
-import io.micronaut.inject.InjectionPoint;
 import io.micronaut.transaction.support.ExceptionUtil;
 import jakarta.inject.Singleton;
 
@@ -72,33 +70,35 @@ public final class DataInterceptorResolver {
 
     DataInterceptor<Object, Object> resolve(@NonNull RepositoryMethodKey key,
                                             @NonNull MethodInvocationContext<Object, Object> context,
-                                            @Nullable InjectionPoint<?> injectionPoint) {
+                                            @Nullable String injectionPointDataSourceName) {
         String tenantDataSourceName;
         if (tenantResolver != null) {
             tenantDataSourceName = tenantResolver.resolveTenantDataSourceName();
         } else {
             tenantDataSourceName = null;
         }
-        TenantRepositoryMethodKey theKey = new TenantRepositoryMethodKey(tenantDataSourceName, key, null);
-        if (tenantDataSourceName == null && injectionPoint instanceof ArgumentInjectionPoint<?, ?> argumentInjectionPoint) {
-            theKey = new TenantRepositoryMethodKey(tenantDataSourceName, key, argumentInjectionPoint.asArgument());
-        }
+        // The data source of the injection point is only used without a tenant data source.
+        // Injection points with the same data source share the interceptor, so the cache stays bounded.
+        TenantRepositoryMethodKey theKey = new TenantRepositoryMethodKey(
+            tenantDataSourceName,
+            key,
+            tenantDataSourceName == null ? injectionPointDataSourceName : null
+        );
         // Don't use "computeIfAbsent" to avoid "java.lang.IllegalStateException: Recursive update"
         DataInterceptor<? super Object, ? super Object> dataInterceptor = interceptors.get(theKey);
         if (dataInterceptor == null) {
-            dataInterceptor = withEntityNullCheck(context, findDataInterceptor(context, injectionPoint, tenantDataSourceName));
+            dataInterceptor = withEntityNullCheck(context, findDataInterceptor(context, injectionPointDataSourceName, tenantDataSourceName));
             interceptors.put(theKey, dataInterceptor);
         }
         return dataInterceptor;
     }
 
     private DataInterceptor<Object, Object> findDataInterceptor(MethodInvocationContext<Object, Object> context,
-                                                                @Nullable InjectionPoint<?> injectionPoint,
+                                                                @Nullable String injectionPointDataSourceName,
                                                                 @Nullable String tenantDataSourceName) {
         final String dataSourceName;
         if (tenantDataSourceName == null) {
-            dataSourceName = context.stringValue(Repository.class)
-                .orElseGet(() -> injectionPoint == null ? null : injectionPoint.getAnnotationMetadata().stringValue(Repository.class).orElse(null));
+            dataSourceName = context.stringValue(Repository.class).orElse(injectionPointDataSourceName);
         } else {
             dataSourceName = tenantDataSourceName;
         }
@@ -230,14 +230,14 @@ public final class DataInterceptorResolver {
         private final String dataSource;
         private final RepositoryMethodKey key;
         @Nullable
-        private final Argument<?> injectionPoint;
+        private final String injectionPointDataSource;
         private final int hashCode;
 
-        TenantRepositoryMethodKey(@Nullable String dataSource, RepositoryMethodKey key, @Nullable Argument<?> injectionPoint) {
+        TenantRepositoryMethodKey(@Nullable String dataSource, RepositoryMethodKey key, @Nullable String injectionPointDataSource) {
             this.dataSource = dataSource;
             this.key = key;
-            this.injectionPoint = injectionPoint;
-            this.hashCode = Objects.hash(dataSource, key);
+            this.injectionPointDataSource = injectionPointDataSource;
+            this.hashCode = Objects.hash(dataSource, key, injectionPointDataSource);
         }
 
         @Override
@@ -249,7 +249,7 @@ public final class DataInterceptorResolver {
                 return false;
             }
             TenantRepositoryMethodKey that = (TenantRepositoryMethodKey) o;
-            return Objects.equals(dataSource, that.dataSource) && key.equals(that.key) && Objects.equals(injectionPoint, that.injectionPoint);
+            return Objects.equals(dataSource, that.dataSource) && key.equals(that.key) && Objects.equals(injectionPointDataSource, that.injectionPointDataSource);
         }
 
         @Override

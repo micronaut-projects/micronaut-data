@@ -28,6 +28,7 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils;
 import io.micronaut.data.model.runtime.convert.DefinitionProvider;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.r2dbc.operations.R2dbcSchemaHandler;
@@ -60,6 +61,7 @@ import java.util.stream.Collectors;
 @Internal
 public class R2dbcSchemaGenerator {
     private static final Logger LOG = LoggerFactory.getLogger(R2dbcSchemaGenerator.class);
+    private static final int DDL_LITERAL_LENGTH = 4000;
     private final List<DataR2dbcConfiguration> configurations;
     private final R2dbcSchemaHandler schemaHandler;
     private final List<DefinitionProvider> definitionProviders;
@@ -168,7 +170,9 @@ public class R2dbcSchemaGenerator {
                     if (DataSettings.QUERY_LOG.isDebugEnabled()) {
                         DataSettings.QUERY_LOG.debug("Creating Table: \n{}", sql);
                     }
-                    return execute(connection, sql)
+                    // Only the executed statement is wrapped, so the logs show the DDL as it is
+                    String statement = builder.getDialect() == Dialect.ORACLE ? executeImmediateDualityView(sql) : sql;
+                    return execute(connection, statement)
                             .onErrorResume((throwable -> {
                                 if (LOG.isWarnEnabled()) {
                                     LOG.warn("Unable to create table :{}, {}", throwable.getMessage(), sql);
@@ -192,7 +196,7 @@ public class R2dbcSchemaGenerator {
     private Mono<Void> dropTablesOneByOne(Connection connection,
                                           PersistentEntity[] entities,
                                           SqlQueryBuilder builder) {
-        List<String> dropStatements = Arrays.stream(entities).flatMap(entity -> Arrays.stream(builder.buildDropTableStatements(entity)))
+        List<String> dropStatements = Arrays.stream(SqlSchemaUtils.orderForDrop(entities)).flatMap(entity -> Arrays.stream(builder.buildDropTableStatements(entity)))
                 .toList();
         return Flux.fromIterable(dropStatements)
                 .concatMap(sql -> {
@@ -237,6 +241,36 @@ public class R2dbcSchemaGenerator {
             case CREATE -> createTables;
             default -> Mono.empty();
         };
+    }
+
+    /**
+     * Oracle R2DBC prepares every statement, and the Oracle driver finds bind markers in duality views whose sub-views
+     * have generated fields with function calls (ORA-17041). The DDL is passed to {@code EXECUTE IMMEDIATE} in string
+     * literals instead, and the driver doesn't look for bind markers inside string literals. A PL/SQL string literal is
+     * limited to 32,767 bytes, so the DDL is appended to a {@code CLOB} in literals of at most
+     * {@value #DDL_LITERAL_LENGTH} characters: up to 3 bytes each in AL32UTF8, twice that with every quote doubled.
+     *
+     * @param sql The CREATE statement
+     * @return The statement to execute
+     */
+    static String executeImmediateDualityView(String sql) {
+        if (!sql.startsWith("CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW")) {
+            return sql;
+        }
+        StringBuilder block = new StringBuilder("DECLARE ddl CLOB; BEGIN");
+        int start = 0;
+        while (start < sql.length()) {
+            int end = Math.min(start + DDL_LITERAL_LENGTH, sql.length());
+            if (end < sql.length() && Character.isHighSurrogate(sql.charAt(end - 1))) {
+                end--;
+            }
+            // Quotes are doubled after splitting, so that a doubled quote is never split
+            block.append(start == 0 ? " ddl := '" : " ddl := ddl || '")
+                .append(sql.substring(start, end).replace("'", "''"))
+                .append("';");
+            start = end;
+        }
+        return block.append(" EXECUTE IMMEDIATE ddl; END;").toString();
     }
 
     /**
