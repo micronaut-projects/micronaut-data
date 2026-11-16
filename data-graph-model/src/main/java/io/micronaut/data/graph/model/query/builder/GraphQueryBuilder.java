@@ -131,6 +131,17 @@ public interface GraphQueryBuilder extends QueryBuilder {
                           @Nullable PersistentProperty relationshipIdentity);
 
     /**
+     * Builds the query that adds labels to a node, identified by the parameter {@code id}.
+     *
+     * @param entity The entity
+     * @param labels The labels to add
+     * @return The query
+     */
+    default String buildAddLabelsQuery(PersistentEntity entity, List<String> labels) {
+        throw new UnsupportedOperationException("Dynamic labels are not supported by this database");
+    }
+
+    /**
      * Builds the query that creates a new relationship entity between two nodes, which may already be connected by
      * another one.
      *
