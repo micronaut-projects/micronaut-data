@@ -19,9 +19,11 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.graph.annotation.DynamicAttributes;
 import io.micronaut.data.graph.annotation.Node;
 import io.micronaut.data.graph.annotation.RelationshipProperties;
+import io.micronaut.data.graph.model.GraphEntities;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.PropertyElement;
 import io.micronaut.inject.visitor.TypeElementVisitor;
@@ -31,7 +33,8 @@ import io.micronaut.inject.visitor.VisitorContext;
  * Rejects database-assigned identifiers of a primitive type. Such a property cannot be unset, and the value it starts
  * with is an identifier the database also assigns, so a new node could not be told from a saved one.
  *
- * <p>Also rejects {@code @DynamicAttributes} on a relationship entity, whose attributes would be written but not read.</p>
+ * <p>Also rejects {@code @DynamicAttributes} on a relationship entity, whose attributes would be written but not read,
+ * and a node property stored under the name that versioned writes lock the node with, which they would remove.</p>
  *
  * @author graemerocher
  * @since 5.3.0
@@ -47,6 +50,10 @@ public final class GraphIdentityVisitor implements TypeElementVisitor<Object, Ob
         for (PropertyElement property : element.getBeanProperties()) {
             if (element.hasStereotype(RelationshipProperties.class) && property.hasAnnotation(DynamicAttributes.class)) {
                 context.fail("@DynamicAttributes is not supported on a relationship entity: " + property.getName(), property);
+            }
+            if (element.hasStereotype(Node.class)
+                && GraphEntities.LOCK_PROPERTY.equals(property.stringValue(MappedProperty.class).orElse(property.getName()))) {
+                context.fail("Property name [" + GraphEntities.LOCK_PROPERTY + "] is reserved for locking a node during versioned writes, map the property to another name: " + property.getName(), property);
             }
             if (property.hasStereotype(Id.class)
                 && property.hasStereotype(GeneratedValue.class)

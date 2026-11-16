@@ -2,6 +2,7 @@ package io.micronaut.data.neo4j
 
 import io.micronaut.data.graph.tck.AbstractGraphRepositorySpec
 import io.micronaut.data.neo4j.operations.Neo4jRepositoryOperations
+import io.micronaut.data.neo4j.tck.Neo4jArticleRepository
 import io.micronaut.data.neo4j.tck.Neo4jColleagueRepository
 import io.micronaut.data.neo4j.tck.Neo4jFriendRepository
 import io.micronaut.data.neo4j.tck.Neo4jMovieRepository
@@ -13,6 +14,9 @@ import jakarta.inject.Inject
 
 @MicronautTest(transactional = false)
 class Neo4jGraphRepositorySpec extends AbstractGraphRepositorySpec implements TestPropertyProvider {
+
+    @Inject
+    Neo4jArticleRepository articleRepository
 
     @Inject
     Neo4jMovieRepository movieRepository
