@@ -1,0 +1,26 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
+plugins {
+    id "io.micronaut.build.internal.data-python-example"
+    id "io.micronaut.test-resources"
+}
+
+micronaut {
+    testResources {
+        enabled = true
+        inferClasspath = false
+        additionalModules.add(KnownModules.NEO4J)
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
+}
+
+dependencies {
+    // The Python compiler takes the compile classpath as its annotation processor path
+    implementation projects.micronautDataGraphProcessor
+
+    implementation projects.micronautDataNeo4j
+    implementation(mnSql.jakarta.persistence.api)
+
+    runtimeOnly mnLogging.logback.classic
+}
