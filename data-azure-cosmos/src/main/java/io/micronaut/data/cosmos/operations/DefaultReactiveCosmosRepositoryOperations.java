@@ -296,10 +296,11 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
             } else {
                 argument = Argument.of(preparedQuery.getResultType());
             }
+            RuntimePersistentEntity<R> resultEntity = runtimeEntityRegistry.getEntity(preparedQuery.getResultType());
             return result.byPage().flatMap(response -> {
                 CosmosUtils.processDiagnostics(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.QUERY_ITEMS, response.getCosmosDiagnostics(),
                     response.getActivityId(), response.getRequestCharge());
-                return Flux.fromIterable(response.getResults().stream().map(item -> cosmosSerde.deserialize(item, argument)).toList());
+                return Flux.fromIterable(response.getResults().stream().map(item -> cosmosSerde.deserialize(cosmosSerde.withSerializedIdentity(resultEntity, item), argument)).toList());
             }).onErrorMap(e ->  CosmosUtils.cosmosAccessException(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.QUERY_ITEMS,
                 FAILED_TO_QUERY_ITEMS, e));
         }
