@@ -19,7 +19,7 @@ micronaut-multitenancy = "6.1.0"
 micronaut-validation = "5.2.1"
 micronaut-logging = "2.1.0"
 micronaut-flyway = "8.1.1"
-micronaut-liquibase = "7.2.0"
+micronaut-liquibase = "7.2.1"
 micronaut-coherence = "7.1.0"
 micronaut-sourcegen = "2.2.4"
 
