@@ -89,7 +89,6 @@ import io.micronaut.data.r2dbc.mapper.ReadableTupleMapper;
 import io.micronaut.data.r2dbc.mapper.R2dbcQueryStatement;
 import io.micronaut.data.r2dbc.mapper.RowTupleMapper;
 import io.micronaut.data.r2dbc.transaction.R2dbcReactorTransactionOperations;
-import io.micronaut.data.runtime.convert.DatabaseConversionContextFactory;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.convert.RuntimePersistentPropertyConversionContext;
 import io.micronaut.data.runtime.date.DateTimeProvider;
@@ -229,7 +228,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         List<R2dbcUpsertReturningExecutor> upsertReturningExecutorList,
         @Parameter R2dbcReactorTransactionOperations transactionOperations,
         @Parameter ReactorConnectionOperations<Connection> connectionOperations,
-        @Parameter DatabaseConversionContextFactory conversionContextFactory) {
+        @Parameter R2dbcDatabaseConversionContextFactory conversionContextFactory) {
         super(
             dataSourceName,
             new ColumnNameR2dbcResultReader(conversionService),
