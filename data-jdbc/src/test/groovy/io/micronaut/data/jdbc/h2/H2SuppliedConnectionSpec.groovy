@@ -249,6 +249,7 @@ class H2SuppliedConnectionSpec extends Specification implements H2TestPropertyPr
                 tx.registerSynchronization(new TransactionSynchronization() {
                     @Override
                     void afterCommit() {
+                        // registering the synchronization is what the test exercises
                     }
                 })
             })
