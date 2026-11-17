@@ -209,6 +209,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         return Dialect.ANSI;
     }
 
+    private boolean isNoArgKeywordFunction(FunctionExpression<?> functionExpression) {
+        return functionExpression.getExpressions().isEmpty()
+            && (NO_ARG_KEYWORD_FUNCTIONS.contains(functionExpression.getName())
+                || (getDialect() == Dialect.ORACLE && "ROWID".equals(functionExpression.getName())));
+    }
+
     /**
      * @param requiredVersion the required target dialect version
      * @return whether the target dialect version meets the requirement
@@ -3323,7 +3329,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         @Override
         public void visit(FunctionExpression<?> functionExpression) {
-            if (functionExpression.getExpressions().isEmpty() && NO_ARG_KEYWORD_FUNCTIONS.contains(functionExpression.getName())) {
+            if (isNoArgKeywordFunction(functionExpression)) {
                 query.append(functionExpression.getName());
             } else {
                 appendFunction(functionExpression.getName(), functionExpression.getExpressions());
@@ -3575,7 +3581,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         @Override
         public void visit(FunctionExpression<?> functionExpression) {
-            if (functionExpression.getExpressions().isEmpty() && NO_ARG_KEYWORD_FUNCTIONS.contains(functionExpression.getName())) {
+            if (isNoArgKeywordFunction(functionExpression)) {
                 query.append(functionExpression.getName());
             } else {
                 appendFunction(functionExpression.getName(), functionExpression.getExpressions());
@@ -3869,28 +3875,41 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             String transformed = getDataTransformerReadValue(tableAlias, property).orElse(null);
             String resultName = targetName != null ? escapeColumnIfNeeded(targetName, escape) : getColumnAlias(property);
             boolean useAlias = StringUtils.isNotEmpty(resultName);
-            String alias = null;
+            String alias;
             if (transformed != null) {
                 sb.append(transformed);
                 alias = useAlias ? resultName : property.getPersistedName();
             } else {
                 String column = getMappedName(namingStrategy, associations, property);
-                String escapedColumn = escapeColumnIfNeeded(column, escape);
-                String columnWithTableAlias = tableAlias == null ? escapedColumn : tableAlias + DOT + escapedColumn;
-                if (isJsonOrWktGeometry(property)) {
-                    sb.append(getGeometryFunction(columnWithTableAlias, property));
-                    alias = useAlias ? resultName : escapedColumn;
-                } else {
-                    sb.append(columnWithTableAlias);
-                    if (useAlias && !column.equals(targetName)) {
-                        alias = resultName;
-                    }
-                }
+                alias = appendPropertyColumn(sb, property, column, tableAlias, escape, useAlias ? resultName : null, column.equals(targetName));
             }
             if (!explicitAlias && StringUtils.isNotEmpty(alias)) {
                 sb.append(AS_CLAUSE).append(alias);
             }
             sb.append(COMMA);
+        }
+
+        /**
+         * Appends the property column, or the geometry read function wrapping it, and returns its alias.
+         */
+        @Nullable
+        private String appendPropertyColumn(StringBuilder sb,
+                                            PersistentProperty property,
+                                            String column,
+                                            @Nullable
+                                            String tableAlias,
+                                            boolean escape,
+                                            @Nullable
+                                            String resultName,
+                                            boolean columnIsTarget) {
+            String escapedColumn = escapeColumnIfNeeded(column, escape);
+            String columnWithTableAlias = tableAlias == null ? escapedColumn : tableAlias + DOT + escapedColumn;
+            if (isJsonOrWktGeometry(property)) {
+                sb.append(getGeometryFunction(columnWithTableAlias, property));
+                return resultName != null ? resultName : escapedColumn;
+            }
+            sb.append(columnWithTableAlias);
+            return columnIsTarget ? null : resultName;
         }
 
         /**
