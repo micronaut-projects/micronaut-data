@@ -21,8 +21,8 @@ dependencies {
     compileOnly libs.managed.jakarta.data.stateful
     compileOnly mn.micronaut.inject.java
 
-    implementation mn.micronaut.sourcegen.generator
-    implementation mn.micronaut.sourcegen.generator.java
+    implementation mnSourcegen.micronaut.sourcegen.generator
+    implementation mnSourcegen.micronaut.sourcegen.generator.java
 
     testAnnotationProcessor mn.micronaut.inject.java
 	testAnnotationProcessor projects.micronautDataProcessor
@@ -40,7 +40,7 @@ dependencies {
 	testImplementation projects.micronautDataTx
 	testImplementation projects.micronautDataJdbc
     testImplementation libs.managed.jakarta.data.api
-    testImplementation mn.micronaut.sourcegen.annotations
+    testImplementation mnSourcegen.micronaut.sourcegen.annotations
     testImplementation mn.jackson.annotations
 
     antlr libs.antlr
