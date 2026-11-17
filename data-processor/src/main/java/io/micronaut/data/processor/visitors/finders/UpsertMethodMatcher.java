@@ -21,6 +21,7 @@ import io.micronaut.data.annotation.DataAnnotationUtils;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.annotation.Upsert;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
@@ -143,37 +144,52 @@ public final class UpsertMethodMatcher extends AbstractMethodMatcher {
     @Nullable
     private String validateConflictProperties(SourcePersistentEntity rootEntity, List<String> conflictProperties) {
         for (String conflictProperty : conflictProperties) {
-            if (StringUtils.isEmpty(conflictProperty) || StringUtils.isEmpty(conflictProperty.trim())) {
-                return "conflict property cannot be blank";
-            }
-            PersistentPropertyPath propertyPath;
-            try {
-                propertyPath = rootEntity.getPropertyPath(conflictProperty);
-            } catch (IllegalArgumentException _) {
-                return "invalid conflict property path: " + conflictProperty;
-            }
-            if (propertyPath == null) {
-                return "conflict property does not exist: " + conflictProperty;
-            }
-            List<PersistentProperty> generatedProperties = new ArrayList<>();
-            boolean[] hasBindableColumn = {false};
-            PersistentEntityUtils.traversePersistentProperties(propertyPath, (associations, property) -> {
-                hasBindableColumn[0] = true;
-                // A referenced generated identity is a bindable foreign key; the root generated value is not.
-                // Keep this aligned with SqlQueryBuilderUtils.isGeneratedProperty for runtime upsert binding.
-                if (property.isGenerated() && (associations.isEmpty()
-                    || !associations.getLast().getAssociatedEntity().getIdentityProperties().contains(property))) {
-                    generatedProperties.add(property);
-                }
-            });
-            if (!hasBindableColumn[0]) {
-                return "conflict property does not map to a column: " + conflictProperty;
-            }
-            if (!generatedProperties.isEmpty()) {
-                return "generated conflict properties are not supported";
+            String reason = validateConflictProperty(rootEntity, conflictProperty);
+            if (reason != null) {
+                return reason;
             }
         }
         return null;
+    }
+
+    @Nullable
+    private String validateConflictProperty(SourcePersistentEntity rootEntity, String conflictProperty) {
+        if (StringUtils.isEmpty(conflictProperty) || StringUtils.isEmpty(conflictProperty.trim())) {
+            return "conflict property cannot be blank";
+        }
+        PersistentPropertyPath propertyPath;
+        try {
+            propertyPath = rootEntity.getPropertyPath(conflictProperty);
+        } catch (IllegalArgumentException _) {
+            return "invalid conflict property path: " + conflictProperty;
+        }
+        if (propertyPath == null) {
+            return "conflict property does not exist: " + conflictProperty;
+        }
+        List<PersistentProperty> generatedProperties = new ArrayList<>();
+        boolean[] hasBindableColumn = {false};
+        PersistentEntityUtils.traversePersistentProperties(propertyPath, (associations, property) -> {
+            hasBindableColumn[0] = true;
+            if (isUnbindableGeneratedProperty(associations, property)) {
+                generatedProperties.add(property);
+            }
+        });
+        if (!hasBindableColumn[0]) {
+            return "conflict property does not map to a column: " + conflictProperty;
+        }
+        if (!generatedProperties.isEmpty()) {
+            return "generated conflict properties are not supported";
+        }
+        return null;
+    }
+
+    /**
+     * A referenced generated identity is a bindable foreign key; the root generated value is not.
+     * Keep this aligned with SqlQueryBuilderUtils.isGeneratedProperty for runtime upsert binding.
+     */
+    private static boolean isUnbindableGeneratedProperty(List<Association> associations, PersistentProperty property) {
+        return property.isGenerated() && (associations.isEmpty()
+            || !associations.getLast().getAssociatedEntity().getIdentityProperties().contains(property));
     }
 
     private MethodMatch upsertEntity() {
