@@ -15,11 +15,15 @@
  */
 package io.micronaut.data.processor.visitors
 
+import io.micronaut.annotation.processing.PostponeToNextRoundException
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.data.annotation.Embeddable
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.MappedProperty
+import io.micronaut.data.exceptions.MappingException
 import io.micronaut.data.model.DataType
+import io.micronaut.inject.ast.Element
+import io.micronaut.inject.visitor.ElementPostponedToNextRoundException
 import spock.lang.PendingFeature
 import spock.lang.Unroll
 
@@ -420,5 +424,13 @@ class SNameTypeConverter implements AttributeConverter<SName, $type> {
 // Core doesn't detect primitive arrays
 //            'byte[]'                || DataType.BYTE_ARRAY
 //            'int[]'                 || DataType.INTEGER_ARRAY
+    }
+
+    void "test postponement is recognised for the core and Java processor exceptions only"() {
+        expect:
+        MappedEntityVisitor.isPostponement(new ElementPostponedToNextRoundException(Mock(Element)))
+        MappedEntityVisitor.isPostponement(new PostponeToNextRoundException(new Object(), "test.Book"))
+        !MappedEntityVisitor.isPostponement(new IllegalStateException("bootstrap class loader"))
+        !MappedEntityVisitor.isPostponement(new MappingException("not a postponement"))
     }
 }
