@@ -22,6 +22,7 @@ import io.micronaut.data.connection.async.AsyncUsingReactiveConnectionOperations
 import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
 import io.micronaut.data.connection.sync.SynchronousConnectionOperationsFromReactiveConnectionOperations;
 import io.micronaut.scheduling.TaskExecutors;
+import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import jakarta.inject.Named;
 
@@ -37,13 +38,13 @@ import java.util.concurrent.ExecutorService;
 final class R2dbcConnectionManagerFactory {
 
     @EachBean(ConnectionFactory.class)
-    <T> SynchronousConnectionOperationsFromReactiveConnectionOperations<T> buildSynchronousTransactionManager(@Parameter ReactorConnectionOperations<T> reactorConnectionOperations,
-                                                                                                              @Named(TaskExecutors.IO) ExecutorService executorService) {
+    SynchronousConnectionOperationsFromReactiveConnectionOperations<Connection> buildSynchronousTransactionManager(@Parameter ReactorConnectionOperations<Connection> reactorConnectionOperations,
+                                                                                                                   @Named(TaskExecutors.IO) ExecutorService executorService) {
         return new SynchronousConnectionOperationsFromReactiveConnectionOperations<>(reactorConnectionOperations, executorService);
     }
 
     @EachBean(ConnectionFactory.class)
-    <T> AsyncUsingReactiveConnectionOperations<T> buildAsyncTransactionOperations(@Parameter ReactorConnectionOperations<T> reactorConnectionOperations) {
+    AsyncUsingReactiveConnectionOperations<Connection> buildAsyncTransactionOperations(@Parameter ReactorConnectionOperations<Connection> reactorConnectionOperations) {
         return new AsyncUsingReactiveConnectionOperations<>(reactorConnectionOperations);
     }
 
