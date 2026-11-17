@@ -1730,6 +1730,69 @@ class Test {
         "generated identity"         | ""                                                                                                                  | ""                                                                                                                  | "@Id\n    @GeneratedValue" | ""                | "generated identity properties are not supported"
         "blank conflict property"    | "@Upsert(conflictsOn = \"\")"                                                                                | ""                                                                                                                  | "@Id"                      | ""                | "conflict property cannot be blank"
         "unknown conflict property"  | "@Upsert(conflictsOn = \"missing\")"                                                                         | ""                                                                                                                  | "@Id"                      | ""                | "conflict property does not exist: missing"
+        "generated conflict property" | "@Upsert(conflictsOn = \"id\")"                                                                            | ""                                                                                                                  | "@Id\n    @GeneratedValue" | ""                | "generated conflict properties are not supported"
+    }
+
+    void "test upsert binds a referenced generated identity as a conflict foreign key"() {
+        given:
+        BeanDefinition beanDefinition = buildRepository('test.MyInterface', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@JdbcRepository(dialect=Dialect.POSTGRES)
+@io.micronaut.context.annotation.Executable
+interface MyInterface extends GenericRepository<Book, Long> {
+    @Upsert(conflictsOn = "author")
+    Book upsert(Book book);
+}
+
+@MappedEntity("upsert_author")
+class Author {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+}
+
+@MappedEntity("upsert_book")
+class Book {
+    @Id
+    private Long id;
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    private Author author;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Author getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(Author author) {
+        this.author = author;
+    }
+}
+""")
+
+        when:
+        def upsertMethod = beanDefinition.findPossibleMethods("upsert").findFirst().get()
+
+        then:
+        getOperationType(upsertMethod) == DataMethod.OperationType.UPSERT
+        getQuery(upsertMethod).contains('ON CONFLICT ("author_id")')
     }
 
     void "test explicit upsert fails for non sql repository"() {
