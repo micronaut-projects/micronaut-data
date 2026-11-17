@@ -53,6 +53,7 @@ io.micronaut.data.jdbc.exceptions
 io.micronaut.data.jdbc.mapper
 io.micronaut.data.jdbc.notification
 io.micronaut.data.jdbc.notification.oracle
+io.micronaut.data.jdbc.notification.postgres
 io.micronaut.data.jdbc.operations
 io.micronaut.data.jdbc.runtime
 io.micronaut.data.jpa.annotation
@@ -74,6 +75,7 @@ io.micronaut.data.model.query
 io.micronaut.data.model.query.builder
 io.micronaut.data.model.query.builder.jpa
 io.micronaut.data.model.query.builder.sql
+io.micronaut.data.model.query.builder.sql.postgres
 io.micronaut.data.model.query.builder.sql.validation
 io.micronaut.data.model.query.impl
 io.micronaut.data.model.runtime

@@ -419,12 +419,119 @@
 </tbody>
 </table>
 <div style="page-break-after: always;"></div>
+<a id="io.micronaut.data.jdbc.notification.postgres.PostgresNotificationConfiguration" href="#io.micronaut.data.jdbc.notification.postgres.PostgresNotificationConfiguration">&#128279;</a>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 9. Configuration Properties for <a href="../api/io/micronaut/data/jdbc/notification/postgres/PostgresNotificationConfiguration.html">PostgresNotificationConfiguration</a></caption>
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Default value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.data.jdbc.notifications.postgres.queue-capacity</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the limit for waiting notifications per listener.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.data.jdbc.notifications.postgres.schema-generate</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Enables notification function and trigger creation alongside generated tables.
+ Has no effect for {@code NONE} or {@code VALIDATE}; migrations remain responsible for those schemas.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.data.jdbc.notifications.postgres.schema-generate-mode</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/jdbc/notification/postgres/PostgresNotificationConfiguration.SchemaGenerationMode.html">PostgresNotificationConfiguration$SchemaGenerationMode</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Selects row notifications or statement-level invalidations for generated triggers.
+ Applies to all subscribed tables included in schema generation.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.data.jdbc.notifications.postgres.poll-timeout</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the notification poll timeout. Durations are used at millisecond precision.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.data.jdbc.notifications.postgres.validation-interval</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the interval between round trips that detect silently broken listening connections.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.data.jdbc.notifications.postgres.validation-timeout</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the timeout for a listening connection check. Shutdown may wait for an active check.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+</tbody>
+</table>
+<div style="page-break-after: always;"></div>
+<a id="io.micronaut.data.jdbc.notification.postgres.PostgresNotificationConfiguration$ConnectionRecoveryConfiguration" href="#io.micronaut.data.jdbc.notification.postgres.PostgresNotificationConfiguration$ConnectionRecoveryConfiguration">&#128279;</a>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 10. Configuration Properties for <a href="../api/io/micronaut/data/jdbc/notification/postgres/PostgresNotificationConfiguration.ConnectionRecoveryConfiguration.html">PostgresNotificationConfiguration$ConnectionRecoveryConfiguration</a></caption>
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Default value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.data.jdbc.notifications.postgres.connection-recovery.max-retries</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the number of retries after the initial recovery attempt. Zero allows only that initial attempt.
+ A reconnected session resets the retry count and delay after a successful connection check.
+ If it fails before that check, it counts as a failed recovery attempt.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.data.jdbc.notifications.postgres.connection-recovery.retry-delay-multiplier</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the multiplier applied to the delay after each failed recovery attempt. One uses a fixed delay.
+ Delays are capped at {@link #getMaxRetryDelay()}.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.data.jdbc.notifications.postgres.connection-recovery.retry-delay</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the initial recovery delay. Durations are used at millisecond precision.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>micronaut.data.jdbc.notifications.postgres.connection-recovery.max-retry-delay</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">java.time.Duration</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets the maximum recovery delay. Durations are used at millisecond precision.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+</tbody>
+</table>
+<div style="page-break-after: always;"></div>
 </div>
 <div class="sect2">
 <h3 id="_micronaut_data_mongodb_config_properties">Micronaut Data Mongodb Config Properties</h3>
 <a id="io.micronaut.data.mongodb.conf.MongoDataConfiguration" href="#io.micronaut.data.mongodb.conf.MongoDataConfiguration">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 9. Configuration Properties for <a href="../api/io/micronaut/data/mongodb/conf/MongoDataConfiguration.html">MongoDataConfiguration</a></caption>
+<caption class="title">Table 11. Configuration Properties for <a href="../api/io/micronaut/data/mongodb/conf/MongoDataConfiguration.html">MongoDataConfiguration</a></caption>
 <colgroup>
 <col style="width: 25%;">
 <col style="width: 25%;">
@@ -466,7 +573,7 @@
 <h3 id="_micronaut_data_r2dbc_config_properties">Micronaut Data R2dbc Config Properties</h3>
 <a id="io.micronaut.data.r2dbc.config.DataR2dbcConfiguration" href="#io.micronaut.data.r2dbc.config.DataR2dbcConfiguration">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 10. Configuration Properties for <a href="../api/io/micronaut/data/r2dbc/config/DataR2dbcConfiguration.html">DataR2dbcConfiguration</a></caption>
+<caption class="title">Table 12. Configuration Properties for <a href="../api/io/micronaut/data/r2dbc/config/DataR2dbcConfiguration.html">DataR2dbcConfiguration</a></caption>
 <colgroup>
 <col style="width: 25%;">
 <col style="width: 25%;">
@@ -535,7 +642,7 @@
 <div style="page-break-after: always;"></div>
 <a id="io.micronaut.data.r2dbc.config.DataR2dbcConfiguration$DialectOptionsConfiguration" href="#io.micronaut.data.r2dbc.config.DataR2dbcConfiguration$DialectOptionsConfiguration">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 11. Configuration Properties for <a href="../api/io/micronaut/data/r2dbc/config/DataR2dbcConfiguration.DialectOptionsConfiguration.html">DataR2dbcConfiguration$DialectOptionsConfiguration</a></caption>
+<caption class="title">Table 13. Configuration Properties for <a href="../api/io/micronaut/data/r2dbc/config/DataR2dbcConfiguration.DialectOptionsConfiguration.html">DataR2dbcConfiguration$DialectOptionsConfiguration</a></caption>
 <colgroup>
 <col style="width: 25%;">
 <col style="width: 25%;">
@@ -571,7 +678,7 @@
 <h3 id="_micronaut_data_runtime_config_properties">Micronaut Data Runtime Config Properties</h3>
 <a id="io.micronaut.data.runtime.config.DataConfiguration" href="#io.micronaut.data.runtime.config.DataConfiguration">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 12. Configuration Properties for <a href="../api/io/micronaut/data/runtime/config/DataConfiguration.html">DataConfiguration</a></caption>
+<caption class="title">Table 14. Configuration Properties for <a href="../api/io/micronaut/data/runtime/config/DataConfiguration.html">DataConfiguration</a></caption>
 <colgroup>
 <col style="width: 25%;">
 <col style="width: 25%;">
@@ -607,7 +714,7 @@
 <div style="page-break-after: always;"></div>
 <a id="io.micronaut.data.runtime.multitenancy.conf.MultiTenancyConfiguration" href="#io.micronaut.data.runtime.multitenancy.conf.MultiTenancyConfiguration">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 13. Configuration Properties for <a href="../api/io/micronaut/data/runtime/multitenancy/conf/MultiTenancyConfiguration.html">MultiTenancyConfiguration</a></caption>
+<caption class="title">Table 15. Configuration Properties for <a href="../api/io/micronaut/data/runtime/multitenancy/conf/MultiTenancyConfiguration.html">MultiTenancyConfiguration</a></caption>
 <colgroup>
 <col style="width: 25%;">
 <col style="width: 25%;">
@@ -634,7 +741,7 @@
 <div style="page-break-after: always;"></div>
 <a id="io.micronaut.data.runtime.config.DataConfiguration$PageableConfiguration" href="#io.micronaut.data.runtime.config.DataConfiguration$PageableConfiguration">&#128279;</a>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 14. Configuration Properties for <a href="../api/io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html">DataConfiguration$PageableConfiguration</a></caption>
+<caption class="title">Table 16. Configuration Properties for <a href="../api/io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html">DataConfiguration$PageableConfiguration</a></caption>
 <colgroup>
 <col style="width: 25%;">
 <col style="width: 25%;">

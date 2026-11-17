@@ -4231,6 +4231,54 @@ a direction.</div>
 <div class="col-last even-row-color all-classes-table all-classes-table-tab4">
 <div class="block">Represents a polygon defined by one or more closed <a href="io/micronaut/data/model/geo/LineString.html" title="class in io.micronaut.data.model.geo"><code>LineString</code></a> rings.</div>
 </div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/data/jdbc/notification/postgres/PostgresChangeEventMetadata.html" title="interface in io.micronaut.data.jdbc.notification.postgres">PostgresChangeEventMetadata</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab1">
+<div class="block">PostgreSQL notification metadata identifying the affected table and row keys.</div>
+</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab6"><a href="io/micronaut/data/jdbc/notification/postgres/PostgresChangeListenerQuery.html" title="annotation interface in io.micronaut.data.jdbc.notification.postgres">PostgresChangeListenerQuery</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab6">
+<div class="block">Internal, compile-time generated PostgreSQL primary-key reload query and ordered key mapping for a change listener.</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab6"><a href="io/micronaut/data/jdbc/annotation/PostgresChangeNotification.html" title="annotation interface in io.micronaut.data.jdbc.annotation">PostgresChangeNotification</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab6">
+<div class="block">Declares the PostgreSQL notification channel for a method annotated with <a href="io/micronaut/data/annotation/ChangeListener.html" title="annotation interface in io.micronaut.data.annotation"><code>ChangeListener</code></a>.</div>
+</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/processor/visitors/PostgresChangeNotificationVisitor.html" title="class in io.micronaut.data.processor.visitors">PostgresChangeNotificationVisitor</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="block">Processes <code>@PostgresChangeNotification</code> methods during compilation.</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/model/query/builder/sql/postgres/PostgresIdentifiers.html" title="class in io.micronaut.data.model.query.builder.sql.postgres">PostgresIdentifiers</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="block">Normalizes mapped identifiers for PostgreSQL databases using UTF-8 and the default identifier limit.</div>
+</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdbc/notification/postgres/PostgresNotificationConfiguration.html" title="class in io.micronaut.data.jdbc.notification.postgres">PostgresNotificationConfiguration</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="block">Shared schema-generation, listener dispatch, polling, connection validation, and reconnection settings for PostgreSQL notification subscriptions.</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdbc/notification/postgres/PostgresNotificationConfiguration.ConnectionRecoveryConfiguration.html" title="class in io.micronaut.data.jdbc.notification.postgres">PostgresNotificationConfiguration.ConnectionRecoveryConfiguration</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab2">
+<div class="block">Settings for reconnecting failed PostgreSQL notification connections.</div>
+</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab3"><a href="io/micronaut/data/jdbc/notification/postgres/PostgresNotificationConfiguration.SchemaGenerationMode.html" title="enum class in io.micronaut.data.jdbc.notification.postgres">PostgresNotificationConfiguration.SchemaGenerationMode</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab3">
+<div class="block">Notification trigger modes supported by JDBC schema generation.</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab1"><a href="io/micronaut/data/jdbc/notification/postgres/PostgresNotificationConnectionFactory.html" title="interface in io.micronaut.data.jdbc.notification.postgres">PostgresNotificationConnectionFactory</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab1">
+<div class="block">Opens dedicated PostgreSQL connections for change notification subscriptions.</div>
+</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab4"><a href="io/micronaut/data/model/query/builder/sql/postgres/PostgresNotificationQuery.html" title="class in io.micronaut.data.model.query.builder.sql.postgres">PostgresNotificationQuery</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab4">
+<div class="block">Primary-key reload SQL and notification key mappings shared by annotation processing and runtime fallback.</div>
+</div>
+<div class="col-first odd-row-color all-classes-table all-classes-table-tab4"><a href="io/micronaut/data/model/query/builder/sql/postgres/PostgresNotificationQuery.Key.html" title="class in io.micronaut.data.model.query.builder.sql.postgres">PostgresNotificationQuery.Key</a></div>
+<div class="col-last odd-row-color all-classes-table all-classes-table-tab4">
+<div class="block">A mapped notification key shared by query generation and trigger installation.</div>
+</div>
+<div class="col-first even-row-color all-classes-table all-classes-table-tab2"><a href="io/micronaut/data/jdbc/notification/postgres/PostgresNotificationSchemaGenerator.html" title="class in io.micronaut.data.jdbc.notification.postgres">PostgresNotificationSchemaGenerator</a></div>
+<div class="col-last even-row-color all-classes-table all-classes-table-tab2">
+<div class="block">Installs PostgreSQL notification functions and triggers during JDBC schema generation when opted in.</div>
+</div>
 <div class="col-first odd-row-color all-classes-table all-classes-table-tab6"><a href="io/micronaut/data/annotation/event/PostLoad.html" title="annotation interface in io.micronaut.data.annotation.event">PostLoad</a></div>
 <div class="col-last odd-row-color all-classes-table all-classes-table-tab6">
 <div class="block">Designates method that is representing a post load event listener.</div>

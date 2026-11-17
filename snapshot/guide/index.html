@@ -277,6 +277,8 @@
         
         <div class="toc-item" style="margin-left:20px" id="toc-item-oracleQueryNotifications"><a href="#oracleQueryNotifications"><strong>4.12.1</strong><span>Oracle Change Notifications</span></a></div>
         
+        <div class="toc-item" style="margin-left:20px" id="toc-item-postgresChangeNotifications"><a href="#postgresChangeNotifications"><strong>4.12.2</strong><span>PostgreSQL Change Notifications</span></a></div>
+        
         <div class="toc-item" style="margin-left:0px" id="toc-item-hibernate"><a href="#hibernate"><strong>5</strong><span>Micronaut Data JPA Hibernate</span></a></div>
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-hibernateJpaAnnotations"><a href="#hibernateJpaAnnotations"><strong>5.1</strong><span>JPA Annotations</span></a></div>
@@ -20270,11 +20272,12 @@ Long calculateSum(@NonNull Long bookId);</code></pre>
 
 <div class="paragraph">
 <p>Micronaut Data JDBC lets an application react to committed database changes through
-<a href="../api/io/micronaut/data/annotation/ChangeListener.html">@ChangeListener</a>. The listener contract is described below;
-the available notification capabilities and database setup depend on the database and JDBC driver.</p>
+<a href="../api/io/micronaut/data/annotation/ChangeListener.html">@ChangeListener</a>. Oracle and PostgreSQL share the listener contract described below;
+the available notification capabilities and database setup differ.</p>
 </div>
 <div class="paragraph">
-<p>See <a href="#oracleQueryNotifications">Oracle Change Notifications</a> for prerequisites, examples, and configuration.</p>
+<p>See <a href="#oracleQueryNotifications">Oracle Change Notifications</a> or
+<a href="#postgresChangeNotifications">PostgreSQL Change Notifications</a> for prerequisites, examples, and configuration.</p>
 </div>
 <div class="paragraph">
 <p>JDBC change listeners are enabled by default. To disable them, for example in tests using H2 or another database
@@ -20417,9 +20420,13 @@ Micronaut Data validates the listener contract at compilation time. A method ann
 </table>
 </div>
 <div class="paragraph">
-<p>A complete listener also requires a provider-specific notification annotation, such as
-<a href="../api/io/micronaut/data/jdbc/annotation/OracleChangeNotification.html">@OracleChangeNotification</a>. Missing provider configuration is rejected at compilation time.
-The database-specific sections show complete examples.</p>
+<p>A complete listener also requires a database-specific notification annotation:
+<a href="../api/io/micronaut/data/jdbc/annotation/OracleChangeNotification.html">@OracleChangeNotification</a> for Oracle Database or
+<a href="../api/io/micronaut/data/jdbc/annotation/PostgresChangeNotification.html">@PostgresChangeNotification</a> for PostgreSQL.
+Omitting this annotation causes a compilation error.</p>
+</div>
+<div class="paragraph">
+<p>See the database-specific sections for complete examples.</p>
 </div>
 <div class="paragraph">
 <p>The listener uses the <code>default</code> datasource unless another datasource is specified through the <code>dataSource</code>
@@ -21734,6 +21741,1463 @@ then query <a href="https://docs.oracle.com/en/database/oracle/oracle-database/2
 <pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">SELECT DISTINCT regid, callback, table_name
 FROM user_change_notification_regs
 ORDER BY regid, table_name;</code></pre>
+</div>
+</div>
+</div>
+</div>
+
+<h2 id="postgresChangeNotifications"><a class="anchor" href="#postgresChangeNotifications"></a>4.12.2 PostgreSQL Change Notifications</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/5.3.x/src/main/docs/guide/dbc/notifications/postgresChangeNotifications.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Micronaut Data JDBC supports PostgreSQL table change notifications so applications can react
+when committed database changes affect a mapped entity table.</p>
+</div>
+<div class="paragraph">
+<p>Micronaut Data exposes a database-neutral listener contract through <a href="../api/io/micronaut/data/annotation/ChangeListener.html">@ChangeListener</a> and
+PostgreSQL notification settings through <a href="../api/io/micronaut/data/jdbc/annotation/PostgresChangeNotification.html">@PostgresChangeNotification</a>.
+When a table trigger publishes a notification, the listener receives an <a href="../api/io/micronaut/data/notification/ChangeEvent.html">ChangeEvent</a>
+containing the reported operation, optional current entity state, and optional provider-specific metadata.</p>
+</div>
+<div class="paragraph">
+<p>Notification payloads are unauthenticated hints. Re-read database state before making authoritative decisions
+from an event, especially a reported deletion. See <a href="#postgresNotificationTrustModel">Notification Trust and Database Access</a>.</p>
+</div>
+<div class="sect1">
+<h2 id="_prerequisites">Prerequisites</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Notifications require Micronaut Data JDBC, the PostgreSQL JDBC driver, and a Micronaut <code>JsonMapper</code> implementation,
+such as Micronaut Serialization:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">runtimeOnly(<span class="hljs-string">"org.postgresql:postgresql")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;org.postgresql&lt;/groupId&gt;
+    &lt;artifactId&gt;postgresql&lt;/artifactId&gt;
+    &lt;scope&gt;runtime&lt;/scope&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="pyronaut">[tool.pyronaut.dependencies]
+runtime = [
+    <span class="hljs-string">"org.postgresql:postgresql"</span>,
+]</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.serde:micronaut-serde-jackson")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;io.micronaut.serde&lt;/groupId&gt;
+    &lt;artifactId&gt;micronaut-serde-jackson&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="title"></div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="pyronaut">[tool.pyronaut.dependencies]
+runtime = [
+    <span class="hljs-string">"io.micronaut.serde:micronaut-serde-jackson"</span>,
+]</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="paragraph">
+<p>The setup described below covers regular tables that store rows directly. Views, foreign tables, and partitioned
+tables are not covered by this guide. The trigger examples use <code>EXECUTE FUNCTION</code>, which requires PostgreSQL 11 or later.
+Install the notification function and triggers through application migrations, or enable their creation alongside
+Micronaut Data schema generation for development and tests. The database user performing installation needs
+permission to create functions and triggers in the selected schema.</p>
+</div>
+<div class="sect2">
+<h3 id="_installing_the_trigger_function">Installing the Trigger Function</h3>
+<div class="paragraph">
+<p>Notification setup requires a function and triggers on each table you want to observe. Choose one setup option:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="#postgresNotificationSchemaGeneration">Using Micronaut Data Schema Generation</a> for development and tests.
+Micronaut Data creates the function and triggers alongside the mapped tables.</p>
+</li>
+<li>
+<p><a href="#postgresNotificationLiquibase">Using Liquibase</a> or <a href="#postgresNotificationFlyway">Using Flyway</a> for
+migration-managed deployments. Your migrations install the function and create the table triggers.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Use one option to manage notification triggers for a given table and channel. Combining automatic schema
+generation with migration-managed triggers can produce duplicate notifications. Functions and triggers remain
+installed after application shutdown.</p>
+</div>
+<div class="paragraph">
+<p>The <code>micronaut-data-jdbc</code> artifact includes two SQL resources:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>create-notification-function.sql</code> installs <code>micronaut_data_notify_change()</code> for individual row changes.</p>
+</li>
+<li>
+<p><code>create-invalidation-function.sql</code> installs <code>micronaut_data_notify_invalidation()</code> for statement-level invalidations.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Both resources are in the following classpath directory:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-text hljs" data-lang="text">io/micronaut/data/jdbc/notification/postgres/sql/</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For migrations, select the installation schema explicitly. Each resource creates its function in the migration&#8217;s
+current schema, and the function executes with the caller&#8217;s privileges. Include the installation schema in the
+function name when creating triggers, as shown below. The Liquibase and Flyway examples install the row-notification
+function; <a href="#postgresStatementNotifications">Statement Notifications for Bulk Changes</a> shows the alternative.</p>
+</div>
+<div class="sect3">
+<h4 id="postgresNotificationSchemaGeneration">Using Micronaut Data Schema Generation</h4>
+<div class="sect4">
+<h5 id="_enable_schema_generation">Enable Schema Generation</h5>
+<div class="paragraph">
+<p>For development and tests that use Micronaut Data schema generation, enable notification schema generation:</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">datasources.default.db-type=postgresql
+datasources.default.dialect=POSTGRES
+datasources.default.schema-generate=CREATE_DROP
+micronaut.data.jdbc.notifications.postgres.schema-generate=true</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">datasources:
+  default:
+    db-type: postgresql
+    dialect: POSTGRES
+    schema-generate: CREATE_DROP
+micronaut:
+  data:
+    jdbc:
+      notifications:
+        postgres:
+          schema-generate: true</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[datasources.default]
+db-type = "postgresql"
+dialect = "POSTGRES"
+schema-generate = "CREATE_DROP"
+
+[micronaut.data.jdbc.notifications.postgres]
+schema-generate = true</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">datasources {
+  'default' {
+    dbType = "postgresql"
+    dialect = "POSTGRES"
+    schemaGenerate = "CREATE_DROP"
+  }
+}
+micronaut {
+  data {
+    jdbc {
+      notifications {
+        postgres {
+          schemaGenerate = true
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  datasources {
+    default {
+      db-type = "postgresql"
+      dialect = "POSTGRES"
+      schema-generate = "CREATE_DROP"
+    }
+  }
+  micronaut {
+    data {
+      jdbc {
+        notifications {
+          postgres {
+            schema-generate = true
+          }
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "datasources": {
+    "default": {
+      "db-type": "postgresql",
+      "dialect": "POSTGRES",
+      "schema-generate": "CREATE_DROP"
+    }
+  },
+  "micronaut": {
+    "data": {
+      "jdbc": {
+        "notifications": {
+          "postgres": {
+            "schema-generate": true
+          }
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p><code>CREATE_DROP</code> drops and recreates mapped tables during startup; use it only where existing data can be discarded.</p>
+</div>
+<div class="paragraph">
+<p>The two <code>schema-generate</code> settings have different purposes:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>datasources.&lt;name&gt;.schema-generate</code> controls creation of mapped tables for that datasource.</p>
+</li>
+<li>
+<p><code>micronaut.data.jdbc.notifications.postgres.schema-generate</code> adds notification functions and triggers for listener tables.
+It defaults to <code>false</code> and applies to all PostgreSQL datasources using <code>CREATE</code> or <code>CREATE_DROP</code>.
+It has no effect for datasources using <code>NONE</code> or <code>VALIDATE</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_choose_a_notification_mode">Choose a Notification Mode</h5>
+<div class="paragraph">
+<p>Micronaut Data creates the notification functions and triggers for tables used by your listeners.
+The <code>schema-generate-mode</code> setting supports two modes:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>ROW</code> is the default. Listeners receive individual insert, update, and delete events with primary keys,
+and an <code>INVALIDATE</code> event when a table is truncated.</p>
+</li>
+<li>
+<p><code>STATEMENT</code> sends a table-level <code>INVALIDATE</code> for each insert, update, delete, or truncate statement,
+including statements that affect no rows. These events have no row keys or entity, so listeners must refresh
+their state from the database. Choose this mode for tables frequently changed by bulk statements.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Notifications are delivered after commit, and PostgreSQL can combine identical notifications within the same transaction.</p>
+</div>
+<div class="paragraph">
+<p>To select <code>STATEMENT</code>, configure:</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.data.jdbc.notifications.postgres.schema-generate=true
+micronaut.data.jdbc.notifications.postgres.schema-generate-mode=STATEMENT</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut:
+  data:
+    jdbc:
+      notifications:
+        postgres:
+          schema-generate: true
+          schema-generate-mode: STATEMENT</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[micronaut.data.jdbc.notifications.postgres]
+schema-generate = true
+schema-generate-mode = "STATEMENT"</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut {
+  data {
+    jdbc {
+      notifications {
+        postgres {
+          schemaGenerate = true
+          schemaGenerateMode = "STATEMENT"
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  micronaut {
+    data {
+      jdbc {
+        notifications {
+          postgres {
+            schema-generate = true
+            schema-generate-mode = "STATEMENT"
+          }
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "micronaut": {
+    "data": {
+      "jdbc": {
+        "notifications": {
+          "postgres": {
+            "schema-generate": true,
+            "schema-generate-mode": "STATEMENT"
+          }
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>The selected mode applies to all listener tables included in schema generation.</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_generated_tables_and_schemas">Generated Tables and Schemas</h5>
+<div class="paragraph">
+<p>Notification setup applies only to entities discovered for table generation and used by listeners selecting that
+datasource. If <code>datasources.&lt;name&gt;.packages</code> is configured, it restricts entity discovery to those packages;
+otherwise, Micronaut Data discovers mapped entities without that package restriction. Notification setup finishes
+before your listeners start receiving events.</p>
+</div>
+<div class="paragraph">
+<p>Functions and triggers are created in the mapped table&#8217;s schema. Without an explicit schema in the mapping,
+the schema selected for table generation is used: <code>datasources.&lt;name&gt;.schema-generate-name</code>, or each schema listed
+in <code>schema-generate-names</code> when configured. If neither setting is configured, the connection&#8217;s current schema is used.</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_restarts_and_changes">Restarts and Changes</h5>
+<div class="paragraph">
+<p>Restarting with unchanged listener settings does not add duplicate notification triggers. Switching between
+<code>ROW</code> and <code>STATEMENT</code> updates the generated triggers to use the selected mode, including with <code>CREATE</code>.</p>
+</div>
+<div class="paragraph">
+<p>Removing a listener, renaming its channel, or disabling notification schema generation does not remove previously
+installed triggers from retained tables. Remove obsolete triggers through a migration after confirming that no
+other application or running instance needs them.</p>
+</div>
+<div class="paragraph">
+<p>When <code>CREATE_DROP</code> drops and recreates a table, its old triggers are removed. If notification schema generation
+is enabled, Micronaut Data installs the triggers required by the current listener settings. Notification functions,
+including those from a previously selected mode, remain installed until you remove them.</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_failures_and_shared_databases">Failures and Shared Databases</h5>
+<div class="paragraph">
+<p>If notification setup fails, application startup fails and changes made during that notification setup
+are undone. Existing notification functions and triggers are restored. Changes already made to tables,
+including data removed by <code>CREATE_DROP</code>, are not undone by this rollback.</p>
+</div>
+<div class="paragraph">
+<p>Use separate databases or schemas for parallel tests. Running schema generation from multiple application
+instances against the same schema is unsupported. Use coordinated migrations for applications sharing a database.</p>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="postgresNotificationLiquibase">Using Liquibase</h4>
+<div class="paragraph">
+<p>For migration-managed schemas, leave <code>micronaut.data.jdbc.notifications.postgres.schema-generate</code> disabled
+(the default). Add the following changeset to your changelog to install the row-notification function in <code>public</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">    &lt;changeSet id="postgres-notification-function"
+               author="application"
+               dbms="postgresql"
+               runOnChange="true"&gt; <i class="conum" data-value="1"></i><b>(1)</b>
+
+        &lt;sql&gt;SET LOCAL search_path TO public&lt;/sql&gt; <i class="conum" data-value="2"></i><b>(2)</b>
+
+        &lt;sqlFile
+            path="io/micronaut/data/jdbc/notification/postgres/sql/create-notification-function.sql"
+            relativeToChangelogFile="false" splitStatements="false"/&gt; <i class="conum" data-value="3"></i><b>(3)</b> <i class="conum" data-value="4"></i><b>(4)</b>
+    &lt;/changeSet&gt;</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td><code>runOnChange="true"</code> reruns the changeset when Liquibase detects a change to the bundled SQL, such as after a
+dependency upgrade. The function definition is updated using <code>CREATE OR REPLACE FUNCTION</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td><code>SET LOCAL</code> selects <code>public</code> for the changeset&#8217;s transaction. Replace <code>public</code> with your target schema if needed.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td><code>relativeToChangelogFile="false"</code> resolves the SQL resource from the classpath rather than relative to the
+application changelog.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td><code>splitStatements="false"</code> preserves the function definition&#8217;s internal semicolons.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Create the table and its triggers in subsequent changesets,
+following <a href="#postgresNotificationTableTriggers">Creating Table Triggers</a>.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="postgresNotificationFlyway">Using Flyway</h4>
+<div class="paragraph">
+<p>For migration-managed schemas, leave <code>micronaut.data.jdbc.notifications.postgres.schema-generate</code> disabled
+(the default). Copy the bundled <code>create-notification-function.sql</code> resource into a versioned SQL migration,
+such as <code>src/main/resources/db/migration/V1__install_notification_function.sql</code>. Select the target schema
+with <code>SET LOCAL search_path TO public</code> before the function definition, replacing <code>public</code> if needed.
+Keep the migration transactional so the schema selection applies to the function installation.</p>
+</div>
+<div class="paragraph">
+<p>Alternatively, a transactional Java migration can read the bundled resource from the classpath and execute it
+using Flyway&#8217;s migration connection after selecting the target schema. The <code>micronaut-data-jdbc</code> dependency
+must be on the migration runtime classpath. See the
+<a href="https://documentation.red-gate.com/flyway/flyway-concepts/migrations/java-based-migrations">Flyway Java migration documentation</a>
+for discovery and naming conventions.</p>
+</div>
+<div class="paragraph">
+<p>Create the table and triggers in subsequent migrations, following
+<a href="#postgresNotificationTableTriggers">Creating Table Triggers</a>. Versioned migrations run once; add a new migration
+when a dependency upgrade changes the bundled function and you need to reinstall it.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="postgresNotificationTableTriggers">Creating Table Triggers</h4>
+<div class="paragraph">
+<p>For migration-managed row notifications, create the table and its triggers after installing
+<code>micronaut_data_notify_change()</code>. This example creates <code>public.book</code> and attaches row and truncate triggers:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">CREATE TABLE public.book (id bigint PRIMARY KEY, title text NOT NULL);
+
+CREATE TRIGGER book_changes
+AFTER INSERT OR UPDATE OR DELETE ON public.book <i class="conum" data-value="1"></i><b>(1)</b>
+FOR EACH ROW EXECUTE FUNCTION public.micronaut_data_notify_change(
+    'book_changes', <i class="conum" data-value="2"></i><b>(2)</b>
+    'id' <i class="conum" data-value="3"></i><b>(3)</b>
+);
+
+CREATE TRIGGER book_truncate
+AFTER TRUNCATE ON public.book
+FOR EACH STATEMENT EXECUTE FUNCTION public.micronaut_data_notify_change('book_changes', 'id'); <i class="conum" data-value="4"></i><b>(4)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The row trigger publishes a notification for each inserted, updated, or deleted row.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The first function argument is the channel. It must match the listener&#8217;s configured channel exactly.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Subsequent arguments are the exact mapped primary-key column names, including their case, rather than Java properties.
+Supply every component for composite keys, for example <code>'book_changes', 'tenant_id', 'book_id'</code>.
+The migration must supply the actual primary key: the function validates column values, but does not inspect primary-key constraints.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>A separate statement trigger handles <code>TRUNCATE</code>, which produces a table-level <code>INVALIDATE</code> event.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Keys must be non-null values represented by PostgreSQL JSON strings, numbers, or booleans.
+Missing columns, duplicate column arguments, null keys, and structured JSON keys cause the modifying statement to fail explicitly.
+The function supports <code>AFTER ROW</code> insert/update/delete triggers and <code>AFTER STATEMENT</code> truncate triggers.
+Changes to the database structure, such as dropping a table, do not produce notifications.</p>
+</div>
+<div class="paragraph">
+<p>When using Micronaut Data notification schema generation, the triggers are created automatically; do not also
+create the triggers above.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="postgresStatementNotifications">Statement Notifications for Bulk Changes</h4>
+<div class="paragraph">
+<p>For tables frequently changed by bulk statements, use an application-managed statement trigger that sends
+<code>INVALIDATE</code>. An update affecting a million rows then generates one table notification instead of a million
+row notifications. This option always sends invalidations, including for single-row changes; listeners must
+refresh the relevant application state instead of expecting row keys.</p>
+</div>
+<div class="paragraph">
+<p>Install the bundled statement-invalidation function using this resource instead of the row-notification resource:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-text hljs" data-lang="text">io/micronaut/data/jdbc/notification/postgres/sql/create-invalidation-function.sql</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>It creates <code>micronaut_data_notify_invalidation()</code> in the migration&#8217;s current schema. For Liquibase, use:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">    &lt;changeSet id="postgres-invalidation-function" author="application" dbms="postgresql" runOnChange="true"&gt;
+        &lt;sql&gt;SET LOCAL search_path TO public&lt;/sql&gt;
+        &lt;sqlFile path="io/micronaut/data/jdbc/notification/postgres/sql/create-invalidation-function.sql"
+                 relativeToChangelogFile="false" splitStatements="false"/&gt;
+    &lt;/changeSet&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For Flyway, install <code>create-invalidation-function.sql</code> instead of the row-notification resource using the
+migration approach described above. Use a new migration version when changing an existing installation.</p>
+</div>
+<div class="paragraph">
+<p>After installing the function, replace the <code>book_changes</code> and <code>book_truncate</code> triggers shown above:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">DROP TRIGGER IF EXISTS book_changes ON public.book;
+DROP TRIGGER IF EXISTS book_truncate ON public.book; <i class="conum" data-value="1"></i><b>(1)</b>
+
+CREATE TRIGGER book_changes
+AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON public.book
+FOR EACH STATEMENT EXECUTE FUNCTION public.micronaut_data_notify_invalidation('book_changes'); <i class="conum" data-value="2"></i><b>(2)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Remove the row and truncate triggers before installing their replacement. Use your existing trigger names;
+leaving a row trigger installed would continue to generate row notifications.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The <code>AFTER STATEMENT</code> trigger sends one table-level invalidation per statement. The function takes exactly
+one argument: the notification channel.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Keep notification schema generation disabled when migrations manage these triggers.
+For development and tests, <code>schema-generate-mode: STATEMENT</code> installs the function and
+triggers automatically when notification schema generation is enabled.</p>
+</div>
+<div class="paragraph">
+<p>The existing listener annotation and <code>INVALIDATE</code> handling work without changes. These events contain schema
+and table metadata and empty key maps.</p>
+</div>
+<div class="paragraph">
+<p>A statement trigger also runs when a statement affects no rows. Notifications are delivered after commit,
+and PostgreSQL combines identical channel/payload pairs within the same transaction. Separate transactions
+still produce separate notifications. Refreshing a large cache can itself be expensive, so choose the
+refresh strategy to suit the application. Statement triggers do not report <code>ALTER TABLE</code> or <code>DROP TABLE</code>.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_declaring_a_listener">Declaring a Listener</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The following listener receives change events for the mapped <code>public.book</code> table on the <code>book_changes</code> channel:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Singleton
+class BookCatalog {
+    @ChangeListener
+    @PostgresChangeNotification(channel = "book_changes") // <b class="conum">(1)</b>
+    void changed(ChangeEvent&lt;Book&gt; event) {
+        // Handle the change.
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">@Singleton
+class BookCatalog {
+    @ChangeListener
+    @PostgresChangeNotification(channel = "book_changes") // <b class="conum">(1)</b>
+    void changed(ChangeEvent&lt;Book&gt; event) {
+        // Handle the change.
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">@Singleton
+open class BookCatalog(private val repository: BookRepository) {
+    @ChangeListener
+    @PostgresChangeNotification(channel = "book_changes") // <b class="conum">(1)</b>
+    open fun changed(event: ChangeEvent&lt;Book&gt;) {
+        // Handle the change.
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">@Singleton
+class BookCatalog:
+    @ChangeListener
+    @PostgresChangeNotification(channel="book_changes") # <b class="conum">(1)</b>
+    def changed(self, event: ChangeEvent[Book]) -&gt; None:
+        # Handle the change.</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Declare both <a href="../api/io/micronaut/data/annotation/ChangeListener.html">@ChangeListener</a> and <a href="../api/io/micronaut/data/jdbc/annotation/PostgresChangeNotification.html">@PostgresChangeNotification</a>.
+The required <code>channel</code> attribute names the exact channel used by the table triggers.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Supply the case-sensitive channel name without SQL identifier quotes, using at most
+63 UTF-8 bytes. Literal names are checked during compilation and must not be blank or contain NUL characters.</p>
+</div>
+<div class="paragraph">
+<p>The <code>ChangeEvent&lt;Book&gt;</code> parameter provides the operation, optional current entity, and optional metadata.</p>
+</div>
+<div class="paragraph">
+<p>Property placeholders such as <code>@PostgresChangeNotification(channel = "${app.channel}")</code> are supported.
+The resolved channel is checked during startup, before <code>LISTEN</code> or notification function and trigger installation.
+Missing properties and resolved names that are blank, contain NUL characters, or exceed 63 UTF-8 bytes fail startup.
+The resolved spelling and case are preserved; channel names are not truncated. Migration-managed triggers must
+publish to the same resolved channel.</p>
+</div>
+<div class="paragraph">
+<p>Follow the shared <a href="#notificationListenerRequirements">listener requirements</a>, including the method signature
+and datasource selection.</p>
+</div>
+<div class="paragraph">
+<p>Listener methods inherited from separately compiled base classes are supported. If a method has no generated
+reload-query metadata, Micronaut Data builds its primary-key reload query from the entity mapping at startup.
+Automatic notification schema generation derives the same key columns for its triggers. The supported key
+mappings and restrictions on additional query parameters also apply to this runtime fallback.</p>
+</div>
+<div class="paragraph">
+<p>Micronaut Data subscribes to each distinct channel during application startup. Listener methods using the same
+datasource share a listening connection, whether they use the same channel or different channels.
+Subscriptions normally remain active for the application&#8217;s lifetime, and Micronaut Data attempts to remove them
+during application shutdown.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_handling_change_events">Handling Change Events</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>See <a href="#notificationChangeEvents">Handling Change Events</a> for the common event API and invalidation handling.</p>
+</div>
+<div class="paragraph">
+<p><a href="../api/io/micronaut/data/jdbc/notification/postgres/PostgresChangeEventMetadata.html">PostgresChangeEventMetadata</a> provides the channel, schema, table, and the
+<code>oldKeys</code> and <code>newKeys</code> maps of primary-key column values.
+For <code>DELETE</code>, the old keys identify the row reported by the payload; Micronaut Data does not verify that it was deleted.
+The following cache example assumes all clients connected to the database are trusted to publish notifications.
+See <a href="#postgresNotificationTrustModel">Notification Trust and Database Access</a> before acting on event metadata:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">void changed(ChangeEvent&lt;Book&gt; event) {
+    // Handle the change.
+    if (!cacheEnabled) {
+        return;
+    }
+    switch (event.operation()) {
+        case INSERT -&gt; event.entity().ifPresent(book -&gt; books.put(book.id(), book));
+        case UPDATE -&gt; {
+            PostgresChangeEventMetadata metadata = event.metadata(PostgresChangeEventMetadata.class).orElseThrow();
+            // An UPDATE can change the primary key.
+            books.remove(Long.valueOf(metadata.oldKeys().get("id")));
+            event.entity().ifPresent(book -&gt; books.put(book.id(), book));
+        }
+        case DELETE -&gt; {
+            PostgresChangeEventMetadata metadata = event.metadata(PostgresChangeEventMetadata.class).orElseThrow();
+            books.remove(Long.valueOf(metadata.oldKeys().get("id")));
+        }
+        case INVALIDATE -&gt; refresh(); // <b class="conum">(1)</b>
+        case TERMINATED -&gt; {
+            cacheEnabled = false; // <b class="conum">(2)</b>
+            books.clear();
+        }
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">void changed(ChangeEvent&lt;Book&gt; event) {
+    // Handle the change.
+    if (!cacheEnabled) {
+        return
+    }
+    switch (event.operation()) {
+        case ChangeOperation.INSERT:
+            event.entity().ifPresent { book -&gt; books.put(book.id(), book) }
+            break
+        case ChangeOperation.UPDATE:
+            def metadata = event.metadata(PostgresChangeEventMetadata).orElseThrow()
+            // An UPDATE can change the primary key.
+            books.remove(Long.valueOf(metadata.oldKeys().get("id")))
+            event.entity().ifPresent { book -&gt; books.put(book.id(), book) }
+            break
+        case ChangeOperation.DELETE:
+            def metadata = event.metadata(PostgresChangeEventMetadata).orElseThrow()
+            books.remove(Long.valueOf(metadata.oldKeys().get("id")))
+            break
+        case ChangeOperation.INVALIDATE: // <b class="conum">(1)</b>
+            refresh()
+            break
+        case ChangeOperation.TERMINATED:
+            cacheEnabled = false // <b class="conum">(2)</b>
+            books.clear()
+            break
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">open fun changed(event: ChangeEvent&lt;Book&gt;) {
+    // Handle the change.
+    if (!cacheEnabled) {
+        return
+    }
+    when (event.operation()) {
+        ChangeOperation.INSERT -&gt; event.entity().ifPresent { book -&gt; books[book.id] = book }
+        ChangeOperation.UPDATE -&gt; {
+            val metadata = event.metadata(PostgresChangeEventMetadata::class.java).orElseThrow()
+            // An UPDATE can change the primary key.
+            books.remove(metadata.oldKeys().getValue("id").toLong())
+            event.entity().ifPresent { book -&gt; books[book.id] = book }
+        }
+        ChangeOperation.DELETE -&gt; {
+            val metadata = event.metadata(PostgresChangeEventMetadata::class.java).orElseThrow()
+            books.remove(metadata.oldKeys().getValue("id").toLong())
+        }
+        ChangeOperation.INVALIDATE -&gt; refresh() // <b class="conum">(1)</b>
+        ChangeOperation.TERMINATED -&gt; {
+            cacheEnabled = false // <b class="conum">(2)</b>
+            books.clear()
+        }
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">def changed(self, event: ChangeEvent[Book]) -&gt; None:
+    # Handle the change.
+    if not self.cacheEnabled.get():
+        return
+    operation = event.operation()
+    if operation == ChangeOperation.INSERT:
+        book = event.entity().orElse(None)
+        if book is not None:
+            self.books.get().put(Long.valueOf(book.id), book)
+    elif operation == ChangeOperation.UPDATE:
+        metadata = event.metadata(PostgresChangeEventMetadata).orElseThrow()
+        # An UPDATE can change the primary key.
+        self.books.get().remove(Long.valueOf(metadata.oldKeys().get("id")))
+        book = event.entity().orElse(None)
+        if book is not None:
+            self.books.get().put(Long.valueOf(book.id), book)
+    elif operation == ChangeOperation.DELETE:
+        metadata = event.metadata(PostgresChangeEventMetadata).orElseThrow()
+        self.books.get().remove(Long.valueOf(metadata.oldKeys().get("id")))
+    elif operation == ChangeOperation.INVALIDATE: # <b class="conum">(1)</b>
+        self.refresh()
+    elif operation == ChangeOperation.TERMINATED:
+        self.cacheEnabled.set(False) # <b class="conum">(2)</b>
+        self.books.get().clear()</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>On <code>INVALIDATE</code>, refresh the cache from the repository to reconcile changes that individual row events cannot describe.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>On <code>TERMINATED</code>, disable and clear the cache. The example ignores later events and reads directly from the
+repository when <code>find</code> is called.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>If recovery exhausts its configured retry limit or the subscription stops unexpectedly, Micronaut Data attempts to
+send a final <code>TERMINATED</code> event to each listener.
+It replaces waiting notifications and runs after any event already being processed. The event has no entity
+or PostgreSQL metadata.</p>
+</div>
+<div class="paragraph">
+<p>Each listener processes its events one at a time. Different listeners and other application threads can run
+concurrently, so protect shared cache access.</p>
+</div>
+<div class="paragraph">
+<p>For <code>INSERT</code> and <code>UPDATE</code>, Micronaut Data uses the new primary key to reload the entity.
+See <a href="#notificationEntityLoading">Entity Loading</a> for current-state semantics and cases where <code>entity()</code> is empty.
+For <code>UPDATE</code>, use the old keys to remove a cached entry if the primary key changed, then store the reloaded entity,
+when present, under its new key. For <code>DELETE</code>, use the reported old keys to re-read current state before treating
+the row as deleted; another session can forge the notification, and the row may still exist or have been recreated.</p>
+</div>
+<div class="paragraph">
+<p><code>TRUNCATE</code> produces <code>INVALIDATE</code>. An invalid payload causes <code>INVALIDATE</code> for all listeners on its channel;
+unexpected key-column names cause <code>INVALIDATE</code> for the affected listener. A payload too large for a row notification
+also produces <code>INVALIDATE</code>. The application decides whether to refresh a cache, rerun a query, or take another action.
+Invalidations caused by reconnection, queue overflow, or malformed payloads have no PostgreSQL event metadata;
+check whether metadata is present before accessing it.</p>
+</div>
+<div class="paragraph">
+<p>Load any initial application state explicitly: starting a listener does not send an <code>INVALIDATE</code> event
+or notifications for existing rows. After a lost connection is restored, listeners receive <code>INVALIDATE</code>
+to refresh changes they may have missed.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_table_change_notification">Table Change Notification</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>With the bundled row-trigger function, each affected row produces an <code>INSERT</code>, <code>UPDATE</code>, or <code>DELETE</code> notification.
+A bulk operation can therefore produce multiple listener calls, subject to PostgreSQL&#8217;s coalescing of identical
+notifications described below. Large changes can put pressure on PostgreSQL&#8217;s notification queue and
+on application listener processing. Use the statement-trigger option above to reduce database notification
+volume, and the listener work limit below to bound queued notifications.</p>
+</div>
+<div class="paragraph">
+<p>Notifications are matched by channel and mapped table name. Each matching listener method receives its own event,
+including when multiple methods share the same channel. If the entity mapping specifies a schema,
+that schema must also match. Without an explicit schema, notifications from tables with the same name
+in different schemas can reach the same listener when they publish to its channel.
+Entity loading follows the datasource&#8217;s schema search path, which may resolve to a different table
+from the notification&#8217;s source. This can load an unrelated row with the same primary key or find no row.
+Specify a schema, such as <code>@MappedEntity(value = "book", schema = "public")</code>, or use separate channels
+for tables in different schemas to avoid this ambiguity.
+Identifier matching assumes a UTF-8 database and PostgreSQL&#8217;s default 63-byte identifier limit.
+Quoted mapped identifiers retain their case; unquoted identifiers fold only ASCII <code>A</code>–<code>Z</code> to lower case.
+PostgreSQL truncates identifiers longer than 63 UTF-8 bytes without splitting a character; notification matching
+accounts for this truncation. If a primary-key column name exceeds that limit, use its stored database name
+as the trigger argument.</p>
+</div>
+<div class="paragraph">
+<p>Scalar and composite primary keys are supported, including embedded keys. Key values must be convertible
+from the text sent by PostgreSQL to the mapped Java key type using Micronaut&#8217;s conversion service.
+Association keys and keys with custom converters are unsupported.
+Entity filters requiring extra query parameters are rejected at compilation.
+Listeners receive changes to the mapped table. They cannot subscribe to the result of an arbitrary SQL query.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_notification_payload">Notification Payload</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The trigger function sends the channel name separately from the notification payload. The payload is a JSON object:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  "version": 1,
+  "schema": "public",
+  "table": "book",
+  "operation": "UPDATE",
+  "oldKeys": { "id": "9007199254740993" },
+  "newKeys": { "id": "9007199254740994" }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>All key values are JSON strings, including numeric and boolean identifiers, so numeric precision is preserved.
+Schema, table, and key names retain their database spelling. Payloads contain keys only, with no complete row state.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 40%;">
+<col style="width: 40%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Operation</th>
+<th class="tableblock halign-left valign-top"><code>oldKeys</code></th>
+<th class="tableblock halign-left valign-top"><code>newKeys</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>INSERT</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Empty object</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Inserted primary key</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>UPDATE</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Previous primary key</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Current primary key</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>DELETE</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Deleted primary key</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Empty object</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>INVALIDATE</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Empty object</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Empty object</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>Updates retain both keys even when their values are identical. Truncation sends <code>INVALIDATE</code>.
+<code>TERMINATED</code> is a provider lifecycle event and is rejected in trigger payloads. Such a payload causes
+invalidation for listeners on its channel; it does not terminate the subscription.
+If the serialized payload reaches 8,000 bytes in the database encoding, the function emits <code>INVALIDATE</code> with the
+schema and table identity and empty key objects, keeping the notification below PostgreSQL&#8217;s default payload limit.
+Micronaut Data validates the payload version and table/key mapping before loading an entity.
+If you consume these notifications directly outside Micronaut Data, validate those fields before loading rows.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_postgresql_connection_properties">PostgreSQL Connection Properties</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Micronaut Data opens one dedicated connection per datasource that has notification listeners. All listeners
+for that datasource share the connection, including listeners on different channels. This connection remains open
+while the application listens for changes and does not consume a slot in the application connection pool.
+Entity loading and application queries continue to use the configured datasource pool. Allow capacity on the
+PostgreSQL server for the additional notification connections.</p>
+</div>
+<div class="paragraph">
+<p>The default notification connection factory requires a plain <code>jdbc:postgresql:</code> datasource URL. Wrapped URLs such as
+<code>jdbc:otel:postgresql:</code>, <code>jdbc:aws-wrapper:postgresql:</code>, <code>jdbc:p6spy:postgresql:</code>, and
+<code>jdbc:tc:postgresql:</code> are unsupported. Configure a plain PostgreSQL JDBC URL to use notifications;
+otherwise, application startup fails with an error identifying the unsupported JDBC scheme.</p>
+</div>
+<div class="paragraph">
+<p>The default factory uses the selected datasource&#8217;s JDBC URL, username, and password. It also reads
+PostgreSQL driver properties from <code>datasources.&lt;name&gt;.data-source-properties</code>, <code>db-properties</code>, and the
+semicolon-separated <code>connection-properties</code> setting. Properties embedded in the JDBC URL take precedence.
+Connection settings are read for every connection attempt, including reconnection. Rotated credentials are
+used when they are exposed through the datasource configuration bean or environment. Updating only the
+application pool&#8217;s credentials does not update notification connections.</p>
+</div>
+<div class="paragraph">
+<p>The default factory does not invoke authentication hooks or token generation provided by a custom
+pool or datasource. For short-lived credentials such as RDS IAM tokens, a fresh valid token must be available
+through the configuration when each connection is opened. Micronaut Data does not generate or renew these tokens.</p>
+</div>
+<div class="paragraph">
+<p>For programmatic driver properties or custom authentication, provide a bean implementing
+<a href="../api/io/micronaut/data/jdbc/notification/postgres/PostgresNotificationConnectionFactory.html">PostgresNotificationConnectionFactory</a>. This replaces the default factory
+for all datasources. The factory receives the datasource name on every initial connection and reconnection attempt.
+It must return a new dedicated PostgreSQL connection, resolve current settings and credentials, and configure finite
+connection and socket timeouts. The subscription owns and closes the returned connection. This extension works
+with application configuration from any pool implementation; JDBC does not provide a standard API for discovering
+a pool&#8217;s effective driver properties. Driver timeout defaults described below apply to the default factory.</p>
+</div>
+<div class="paragraph">
+<p>Pool settings and connection initialization SQL do not apply to notification connections. Put any required session
+settings in PostgreSQL driver properties, such as <code>currentSchema</code> or <code>options</code>.</p>
+</div>
+<div class="paragraph">
+<p>Use a direct PostgreSQL connection or a proxy with session pooling; transaction pooling cannot preserve <code>LISTEN</code>
+state. Dedicated notification connections use finite PostgreSQL driver timeouts: <code>connectTimeout</code> defaults
+to 10 seconds, while <code>loginTimeout</code> and <code>socketTimeout</code> default to 30 seconds. These defaults replace absent
+or zero (unlimited) values after JDBC URL properties have been applied. Positive configured values are
+preserved; invalid values fail subscription startup. Set these driver properties in the datasource settings
+or JDBC URL to suit your deployment. The defaults apply only to notification connections.</p>
+</div>
+<div class="paragraph">
+<p><code>connectTimeout</code> limits each attempt to connect to a database server, <code>loginTimeout</code> limits how long the
+application waits for a connection to be established, and <code>socketTimeout</code> limits waits for data during operations
+such as subscribing to channels with <code>LISTEN</code>. The separate <code>poll-timeout</code> setting controls waits for notifications
+on an established connection.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_connection_lifetime_and_recovery">Connection Lifetime and Recovery</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The notification connection remains open while the application listens for changes. After a connection failure,
+Micronaut Data attempts to open a new connection and listen on the same channels again. After reconnecting, it
+schedules an <code>INVALIDATE</code> event for every affected listener so each can refresh state that may have become outdated
+while disconnected. Starting listeners for the first time does not send an initial <code>INVALIDATE</code> event.</p>
+</div>
+<div class="paragraph">
+<p>Configure polling and connection recovery globally for all PostgreSQL notification listeners and datasources:</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.data.jdbc.notifications.postgres.poll-timeout=1s
+micronaut.data.jdbc.notifications.postgres.validation-interval=30s
+micronaut.data.jdbc.notifications.postgres.validation-timeout=5s
+micronaut.data.jdbc.notifications.postgres.connection-recovery.max-retries=-1
+micronaut.data.jdbc.notifications.postgres.connection-recovery.retry-delay=1s
+micronaut.data.jdbc.notifications.postgres.connection-recovery.retry-delay-multiplier=2
+micronaut.data.jdbc.notifications.postgres.connection-recovery.max-retry-delay=60s</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut:
+  data:
+    jdbc:
+      notifications:
+        postgres:
+          poll-timeout: 1s
+          validation-interval: 30s
+          validation-timeout: 5s
+          connection-recovery:
+            max-retries: -1
+            retry-delay: 1s
+            retry-delay-multiplier: 2
+            max-retry-delay: 60s</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[micronaut.data.jdbc.notifications.postgres]
+poll-timeout = "1s"
+validation-interval = "30s"
+validation-timeout = "5s"
+
+[micronaut.data.jdbc.notifications.postgres.connection-recovery]
+max-retries = -1
+retry-delay = "1s"
+retry-delay-multiplier = 2
+max-retry-delay = "60s"</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut {
+  data {
+    jdbc {
+      notifications {
+        postgres {
+          pollTimeout = "1s"
+          validationInterval = "30s"
+          validationTimeout = "5s"
+          connectionRecovery {
+            maxRetries = -1
+            retryDelay = "1s"
+            retryDelayMultiplier = 2
+            maxRetryDelay = "60s"
+          }
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  micronaut {
+    data {
+      jdbc {
+        notifications {
+          postgres {
+            poll-timeout = "1s"
+            validation-interval = "30s"
+            validation-timeout = "5s"
+            connection-recovery {
+              max-retries = -1
+              retry-delay = "1s"
+              retry-delay-multiplier = 2
+              max-retry-delay = "60s"
+            }
+          }
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "micronaut": {
+    "data": {
+      "jdbc": {
+        "notifications": {
+          "postgres": {
+            "poll-timeout": "1s",
+            "validation-interval": "30s",
+            "validation-timeout": "5s",
+            "connection-recovery": {
+              "max-retries": -1,
+              "retry-delay": "1s",
+              "retry-delay-multiplier": 2,
+              "max-retry-delay": "60s"
+            }
+          }
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p><code>poll-timeout</code>, <code>validation-interval</code>, <code>validation-timeout</code>, <code>retry-delay</code>, and <code>max-retry-delay</code> accept duration
+values such as <code>100ms</code>, <code>5s</code>, or <code>1m</code>. Each must be at least one millisecond and no greater than <code>Integer.MAX_VALUE</code>
+milliseconds (approximately 24.9 days). This shared limit matches the integer timeout range used by the PostgreSQL
+JDBC notification-polling method.</p>
+</div>
+<div class="paragraph">
+<p><code>poll-timeout</code> defaults to one second and controls how long each call waits for notifications.
+Increasing it can delay graceful shutdown when no notifications arrive, because stopping the service
+does not interrupt a call already waiting for notifications. The listening connection is closed after
+that call returns. Graceful shutdown waits for the connection to close and any listener work in progress to finish.
+Waiting for notifications does not itself send queries to PostgreSQL.</p>
+</div>
+<div class="paragraph">
+<p><code>validation-interval</code> defaults to thirty seconds and controls periodic connection checks using a lightweight
+database round trip. These checks detect silent network failures that would otherwise look like an idle connection.
+A failed check starts reconnection attempts. Once reconnected, an <code>INVALIDATE</code> event is queued for each listener.</p>
+</div>
+<div class="paragraph">
+<p><code>validation-timeout</code> limits how long a connection check waits. It defaults to five seconds and is rounded up
+to whole seconds for JDBC validation.
+Checks run between notification polls; increasing <code>poll-timeout</code> can therefore delay failure detection.
+Graceful shutdown may also wait for a connection check already in progress.</p>
+</div>
+<div class="paragraph">
+<p>TCP keepalive is enabled on notification connections unless explicitly configured through the datasource&#8217;s
+<code>tcpKeepAlive</code> driver property. Its timing depends on operating-system settings; periodic connection checks
+provide detection independently of those settings.</p>
+</div>
+<div class="paragraph">
+<p>Recovery settings use the <code>micronaut.data.jdbc.notifications.postgres.connection-recovery</code> prefix.</p>
+</div>
+<div class="paragraph">
+<p><code>max-retries</code> defaults to <code>-1</code>, which retries recovery until it succeeds or the application shuts down.
+Non-negative values count retries after the initial recovery attempt; <code>0</code> allows only that initial attempt.
+The first recovery attempt waits
+for <code>retry-delay</code> (default <code>1s</code>). Subsequent delays are multiplied by <code>retry-delay-multiplier</code> (default <code>2</code>).
+All delays, including the initial delay, are capped at <code>max-retry-delay</code> (default <code>60s</code>).
+The multiplier must be an integer of at least <code>1</code>; <code>1</code> uses a fixed delay.
+A reconnected session must pass its next connection check to reset the retry count and delay.
+If it fails before that check, it counts as a failed recovery attempt. These settings do not retry failed application
+startup or listener failures. If a finite retry limit is exhausted, the provider logs an error, stops receiving
+notifications for that datasource, and queues a final <code>TERMINATED</code> event for every affected listener method.
+Waiting notifications, including invalidations, are discarded; any event being processed finishes before
+termination is delivered. No further recovery attempts occur until the application restarts. Listeners should
+disable notification-backed caches and fall back to database reads or another consistency mechanism.
+The default delay sequence is <code>1s</code>, <code>2s</code>, <code>4s</code>, <code>8s</code>, <code>16s</code>, <code>32s</code>, then <code>60s</code> for subsequent attempts.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_delivery_and_concurrency">Delivery and Concurrency</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>See <a href="#notificationDeliveryAndConcurrency">Delivery and Concurrency</a> for shared threading requirements,
+delivery limitations, queue order, and overflow reconciliation.</p>
+</div>
+<div class="paragraph">
+<p>Each listener loads entities and processes events one at a time. Configure the limit for waiting notifications,
+excluding the event currently being processed:</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">micronaut.data.jdbc.notifications.postgres.queue-capacity=1000</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">micronaut:
+  data:
+    jdbc:
+      notifications:
+        postgres:
+          queue-capacity: 1000</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[micronaut.data.jdbc.notifications.postgres]
+queue-capacity = 1000</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">micronaut {
+  data {
+    jdbc {
+      notifications {
+        postgres {
+          queueCapacity = 1000
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  micronaut {
+    data {
+      jdbc {
+        notifications {
+          postgres {
+            queue-capacity = 1000
+          }
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "micronaut": {
+    "data": {
+      "jdbc": {
+        "notifications": {
+          "postgres": {
+            "queue-capacity": 1000
+          }
+        }
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p><code>queue-capacity</code> must be positive and defaults to <code>1000</code>. The setting applies independently to every listener
+method across all PostgreSQL datasources. Reaching the limit replaces waiting data and the new submission with
+one <code>INVALIDATE</code> event. Further data is covered by that pending refresh until processing begins. A capacity of <code>1</code>
+therefore reconciles every data notification instead of delivering individual row events.</p>
+</div>
+<div class="paragraph">
+<p>After reconnection, the recovery <code>INVALIDATE</code> replaces waiting notifications and runs after any event already
+being processed. Explicit invalidations, such as <code>TRUNCATE</code>, use the same replacement behavior and retain their table metadata.
+Notifications arriving during reconciliation can be queued normally and can trigger another invalidation if the
+limit is reached again.</p>
+</div>
+<div class="paragraph">
+<p>A slow listener does not block notification reception or other listeners. Each listener worker performs at most
+one entity reload at a time, but listeners still share their datasource&#8217;s connection pool. With many listeners,
+total application work can still be substantial. Queue limits do not reduce notifications generated by PostgreSQL;
+use <a href="#postgresStatementNotifications">statement-trigger invalidations</a> to reduce notification volume for bulk changes.</p>
+</div>
+<div class="paragraph">
+<p>PostgreSQL can combine notifications with the same channel and payload within a transaction. For example, multiple
+updates to the same row with unchanged keys may produce one update notification. Missed notifications cannot be
+replayed after the application loses its notification connection.</p>
+</div>
+<div id="postgresNotificationTrustModel" class="paragraph">
+<div class="title">Notification Trust and Database Access</div>
+<p>PostgreSQL notification payloads are unauthenticated hints. Any role that can connect to the database can send
+<code>NOTIFY</code> or call <code>pg_notify</code> on a channel, even without permission to modify the reported table. Channel names
+provide no access control. Payload version, schema, table, and key validation check format and routing;
+they do not authenticate the sender or establish that the reported change occurred.</p>
+</div>
+<div class="paragraph">
+<p>A well-formed forged <code>DELETE</code> is delivered without checking whether the row still exists. Re-read current state
+through your repository, using the application&#8217;s normal authorization and consistency rules, before removing
+authoritative state, propagating a deletion downstream, or taking another irreversible action. Do not use the
+operation or key metadata alone as proof of a deletion or as authorization for a change.</p>
+</div>
+<div class="paragraph">
+<p>Notifications are also visible to all users in the database. Include only appropriate identifiers in payloads;
+do not include secrets or assume that a channel name protects confidentiality.</p>
+</div>
+<div class="paragraph">
+<p>Restrict database <code>CONNECT</code> privileges to trusted roles, especially on shared databases, and restrict allowed
+clients and roles through <code>pg_hba.conf</code>. PostgreSQL grants <code>CONNECT</code> to <code>PUBLIC</code> by default, so review that grant
+as well as explicit role grants. A reporting role with read-only table access can still publish notifications;
+a separate channel or schema does not isolate untrusted publishers. See PostgreSQL&#8217;s
+<a href="https://www.postgresql.org/docs/current/ddl-priv.html">database privilege documentation</a>.</p>
+</div>
+<div class="paragraph">
+<p>Repeated malformed payloads can cause refreshes for every listener on their channel. Forged insert or update
+payloads with unconvertible keys can also cause repeated entity-loading errors and error logs. The listener
+queue keeps at most one invalidation waiting, but another can be queued while a refresh is running. This bounds
+waiting work; it does not rate-limit incoming notifications, refresh frequency, or logging. Consider coalescing
+or debouncing expensive refresh requests in the application while ensuring a later refresh still reconciles changes.</p>
+</div>
+<div class="paragraph">
+<p>Errors in trigger execution or PostgreSQL&#8217;s notification queue can cause the transaction modifying the table to fail.</p>
+</div>
+<div class="paragraph">
+<p>See the PostgreSQL <a href="https://www.postgresql.org/docs/current/sql-notify.html"><code>NOTIFY</code> documentation</a>
+for transaction, payload, and delivery behavior.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_transactions_retry_and_recovery">Transactions, Retry, and Recovery</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The shared <a href="#notificationTransactionsAndRetries">transaction and retry guidance</a> explains how to apply
+<code>@Transactional</code>, <code>@Retryable</code>, and <code>@Recoverable</code> to listener methods.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_startup_shutdown_and_failures">Startup, Shutdown, and Failures</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_startup">Startup</h3>
+<div class="paragraph">
+<p>Create the mapped table, its primary-key constraints, and notification triggers through migrations or the opt-in
+schema-generation support described above before listeners subscribe. For migration-managed schemas,
+Micronaut Data uses the entity mapping to match notifications and load entities; it does not check that the table,
+constraints, or triggers exist during startup or reconnection.
+A missing trigger means changes produce no notifications. A missing table causes entity loading to fail when
+a matching insert or update notification arrives.</p>
+</div>
+<div class="paragraph">
+<p>An initial connection or channel-subscription failure fails application startup. Connection recovery settings
+apply only after a listening connection fails; they do not retry initial startup.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_listener_failures">Listener Failures</h3>
+<div class="paragraph">
+<p>See <a href="#notificationCallbackFailures">Handling Listener Failures</a> for handling of entity-loading and listener errors.
+PostgreSQL entity-loading and listener failures are passed to <a href="../api/io/micronaut/data/jdbc/notification/ChangeListenerExceptionHandler.html">ChangeListenerExceptionHandler</a>.
+The default handler logs the datasource, listener method, operation, and available channel, schema, table,
+and old and new primary-key values. An application handler receives the failed event and the original cause.</p>
+</div>
+<div class="paragraph">
+<p>If loading or delivering an <code>INSERT</code>, <code>UPDATE</code>, or <code>DELETE</code> still fails after configured retry and recovery,
+the listener&#8217;s waiting work is replaced with one <code>INVALIDATE</code>. This event has no table metadata and asks the
+listener to reconcile all state it maintains. It also replaces any invalidation already waiting in the queue.
+Failures while handling <code>INVALIDATE</code> or <code>TERMINATED</code> are also passed to the handler without scheduling another
+invalidation, preventing an automatic refresh loop. If a custom handler throws a runtime exception, both
+failures are logged and reconciliation and later listener invocations can still proceed.
+This applies to entity loading and synchronous listener execution;
+failures in an <code>@Async</code> listener body occur after delivery has returned.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_shutdown">Shutdown</h3>
+<div class="paragraph">
+<p>When the application stops, Micronaut Data stops accepting listener calls, removes channel subscriptions,
+and closes the listening connection. Listener calls already running may finish; calls still waiting for execution
+are discarded, including any pending <code>TERMINATED</code> event. Normal shutdown does not produce <code>TERMINATED</code> events.</p>
+</div>
+<div class="paragraph">
+<p>With Micronaut graceful shutdown enabled, the application waits for connection cleanup and running listener calls
+up to the configured graceful shutdown timeout. When graceful shutdown is disabled, closing the application context
+still waits for reception, connection cleanup, and listener work in progress before datasources and executors are
+destroyed. This wait uses <code>micronaut.lifecycle.graceful-shutdown.grace-period</code>, which defaults to 15 seconds.</p>
+</div>
+<div class="paragraph">
+<p>The timeout limits how long the application waits; it does not forcibly terminate listener code or database operations
+already in progress. If the deadline expires, context destruction continues without interrupting the remaining work.
+Connection cleanup is best effort: database unavailability or the shutdown timeout can prevent it from completing.
+The connection and polling timeouts described above also affect how long shutdown can take.</p>
+</div>
+<div class="paragraph">
+<p>Notification functions and triggers remain installed after shutdown, whether created by migrations or schema generation.</p>
 </div>
 </div>
 </div>
