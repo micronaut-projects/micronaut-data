@@ -16,6 +16,7 @@
 package io.micronaut.data.processor.visitors;
 
 import io.micronaut.inject.ast.ClassElement;
+import io.micronaut.inject.ast.GenericPlaceholderElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 import org.jspecify.annotations.Nullable;
@@ -59,6 +60,9 @@ final class ChangeListenerMethodUtils {
             return null;
         }
         ClassElement entityType = typeArguments.values().iterator().next();
+        if (entityType instanceof GenericPlaceholderElement placeholder) {
+            entityType = placeholder.getResolved().orElse(entityType);
+        }
         return entityType.isWildcard() || entityType.isGenericPlaceholder() ? null : entityType;
     }
 }
