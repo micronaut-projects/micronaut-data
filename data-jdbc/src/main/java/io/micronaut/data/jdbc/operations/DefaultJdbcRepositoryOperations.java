@@ -85,7 +85,6 @@ import io.micronaut.data.operations.DeleteReturningRepositoryOperations;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
-import io.micronaut.data.runtime.convert.DatabaseConversionContextFactory;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.convert.RuntimePersistentPropertyConversionContext;
 import io.micronaut.data.runtime.date.DateTimeProvider;
@@ -231,7 +230,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                     JdbcSchemaHandler schemaHandler,
                                     @Nullable JsonMapper jsonMapper,
                                     SqlJsonColumnMapperProvider<ResultSet> sqlJsonColumnMapperProvider,
-                                    @Parameter DatabaseConversionContextFactory conversionContextFactory,
+                                    @Parameter JdbcDatabaseConversionContextFactory conversionContextFactory,
                                     List<JdbcUpsertReturningExecutor> upsertReturningExecutorList,
                                     List<SqlExceptionMapper> sqlExceptionMapperList) {
 
