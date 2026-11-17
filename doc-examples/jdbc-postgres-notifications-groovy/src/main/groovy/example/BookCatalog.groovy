@@ -1,0 +1,92 @@
+package example
+
+import io.micronaut.context.event.StartupEvent
+import io.micronaut.core.annotation.Order
+import io.micronaut.core.order.Ordered
+import io.micronaut.data.annotation.ChangeListener
+import io.micronaut.data.jdbc.annotation.PostgresChangeNotification
+import io.micronaut.data.jdbc.notification.postgres.PostgresChangeEventMetadata
+import io.micronaut.data.notification.ChangeEvent
+import io.micronaut.data.notification.ChangeOperation
+import io.micronaut.runtime.event.annotation.EventListener
+import jakarta.inject.Singleton
+
+import java.util.concurrent.ConcurrentHashMap
+
+// tag::listener[]
+@Singleton
+class BookCatalog {
+    // end::listener[]
+    private final BookRepository repository
+    private volatile Map<Long, Book> books = new ConcurrentHashMap<>()
+    private volatile boolean cacheEnabled = true
+
+    BookCatalog(BookRepository repository) {
+        this.repository = repository
+    }
+
+    @EventListener
+    @Order(Ordered.LOWEST_PRECEDENCE)
+    void loadInitialState(StartupEvent event) {
+        refresh()
+    }
+
+    // tag::listener[]
+    // tag::listener-signature[]
+    @ChangeListener
+    // end::listener-signature[]
+    @PostgresChangeNotification(channel = "book_changes") // <1>
+    // tag::events[]
+    // tag::listener-signature[]
+    void changed(ChangeEvent<Book> event) {
+        // Handle the change.
+        // end::listener[]
+    // end::listener-signature[]
+        if (!cacheEnabled) {
+            return
+        }
+        switch (event.operation()) {
+            case ChangeOperation.INSERT:
+                event.entity().ifPresent { book -> books.put(book.id(), book) }
+                break
+            case ChangeOperation.UPDATE:
+                def metadata = event.metadata(PostgresChangeEventMetadata).orElseThrow()
+                // An UPDATE can change the primary key.
+                books.remove(Long.valueOf(metadata.oldKeys().get("id")))
+                event.entity().ifPresent { book -> books.put(book.id(), book) }
+                break
+            case ChangeOperation.DELETE:
+                def metadata = event.metadata(PostgresChangeEventMetadata).orElseThrow()
+                books.remove(Long.valueOf(metadata.oldKeys().get("id")))
+                break
+            case ChangeOperation.INVALIDATE: // <1>
+                refresh()
+                break
+            case ChangeOperation.TERMINATED:
+                cacheEnabled = false // <2>
+                books.clear()
+                break
+        }
+        // tag::listener-signature[]
+        // tag::listener[]
+    }
+    // end::listener[]
+    // end::listener-signature[]
+
+    // end::events[]
+
+    Optional<Book> find(Long id) {
+        cacheEnabled ? Optional.ofNullable(books.get(id)) : repository.findById(id)
+    }
+
+    private void refresh() {
+        if (!cacheEnabled) {
+            return
+        }
+        Map<Long, Book> refreshed = new ConcurrentHashMap<>()
+        repository.findAll().each { book -> refreshed.put(book.id(), book) }
+        books = refreshed
+    }
+    // tag::listener[]
+}
+// end::listener[]
