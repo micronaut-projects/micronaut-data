@@ -1,5 +1,6 @@
 package example
 
+import io.micronaut.data.model.search.SearchQuery
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Specification
@@ -42,5 +43,12 @@ class BookRepositorySpec extends Specification {
         bookRepository.findByDescriptionSearchPhrase("beans coffee").isEmpty()
         bookRepository.findByTitleSearchPrefix("coff").size() == 2
         bookRepository.findBySearchAndAuthor("coffee", "Bean").size() == 1
+    }
+
+    void "programmatic search query"() {
+        expect:
+        bookService.titlesContainingEveryWord("coffee roaster") == ["The Coffee Roaster"]
+        bookService.titlesContainingEveryWord("coffee beans").isEmpty()
+        bookRepository.search(SearchQuery.of("coffee")).totalHits() == 2
     }
 }
