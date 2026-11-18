@@ -46,11 +46,7 @@ class PostgresTsQueryConverterSpec extends Specification {
         PostgresTsQueryConverter.converterFor(MatchMode.PREFIX) == PostgresTsQueryConverter.Prefix.name
         new PostgresTsQueryConverter.All().convertToPersistedValue("a b", ConversionContext.DEFAULT) == "'a' & 'b'"
         new PostgresTsQueryConverter.All().convertToEntityValue("x", ConversionContext.DEFAULT) == "x"
-
-        when:
-        PostgresTsQueryConverter.converterFor(MatchMode.FUZZY)
-
-        then:
-        thrown(io.micronaut.data.model.search.UnsupportedSearchFeatureException)
+        PostgresTsQueryConverter.converterFor(MatchMode.FUZZY) == PostgresTsQueryConverter.FuzzyPositive.name
+        PostgresTsQueryConverter.fuzzyConverterFor(true) == PostgresTsQueryConverter.FuzzyNegated.name
     }
 }
