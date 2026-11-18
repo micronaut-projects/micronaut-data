@@ -8,7 +8,9 @@ test-resources:
     mysql:
       startup-timeout: 300s
     oracle:
-      startup-timeout: 300s
+      startup-timeout: 600s
+      # the slim image has no Oracle Text, which the full-text search specs need
+      image-name: gvenzl/oracle-free:23-faststart
     postgres:
       startup-timeout: 300s
 
