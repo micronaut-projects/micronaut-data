@@ -31,4 +31,19 @@ class PetRepositorySpec extends AbstractNeo4jSpec {
         found['legs'] == 4
         inPatch*.name == ["Dino"]
     }
+
+    void "dynamic relationships"() {
+        when:
+        // tag::dynamicRelationships[]
+        def dino = new Pet(name: "Dino")
+        dino.related.PLAYS_WITH = [new Pet(name: "Hoppy")] // <1>
+        petRepository.save(dino) // <2>
+
+        def found = petRepository.findById("Dino").get()
+        def playsWith = found.related.PLAYS_WITH // <3>
+        // end::dynamicRelationships[]
+
+        then:
+        playsWith*.name == ["Hoppy"]
+    }
 }
