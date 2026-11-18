@@ -780,6 +780,14 @@ public interface TextSearchDialect {
                     appendParameter.apply(OracleTextQueryConverter.converterFor(mode, OracleTextQueryConverter.Part.FULL)));
                 return;
             }
+            if (mode == MatchMode.NATIVE) {
+                // the caller's CONTAINS query runs against every field as it is; its own NOT excludes
+                query.append('(');
+                appendAnyField(query, fields, base, queryExpression, target, appendExpression,
+                    appendParameter.apply(OracleTextQueryConverter.converterFor(mode, OracleTextQueryConverter.Part.FULL)));
+                query.append(')');
+                return;
+            }
             Consumer<Expression<?>> positive = appendParameter.apply(OracleTextQueryConverter.converterFor(mode, OracleTextQueryConverter.Part.POSITIVE));
             if (mode == MatchMode.PHRASE) {
                 // a phrase has no negated terms: a - inside it is part of the phrase

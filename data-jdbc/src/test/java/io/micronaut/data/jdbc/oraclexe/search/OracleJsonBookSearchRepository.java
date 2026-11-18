@@ -36,6 +36,8 @@ public interface OracleJsonBookSearchRepository extends CrudRepository<OracleJso
 
     List<OracleJsonBook> findByTitleSearch(String query);
 
+    List<OracleJsonBook> findByTitleSearchNative(String query);
+
     SearchResults<OracleJsonBook> searchByTitleSearchAll(String query);
 
     List<OracleJsonBook> findBySearchAndAuthor(String query, String author);
