@@ -1,6 +1,7 @@
 package example;
 
 import io.micronaut.data.model.search.SearchQuery;
+import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.model.vector.search.SearchResults;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
@@ -25,9 +26,9 @@ class BookRepositorySpec {
     void setup() {
         bookRepository.deleteAll();
         bookRepository.saveAll(List.of(
-            new Book(null, "Cooking with Coffee", "Recipes and desserts made with coffee beans", "Bean"),
-            new Book(null, "Baking Bread", "Sourdough and yeast breads for the home baker", "Dough"),
-            new Book(null, "The Coffee Roaster", "Roasting coffee at home, from green beans to espresso", "Roast")
+            new Book(null, "Cooking with Coffee", "Recipes and desserts made with coffee beans", "Bean", Vector.of(1f, 0f, 0f)),
+            new Book(null, "Baking Bread", "Sourdough and yeast breads for the home baker", "Dough", Vector.of(0.2f, 0.9f, 0f)),
+            new Book(null, "The Coffee Roaster", "Roasting coffee at home, from green beans to espresso", "Roast", Vector.of(0.9f, 0.1f, 0f))
         ));
     }
 
@@ -56,6 +57,12 @@ class BookRepositorySpec {
         assertEquals(List.of("The Coffee Roaster"), bookService.titlesContainingEveryWord("coffee roaster"));
         assertEquals(List.of(), bookService.titlesContainingEveryWord("coffee beans"));
         assertEquals(2, bookRepository.search(SearchQuery.of("coffee")).totalHits());
+    }
+
+    @Test
+    void hybridSearch() {
+        // the bread book is the only text hit and third by vector similarity, so it collects both ranks
+        assertEquals(List.of("Baking Bread", "Cooking with Coffee", "The Coffee Roaster"), bookService.hybridTitles("bread", Vector.of(1f, 0f, 0f)));
     }
 
     @Test

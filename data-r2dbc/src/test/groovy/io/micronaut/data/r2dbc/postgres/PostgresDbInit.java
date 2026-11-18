@@ -90,23 +90,23 @@ public class PostgresDbInit implements BeanCreatedEventListener<DefaultBasicR2db
             waitUntilPortIsReachable(url, info);
         }
 
-        boolean createVectorExtension = "PostgresR2dbcVectorEntitySpec".equals(specName);
         boolean createUuidOsspExtension = "PostgresUpsertSpec".equals(specName);
-        if (createVectorExtension || createUuidOsspExtension) {
-            try (Connection connection = DriverManager.getConnection(url, info)) {
-                if (createVectorExtension) {
-                    try (CallableStatement st = connection.prepareCall("CREATE EXTENSION IF NOT EXISTS vector;")) {
-                        st.execute();
-                    }
-                }
-                if (createUuidOsspExtension) {
-                    try (CallableStatement statement = connection.prepareCall("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";")) {
-                        statement.execute();
-                    }
-                }
+        try (Connection connection = DriverManager.getConnection(url, info)) {
+            // The vector entity and hybrid search specs run on the pgvector image and create tables with
+            // vector columns; on the plain image the extension does not exist and the failure is ignored,
+            // as in the JDBC initialiser
+            try (CallableStatement st = connection.prepareCall("CREATE EXTENSION IF NOT EXISTS vector;")) {
+                st.execute();
             } catch (SQLException e) {
-                throw new RuntimeException("Failed to create postgres extension", e);
+                // not available on this image
             }
+            if (createUuidOsspExtension) {
+                try (CallableStatement statement = connection.prepareCall("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";")) {
+                    statement.execute();
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to create postgres extension", e);
         }
         return configuration;
     }

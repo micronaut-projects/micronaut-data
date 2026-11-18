@@ -15,9 +15,11 @@ dependencies {
     // The Python compiler takes the compile classpath as its annotation processor path
     implementation projects.micronautDataProcessor
     implementation projects.micronautDataJdbc
+    implementation(mnSql.jakarta.persistence.api)
     testImplementation(mnTestResources.micronaut.test.resources.extensions.junit.platform)
 
     runtimeOnly mnSql.postgresql
+    runtimeOnly libs.managed.pg.vector // pgvector JDBC type for the vector column
     runtimeOnly mnSql.micronaut.jdbc.hikari
     runtimeOnly mnLogging.logback.classic
 }
