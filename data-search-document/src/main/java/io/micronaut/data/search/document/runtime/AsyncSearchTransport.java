@@ -87,10 +87,11 @@ public interface AsyncSearchTransport {
     }
 
     /**
-     * Indexes several new documents in one request, each a create-only write like
-     * {@link #create(String, String, Map, DocumentSearchConfiguration.Refresh)}, or, for a document with
-     * a version, an externally versioned write like
-     * {@link #index(String, String, Map, Long, DocumentSearchConfiguration.Refresh)}. The default sends one
+     * Indexes several documents in one request: a document marked {@link SearchTransport.BulkDocument#create()}
+     * is a create-only write like {@link #create(String, String, Map, DocumentSearchConfiguration.Refresh)},
+     * any other one a replacing write like
+     * {@link #index(String, String, Map, Long, DocumentSearchConfiguration.Refresh)}, externally versioned
+     * when it has a version. The default sends one
      * request per document, in sequence, and stops at the first failure.
      *
      * @param index The index name
@@ -105,7 +106,7 @@ public interface AsyncSearchTransport {
         List<String> ids = new ArrayList<>(documents.size());
         CompletionStage<List<String>> written = CompletableFuture.completedFuture(ids);
         for (SearchTransport.BulkDocument document : documents) {
-            written = written.thenCompose(list -> (document.version() == null
+            written = written.thenCompose(list -> (document.create()
                 ? create(index, document.id(), document.source(), refresh)
                 : index(index, document.id(), document.source(), document.version(), refresh)).thenApply(id -> {
                 list.add(id);

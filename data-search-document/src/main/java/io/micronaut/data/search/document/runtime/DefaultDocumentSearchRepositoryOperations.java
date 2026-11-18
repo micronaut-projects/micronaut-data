@@ -171,7 +171,7 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
     @Override
     public <T> SearchResults<T> search(Class<T> entityType, String body, Map<String, ?> parameters) {
         RuntimePersistentEntity<T> entity = runtimeEntityRegistry.getEntity(entityType);
-        Map<String, Object> request = parseBody(body, parameters);
+        Map<String, Object> request = parseSearchBody(body, parameters);
         // totalHits is exact, as for a SearchResults method, unless the body asks otherwise
         request.putIfAbsent("track_total_hits", true);
         return toSearchResults(transport.search(indexName(entity), searchJson(request, entity)), entity, null);
@@ -180,13 +180,20 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
     @Override
     public <T> List<T> find(Class<T> entityType, String body, Map<String, ?> parameters) {
         RuntimePersistentEntity<T> entity = runtimeEntityRegistry.getEntity(entityType);
-        return search(parseBody(body, parameters), entity, null);
+        return search(parseSearchBody(body, parameters), entity, null);
     }
 
     @Override
     public long count(Class<?> entityType, String body, Map<String, ?> parameters) {
         RuntimePersistentEntity<?> entity = runtimeEntityRegistry.getEntity(entityType);
         return transport.count(indexName(entity), queryOnly(parseBody(body, parameters)));
+    }
+
+    /** A search body with the max-results ceiling as its size when it declares none, as for an unpaged query method. */
+    private Map<String, Object> parseSearchBody(String body, Map<String, ?> parameters) {
+        Map<String, Object> request = parseBody(body, parameters);
+        request.putIfAbsent("size", configuration.getMaxResults());
+        return request;
     }
 
     private Map<String, Object> parseBody(String body, Map<String, ?> parameters) {
@@ -207,21 +214,20 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
         DocumentStoredQuery<T, R> storedQuery = storedQuery(preparedQuery);
         if (storedQuery.isCount()) {
             long count = transport.count(indexName(storedQuery.getPersistentEntity()), queryOnly(body(preparedQuery, storedQuery)));
-            return conversionService.convertRequired(count, preparedQuery.getResultArgument());
+            // the result type is the count's own type; the result argument is the method's return type, a Page for
+            // the count query of a paged criteria method
+            return conversionService.convertRequired(count, preparedQuery.getResultType());
         }
         Map<String, Object> body = body(preparedQuery, storedQuery);
         RuntimePersistentEntity<T> entity = storedQuery.getPersistentEntity();
         if (preparedQuery.getResultType() == SearchResults.class) {
-            applyPageable(body, preparedQuery.getPageable(), entity);
+            applyPageable(body, preparedQuery, entity);
             // totalHits is exact, not capped at the result window
             body.put("track_total_hits", true);
             return (R) toSearchResults(transport.search(indexName(entity), searchJson(body, entity)), entity, preparedQuery);
         }
-        // a single result still honours a Sort parameter, which decides which hit comes first
-        applyPageable(body, preparedQuery.getPageable(), entity);
-        body.put("size", 1);
-        List<R> results = search(body, entity, preparedQuery);
-        return results.isEmpty() ? null : results.get(0);
+        boolean checkUnique = applySingleResult(body, preparedQuery, entity);
+        return singleResult(search(body, entity, preparedQuery), checkUnique, preparedQuery);
     }
 
     @Override
@@ -234,7 +240,7 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
     public <T> Iterable<T> findAll(PagedQuery<T> query) {
         RuntimePersistentEntity<T> entity = runtimeEntityRegistry.getEntity(query.getRootEntity());
         Map<String, Object> body = matchAll();
-        applyPageable(body, query.getPageable(), entity);
+        applyPageable(body, query, entity);
         return search(body, entity, null);
     }
 
@@ -254,7 +260,7 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
         }
         Map<String, Object> body = body(preparedQuery, storedQuery);
         RuntimePersistentEntity<T> entity = storedQuery.getPersistentEntity();
-        applyPageable(body, preparedQuery.getPageable(), entity);
+        applyPageable(body, preparedQuery, entity);
         return search(body, entity, preparedQuery);
     }
 
@@ -281,12 +287,12 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
     @Override
     public <T> T persist(InsertOperation<T> operation) {
         RuntimePersistentEntity<T> entity = runtimeEntityRegistry.getEntity(operation.getRootEntity());
-        return persistOne(operation.getEntity(), entity);
+        return persistOne(operation.getEntity(), entity, replacesExisting(operation.getAnnotationMetadata()));
     }
 
     @Override
     public <T> Iterable<T> persistAll(InsertBatchOperation<T> operation) {
-        PersistBatch<T> batch = persistBatch(operation, runtimeEntityRegistry.getEntity(operation.getRootEntity()));
+        PersistBatch<T> batch = persistBatch(operation, runtimeEntityRegistry.getEntity(operation.getRootEntity()), replacesExisting(operation.getAnnotationMetadata()));
         List<List<SearchTransport.BulkDocument>> requests = batch.requests();
         for (int i = 0; i < requests.size(); i++) {
             List<String> ids;
@@ -363,7 +369,7 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
 
     // ---------- helpers
 
-    private <T> T persistOne(T value, RuntimePersistentEntity<T> entity) {
+    private <T> T persistOne(T value, RuntimePersistentEntity<T> entity, boolean replace) {
         T current = prePersist(value, entity);
         if (current == null) {
             return value;
@@ -371,7 +377,7 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
         Long version = persistVersion(current, entity);
         // a create-only write, so saving an entity with the id of an existing document fails instead of
         // replacing it; a versioned entity relies on the external version instead
-        String documentId = version == null
+        String documentId = version == null && !replace
             ? transport.create(indexName(entity), documentId(current, entity), toDocument(current, entity), configuration.getRefresh())
             : transport.index(indexName(entity), documentId(current, entity), toDocument(current, entity), version, configuration.getRefresh());
         return postPersist(current, entity, documentId);

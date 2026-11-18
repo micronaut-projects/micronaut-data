@@ -219,7 +219,7 @@ class StubTransportReactiveSpec extends Specification {
         transport.bodies.any { it.contains('"k":2000,"num_candidates":10000') }
     }
 
-    void "an unpaged Near method returns the stores' default of 10 hits"() {
+    void "an unpaged Near method returns up to max-results hits, its k capped at the 10000 the stores accept"() {
         given:
         def articles = context.getBean(StubArticleRepository)
         def transport = context.getBean(StubSearchTransport)
@@ -228,9 +228,26 @@ class StubTransportReactiveSpec extends Specification {
         when:
         articles.searchByEmbeddingNear(Vector.of([1f, 0f, 0f] as float[]), new io.micronaut.data.model.vector.search.Score(0.5d), Pageable.UNPAGED)
 
-        then: "k matches the size of a request without one"
-        transport.bodies.last().contains('"k":10,"num_candidates":100')
-        !transport.bodies.last().contains('"size"')
+        then: "k covers the max-results size of an unpaged request"
+        transport.bodies.last().contains('"k":10000,"num_candidates":10000')
+        transport.bodies.last().contains('"size":10000')
+    }
+
+    void "an unpaged Near method follows a lower max-results"() {
+        given:
+        def limited = ApplicationContext.run(["spec.name": "StubTransportReactiveSpec", "micronaut.data.search.max-results": "50"])
+        def transport = limited.getBean(StubSearchTransport)
+        transport.bodies.clear()
+
+        when:
+        limited.getBean(StubArticleRepository).searchByEmbeddingNear(Vector.of([1f, 0f, 0f] as float[]), new io.micronaut.data.model.vector.search.Score(0.5d), Pageable.UNPAGED)
+
+        then:
+        transport.bodies.last().contains('"k":50,"num_candidates":500')
+        transport.bodies.last().contains('"size":50')
+
+        cleanup:
+        limited.close()
     }
 
     void "cursored paging of a Near method is rejected"() {

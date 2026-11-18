@@ -176,9 +176,11 @@ public final class ElasticsearchAsyncSearchTransport implements AsyncSearchTrans
     /** One index operation of a bulk request; a versioned document is written with external versioning. */
     private static BulkOperation indexOperation(SearchTransport.BulkDocument document) {
         Long version = document.version();
-        if (version == null) {
-            // a new document without a version is a create-only write
+        if (document.create()) {
             return BulkOperation.of(op -> op.create(c -> c.id(document.id()).document(document.source())));
+        }
+        if (version == null) {
+            return BulkOperation.of(op -> op.index(i -> i.id(document.id()).document(document.source())));
         }
         return BulkOperation.of(op -> op.index(i -> i.id(document.id()).document(document.source()).version(version).versionType(VersionType.External)));
     }
