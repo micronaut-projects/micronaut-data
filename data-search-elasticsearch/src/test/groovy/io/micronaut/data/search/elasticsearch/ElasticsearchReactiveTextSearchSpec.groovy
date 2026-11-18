@@ -5,6 +5,7 @@ import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.search.document.runtime.AsyncSearchTransport
 import io.micronaut.data.search.document.runtime.DocumentSearchRepositoryOperations
 import io.micronaut.data.search.tck.AbstractReactiveTextSearchSpec
+import io.micronaut.data.search.tck.repositories.AsyncBookSearchRepository
 import io.micronaut.data.search.tck.entities.Book
 import io.micronaut.data.search.tck.repositories.ReactorBookSearchRepository
 import io.micronaut.test.support.TestPropertyProvider
@@ -24,6 +25,12 @@ class ElasticsearchReactiveTextSearchSpec extends AbstractReactiveTextSearchSpec
     @Override
     ReactorBookSearchRepository getBookSearchRepository() {
         return context.getBean(ElasticsearchReactorBookSearchRepository)
+    }
+
+    @Memoized
+    @Override
+    AsyncBookSearchRepository getAsyncBookSearchRepository() {
+        return context.getBean(ElasticsearchAsyncBookSearchRepository)
     }
 
     void "an async create of an existing id says the document exists"() {
