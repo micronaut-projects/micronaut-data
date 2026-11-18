@@ -17,7 +17,11 @@ package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
+import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.search.MatchMode;
+import io.micronaut.data.model.search.TextSearchSupport;
+import io.micronaut.data.processor.visitors.MatchFailedException;
 import io.micronaut.data.model.query.builder.sql.VectorScoringDialectSupport;
 import io.micronaut.data.model.vector.Vector;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -27,6 +31,7 @@ import jakarta.persistence.criteria.Predicate;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -1025,6 +1030,152 @@ public final class Restrictions {
         @Override
         public String getName() {
             return "Near";
+        }
+    }
+
+    /**
+     * Full-text match of a property.
+     */
+    public static class PropertySearch extends SinglePropertyExpressionRestriction<String> {
+
+        private final MatchMode mode;
+
+        public PropertySearch() {
+            this(MatchMode.ANY);
+        }
+
+        protected PropertySearch(MatchMode mode) {
+            super((cb, expression, parameter) -> cb.textMatch(expression, parameter, mode));
+            this.mode = mode;
+        }
+
+        @Override
+        public String getName() {
+            return mode.keyword();
+        }
+    }
+
+    /**
+     * Full-text match of a property requiring every term.
+     */
+    public static class PropertySearchAll extends PropertySearch {
+        public PropertySearchAll() {
+            super(MatchMode.ALL);
+        }
+    }
+
+    /**
+     * Full-text phrase match of a property.
+     */
+    public static class PropertySearchPhrase extends PropertySearch {
+        public PropertySearchPhrase() {
+            super(MatchMode.PHRASE);
+        }
+    }
+
+    /**
+     * Full-text prefix match of a property.
+     */
+    public static class PropertySearchPrefix extends PropertySearch {
+        public PropertySearchPrefix() {
+            super(MatchMode.PREFIX);
+        }
+    }
+
+    /**
+     * Full-text fuzzy match of a property.
+     */
+    public static class PropertySearchFuzzy extends PropertySearch {
+        public PropertySearchFuzzy() {
+            super(MatchMode.FUZZY);
+        }
+    }
+
+    /**
+     * Full-text match of every {@code @SearchField} property of the root entity.
+     */
+    public static class Search implements Restriction<String> {
+
+        @Override
+        public String getName() {
+            return mode().keyword();
+        }
+
+        @Override
+        public int getRequiredParameters() {
+            return 1;
+        }
+
+        @Override
+        public Predicate find(PersistentEntityRoot<?> entityRoot,
+                              PersistentEntityCriteriaBuilder cb,
+                              List<ParameterExpression<String>> parameters) {
+            return cb.textMatch(searchFields(entityRoot), parameters.get(0), mode());
+        }
+
+        /**
+         * @return The match mode
+         */
+        protected MatchMode mode() {
+            return MatchMode.ANY;
+        }
+
+        /**
+         * Resolves the {@code @SearchField} expressions of the root entity.
+         *
+         * @param entityRoot The root
+         * @return The field expressions
+         */
+        public static List<Expression<?>> searchFields(PersistentEntityRoot<?> entityRoot) {
+            List<PersistentProperty> fields = TextSearchSupport.searchFields(entityRoot.getPersistentEntity());
+            if (fields.isEmpty()) {
+                throw new MatchFailedException("Entity " + entityRoot.getPersistentEntity().getName() + " declares no @SearchField properties to search");
+            }
+            List<Expression<?>> expressions = new ArrayList<>(fields.size());
+            for (PersistentProperty field : fields) {
+                expressions.add(entityRoot.get(field.getName()));
+            }
+            return expressions;
+        }
+    }
+
+    /**
+     * Full-text match of every search field requiring every term.
+     */
+    public static class SearchAll extends Search {
+        @Override
+        protected MatchMode mode() {
+            return MatchMode.ALL;
+        }
+    }
+
+    /**
+     * Full-text phrase match of every search field.
+     */
+    public static class SearchPhrase extends Search {
+        @Override
+        protected MatchMode mode() {
+            return MatchMode.PHRASE;
+        }
+    }
+
+    /**
+     * Full-text prefix match of every search field.
+     */
+    public static class SearchPrefix extends Search {
+        @Override
+        protected MatchMode mode() {
+            return MatchMode.PREFIX;
+        }
+    }
+
+    /**
+     * Full-text fuzzy match of every search field.
+     */
+    public static class SearchFuzzy extends Search {
+        @Override
+        protected MatchMode mode() {
+            return MatchMode.FUZZY;
         }
     }
 }
