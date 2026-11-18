@@ -26,6 +26,7 @@ import io.micronaut.data.model.search.SearchSyntax
 import io.micronaut.data.model.search.UnsupportedSearchFeatureException
 import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.model.vector.search.Score
+import io.micronaut.data.runtime.search.SearchCapabilities
 import io.micronaut.data.runtime.search.SearchIndexOperations
 import org.jspecify.annotations.Nullable
 import io.micronaut.data.search.tck.entities.Book
@@ -126,6 +127,15 @@ abstract class AbstractTextSearchSpec extends Specification {
     }
 
     /**
+     * @return The capabilities the backend reports at runtime: the one {@link SearchCapabilities} bean of the
+     * spec's context by default
+     */
+    SearchCapabilities searchCapabilities() {
+        // one store per spec context, so exactly one bean answers for the backend under test
+        return context.getBean(SearchCapabilities)
+    }
+
+    /**
      * @return Whether the backend pages with a cursor ({@code search_after} on the document stores)
      */
     boolean supportsCursoredPaging() {
@@ -152,8 +162,27 @@ abstract class AbstractTextSearchSpec extends Specification {
         awaitIndexing()
     }
 
+    void "the backend reports the capabilities the specs exercise"() {
+        given:
+        def reported = searchCapabilities()
+        def entityType = newBook("Title", "Description", "Author", 1).getClass()
+
+        expect:
+        reported.getSearchCapabilities(entityType) == capabilities()
+        capabilities().every { reported.supports(entityType, it) }
+    }
+
     void cleanup() {
         bookSearchRepository.deleteAll()
+    }
+
+    void "an entity without @Searchable reports no capabilities"() {
+        given:
+        def reported = searchCapabilities()
+
+        expect:
+        reported.getSearchCapabilities(io.micronaut.data.search.tck.entities.Shelf).isEmpty()
+        !reported.supports(io.micronaut.data.search.tck.entities.Shelf, SearchCapability.PHRASE)
     }
 
     void "search matches any term across every search field ordered by relevance"() {

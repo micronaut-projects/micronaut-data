@@ -83,7 +83,7 @@ Hybrid search with `SearchQuery.vector(...)` runs one `$rankFusion` aggregation 
 |Field scoping (`findByTitleSearch` matching only `title`) |not supported, every search field is searched |supported
 |A property keyword on a property without `@SearchField` or of a joined entity |rejected at compile time, as the property is not in the text index |the property must be mapped by the search index
 |Stemming in `SearchAll` |not supported, every term is matched literally |follows the analyzer of the search index
-|Vector search and hybrid search |not supported |supported, `$vectorSearch` with the similarity of the vector index, and `$rankFusion` for hybrid search on MongoDB 8.1+
+|Vector search and hybrid search |not supported |supported, `$vectorSearch` with the similarity of the vector index, and hybrid search fused by `$rankFusion` on MongoDB 8.1+ and in memory on earlier servers
 |`SearchPrefix` and `SearchFuzzy` |not supported, rejected at compile time |supported
 |Highlighting |not supported; `@SearchField(highlightable = true)` is ignored by derived `SearchResults` methods, and `SearchQuery.highlight(...)` throws `UnsupportedSearchFeatureException` |supported
 |Minimum score |not supported |supported
