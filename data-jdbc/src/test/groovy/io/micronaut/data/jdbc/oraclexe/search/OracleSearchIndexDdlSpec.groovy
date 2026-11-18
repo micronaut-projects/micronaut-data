@@ -19,4 +19,25 @@ class OracleSearchIndexDdlSpec extends Specification {
         statements[2] == 'CREATE INDEX "IDX_SEARCH_BOOK_SEARCH_DESCRIPTION" ON "SEARCH_BOOK" ("DESCRIPTION") INDEXTYPE IS CTXSYS.CONTEXT PARAMETERS (\'SYNC (ON COMMIT)\');'
         statements[3] == "BEGIN CTX_DDL.CREATE_POLICY('MN_SEARCH_POLICY'); EXCEPTION WHEN OTHERS THEN IF SQLCODE != -20000 OR INSTR(SQLERRM, 'DRG-10507') = 0 THEN RAISE; END IF; END;"
     }
+
+    void "a JSON entity on another dialect keeps the relational DDL"() {
+        when:
+        def statements = new SqlQueryBuilder(Dialect.POSTGRES).buildCreateTableStatements(new RuntimePersistentEntity<>(OracleJsonBook))
+
+        then:
+        !statements.any { it.contains(" JSON NOT NULL") }
+        statements[0].startsWith('CREATE TABLE ')
+    }
+
+    void "a JSON entity gets a unique identity index and one JSON search index over its column on Oracle"() {
+        when:
+        def statements = new SqlQueryBuilder(Dialect.ORACLE).buildCreateTableStatements(new RuntimePersistentEntity<>(OracleJsonBook))
+
+        then:
+        statements.size() == 4
+        statements[0] == 'CREATE TABLE "JSON_BOOK" ("DATA" JSON NOT NULL);'
+        statements[1] == 'CREATE UNIQUE INDEX "IDX_JSON_BOOK_ID" ON "JSON_BOOK" (JSON_VALUE("DATA",\'$.id\' ERROR ON ERROR NULL ON EMPTY));'
+        statements[2] == 'CREATE SEARCH INDEX "IDX_JSON_BOOK_SEARCH" ON "JSON_BOOK" ("DATA") FOR JSON PARAMETERS (\'SYNC (ON COMMIT)\');'
+        statements[3] == "BEGIN CTX_DDL.CREATE_POLICY('MN_SEARCH_POLICY'); EXCEPTION WHEN OTHERS THEN IF SQLCODE != -20000 OR INSTR(SQLERRM, 'DRG-10507') = 0 THEN RAISE; END IF; END;"
+    }
 }
