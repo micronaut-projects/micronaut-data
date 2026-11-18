@@ -5,6 +5,9 @@ import io.micronaut.test.support.TestPropertyProvider
 import org.testcontainers.elasticsearch.ElasticsearchContainer
 import org.testcontainers.utility.DockerImageName
 import jakarta.inject.Inject
+import io.micronaut.data.model.search.SearchQuery
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -37,6 +40,9 @@ class BookRepositoryTest : TestPropertyProvider {
     @Inject
     lateinit var reactiveBookRepository: ReactiveBookRepository
 
+    @Inject
+    lateinit var coroutineBookRepository: CoroutineBookRepository
+
     @BeforeEach
     fun setup() {
         bookRepository.deleteAll()
@@ -64,6 +70,17 @@ class BookRepositoryTest : TestPropertyProvider {
         assertEquals(3, reactiveBookRepository.count().block())
         assertEquals(2, reactiveBookRepository.search("coffee").block()!!.totalHits())
         assertEquals(2, reactiveBookRepository.countHits("coffee").block())
+    }
+
+    @Test
+    fun coroutineSearch() = runBlocking {
+        assertEquals(2, coroutineBookRepository.searchBySearch("coffee").totalHits())
+        assertEquals(listOf("The Coffee Roaster"), coroutineBookRepository.findByTitleSearch("roaster").toList().map { it.title })
+        assertEquals(3, coroutineBookRepository.count())
+        assertEquals(2, coroutineBookRepository.search("coffee").totalHits())
+        assertEquals(1, coroutineBookRepository.search("coffee", io.micronaut.data.model.Pageable.from(0, 1)).results().size)
+        assertEquals(1, coroutineBookRepository.search(SearchQuery.builder("roaster").build()).totalHits())
+        assertEquals(2, coroutineBookRepository.countHits("coffee"))
     }
 
     @Test
