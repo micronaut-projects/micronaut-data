@@ -7,6 +7,7 @@ from org.junit.jupiter.api import BeforeEach, Test
 from example.Book import Book
 from example.BookRepository import BookRepository
 from example.BookService import BookService
+from example.ReactiveBookRepository import ReactiveBookRepository
 
 
 # support.ElasticsearchConfigurer starts the Elasticsearch container for the test context
@@ -15,6 +16,7 @@ class BookRepositorySpec:
 
     repository: Annotated[BookRepository, Inject]
     service: Annotated[BookService, Inject]
+    reactive_repository: Annotated[ReactiveBookRepository, Inject]
 
     @BeforeEach
     def setup(self):
@@ -33,6 +35,12 @@ class BookRepositorySpec:
         assert self.repository.countHits("coffee") == 2
         assert self.service.titles_matching("bread OR sourdough") == ["Baking Bread"]
         assert self.repository.search("coffee -desserts").totalHits() == 1
+
+    @Test
+    def reactiveSearch(self):
+        assert self.reactive_repository.searchBySearch("coffee").block().totalHits() == 2
+        assert [b.title for b in self.reactive_repository.findByTitleSearch("roaster").collectList().block()] == ["The Coffee Roaster"]
+        assert self.reactive_repository.count().block() == 3
 
     @Test
     def derivedSearchFinders(self):

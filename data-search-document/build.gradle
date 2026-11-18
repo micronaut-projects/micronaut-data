@@ -8,6 +8,8 @@ dependencies {
     api projects.micronautDataModel
     api projects.micronautDataRuntime
     api mn.micronaut.json.core
+    api mn.reactor
+    implementation mnReactor.micronaut.reactor
     compileOnly(mnSql.jakarta.persistence.api)
 
     testImplementation mn.micronaut.inject.groovy
