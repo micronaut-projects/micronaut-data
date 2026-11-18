@@ -1,6 +1,7 @@
 package io.micronaut.data.search.elasticsearch
 
 import groovy.transform.Memoized
+import io.micronaut.data.model.Sort
 import io.micronaut.data.model.search.SearchCapability
 import io.micronaut.data.search.tck.AbstractTextSearchSpec
 import io.micronaut.data.search.tck.repositories.BookSearchRepository
@@ -39,5 +40,18 @@ class ElasticsearchTextSearchSpec extends AbstractTextSearchSpec implements Test
     @Override
     String nativeProgrammingWithoutKotlinQuery() {
         return "programming AND NOT kotlin"
+    }
+
+    void "a hand-written mapping of an analysed field keeps the keyword sub-field of exact matches and sorts"() {
+        given:
+        def repository = context.getBean(TunedBookRepository)
+        repository.saveAll(["Crème Brûlée", "Apple Pie", "Banana Bread"].collect { new TunedBook(title: it) })
+
+        expect:
+        repository.findByTitle("Crème Brûlée")*.title == ["Crème Brûlée"]
+        repository.findByTitleGreaterThan("Apple Pie", Sort.of(Sort.Order.desc("title")))*.title == ["Crème Brûlée", "Banana Bread"]
+
+        cleanup:
+        repository.deleteAll()
     }
 }

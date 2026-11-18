@@ -303,6 +303,90 @@ interface PostRepository extends CrudRepository<Post, Long> {
         "an entity without @Searchable" | "String"  | false      | "@SearchField property [value] of [test.Post] is never searched: annotate the entity with @Searchable"
     }
 
+    @Unroll
+    void "#annotation JSON that is not one JSON object fails the compilation: #description"() {
+        when:
+        buildRepository('test.PostRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.annotation.search.SearchField;
+import io.micronaut.data.annotation.search.SearchIndexSettings;
+import io.micronaut.data.annotation.search.SearchMapping;
+import io.micronaut.data.annotation.search.Searchable;
+
+@MappedEntity
+@Searchable
+${annotation == 'SearchIndexSettings' ? "@SearchIndexSettings(\"${json}\")" : ''}
+class Post {
+    @Id
+    @GeneratedValue
+    private Long id;
+    @SearchField
+    ${annotation == 'SearchMapping' ? "@SearchMapping(\"${json}\")" : ''}
+    private String title;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+}
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+interface PostRepository extends CrudRepository<Post, Long> {
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains(message)
+
+        where:
+        annotation            | description             | json                                       | message
+        'SearchIndexSettings' | "a trailing comma"      | '{\\"number_of_shards\\": 2,}'             | "The @SearchIndexSettings of [test.Post] must be one JSON object: expected '\"' but found '}' at offset 23"
+        'SearchIndexSettings' | "an array"              | '[1]'                                      | "The @SearchIndexSettings of [test.Post] must be one JSON object: expected '{' but found '[' at offset 0"
+        'SearchMapping'       | "an unquoted key"       | '{type: \\"text\\"}'                          | "The @SearchMapping of property [title] of [test.Post] must be one JSON object: expected '\"' but found 't' at offset 1"
+        'SearchMapping'       | "content after it"      | '{\\"type\\": \\"text\\"} x'                    | "The @SearchMapping of property [title] of [test.Post] must be one JSON object: unexpected character 'x' at offset 17"
+        'SearchMapping'       | "an unclosed object"    | '{\\"fields\\": {\\"raw\\": true}'               | "The @SearchMapping of property [title] of [test.Post] must be one JSON object: expected '}' but the JSON ends at offset 24"
+        'SearchMapping'       | "an invalid escape"     | '{\\"a\\": \\"\\\\x\\"}'                    | "The @SearchMapping of property [title] of [test.Post] must be one JSON object: invalid escape '\\x' at offset 9"
+        'SearchMapping'       | "an unknown literal"    | '{\\"ok\\": tru}'                          | "The @SearchMapping of property [title] of [test.Post] must be one JSON object: unexpected character 't' at offset 7"
+        'SearchMapping'       | "a sign without digits" | '{\\"n\\": -}'                             | "The @SearchMapping of property [title] of [test.Post] must be one JSON object: unexpected character '}' at offset 7"
+        'SearchMapping'       | "a raw tab in a string" | '{\\"a\\": \\"x\ty\\"}'                     | "The @SearchMapping of property [title] of [test.Post] must be one JSON object: unescaped control character in a string at offset 9"
+    }
+
+    void "valid #annotation JSON compiles"() {
+        when:
+        def repository = buildRepository('test.PostRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.annotation.search.SearchField;
+import io.micronaut.data.annotation.search.SearchIndexSettings;
+import io.micronaut.data.annotation.search.SearchMapping;
+import io.micronaut.data.annotation.search.Searchable;
+
+@MappedEntity
+@Searchable
+@SearchIndexSettings("{\\"number_of_shards\\": 2, \\"analysis\\": {\\"filter\\": [\\"lowercase\\"], \\"n\\": -1.5e+3, \\"ok\\": true, \\"none\\": null, \\"s\\": \\"a\\\\u00e9\\\\n\\"}}")
+class Post {
+    @Id
+    @GeneratedValue
+    private Long id;
+    @SearchField
+    @SearchMapping(" {\\"type\\": \\"text\\", \\"fields\\": {}} ")
+    private String title;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+}
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+interface PostRepository extends CrudRepository<Post, Long> {
+}
+""")
+
+        then:
+        repository != null
+    }
+
     void "no-property Search keyword and other predicates combine"() {
         given:
         def repository = articleRepository("""
