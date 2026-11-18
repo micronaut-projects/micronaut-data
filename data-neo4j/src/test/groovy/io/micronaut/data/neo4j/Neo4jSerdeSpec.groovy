@@ -1,0 +1,301 @@
+package io.micronaut.data.neo4j
+
+import io.micronaut.context.ApplicationContext
+import io.micronaut.data.annotation.Query
+import io.micronaut.data.exceptions.DataAccessException
+import io.micronaut.data.graph.runtime.GraphNode
+import io.micronaut.data.graph.runtime.serde.GraphSerde
+import io.micronaut.serde.SerdeRegistry
+import io.micronaut.data.graph.tck.entities.Movie
+import io.micronaut.data.graph.tck.entities.Person
+import io.micronaut.core.type.Argument
+import io.micronaut.data.graph.tck.entities.Role
+import io.micronaut.data.neo4j.features.Composer
+import io.micronaut.data.neo4j.features.ComposerRepository
+import io.micronaut.data.neo4j.features.Critic
+import io.micronaut.data.neo4j.features.CriticRepository
+import io.micronaut.data.neo4j.features.Event
+import io.micronaut.data.neo4j.features.EventRepository
+import io.micronaut.data.neo4j.features.KennelRepository
+import io.micronaut.data.neo4j.features.PetRepository
+import io.micronaut.data.neo4j.features.Reading
+import io.micronaut.data.neo4j.features.ReadingRepository
+import io.micronaut.data.neo4j.features.Tag
+import io.micronaut.data.neo4j.features.Topic
+import io.micronaut.data.neo4j.features.TopicRepository
+import io.micronaut.data.model.runtime.RuntimeEntityRegistry
+import io.micronaut.data.neo4j.operations.Neo4jRepositoryOperations
+import io.micronaut.data.neo4j.tck.Neo4jMovieRepository
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import io.micronaut.test.support.TestPropertyProvider
+import jakarta.inject.Inject
+import org.neo4j.driver.types.IsoDuration
+import spock.lang.Specification
+
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
+
+/**
+ * Reads nodes with Micronaut Serialization and with GraphEntityMapper, and checks both give the same entities.
+ */
+@MicronautTest(transactional = false)
+class Neo4jSerdeSpec extends Specification implements TestPropertyProvider {
+
+    @Inject
+    ApplicationContext context
+
+    @Inject
+    Neo4jRepositoryOperations operations
+
+    @Inject
+    Neo4jMovieRepository movieRepository
+
+    @Inject
+    RuntimeEntityRegistry entityRegistry
+
+    @Inject
+    TopicRepository topicRepository
+
+    @Inject
+    EventRepository eventRepository
+
+    @Inject
+    ComposerRepository composerRepository
+
+    @Inject
+    CriticRepository criticRepository
+
+    @Inject
+    KennelRepository kennelRepository
+
+    @Inject
+    PetRepository petRepository
+
+    @Inject
+    ReadingRepository readingRepository
+
+    @Inject
+    GraphSerde serde
+
+    @Override
+    Map<String, String> getProperties() {
+        return ['neo4j.uri': EmbeddedNeo4j.boltUri()]
+    }
+
+    void setup() {
+        operations.executeQuery("MATCH (n) DETACH DELETE n", [:])
+        def keanu = new Person("Keanu Reeves", 1964)
+        def carrie = new Person("Carrie-Anne Moss", 1967)
+        def lana = new Person("Lana Wachowski", 1965)
+        def matrix = new Movie("The Matrix", "Welcome to the Real World", 1999)
+        matrix.roles = [new Role(["Neo"], keanu), new Role(["Trinity"], carrie)]
+        matrix.directors = [lana]
+        matrix.votes = 42L
+        movieRepository.save(matrix)
+    }
+
+    void "temporal values, identifiers, enums, decimals and attribute converters"() {
+        given:
+        def instant = Instant.parse("2026-10-16T09:30:15.123456789Z")
+        def event = new Event("launch", LocalDate.of(2026, 10, 16), LocalDateTime.of(2026, 10, 16, 9, 30, 15),
+            instant, ZonedDateTime.of(2026, 10, 16, 11, 30, 15, 0, ZoneId.of("Europe/Madrid")),
+            OffsetDateTime.of(2026, 10, 16, 9, 30, 15, 0, ZoneOffset.ofHours(2)), Date.from(instant.truncatedTo(ChronoUnit.MILLIS)),
+            Duration.ofMinutes(90), UUID.fromString("6f9619ff-8b86-d011-b42d-00cf4fc964ff"), Event.Priority.HIGH,
+            new BigDecimal("19.99"), new Event.Points(7))
+
+        when:
+        eventRepository.save(event)
+        def found = eventRepository.findById("launch").get()
+
+        then:
+        found.day() == event.day()
+        found.start() == event.start()
+        found.created() == event.created()
+        found.zoned().toInstant() == event.zoned().toInstant()
+        found.offset().toInstant() == event.offset().toInstant()
+        found.legacy() == event.legacy()
+        found.length() == event.length()
+        found.ref() == event.ref()
+        found.priority() == Event.Priority.HIGH
+        found.price() == new BigDecimal("19.99")
+        found.points() == new Event.Points(7)
+        operations.executeQuery('MATCH (e:Event) RETURN e.points AS points', [:])[0].get("points") == 70L
+    }
+
+    void "read plain nodes"() {
+        given:
+        def entity = entityRegistry.getEntity(Person)
+        def rows = operations.executeQuery("MATCH (n:Person) RETURN n ORDER BY n.name", [:])
+
+        when:
+        List<Person> viaSerde = rows.collect { serde.readNode(entity, it.get(0) as GraphNode, it) }
+        List<Person> viaMapper = operations.executeQuery("MATCH (n:Person) RETURN n ORDER BY n.name", [:], Person)
+
+        then:
+        viaSerde*.name == ["Carrie-Anne Moss", "Keanu Reeves", "Lana Wachowski"]
+        viaSerde*.name == viaMapper*.name
+        viaSerde*.born == viaMapper*.born
+        viaSerde*.id == viaMapper*.id
+        viaSerde.every { it.id != null }
+    }
+
+    void "read nodes with fetched relationships and relationship properties"() {
+        given:
+        def entity = entityRegistry.getEntity(Movie)
+        def method = context.getBeanDefinition(Neo4jMovieRepository).findMethod("findByTitle", String).get()
+        String cypher = method.stringValue(Query, "rawQuery").orElseGet(() -> method.stringValue(Query).get())
+        def rows = operations.executeQuery(cypher, [p0: "The Matrix"])
+
+        when:
+        Movie viaSerde = serde.readNode(entity, rows[0].get("n") as GraphNode, rows[0])
+        Movie viaMapper = movieRepository.findByTitle("The Matrix").get()
+
+        then: "properties, including the renamed tagline"
+        viaSerde.title == "The Matrix"
+        viaSerde.description == viaMapper.description
+        viaSerde.description == "Welcome to the Real World"
+        viaSerde.released == 1999
+        viaSerde.votes == 42L
+
+        and: "relationship entities with their properties, identifiers and target nodes"
+        viaSerde.roles.size() == 2
+        viaSerde.roles*.roles.flatten().sort() == ["Neo", "Trinity"]
+        viaSerde.roles*.person*.name.sort() == viaMapper.roles*.person*.name.sort()
+        viaSerde.roles*.id.sort() == viaMapper.roles*.id.sort()
+        viaSerde.roles.every { it.id != null }
+
+        and: "related nodes"
+        viaSerde.directors*.name == ["Lana Wachowski"]
+    }
+
+    void "record nodes are read by the deserializer serde generated for them"() {
+        given:
+        def saved = topicRepository.save(new Topic(null, "Databases", [new Tag("graph"), new Tag("nosql")]))
+        def method = context.getBeanDefinition(TopicRepository).findMethod("findByTitle", String).get()
+        String cypher = method.stringValue(Query, "rawQuery").orElseGet(() -> method.stringValue(Query).get())
+        def rows = operations.executeQuery(cypher, [p0: "Databases"])
+        def registry = context.getBean(SerdeRegistry)
+
+        expect: "serde generated the source of the deserializer of the record"
+        registry.findDeserializer(Argument.of(Topic)).toString().contains("beanType=class io.micronaut.data.neo4j.features.SerdeTopicDeserializer")
+
+        when:
+        Topic topic = serde.readNode(entityRegistry.getEntity(Topic), rows[0].get("n") as GraphNode, rows[0])
+
+        then: "a generated identifier and fetched relationships"
+        topic.id() == saved.id()
+        topic.title() == "Databases"
+        topic.tags()*.name.sort() == ["graph", "nosql"]
+    }
+
+    void "relationships that were not fetched keep the value the class initializes"() {
+        given:
+        def entity = entityRegistry.getEntity(Movie)
+        def rows = operations.executeQuery("MATCH (n:Movie) RETURN n", [:])
+
+        when:
+        Movie movie = serde.readNode(entity, rows[0].get(0) as GraphNode, rows[0])
+
+        then:
+        movie.title == "The Matrix"
+        movie.roles != null
+        movie.roles.isEmpty()
+        movie.directors.isEmpty()
+    }
+
+    void "a class-level naming strategy round-trips, including a natural identifier"() {
+        given:
+        def composer = new Composer("Arvo Part", 1935, 200)
+
+        when:
+        composerRepository.save(composer)
+
+        then:
+        operations.executeQuery('MATCH (c {full_name: "Arvo Part"}) RETURN c.birth_year AS born, c.opus_count AS works', [:])[0].get("born") == 1935L
+        composerRepository.findById("Arvo Part").get() == composer
+        composerRepository.findAll().toList() == [composer]
+    }
+
+    void "a serde naming strategy on a node does not change what the node holds"() {
+        given:
+        def critic = new Critic("Pauline Kael", 12)
+
+        when:
+        criticRepository.save(critic)
+
+        then:
+        operations.executeQuery('MATCH (c:Critic) RETURN c.reviewCount AS reviews', [:])[0].get("reviews") == 12L
+        criticRepository.findById("Pauline Kael").get() == critic
+    }
+
+    void "a node fetched through a relationship keeps its schemaless data"() {
+        given:
+        operations.executeQuery('CREATE (:Kennel {name: "North"})-[:HOUSES]->(:Pet:Rescued {name: "Rex", colour: "brown"})', [:])
+
+        when:
+        def kennel = kennelRepository.findByName("North").get()
+
+        then:
+        kennel.pets()*.name == ["Rex"]
+        kennel.pets()[0].attributes == [colour: "brown"]
+        kennel.pets()[0].labels == ["Rescued"] as Set
+    }
+
+    void "a relationship collection of a record that was not fetched is empty"() {
+        given:
+        operations.executeQuery('CREATE (:Kennel {name: "South"})', [:])
+
+        when:
+        def kennel = kennelRepository.findById("South").get()
+
+        then:
+        kennel.name() == "South"
+        kennel.pets() == []
+
+        when: "fetched, with nothing to fetch"
+        kennel = kennelRepository.findByName("South").get()
+
+        then:
+        kennel.pets() == []
+    }
+
+    void "a mixed duration on a node only fails a read of it into a Duration"() {
+        given:
+        operations.executeQuery('CREATE (:Reading {name: "unmapped", level: 1, taken: duration("P1DT2H")})', [:])
+        operations.executeQuery('CREATE (:Event {name: "mapped", length: duration("P1DT2H")})', [:])
+        operations.executeQuery('CREATE (:Pet {name: "Rex", age: duration("P1DT2H")})', [:])
+
+        expect: "a property the entity does not declare is ignored"
+        readingRepository.findById("unmapped").get() == new Reading("unmapped", (short) 1)
+
+        and: "a raw query and a schemaless property get the driver value"
+        operations.executeQuery('RETURN duration("P1DT2H") AS d', [:])[0].get("d") instanceof IsoDuration
+        petRepository.findById("Rex").get().attributes.age instanceof IsoDuration
+
+        when: "it is read into a property that cannot represent it"
+        eventRepository.findById("mapped")
+
+        then:
+        def e = thrown(DataAccessException)
+        e.message.contains('Cannot read the Neo4j duration [')
+        e.message.contains('both a calendar part (months or days) and a time part')
+    }
+
+    void "a schemaless mixed duration saved back keeps its value"() {
+        given:
+        operations.executeQuery('CREATE (:Pet {name: "Tom", age: duration("P1DT2H")})', [:])
+
+        when:
+        petRepository.update(petRepository.findById("Tom").get())
+
+        then:
+        operations.executeQuery('MATCH (p:Pet {name: "Tom"}) RETURN toString(p.age) AS age', [:])[0].get("age") == 'P1DT2H'
+    }
+}

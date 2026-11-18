@@ -7,6 +7,7 @@ dependencies {
 	api mnSerde.micronaut.serde.processor
 	api mnSerde.micronaut.serde.api
 	api projects.micronautDataDocumentModel
+	api projects.micronautDataSerdeProcessor
 
 	compileOnly mn.micronaut.inject.java
 
