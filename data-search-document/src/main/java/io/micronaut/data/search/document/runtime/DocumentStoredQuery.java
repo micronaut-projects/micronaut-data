@@ -25,6 +25,8 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.runtime.operations.internal.query.DefaultBindableParametersStoredQuery;
+import io.micronaut.data.model.vector.Vector;
+import io.micronaut.data.model.vector.search.Score;
 import io.micronaut.data.search.document.query.DocumentSearchQueryBuilder;
 import io.micronaut.data.search.document.query.SearchJson;
 import io.micronaut.json.JsonMapper;
@@ -106,6 +108,45 @@ public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersSt
         return node;
     }
 
+    /**
+     * The value a placeholder stands for, a bound parameter or the literal it carries when the index is
+     * negative, with its wildcard or similarity hint applied.
+     */
+    @Nullable
+    private Object resolvePlaceholder(Map<?, ?> placeholder, int index, List<Object> values) {
+        // a literal comes from the parsed body and is JSON already; vectors and scores are normalized to
+        // numbers before the other bound values are converted with the JSON mapper
+        Object value = index < 0 ? normalize(placeholder.get("value")) : toJsonValue(normalize(values.get(index)));
+        Object hint = placeholder.get(DocumentSearchQueryBuilder.WILDCARD_HINT);
+        if (DocumentSearchQueryBuilder.COSINE_SIMILARITY_HINT.equals(hint)) {
+            return value instanceof Number distance ? 1d - distance.doubleValue() : value;
+        }
+        return hint == null ? value : wildcard(value, hint.toString());
+    }
+
+    /**
+     * Vectors and scores bind as plain JSON numbers.
+     */
+    @Nullable
+    private static Object normalize(@Nullable Object value) {
+        if (value instanceof Vector vector) {
+            double[] doubles = vector.toDoubleArray();
+            List<Object> list = new ArrayList<>(doubles.length);
+            for (double d : doubles) {
+                list.add(d);
+            }
+            return list;
+        }
+        if (value instanceof Score score) {
+            return score.value();
+        }
+        if (value != null && value.getClass().isArray()) {
+            // an array bound to an In predicate is spliced into the list like a collection
+            return SearchJson.arrayToList(value);
+        }
+        return value;
+    }
+
     /** Replaces the items of a list; a parameter bound to a collection, such as the values of an In predicate, contributes its elements. */
     private List<Object> replaceItems(Collection<?> collection, List<Object> values) {
         List<Object> copy = new ArrayList<>(collection.size());
@@ -119,15 +160,6 @@ public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersSt
             }
         }
         return copy;
-    }
-
-    /** The value a placeholder stands for: a bound parameter, or the literal it carries when the index is negative. */
-    @Nullable
-    private Object resolvePlaceholder(Map<?, ?> placeholder, int index, List<Object> values) {
-        // a literal comes from the parsed body and is JSON already
-        Object value = index < 0 ? placeholder.get("value") : toJsonValue(values.get(index));
-        Object hint = placeholder.get(DocumentSearchQueryBuilder.WILDCARD_HINT);
-        return hint == null ? value : wildcard(value, hint.toString());
     }
 
     /**
