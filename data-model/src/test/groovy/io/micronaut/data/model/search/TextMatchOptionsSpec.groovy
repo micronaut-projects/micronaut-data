@@ -35,6 +35,9 @@ class TextMatchOptionsSpec extends Specification {
         TextMatchOptions.builder().build().is(TextMatchOptions.NONE)
         TextMatchOptions.NONE.isDefault()
         !TextMatchOptions.builder().fuzziness(1).build().isDefault()
+        !TextMatchOptions.builder().language("german").build().isDefault()
+        TextMatchOptions.builder().language(" ").build().is(TextMatchOptions.NONE)
+        TextMatchOptions.builder().language(null).build().language() == null
     }
 
     void "options are value objects keyed by property path"() {
@@ -49,12 +52,25 @@ class TextMatchOptionsSpec extends Specification {
         options == TextMatchOptions.builder().boost("address.city", 3d).fuzziness(2).build()
         options.hashCode() == TextMatchOptions.builder().boost("address.city", 3d).fuzziness(2).build().hashCode()
         options != TextMatchOptions.builder().boost("address.city", 3d).build()
-        options.toString() == "TextMatchOptions{boosts={address.city=3.0}, fuzziness=2}"
+        options.toString() == "TextMatchOptions{boosts={address.city=3.0}, fuzziness=2, language=null}"
     }
 
-    void "the options of a search query carry its boosts and edit distance"() {
+    void "options with another language differ"() {
+        given:
+        def german = TextMatchOptions.builder().language("german").build()
+
+        expect:
+        german.language() == "german"
+        german == TextMatchOptions.builder().language("german").build()
+        german.hashCode() == TextMatchOptions.builder().language("german").build().hashCode()
+        german != TextMatchOptions.builder().language("french").build()
+        german.toString() == "TextMatchOptions{boosts={}, fuzziness=0, language=german}"
+    }
+
+    void "the options of a search query carry its boosts, edit distance and language"() {
         expect:
         TextMatchOptions.of(SearchQuery.builder("coffe").fuzzy(2).boost("title", 2d).build()) == TextMatchOptions.builder().boost("title", 2d).fuzziness(2).build()
+        TextMatchOptions.of(SearchQuery.builder("kaffee").language("german").build()).language() == "german"
         TextMatchOptions.of(SearchQuery.of("coffee")).is(TextMatchOptions.NONE)
     }
 }

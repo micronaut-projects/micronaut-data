@@ -31,4 +31,27 @@ class TextSearchDialectSpec extends Specification {
         new TextSearchDialect.Target("data", "b") == new TextSearchDialect.Target("data", "b", null)
         TextSearchDialect.Target.RELATIONAL.languageColumn() == null
     }
+
+    void "a query language that is not a configuration name is rejected before it reaches the SQL"() {
+        when:
+        TextSearchDialect.resolveLanguage([], io.micronaut.data.model.search.TextMatchOptions.builder().language(language).build())
+
+        then:
+        thrown(IllegalArgumentException)
+
+        where:
+        language << ["english'", "english',title),'') OR 1=1 --", "en-US", "english;", "pg_catalog.", ".english", "a.b.c", "my-folding"]
+    }
+
+    void "a configuration name is accepted as the query language"() {
+        expect:
+        TextSearchDialect.resolveLanguage([], io.micronaut.data.model.search.TextMatchOptions.builder().language("german").build()) == "german"
+        TextSearchDialect.resolveLanguage([], io.micronaut.data.model.search.TextMatchOptions.builder().language("pg_catalog.english").build()) == "pg_catalog.english"
+        io.micronaut.data.model.search.SearchQuery.builder("x").language("simple").build().language == "simple"
+    }
+
+    void "the query builder leaves analyzer names to the document stores"() {
+        expect:
+        io.micronaut.data.model.search.SearchQuery.builder("x").language("my-folding").build().language == "my-folding"
+    }
 }

@@ -1,0 +1,44 @@
+/*
+ * Copyright 2017-2026 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.data.search.elasticsearch.memory;
+
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.search.SearchField;
+import io.micronaut.data.annotation.search.Searchable;
+import org.jspecify.annotations.Nullable;
+
+/**
+ * Entities for the mapping specs that must not get an index on a real cluster: the startup index creator
+ * skips nested types.
+ */
+public final class MappingOnlyEntities {
+
+    private MappingOnlyEntities() {
+    }
+
+    /**
+     * A searchable entity analysed by a custom analyzer, whose name is not a SQL configuration name. No
+     * cluster defines the analyzer, so the entity is nested to keep it out of index creation.
+     *
+     * @param id The id
+     * @param text The text
+     */
+    @MappedEntity("folded_notes")
+    @Searchable(language = "my-folding")
+    public record FoldedNote(@Id @Nullable String id, @SearchField String text) {
+    }
+}

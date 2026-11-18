@@ -311,7 +311,7 @@ interface PostRepository extends CrudRepository<Post, Long> {
         getQuery(repository.getRequiredMethod("countBySearchAll", String)) == 'SELECT COUNT(*) FROM "article" article_ WHERE ((setweight(to_tsvector(\'english\',coalesce(article_."title",\'\')),\'A\') || setweight(to_tsvector(\'english\',coalesce(article_."body",\'\')),\'D\')) @@ to_tsquery(\'english\',?))'
     }
 
-    void "the entity language picks the text search configuration"() {
+    void "the entity language #language picks the text search configuration"() {
         given:
         def repository = buildRepository('test.NoteRepository', """
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
@@ -320,7 +320,7 @@ import io.micronaut.data.annotation.search.SearchField;
 import io.micronaut.data.annotation.search.Searchable;
 
 @MappedEntity
-@Searchable(language = "german")
+@Searchable(language = "${language}")
 class Note {
     @Id
     @GeneratedValue
@@ -340,7 +340,10 @@ interface NoteRepository extends CrudRepository<Note, Long> {
 """)
 
         expect:
-        getQuery(repository.getRequiredMethod("findByTextSearch", String)) == 'SELECT note_."id",note_."text" FROM "note" note_ WHERE (to_tsvector(\'german\',note_."text") @@ to_tsquery(\'german\',?))'
+        getQuery(repository.getRequiredMethod("findByTextSearch", String)) == 'SELECT note_."id",note_."text" FROM "note" note_ WHERE (to_tsvector(\'' + language + '\',note_."text") @@ to_tsquery(\'' + language + '\',?))'
+
+        where:
+        language << ["german", "pg_catalog.english"]
     }
 
     void "a language that is not a configuration name is rejected at compile time"() {
