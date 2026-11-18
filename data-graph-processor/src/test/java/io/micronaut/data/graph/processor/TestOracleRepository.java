@@ -13,7 +13,7 @@ import java.lang.annotation.RetentionPolicy;
  */
 @RepositoryConfiguration(
     queryBuilder = OracleGraphQueryBuilder.class,
-    implicitQueries = true,
+    implicitQueries = false,
     namedParameters = false
 )
 @Retention(RetentionPolicy.RUNTIME)

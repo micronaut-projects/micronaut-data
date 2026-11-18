@@ -34,7 +34,7 @@ import java.lang.annotation.Target;
  * {@code CREATE PROPERTY GRAPH}. Queries are compiled at build time to SQL/PGQ {@code GRAPH_TABLE} queries, which run
  * on any Oracle 23ai data source.
  *
- * <p>Property graphs over tables are read only. Write the tables with a JDBC repository.</p>
+ * <p>Nodes are written to their vertex tables with SQL. Write relationships to their edge tables with a JDBC repository.</p>
  *
  * @author graemerocher
  * @since 5.3.0
