@@ -1,0 +1,23 @@
+plugins {
+    id "io.micronaut.build.internal.data-python-example"
+    id "io.micronaut.test-resources"
+}
+
+micronaut {
+    testResources {
+        additionalModules.add("jdbc-postgresql")
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
+}
+
+dependencies {
+    // The Python compiler takes the compile classpath as its annotation processor path
+    implementation projects.micronautDataProcessor
+    implementation projects.micronautDataJdbc
+    testImplementation(mnTestResources.micronaut.test.resources.extensions.junit.platform)
+
+    runtimeOnly mnSql.postgresql
+    runtimeOnly mnSql.micronaut.jdbc.hikari
+    runtimeOnly mnLogging.logback.classic
+}
