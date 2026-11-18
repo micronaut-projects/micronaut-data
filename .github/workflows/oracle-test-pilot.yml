@@ -18,7 +18,7 @@ jobs:
         id: build-matrix
         shell: bash
         run: |
-          echo 'matrix={"db":["base-database-service-26ai","autonomous-transaction-processing-serverless-26ai"], "native_test_task":["micronaut-doc-examples:micronaut-jdbc-example-records-java:nativeTest","micronaut-doc-examples:micronaut-jdbc-example-java:nativeTest","micronaut-doc-examples:micronaut-hibernate-example-java:nativeTest"]}' >> "$GITHUB_OUTPUT"
+          echo 'matrix={"db":["base-database-service-26ai","autonomous-transaction-processing-serverless-26ai"], "native_test_task":["micronaut-doc-examples:micronaut-jdbc-example-records-java:nativeTest","micronaut-doc-examples:micronaut-jdbc-example-java:nativeTest","micronaut-doc-examples:micronaut-hibernate-example-java:nativeTest","micronaut-data-r2dbc:oracleTestPilotTest"]}' >> "$GITHUB_OUTPUT"
 
   build:
     needs: build_matrix
