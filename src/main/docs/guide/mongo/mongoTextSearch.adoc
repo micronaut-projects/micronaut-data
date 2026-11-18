@@ -1,6 +1,6 @@
-Micronaut Data MongoDB supports the full-text search API described in the <<sqlTextSearch, SQL section>> on top of MongoDB's `$text` operator and text indexes. The repository API is the same; this section lists what MongoDB adds and what it cannot do.
+Micronaut Data MongoDB supports the full-text search API described in the <<sqlTextSearch, SQL section>> on top of MongoDB's `$text` operator and text indexes, or on top of MongoDB Search (`$search`) when the entity is annotated with ann:data.mongodb.annotation.MongoSearchIndex[]. The repository API is the same; this section lists what MongoDB adds and what it cannot do.
 
-NOTE: Full-text search is experimental. The `$text` operator is available on every MongoDB deployment; MongoDB Search (`$search`) is not used yet.
+NOTE: Full-text search is experimental. The `$text` operator is available on every MongoDB deployment; `$search` needs MongoDB Atlas or the https://www.mongodb.com/docs/atlas/cli/current/atlas-cli-deploy-docker/[Atlas local deployment] (`mongodb/mongodb-atlas-local`).
 
 == Mapping
 
@@ -34,18 +34,48 @@ The query sets `$language` to the entity's language, which is also the text inde
 
 A api:data.model.search.SearchQuery[] passed to `search(SearchQuery)` runs the same `$text` aggregation at runtime, as described in the <<sqlTextSearch, SQL full-text search section>>; as `$text` always searches the whole index, a query whose `fields` name only some of the search fields fails when the method runs with an api:data.model.search.UnsupportedSearchFeatureException[] for `FIELD_SCOPE` rather than silently searching every field. The `PREFIX` and `FUZZY` modes also fail when the method runs.
 
+== MongoDB Search
+
+Annotating a searchable entity with ann:data.mongodb.annotation.MongoSearchIndex[] switches the entity's search from `$text` to a `$search` aggregation stage over the search fields, which adds field scoping, prefix and fuzzy matching, highlighting and minimum score restrictions:
+
+snippet::example.Article[project-base="doc-examples/mongo-search-example", source="main", tags="entity"]
+
+<1> The language picks the Lucene analyzer of the index, `lucene.english` for `english`; `@MongoSearchIndex(analyzer)` overrides it.
+<2> The name of the search index, `default` unless set.
+<3> The index weights become query-time boosts of the field, `score: { boost: { value: 10 } }` for `HIGH`.
+
+When `micronaut.data.mongodb.create-collections` is enabled, Micronaut Data creates the search index together with the collection, mapping every search field as a `string` with the analyzer; `@MongoSearchIndex(dynamic = true)` also maps the remaining fields dynamically. The index is built asynchronously, so a document saved right before a search may not be found yet. On a deployment without MongoDB Search the index cannot be created and a warning is logged.
+
+snippet::example.ArticleRepository[project-base="doc-examples/mongo-search-example", source="main", tags="repository"]
+
+<1> A property keyword searches only that property with `$search`, unlike `$text`.
+<2> `SearchPrefix` renders a `wildcard` operator over the analyzed field. The wildcard matches the indexed tokens, which a language analyzer such as `lucene.english` has stemmed, so a prefix longer than the stem, such as `runni` for `running` (indexed as `run`), finds nothing. For search-as-you-type, index the field with `lucene.standard` through `@MongoSearchIndex(analyzer)`, or keep prefixes short.
+<3> `SearchFuzzy` renders a `text` operator with `fuzzy: { maxEdits: 1 }`.
+<4> A trailing api:data.model.vector.search.Score[] parameter keeps the hits whose `searchScore` is at least its value.
+<5> The other predicates follow the `$search` stage in a `$match`; a search predicate can neither be part of an `OR` nor be negated.
+
+The search string grammar is rendered into `compound` operators at bind time: every term becomes a `text` operator over the searched paths, a quoted phrase a `phrase` operator, a negated term a `mustNot` clause, and `OR` groups `should` clauses. `SearchAll` puts the terms in `must`, so every one is required.
+
+`search(SearchQuery)` honours the `fields`, `mode`, `highlight` and `minScore` options. Highlights are read from the `searchHighlights` metadata and returned as one fragment per field with the hits wrapped in `<em>` tags, like the other stores. The relevance score is the `searchScore`.
+
+NOTE: A `SearchResults` query, with `$text` or `$search`, adds the relevance score to each document as a field named `mn_score` and each highlight as a field named `mn_hl_<property>`, and removes them before the entity is decoded. These names are reserved: a stored field named `mn_score`, or one whose name starts with `mn_hl_`, is not mapped to the entity by a `SearchResults` query.
+
 == Limitations
 
 |===
-|Feature |MongoDB `$text`
+|Feature |MongoDB `$text` |MongoDB Search (`$search`)
 
-|Field scoping (`findByTitleSearch` matching only `title`) |not supported, every search field is searched
-|A property keyword on a property without `@SearchField` or of a joined entity |rejected at compile time, as the property is not in the text index
-|Stemming in `SearchAll` |not supported, every term is matched literally
-|`SearchPrefix` and `SearchFuzzy` |not supported, rejected at compile time
-|Highlighting and query-time boosts |not supported; `@SearchField(highlightable = true)` is ignored by derived `SearchResults` methods, and `SearchQuery.highlight(...)` throws `UnsupportedSearchFeatureException`
-|`$text` under `OR` or `NOT` |rejected at compile time, as MongoDB only allows `$text` as a top-level condition
-|`$text` with joins |the `$text` match is moved ahead of the join lookups, as MongoDB requires it in the first stage
+|Field scoping (`findByTitleSearch` matching only `title`) |not supported, every search field is searched |supported
+|A property keyword on a property without `@SearchField` or of a joined entity |rejected at compile time, as the property is not in the text index |the property must be mapped by the search index
+|Stemming in `SearchAll` |not supported, every term is matched literally |follows the analyzer of the search index
+|`SearchPrefix` and `SearchFuzzy` |not supported, rejected at compile time |supported
+|Highlighting |not supported; `@SearchField(highlightable = true)` is ignored by derived `SearchResults` methods, and `SearchQuery.highlight(...)` throws `UnsupportedSearchFeatureException` |supported
+|Minimum score |not supported |supported
+|Query-time boosts (`SearchQuery.boost`) |not supported |not supported, the index weights boost the fields
+|Per-document language (`@Language`) |`language_override` |not supported, the analyzer is fixed per index
+|Search with joins |the `$text` match is moved ahead of the join lookups, as MongoDB requires it in the first stage |`$search` must be the first stage, so joined queries are rejected at compile time
+|Search predicate inside `OR` or `NOT` |rejected at compile time, as MongoDB only allows `$text` as a top-level condition |rejected, as the `$search` stage runs before the other conditions
+|Cursored paging |not supported |not supported
 |===
 
 As on SQL stores, an unsorted `Pageable` or `Sort` parameter of a `SearchResults` method keeps the relevance order, best match first, with the document id breaking ties so consecutive pages neither repeat nor skip hits; a `Pageable` or `Sort` with orders replaces it.
