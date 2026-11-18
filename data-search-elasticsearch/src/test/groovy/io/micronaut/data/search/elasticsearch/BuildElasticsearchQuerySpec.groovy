@@ -259,4 +259,27 @@ ${methods}
         def e = thrown(RuntimeException)
         e.message.contains("A vector search cannot select the documents of a delete or an update")
     }
+
+    void "a colon in a @Query string value is a parameter reference unless escaped with a backslash"() {
+        when:
+        articleRepository("""
+    @Query("{\\"query\\": {\\"match\\": {\\"body\\": \\"at 10:30\\"}}}")
+    List<Article> atHalfPastTen();
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("No method parameter found for named Query parameter: 30")
+
+        when:
+        def method = articleRepository("""
+    @Query("{\\"query\\": {\\"bool\\": {\\"must\\": {\\"match\\": {\\"body\\": \\"at 10\\\\:30\\"}}, \\"filter\\": {\\"term\\": {\\"author\\": \\":author\\"}}}}}")
+    List<Article> atHalfPastTen(String author);
+""").getRequiredMethod("atHalfPastTen", String)
+        def body = json(method.getAnnotation(Query).stringValue(DataMethod.META_MEMBER_RAW_QUERY).get())
+
+        then:
+        body.getJsonObject("query").getJsonObject("bool").getJsonObject("must").getJsonObject("match").getString("body") == "at 10:30"
+        body.getJsonObject("query").getJsonObject("bool").getJsonObject("filter").getJsonObject("term").getString("author") == ":author"
+    }
 }

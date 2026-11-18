@@ -45,6 +45,11 @@ class OpenSearchBoundValuesSpec extends Specification {
         meetings.findByStartsAtBefore(START.plusDays(1)).first().startsAt().toInstant() == START.toInstant()
     }
 
+    void "a named parameter of a @Query body binds as the documents store it"() {
+        expect:
+        meetings.startingBefore(START.plusDays(1))*.title() == ["Planning"]
+    }
+
     void "an enum binds by its serialised name"() {
         expect:
         meetings.findByPriority(Meeting.Priority.HIGH)*.title() == ["Planning"]
