@@ -31,6 +31,7 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.document.model.query.builder.MongoQueryBuilder;
 import io.micronaut.data.model.search.MatchMode;
+import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.PersistentPropertyPath;
@@ -655,6 +656,24 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
 
         if (isIdentity && value instanceof String string) {
             return MongoUtils.generatedStringIdValue(string);
+        }
+        if (value instanceof Vector vector) {
+            // the query vector of a $vectorSearch stage
+            value = vector.toDoubleArray();
+        }
+        if (value instanceof double[] doubles) {
+            BsonArray array = new BsonArray(doubles.length);
+            for (double d : doubles) {
+                array.add(new BsonDouble(d));
+            }
+            return array;
+        }
+        if (value instanceof float[] floats) {
+            BsonArray array = new BsonArray(floats.length);
+            for (float f : floats) {
+                array.add(new BsonDouble(f));
+            }
+            return array;
         }
         if (value instanceof Object[] objects) {
             List<Object> valueList = Arrays.asList(objects);

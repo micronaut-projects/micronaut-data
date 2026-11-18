@@ -26,6 +26,9 @@ import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
 import com.mongodb.MongoCommandException;
 import com.mongodb.client.model.IndexOptions;
+import com.mongodb.client.model.SearchIndexModel;
+import com.mongodb.client.model.SearchIndexType;
+import io.micronaut.data.model.vector.Vector;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.data.mongodb.annotation.MongoSearchIndex;
 import com.mongodb.client.model.Indexes;
@@ -82,6 +85,8 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
         "turkish", "ukrainian");
     // the field MongoDB reads a document's language from when the text index names none
     private static final String DEFAULT_LANGUAGE_OVERRIDE = "language";
+    private static final String VECTOR = "vector";
+    private static final String FIELDS = "fields";
 
     /**
      * Get MongoDB database factory.
@@ -137,15 +142,7 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                     }
                     databaseOperations.createCollection(database, persistedName);
                 }
-                SearchIndexDefinition searchIndex = searchIndexDefinition(entity);
-                if (searchIndex != null) {
-                    createSearchIndex(databaseOperations, database, persistedName, searchIndex);
-                } else {
-                    TextIndexDefinition textIndex = textIndexDefinition(entity, persistedName);
-                    if (textIndex != null) {
-                        ensureTextIndex(databaseOperations, database, persistedName, textIndex);
-                    }
-                }
+                createIndexes(databaseOperations, database, persistedName, entity);
                 for (PersistentProperty persistentProperty : entity.getPersistentProperties()) {
                     if (persistentProperty instanceof Association association) {
                         Optional<Association> inverseSide = association.getInverseSide().map(Function.identity());
@@ -168,6 +165,26 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
 
     }
 
+    /**
+     * Creates the full-text index of the entity, a MongoDB Search index or a text index, and, for an entity
+     * with a {@code @MongoSearchIndex}, its vector search index, which does not need any search field.
+     */
+    private void createIndexes(DatabaseOperations<Dtbs> databaseOperations, Dtbs database, String collection, PersistentEntity entity) {
+        SearchIndexDefinition searchIndex = searchIndexDefinition(entity);
+        if (searchIndex != null) {
+            createSearchIndex(databaseOperations, database, collection, searchIndex);
+        } else {
+            TextIndexDefinition textIndex = textIndexDefinition(entity, collection);
+            if (textIndex != null) {
+                ensureTextIndex(databaseOperations, database, collection, textIndex);
+            }
+        }
+        VectorIndexDefinition vectorIndex = vectorIndexDefinition(entity);
+        if (vectorIndex != null) {
+            createVectorIndex(databaseOperations, database, collection, vectorIndex);
+        }
+    }
+
     private void createSearchIndex(DatabaseOperations<Dtbs> databaseOperations, Dtbs database, String collection, SearchIndexDefinition searchIndex) {
         try {
             if (databaseOperations.listSearchIndexNames(database, collection).contains(searchIndex.name())) {
@@ -185,6 +202,71 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
             // Search indexes exist on Atlas and the Atlas local deployment only
             LOG.warn("Cannot create search index: {} on collection: {}; MongoDB Search is not available on this deployment: {}", searchIndex.name(), collection, e.getErrorMessage());
         }
+    }
+
+    /**
+     * Creates the vector search index unless the collection has a search index of that name. An existing index is
+     * kept as it is, like the text index: a changed dimension or similarity is only reported, and applies once the
+     * index is dropped.
+     */
+    private void createVectorIndex(DatabaseOperations<Dtbs> databaseOperations, Dtbs database, String collection, VectorIndexDefinition vectorIndex) {
+        try {
+            Document existing = databaseOperations.findSearchIndex(database, collection, vectorIndex.name());
+            if (existing != null) {
+                if (!vectorIndex.matches(existing) && LOG.isWarnEnabled()) {
+                    LOG.warn("Vector search index: {} on collection: {} in database: {} does not match the vector properties, dimensions or similarity of the entity and is kept as it is; drop it to have it created again",
+                        vectorIndex.name(), collection, databaseOperations.getDatabaseName(database));
+                }
+                return;
+            }
+            if (LOG.isInfoEnabled()) {
+                LOG.info("Creating vector search index: {} on collection: {} in database: {}", vectorIndex.name(), collection, databaseOperations.getDatabaseName(database));
+            }
+            databaseOperations.createVectorIndex(database, collection, vectorIndex);
+        } catch (MongoCommandException e) {
+            if (!SEARCH_UNAVAILABLE_CODES.contains(e.getErrorCode())) {
+                // an invalid definition, such as a dimension Atlas rejects, must not leave the application without its index
+                throw e;
+            }
+            LOG.warn("Cannot create vector search index: {} on collection: {}; MongoDB Search is not available on this deployment: {}", vectorIndex.name(), collection, e.getErrorMessage());
+        }
+    }
+
+    /**
+     * Describes the vector search index of an entity annotated with {@code @MongoSearchIndex}: one
+     * {@code vector} field per {@link Vector} property, with the dimension declared by
+     * {@code @Column(length)}.
+     *
+     * @param entity The entity
+     * @return The definition, or {@code null} when the entity has no vector property with a dimension
+     */
+    @Nullable
+    static VectorIndexDefinition vectorIndexDefinition(PersistentEntity entity) {
+        AnnotationMetadata annotationMetadata = entity.getAnnotationMetadata();
+        if (!annotationMetadata.hasAnnotation(MongoSearchIndex.class)) {
+            return null;
+        }
+        String similarity = annotationMetadata.enumValue(MongoSearchIndex.class, MongoSearchIndex.MEMBER_SIMILARITY, MongoSearchIndex.Similarity.class)
+            .orElse(MongoSearchIndex.Similarity.COSINE)
+            .indexValue();
+        Map<String, Integer> dimensions = new LinkedHashMap<>();
+        for (PersistentProperty property : entity.getPersistentProperties()) {
+            if (property.isAssignable(Vector.class)) {
+                int length = property.getAnnotationMetadata().intValue("jakarta.persistence.Column", "length").orElse(-1);
+                if (length <= 0) {
+                    LOG.warn("Vector property {} of {} declares no @Column(length), which the vector search index needs as its dimension; it is not indexed", property.getName(), entity.getName());
+                    continue;
+                }
+                dimensions.put(persistedFieldName(property), length);
+            }
+        }
+        if (dimensions.isEmpty()) {
+            return null;
+        }
+        String name = annotationMetadata.stringValue(MongoSearchIndex.class, MongoSearchIndex.MEMBER_VECTOR_INDEX)
+            .filter(n -> !n.isEmpty())
+            .orElse(VECTOR);
+        return new VectorIndexDefinition(name, similarity, dimensions);
     }
 
     /**
@@ -306,6 +388,63 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
     }
 
     /**
+     * A MongoDB vector search index over the {@link Vector} properties of an entity.
+     *
+     * @param name The index name
+     * @param similarity The similarity: {@code cosine}, {@code euclidean} or {@code dotProduct}
+     * @param dimensions The dimension of every indexed field, by field name
+     */
+    public record VectorIndexDefinition(String name,
+                                        String similarity,
+                                        Map<String, Integer> dimensions) {
+
+        /**
+         * @return The index definition
+         */
+        public Bson definition() {
+            List<Document> fields = new java.util.ArrayList<>(dimensions.size());
+            for (Map.Entry<String, Integer> field : dimensions.entrySet()) {
+                fields.add(new Document("type", VECTOR)
+                    .append("path", field.getKey())
+                    .append("numDimensions", field.getValue())
+                    .append("similarity", similarity));
+            }
+            return new Document(FIELDS, fields);
+        }
+
+        /**
+         * Whether an existing vector search index has the fields, dimensions and similarity of this definition.
+         *
+         * @param index The index description from {@code $listSearchIndexes}
+         * @return True if the existing index indexes the same vector fields the same way
+         */
+        public boolean matches(Document index) {
+            Object latest = index.get("latestDefinition");
+            if (!(latest instanceof Document latestDefinition)) {
+                return false;
+            }
+            Map<String, Integer> existingDimensions = new LinkedHashMap<>();
+            for (Object field : latestDefinition.getList(FIELDS, Object.class, List.of())) {
+                if (!(field instanceof Document fieldDocument) || !VECTOR.equals(fieldDocument.get("type"))) {
+                    continue;
+                }
+                if (!similarity.equals(fieldDocument.get("similarity")) || !(fieldDocument.get("numDimensions") instanceof Number numDimensions)) {
+                    return false;
+                }
+                existingDimensions.put(fieldDocument.getString("path"), numDimensions.intValue());
+            }
+            return existingDimensions.equals(dimensions);
+        }
+
+        /**
+         * @return The index model, of the {@code vectorSearch} type
+         */
+        public SearchIndexModel model() {
+            return new SearchIndexModel(name, definition(), SearchIndexType.vectorSearch());
+        }
+    }
+
+    /**
      * A MongoDB Search index over the search fields of an entity.
      *
      * @param name The index name
@@ -327,7 +466,7 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                 fieldMappings.append(field, new Document("type", "string").append("analyzer", analyzer));
             }
             return new Document("analyzer", analyzer)
-                .append("mappings", new Document("dynamic", dynamic).append("fields", fieldMappings));
+                .append("mappings", new Document("dynamic", dynamic).append(FIELDS, fieldMappings));
         }
     }
 
@@ -469,6 +608,17 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
         Set<String> listSearchIndexNames(Dtbs database, String collection);
 
         /**
+         * Finds a search index of a collection by name.
+         *
+         * @param database The database
+         * @param collection The collection
+         * @param name The index name
+         * @return The index description from {@code $listSearchIndexes}, with its {@code latestDefinition}, or {@code null}
+         */
+        @Nullable
+        Document findSearchIndex(Dtbs database, String collection, String name);
+
+        /**
          * Create the search index of a searchable entity.
          *
          * @param database The database
@@ -476,6 +626,15 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
          * @param definition The index definition
          */
         void createSearchIndex(Dtbs database, String collection, SearchIndexDefinition definition);
+
+        /**
+         * Create the vector search index of an entity.
+         *
+         * @param database The database
+         * @param collection The collection
+         * @param definition The index definition
+         */
+        void createVectorIndex(Dtbs database, String collection, VectorIndexDefinition definition);
     }
 
 }
