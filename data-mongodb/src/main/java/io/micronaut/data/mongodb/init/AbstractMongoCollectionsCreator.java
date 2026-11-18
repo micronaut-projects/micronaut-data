@@ -24,6 +24,19 @@ import io.micronaut.context.annotation.Context;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
+import com.mongodb.client.model.IndexOptions;
+import com.mongodb.client.model.Indexes;
+import io.micronaut.data.annotation.search.Language;
+import io.micronaut.data.annotation.search.SearchField;
+import io.micronaut.data.annotation.search.SearchWeight;
+import io.micronaut.data.annotation.search.Searchable;
+import io.micronaut.data.model.search.TextSearchSupport;
+import io.micronaut.serde.config.annotation.SerdeConfig;
+import org.bson.Document;
+import org.bson.conversions.Bson;
+import org.jspecify.annotations.Nullable;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.Association;
@@ -54,6 +67,8 @@ import java.util.function.Function;
 @Internal
 public class AbstractMongoCollectionsCreator<Dtbs> {
     private static final Logger LOG = LoggerFactory.getLogger(AbstractMongoCollectionsCreator.class);
+    // the field MongoDB reads a document's language from when the text index names none
+    private static final String DEFAULT_LANGUAGE_OVERRIDE = "language";
 
     /**
      * Get MongoDB database factory.
@@ -109,6 +124,10 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                     }
                     databaseOperations.createCollection(database, persistedName);
                 }
+                TextIndexDefinition textIndex = textIndexDefinition(entity, persistedName);
+                if (textIndex != null) {
+                    ensureTextIndex(databaseOperations, database, persistedName, textIndex);
+                }
                 for (PersistentProperty persistentProperty : entity.getPersistentProperties()) {
                     if (persistentProperty instanceof Association association) {
                         Optional<Association> inverseSide = association.getInverseSide().map(Function.identity());
@@ -129,6 +148,130 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
             }
         }
 
+    }
+
+    /**
+     * Creates the text index of a searchable entity unless the collection has one. A collection holds at most
+     * one text index, whatever its name, so an existing one is kept as it is: rebuilding a text index is costly
+     * and the database refuses a second one, so a changed mapping is only reported, and applies once the
+     * existing index is dropped.
+     *
+     * @param databaseOperations The database operations
+     * @param database The database
+     * @param collection The collection
+     * @param textIndex The text index the entity declares
+     */
+    private void ensureTextIndex(DatabaseOperations<Dtbs> databaseOperations, Dtbs database, String collection, TextIndexDefinition textIndex) {
+        Document existing = databaseOperations.findTextIndex(database, collection);
+        if (existing == null) {
+            if (LOG.isInfoEnabled()) {
+                LOG.info("Creating text index: {} on collection: {} in database: {}", textIndex.name(), collection, databaseOperations.getDatabaseName(database));
+            }
+            databaseOperations.createTextIndex(database, collection, textIndex);
+        } else if (!textIndex.matches(existing) && LOG.isWarnEnabled()) {
+            LOG.warn("Text index: {} on collection: {} in database: {} does not match the @SearchField fields, weights or language of the entity and is kept as it is; drop it to have it created again",
+                existing.get("name"), collection, databaseOperations.getDatabaseName(database));
+        }
+    }
+
+    /**
+     * Describes the text index of a {@link Searchable} entity.
+     *
+     * @param entity The entity
+     * @param collection The collection name
+     * @return The definition, or {@code null} when the entity is not searchable
+     */
+    @Nullable
+    static TextIndexDefinition textIndexDefinition(PersistentEntity entity, String collection) {
+        if (!entity.getAnnotationMetadata().hasAnnotation(Searchable.class)) {
+            return null;
+        }
+        List<PersistentProperty> fields = TextSearchSupport.searchFields(entity);
+        if (fields.isEmpty()) {
+            return null;
+        }
+        Map<String, Integer> weights = new LinkedHashMap<>();
+        for (PersistentProperty field : fields) {
+            int weight = field.getAnnotationMetadata().enumValue(SearchField.class, SearchField.MEMBER_WEIGHT, SearchWeight.class)
+                .map(SearchWeight::numericWeight)
+                .orElse(1);
+            weights.put(persistedFieldName(field), weight);
+        }
+        String languageOverride = entity.getPersistentProperties().stream()
+            .filter(p -> p.getAnnotationMetadata().hasAnnotation(Language.class))
+            .map(AbstractMongoCollectionsCreator::persistedFieldName)
+            .findFirst()
+            .orElse(null);
+        String name = entity.getAnnotationMetadata().stringValue(Searchable.class, "name")
+            .filter(n -> !n.isEmpty())
+            .orElse(collection + "_text");
+        return new TextIndexDefinition(name, weights, TextSearchSupport.resolveLanguage(entity), languageOverride);
+    }
+
+    /**
+     * @param index An index description from {@code listIndexes}
+     * @return True if it is a text index, whose key holds the {@code _fts} field
+     */
+    static boolean isTextIndex(Document index) {
+        Object key = index.get("key");
+        return key instanceof Document keyDocument && keyDocument.containsKey("_fts");
+    }
+
+    private static String persistedFieldName(PersistentProperty property) {
+        return property.getAnnotationMetadata().stringValue(SerdeConfig.class, SerdeConfig.PROPERTY).orElseGet(property::getName);
+    }
+
+    /**
+     * A MongoDB text index over the search fields of an entity.
+     *
+     * @param name The index name
+     * @param weights The indexed field names with their weights
+     * @param defaultLanguage The default language
+     * @param languageOverride The field holding the per-document language, or {@code null}
+     */
+    public record TextIndexDefinition(String name,
+                                      Map<String, Integer> weights,
+                                      String defaultLanguage,
+                                      @Nullable String languageOverride) {
+
+        /**
+         * Whether an existing text index indexes the same fields with the same weights and languages.
+         *
+         * @param index A text index description from {@code listIndexes}
+         * @return True if the index matches this definition, whatever its name
+         */
+        public boolean matches(Document index) {
+            Map<String, Integer> indexWeights = new LinkedHashMap<>();
+            if (index.get("weights") instanceof Document weightsDocument) {
+                weightsDocument.forEach((field, weight) -> indexWeights.put(field, weight instanceof Number n ? n.intValue() : null));
+            }
+            String indexLanguage = index.get("default_language") instanceof String language ? language : TextSearchSupport.DEFAULT_LANGUAGE;
+            String indexOverride = index.get("language_override") instanceof String override ? override : DEFAULT_LANGUAGE_OVERRIDE;
+            return indexWeights.equals(weights)
+                && indexLanguage.equals(defaultLanguage)
+                && indexOverride.equals(languageOverride == null ? DEFAULT_LANGUAGE_OVERRIDE : languageOverride);
+        }
+
+        /**
+         * @return The index keys
+         */
+        public Bson keys() {
+            return Indexes.compoundIndex(weights.keySet().stream().map(Indexes::text).toList());
+        }
+
+        /**
+         * @return The index options
+         */
+        public IndexOptions options() {
+            IndexOptions options = new IndexOptions()
+                .name(name)
+                .weights(new Document(new LinkedHashMap<>(weights)))
+                .defaultLanguage(defaultLanguage);
+            if (languageOverride != null) {
+                options.languageOverride(languageOverride);
+            }
+            return options;
+        }
     }
 
     /**
@@ -187,6 +330,24 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
          */
         void createCollection(Dtbs database, String collection);
 
+        /**
+         * Finds the text index of the collection, under any name.
+         *
+         * @param database The database
+         * @param collection The collection
+         * @return The index description from {@code listIndexes}, or {@code null} when the collection has no text index
+         */
+        @Nullable
+        Document findTextIndex(Dtbs database, String collection);
+
+        /**
+         * Create the text index of a searchable entity.
+         *
+         * @param database The database
+         * @param collection The collection
+         * @param definition The index definition
+         */
+        void createTextIndex(Dtbs database, String collection, TextIndexDefinition definition);
     }
 
 }
