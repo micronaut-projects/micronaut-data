@@ -1,0 +1,13 @@
+micronaut:
+  application:
+    name: oracle-graph-example
+# tag::config[]
+datasources:
+  default:
+    db-type: oracle
+    dialect: ORACLE
+# end::config[]
+test-resources:
+  containers:
+    oracle:
+      init-script-path: bank-graph.sql

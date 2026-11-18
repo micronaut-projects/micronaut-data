@@ -1,0 +1,33 @@
+plugins {
+    id "groovy"
+    id "io.micronaut.build.internal.data-example"
+}
+
+application {
+    mainClass = "example.Application"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+    testRuntime "spock"
+}
+
+dependencies {
+    compileOnly projects.micronautDataProcessor // Override app plugin version
+    compileOnly projects.micronautDataGraphProcessor
+
+    implementation projects.micronautDataNeo4j
+    implementation(mnSql.jakarta.persistence.api)
+
+    runtimeOnly mnLogging.logback.classic
+
+    testImplementation(libs.neo4j.harness) {
+        exclude group: "org.slf4j"
+        exclude group: "ch.qos.logback"
+    }
+}
+
+tasks.withType(Test).configureEach {
+    jvmArgs "--add-opens=java.base/java.nio=ALL-UNNAMED", "--add-opens=java.base/java.lang=ALL-UNNAMED", "--enable-native-access=ALL-UNNAMED"
+}
