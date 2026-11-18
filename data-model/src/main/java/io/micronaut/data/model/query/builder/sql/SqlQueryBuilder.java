@@ -135,6 +135,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     private static final String INSERT_INTO = "INSERT INTO ";
     private static final String JDBC_REPO_ANNOTATION = "io.micronaut.data.jdbc.annotation.JdbcRepository";
     private static final String DIALECT_ATTR = "dialect";
+    private static final String SEARCH_INDEX_SUFFIX = "_search";
     private static final String REFERENCED_COLUMN_NAME = "referencedColumnName";
     // PostgreSQL's NAMEDATALEN limit is measured in server-encoding bytes, not Java characters.
     // The server encoding is not available to the builder, so non-ASCII code points use the
@@ -1155,12 +1156,87 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         if (textSearchDialect == null || !entity.getAnnotationMetadata().hasAnnotation(Searchable.class) || TextSearchSupport.searchFields(entity).isEmpty()) {
             return;
         }
-        String indexName = entity.getAnnotationMetadata().stringValue(Searchable.class, "name")
-            .filter(StringUtils::isNotEmpty)
-            .orElseGet(() -> "idx_" + prepareNames(getUnescapedTableName(entity)) + "_search");
+        String indexName = searchIndexName(entity);
         for (String ddl : textSearchDialect.buildJsonSearchIndex(escape ? quote(indexName) : indexName, tableName, escapedJsonColumn)) {
             addToCollectionIfNotContains(searchIndexStatements, ddl);
         }
+    }
+
+    /**
+     * The statements creating the full-text search indexes of a {@link Searchable} entity, for a runtime
+     * {@code create} after the schema exists.
+     *
+     * @param entity The entity
+     * @return The statements, empty when the entity is not searchable or the dialect needs no index
+     * @since 5.3.0
+     */
+    @Experimental
+    public List<String> buildCreateSearchIndexStatements(PersistentEntity entity) {
+        List<String> statements = new ArrayList<>();
+        if (DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(entity.getAnnotationMetadata())) {
+            addJsonEntityCreateStatements(new ArrayList<>(), statements, entity);
+            return statements;
+        }
+        boolean escape = shouldEscape(entity);
+        String schema = SqlQueryBuilderUtils.getSchemaName(entity);
+        for (SqlTableMapping table : SqlSchemaUtils.getSqlTableMappings(List.of(), entity, dialect)) {
+            createSearchIndexStatement(entity, table, schema, escape, statements);
+        }
+        return statements;
+    }
+
+    /**
+     * The names of the full-text search indexes of a {@link Searchable} entity, escaped as the DDL creates them.
+     *
+     * @param entity The entity
+     * @return The index names, empty when the entity is not searchable or the dialect needs no index
+     * @since 5.3.0
+     */
+    @Experimental
+    public List<String> searchIndexNames(PersistentEntity entity) {
+        TextSearchDialect textSearchDialect = TextSearchDialect.forDialect(dialect);
+        if (textSearchDialect == null || !entity.getAnnotationMetadata().hasAnnotation(Searchable.class) || TextSearchSupport.searchFields(entity).isEmpty()) {
+            return List.of();
+        }
+        boolean escape = shouldEscape(entity);
+        if (DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(entity.getAnnotationMetadata())) {
+            return List.of(escape ? quote(searchIndexName(entity)) : searchIndexName(entity));
+        }
+        return textSearchDialect.searchIndexNames(escape ? quote(searchIndexName(entity)) : searchIndexName(entity), searchColumns(entity, escape));
+    }
+
+    /**
+     * The schema of the table of an entity, escaped as the DDL renders it, for the lookup and the drop of its
+     * full-text search indexes.
+     *
+     * @param entity The entity
+     * @return The escaped schema, or {@code null} when the entity declares none
+     * @since 5.3.0
+     */
+    @Experimental
+    @Nullable
+    public String searchIndexSchema(PersistentEntity entity) {
+        String schema = SqlQueryBuilderUtils.getSchemaName(entity);
+        if (StringUtils.isEmpty(schema)) {
+            return null;
+        }
+        return shouldEscape(entity) ? quote(schema, true) : schema;
+    }
+
+    private String searchIndexName(PersistentEntity entity) {
+        return entity.getAnnotationMetadata().stringValue(Searchable.class, "name")
+            .filter(StringUtils::isNotEmpty)
+            .orElseGet(() -> "idx_" + prepareNames(getUnescapedTableName(entity)) + SEARCH_INDEX_SUFFIX);
+    }
+
+    private List<TextSearchDialect.SearchColumn> searchColumns(PersistentEntity entity, boolean escape) {
+        NamingStrategy namingStrategy = getNamingStrategy(entity);
+        List<PersistentProperty> fields = TextSearchSupport.searchFields(entity);
+        List<TextSearchDialect.SearchColumn> columns = new ArrayList<>(fields.size());
+        for (PersistentProperty field : fields) {
+            columns.add(searchColumn(field, getUnescapedTableName(entity), namingStrategy, escape));
+        }
+        return columns;
     }
 
     /**
@@ -1208,7 +1284,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         String indexName = entity.getAnnotationMetadata().stringValue(Searchable.class, "name")
             .filter(StringUtils::isNotEmpty)
             .map(TextSearchDialect::requireIndexName)
-            .orElseGet(() -> "idx_" + prepareNames(table.name()) + "_search");
+            .orElseGet(() -> "idx_" + prepareNames(table.name()) + SEARCH_INDEX_SUFFIX);
         String languageColumn = languageColumn(entity, namingStrategy, escape);
         for (String ddl : textSearchDialect.buildSearchIndex(escape ? quote(indexName) : indexName, escapedTableName, columns, language, languageColumn)) {
             addToCollectionIfNotContains(createStatements, ddl);

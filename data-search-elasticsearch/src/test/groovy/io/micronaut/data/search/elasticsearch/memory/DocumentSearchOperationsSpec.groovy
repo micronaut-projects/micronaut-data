@@ -7,6 +7,7 @@ import io.micronaut.data.model.CursoredPageable
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.runtime.query.internal.DefaultPagedQuery
+import io.micronaut.data.runtime.search.SearchIndexOperations
 import io.micronaut.data.search.document.conf.DocumentSearchConfiguration
 import io.micronaut.data.search.document.query.SearchJson
 import io.micronaut.data.search.document.runtime.BulkIndexException
@@ -68,6 +69,42 @@ class DocumentSearchOperationsSpec extends Specification {
         operations.getIndexName(Note) == "test_notes"
         operations.transport.is(transport)
         transport.createdIndexes.containsKey("test_notes")
+    }
+
+    void "creating an index that a concurrent create made in the meantime leaves it alone"() {
+        given:
+        def indexOperations = context.getBean(SearchIndexOperations)
+        def mapping = transport.createdIndexes.remove("test_notes")
+        transport.createFailure = new DataAccessException("resource_already_exists_exception")
+        transport.createRacing = true
+
+        when:
+        indexOperations.create(Note)
+
+        then:
+        noExceptionThrown()
+        indexOperations.exists(Note)
+
+        cleanup:
+        transport.createdIndexes.put("test_notes", mapping)
+    }
+
+    void "a failed index creation is reported when the index still does not exist"() {
+        given:
+        def indexOperations = context.getBean(SearchIndexOperations)
+        def mapping = transport.createdIndexes.remove("test_notes")
+        transport.createFailure = new DataAccessException("Elasticsearch create index failed: mapper_parsing_exception")
+
+        when:
+        indexOperations.create(Note)
+
+        then:
+        def e = thrown(DataAccessException)
+        e.message.contains("mapper_parsing_exception")
+        !indexOperations.exists(Note)
+
+        cleanup:
+        transport.createdIndexes.put("test_notes", mapping)
     }
 
     void "saving generates String ids, kept in the document source, and the entities read back by id"() {
