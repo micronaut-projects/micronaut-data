@@ -18,6 +18,9 @@ package benchmark;
 import example.WideBook;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.data.jdbc.mapper.ColumnNameResultSetReader;
+import io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan;
+import io.micronaut.data.jdbc.mapper.FlatEntityResultSetMapper;
+import io.micronaut.data.jdbc.mapper.GeneratedRowMapper;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.runtime.convert.DataConversionService;
@@ -51,7 +54,9 @@ import java.util.StringJoiner;
  *
  * <p>The {@code columnIndexes} parameter switches the column ordinal caching on and off: when off the mapper is
  * given a reader that reports no column index reader, which is how the mapper behaved before the ordinals were
- * cached. Both arms therefore run the same binary and differ only in that one flag.</p>
+ * cached. Both arms therefore run the same binary and differ only in that one flag. {@link #mapRowsFlat} measures
+ * the opt-in flat entity mapper over the same result set reading the columns itself, and {@link #mapRowsGenerated}
+ * the same mapper delegating to the row mapper the annotation processor generated for the entity.</p>
  *
  * <p>The query is executed once and re-read with a scrollable result set, so the measured work is the mapping of
  * the rows rather than the execution of the statement. A mapper is created per invocation, the way the repository
@@ -72,7 +77,7 @@ public class ResultSetMapping {
     private static final String PASSWORD_PROPERTY = "bench.jdbc.password";
     private static final String DEFAULT_URL = "jdbc:h2:mem:mapperbench;DB_CLOSE_DELAY=-1";
 
-    @Param({"1", "10", "100"})
+    @Param({"1", "10", "100", "1000"})
     int rows;
 
     @Param({"true", "false"})
@@ -85,6 +90,8 @@ public class ResultSetMapping {
     private RuntimePersistentEntity<WideBook> entity;
     private ResultReader<ResultSet, String> resultReader;
     private DataConversionService conversionService;
+    private FlatEntityMappingPlan<WideBook> flatPlan;
+    private FlatEntityMappingPlan<WideBook> generatedPlan;
     private String quote;
     private boolean oracle;
 
@@ -93,6 +100,11 @@ public class ResultSetMapping {
         applicationContext = ApplicationContext.run();
         conversionService = applicationContext.getBean(DataConversionService.class);
         entity = new RuntimePersistentEntity<>(WideBook.class);
+        flatPlan = FlatEntityMappingPlan.of(entity, false);
+        generatedPlan = FlatEntityMappingPlan.of(entity);
+        if (generatedPlan.getGeneratedMapper() == null) {
+            throw new IllegalStateException("No row mapper was generated for WideBook");
+        }
 
         ColumnNameResultSetReader nameReader = new ColumnNameResultSetReader(conversionService);
         resultReader = columnIndexes ? nameReader : new NoColumnIndexReader(nameReader);
@@ -138,6 +150,42 @@ public class ResultSetMapping {
             mapper.processRow(resultSet);
         }
         return mapper.getResult();
+    }
+
+    /**
+     * Maps every row of the result set with the flat entity mapper, the opt-in path that reads each column with the
+     * typed getter of the property type by ordinal and sets it through the bean introspection. Compare with
+     * {@link #mapRows} at {@code columnIndexes=true}; the {@code columnIndexes} parameter does not apply here.
+     */
+    @Benchmark
+    public List<WideBook> mapRowsFlat() throws SQLException {
+        resultSet.beforeFirst();
+        FlatEntityResultSetMapper<WideBook> mapper = new FlatEntityResultSetMapper<>(flatPlan, conversionService, null, () -> {
+            throw new UnsupportedOperationException();
+        });
+        List<WideBook> result = new ArrayList<>(20);
+        while (resultSet.next()) {
+            result.add(mapper.readEntity(resultSet));
+        }
+        return result;
+    }
+
+    /**
+     * Maps every row of the result set with the flat entity mapper delegating to the {@link GeneratedRowMapper} the
+     * annotation processor generated for the entity: the typed getters by ordinal, straight into the setters, with
+     * neither per-column dispatch nor bean introspection. Compare with {@link #mapRowsFlat}.
+     */
+    @Benchmark
+    public List<WideBook> mapRowsGenerated() throws SQLException {
+        resultSet.beforeFirst();
+        FlatEntityResultSetMapper<WideBook> mapper = new FlatEntityResultSetMapper<>(generatedPlan, conversionService, null, () -> {
+            throw new UnsupportedOperationException();
+        });
+        List<WideBook> result = new ArrayList<>(20);
+        while (resultSet.next()) {
+            result.add(mapper.readEntity(resultSet));
+        }
+        return result;
     }
 
     private void createTable() throws SQLException {
