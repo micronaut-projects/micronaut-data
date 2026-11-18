@@ -1,6 +1,7 @@
 package io.micronaut.data.search.opensearch
 
 import io.micronaut.data.exceptions.DataAccessException
+import io.micronaut.data.exceptions.OptimisticLockException
 import io.micronaut.data.search.document.runtime.SearchTransport
 import io.micronaut.data.search.opensearch.transport.OpenSearchAsyncSearchTransport
 import io.micronaut.data.search.opensearch.transport.OpenSearchSearchTransport
@@ -57,8 +58,11 @@ class OpenSearchTransportFailureSpec extends Specification {
         "count"           | { OpenSearchSearchTransport t -> t.count("books", BODY) }
         "index"           | { OpenSearchSearchTransport t -> t.index("books", "1", [title: "Kotlin"], NONE) }
         "bulk"            | { OpenSearchSearchTransport t -> t.bulkIndex("books", [new SearchTransport.BulkDocument("1", [title: "Kotlin"])], NONE) }
+        "index"           | { OpenSearchSearchTransport t -> t.index("books", "1", [title: "Kotlin"], 2L, NONE) }
         "get"             | { OpenSearchSearchTransport t -> t.get("books", "1") }
+        "get"             | { OpenSearchSearchTransport t -> t.getHit("books", "1") }
         "delete"          | { OpenSearchSearchTransport t -> t.delete("books", "1", NONE) }
+        "delete"          | { OpenSearchSearchTransport t -> t.delete("books", "1", 2L, NONE) }
         "delete by query" | { OpenSearchSearchTransport t -> t.deleteByQuery("books", BODY, NONE) }
         "index exists"    | { OpenSearchSearchTransport t -> t.indexExists("books") }
         "create index"    | { OpenSearchSearchTransport t -> t.createIndex("books", '{"mappings":{}}') }
@@ -81,8 +85,30 @@ class OpenSearchTransportFailureSpec extends Specification {
         operation | call
         "search"  | { OpenSearchSearchTransport t -> t.search("books", BODY) }
         "get"     | { OpenSearchSearchTransport t -> t.get("books", "1") }
+        "get"     | { OpenSearchSearchTransport t -> t.getHit("books", "1") }
+        "index"   | { OpenSearchSearchTransport t -> t.index("books", "1", [title: "Kotlin"], 2L, NONE) }
+        "delete"  | { OpenSearchSearchTransport t -> t.delete("books", "1", 2L, NONE) }
         "bulk"    | { OpenSearchSearchTransport t -> t.bulkIndex("books", [new SearchTransport.BulkDocument("1", [title: "Kotlin"])], NONE) }
         "index"   | { OpenSearchSearchTransport t -> t.create("books", "1", [title: "Kotlin"], NONE) }
+    }
+
+    void "a version conflict of a versioned #operation is an OptimisticLockException"() {
+        given:
+        def failure = storeError(409)
+        fake.failure = failure
+
+        when:
+        call.call(transport)
+
+        then:
+        OptimisticLockException e = thrown()
+        e.message.startsWith("Document 1 was modified concurrently: ")
+        e.cause.is(failure)
+
+        where:
+        operation | call
+        "index"   | { OpenSearchSearchTransport t -> t.index("books", "1", [title: "Kotlin"], 2L, NONE) }
+        "delete"  | { OpenSearchSearchTransport t -> t.delete("books", "1", 2L, NONE) }
     }
 
     void "a create of an existing id says the document exists and other create errors are wrapped"() {

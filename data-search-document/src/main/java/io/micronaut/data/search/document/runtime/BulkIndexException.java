@@ -26,7 +26,9 @@ import java.util.List;
  * The failure of a bulk index request that the store applied in part: a bulk request is not atomic,
  * so the documents the store accepted stay written. {@link #getIds()} tells them apart; the
  * repository operations still store the id of each written entity and fire its post-persist event
- * before the exception reaches the caller.
+ * before the exception reaches the caller. When a rejected document of a versioned entity conflicted
+ * with the stored version, the caller gets an {@link io.micronaut.data.exceptions.OptimisticLockException}
+ * whose cause is this exception.
  *
  * @since 5.3.0
  */

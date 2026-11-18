@@ -69,21 +69,45 @@ public interface AsyncSearchTransport {
     CompletionStage<String> index(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh);
 
     /**
+     * Indexes a document with an external version, see
+     * {@link SearchTransport#index(String, String, Map, Long, DocumentSearchConfiguration.Refresh)}.
+     *
+     * @param index The index name
+     * @param id The document id, or {@code null}
+     * @param source The document
+     * @param version The external version, or {@code null} for an unconditional write
+     * @param refresh The refresh policy
+     * @return The document id
+     */
+    default CompletionStage<String> index(String index, @Nullable String id, Map<String, Object> source, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
+        if (version != null) {
+            return CompletableFuture.failedStage(new UnsupportedOperationException("Versioned writes are not supported by " + getClass().getName()));
+        }
+        return index(index, id, source, refresh);
+    }
+
+    /**
      * Indexes several new documents in one request, each a create-only write like
-     * {@link #create(String, String, Map, DocumentSearchConfiguration.Refresh)}. The default sends one
+     * {@link #create(String, String, Map, DocumentSearchConfiguration.Refresh)}, or, for a document with
+     * a version, an externally versioned write like
+     * {@link #index(String, String, Map, Long, DocumentSearchConfiguration.Refresh)}. The default sends one
      * request per document, in sequence, and stops at the first failure.
      *
      * @param index The index name
      * @param documents The documents, in order
      * @param refresh The refresh policy
      * @return The document ids, in the same order, failing with a {@link BulkIndexException} when the
-     * store rejected some of the documents and wrote the others
+     * store rejected some of the documents and wrote the others, or with an
+     * {@link io.micronaut.data.exceptions.OptimisticLockException} caused by that {@link BulkIndexException}
+     * when a rejected document conflicted with the stored version
      */
     default CompletionStage<List<String>> bulkIndex(String index, List<SearchTransport.BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
         List<String> ids = new ArrayList<>(documents.size());
         CompletionStage<List<String>> written = CompletableFuture.completedFuture(ids);
         for (SearchTransport.BulkDocument document : documents) {
-            written = written.thenCompose(list -> create(index, document.id(), document.source(), refresh).thenApply(id -> {
+            written = written.thenCompose(list -> (document.version() == null
+                ? create(index, document.id(), document.source(), refresh)
+                : index(index, document.id(), document.source(), document.version(), refresh)).thenApply(id -> {
                 list.add(id);
                 return list;
             }));
@@ -150,6 +174,17 @@ public interface AsyncSearchTransport {
     CompletionStage<Optional<Map<String, Object>>> get(String index, String id);
 
     /**
+     * Reads a document with its version.
+     *
+     * @param index The index name
+     * @param id The document id
+     * @return The hit, empty when not found
+     */
+    default CompletionStage<Optional<SearchTransport.SearchHit>> getHit(String index, String id) {
+        return get(index, id).thenApply(source -> source.map(map -> new SearchTransport.SearchHit(id, null, map)));
+    }
+
+    /**
      * Deletes a document.
      *
      * @param index The index name
@@ -158,6 +193,23 @@ public interface AsyncSearchTransport {
      * @return Whether a document was deleted
      */
     CompletionStage<Boolean> delete(String index, String id, DocumentSearchConfiguration.Refresh refresh);
+
+    /**
+     * Deletes a document with a version check, see
+     * {@link SearchTransport#delete(String, String, Long, DocumentSearchConfiguration.Refresh)}.
+     *
+     * @param index The index name
+     * @param id The document id
+     * @param version The version the entity was read at, or {@code null} for an unconditional delete
+     * @param refresh The refresh policy
+     * @return Whether a document was deleted
+     */
+    default CompletionStage<Boolean> delete(String index, String id, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
+        if (version != null) {
+            return CompletableFuture.failedStage(new UnsupportedOperationException("Versioned deletes are not supported by " + getClass().getName()));
+        }
+        return delete(index, id, refresh);
+    }
 
     /**
      * Deletes the documents matching a query.
