@@ -120,7 +120,8 @@ public class TxSpec {
                 job1
             ).block();
 
-            Assertions.assertEquals(List.of("OPEN CONNECTION_1", "BEGIN TX CONNECTION_1", "CANCEL TX CONNECTION_1", "ON_CANCEL CONNECTION_1", "ON_CLOSE CONNECTION_1", "CLOSE CONNECTION_1", "AFTER_CLOSE CONNECTION_1"), opLogger.getLogs());
+            // The synchronizations run in the reverse order of their registration: the transaction registered its own first
+            Assertions.assertEquals(List.of("OPEN CONNECTION_1", "BEGIN TX CONNECTION_1", "ON_CANCEL CONNECTION_1", "CANCEL TX CONNECTION_1", "ON_CLOSE CONNECTION_1", "CLOSE CONNECTION_1", "AFTER_CLOSE CONNECTION_1"), opLogger.getLogs());
             Assertions.assertEquals("Doing job: job1 in transaction: CONNECTION_1", job);
         }
     }
