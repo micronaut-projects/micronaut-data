@@ -57,4 +57,11 @@ class BookRepositorySpec {
         assertEquals(List.of(), bookService.titlesContainingEveryWord("coffee beans"));
         assertEquals(2, bookRepository.search(SearchQuery.of("coffee")).totalHits());
     }
+
+    @Test
+    void highlighting() {
+        List<String> fragments = bookService.highlightedTitles("coffee");
+        assertEquals(2, fragments.size());
+        assertTrue(fragments.stream().allMatch(f -> f.contains("<em>Coffee</em>")));
+    }
 }
