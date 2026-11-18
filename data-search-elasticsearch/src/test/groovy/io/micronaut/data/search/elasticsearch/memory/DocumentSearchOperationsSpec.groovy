@@ -9,6 +9,7 @@ import io.micronaut.data.model.Sort
 import io.micronaut.data.runtime.query.internal.DefaultPagedQuery
 import io.micronaut.data.search.document.conf.DocumentSearchConfiguration
 import io.micronaut.data.search.document.query.SearchJson
+import io.micronaut.data.search.document.runtime.BulkIndexException
 import io.micronaut.data.search.document.runtime.DocumentSearchRepositoryOperations
 import io.micronaut.data.search.elasticsearch.Meeting
 import io.micronaut.data.search.elasticsearch.MeetingRepository
@@ -27,6 +28,7 @@ import java.time.ZonedDateTime
 @MicronautTest(transactional = false)
 @Property(name = "spec.name", value = "DocumentSearchOperationsSpec")
 @Property(name = "micronaut.data.search.index-prefix", value = "test_")
+@Property(name = "micronaut.data.search.bulk-size", value = "2")
 class DocumentSearchOperationsSpec extends Specification {
 
     @Inject
@@ -93,6 +95,58 @@ class DocumentSearchOperationsSpec extends Specification {
         then:
         transport.indexes["test_notes"]["tea"].pages == 41
         transport.indexes["test_notes"].size() == 1
+    }
+
+    void "equal entities in one batch each get their own generated id"() {
+        when:
+        def saved = tags.saveAll([new Tag(null, "beverages"), new Tag(null, "beverages"), new Tag(null, "beverages")])
+
+        then:
+        saved*.id().every { it != null }
+        saved*.id().toSet().size() == 3
+        transport.indexes["test_tags"].size() == 3
+    }
+
+    void "saveAll sends the batch in bulk requests of the configured size and keeps the order of the ids"() {
+        when:
+        def saved = notes.saveAll((1..5).collect { new Note("Note " + it, "Body", it) })
+
+        then:
+        transport.bulkSizes == [2, 2, 1]
+        saved*.id == (1..5).collect { "generated-" + it }
+        transport.indexes["test_notes"].size() == 5
+    }
+
+    void "a partly failed saveAll gives the written entities their ids and sends no further request"() {
+        given:
+        notes.save(new Note("Tea", "Green tea", 40).tap { id = "tea" })
+        def coffee = new Note("Coffee", "Roasting beans", 120)
+        def cocoa = new Note("Cocoa", "Beans", 80)
+        def bread = new Note("Bread", "Sourdough", 60)
+        def duplicate = new Note("Other", "Black tea", 10).tap { id = "tea" }
+        def cake = new Note("Cake", "Sponge", 10)
+
+        when:
+        notes.saveAll([coffee, cocoa, bread, duplicate, cake])
+
+        then:
+        BulkIndexException e = thrown()
+        e.message.startsWith("Indexing document 1 of 2 failed, the 1 before it were written and the rest were not sent: ")
+        e.ids == ["generated-3", null]
+        transport.bulkSizes == [2, 2]
+        [coffee, cocoa, bread]*.id == ["generated-1", "generated-2", "generated-3"]
+        cake.id == null
+        transport.indexes["test_notes"].keySet() == ["tea", "generated-1", "generated-2", "generated-3"] as Set
+        transport.indexes["test_notes"]["tea"].title == "Tea"
+    }
+
+    void "the bulk size must be positive"() {
+        when:
+        new DocumentSearchConfiguration().bulkSize = 0
+
+        then:
+        IllegalArgumentException e = thrown()
+        e.message == "The bulk size must be at least 1, was 0"
     }
 
     void "saving an entity with the id of an existing document fails instead of replacing it"() {

@@ -196,8 +196,16 @@ public final class DefaultDocumentSearchReactiveRepositoryOperations extends Abs
     @Override
     public <T> Flux<T> persistAll(InsertBatchOperation<T> operation) {
         return Flux.defer(() -> {
-            RuntimePersistentEntity<T> entity = runtimeEntityRegistry.getEntity(operation.getRootEntity());
-            return Flux.fromIterable(operation).concatMap(value -> persistOne(value, entity));
+            // built per subscription, so listeners run on subscribe and a retry starts from fresh state
+            PersistBatch<T> batch = persistBatch(operation, runtimeEntityRegistry.getEntity(operation.getRootEntity()));
+            List<List<SearchTransport.BulkDocument>> requests = batch.requests();
+            // the requests go in sequence, each written entity getting its id and events when its request returns
+            return Flux.range(0, requests.size())
+                .concatMap(i -> call(() -> transport.bulkIndex(batch.index(), requests.get(i), configuration.getRefresh()))
+                    .doOnNext(ids -> batch.written(i, ids))
+                    // a bulk request is not atomic: the written entities still get their ids and events
+                    .doOnError(BulkIndexException.class, e -> batch.written(i, e.getIds())))
+                .thenMany(Flux.defer(() -> Flux.fromIterable(batch.results())));
         });
     }
 
