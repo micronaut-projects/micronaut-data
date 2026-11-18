@@ -7,11 +7,13 @@ dependencies {
     api projects.micronautDataGraphModel
 
     compileOnly mn.micronaut.inject.java
+    compileOnly mn.micronaut.inject.groovy
 
     testAnnotationProcessor mn.micronaut.inject.java
 
     testImplementation mn.micronaut.inject.groovy
     testImplementation mn.micronaut.inject.java.test
+    testImplementation mn.micronaut.inject.groovy.test
     testImplementation(mnSql.jakarta.persistence.api)
 }
 

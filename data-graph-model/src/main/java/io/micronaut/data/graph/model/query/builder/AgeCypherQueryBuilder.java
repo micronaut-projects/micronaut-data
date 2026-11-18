@@ -18,6 +18,7 @@ package io.micronaut.data.graph.model.query.builder;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.data.graph.annotation.Direction;
+import io.micronaut.data.graph.annotation.Labels;
 import io.micronaut.data.graph.model.GraphEntities;
 import io.micronaut.data.graph.model.query.PathQueryDefinition;
 import io.micronaut.data.model.Association;
@@ -200,7 +201,17 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
         if (labels.size() > 1) {
             throw new IllegalArgumentException("Apache AGE nodes have a single label, entity [" + entity.getName() + "] declares " + labels);
         }
+        for (PersistentProperty property : entity.getPersistentProperties()) {
+            if (property.getAnnotationMetadata().hasAnnotation(Labels.class)) {
+                throw new IllegalArgumentException("Apache AGE nodes have a single label, entity [" + entity.getName() + "] cannot hold more in @Labels [" + property.getName() + "]");
+            }
+        }
         return ":" + GraphEntities.escapeName(labels.get(0));
+    }
+
+    @Override
+    public String buildAddLabelsQuery(PersistentEntity entity, List<String> labels) {
+        throw new UnsupportedOperationException("Apache AGE nodes have a single label: dynamic labels are not supported");
     }
 
     @Override
