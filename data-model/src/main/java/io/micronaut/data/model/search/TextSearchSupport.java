@@ -22,6 +22,9 @@ import io.micronaut.data.annotation.search.Searchable;
 import io.micronaut.data.model.query.builder.DelegatingQueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.jpa.criteria.PersistentPropertyPath;
+import jakarta.persistence.criteria.Expression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.PersistentProperty;
 import org.jspecify.annotations.Nullable;
 
@@ -172,6 +175,64 @@ public final class TextSearchSupport {
         return property.getAnnotationMetadata().booleanValue(SearchField.class, SearchField.MEMBER_HIGHLIGHTABLE).orElse(false);
     }
 
+    /**
+     * Reads the arguments of the synthetic {@link #SCORE_FUNCTION}: the field expressions, the query
+     * parameter, a literal holding the {@link MatchMode} name and, when set, a literal holding the
+     * {@link TextMatchOptions}.
+     *
+     * @param expressions The function arguments
+     * @return The arguments
+     * @since 5.3.0
+     */
+    public static ScoreArguments scoreArguments(List<? extends Expression<?>> expressions) {
+        int end = expressions.size();
+        TextMatchOptions options = TextMatchOptions.NONE;
+        if (end > 0 && expressions.get(end - 1) instanceof LiteralExpression<?> literal && literal.getValue() instanceof TextMatchOptions textMatchOptions) {
+            options = textMatchOptions;
+            end--;
+        }
+        if (end < 3) {
+            throw new IllegalStateException("Search score expects fields, a query and a match mode");
+        }
+        Expression<?> modeExpression = expressions.get(end - 1);
+        MatchMode mode = modeExpression instanceof LiteralExpression<?> literal && literal.getValue() != null
+            ? MatchMode.valueOf(literal.getValue().toString())
+            : MatchMode.ANY;
+        @SuppressWarnings("unchecked")
+        Expression<String> query = (Expression<String>) expressions.get(end - 2);
+        return new ScoreArguments(List.copyOf(expressions.subList(0, end - 2)), query, mode, options);
+    }
+
+    /**
+     * Checks the options of a text match against its fields and mode: every boost must name the property path
+     * of one of the matched fields, and an edit distance needs the {@link MatchMode#FUZZY} mode.
+     *
+     * @param fields The matched field expressions
+     * @param mode The match mode
+     * @param options The options
+     * @throws IllegalArgumentException When a boost names no matched field, or an edit distance is set with another mode
+     * @since 5.3.0
+     */
+    public static void validateOptions(List<? extends Expression<?>> fields, MatchMode mode, TextMatchOptions options) {
+        if (options.fuzziness() > 0 && mode != MatchMode.FUZZY) {
+            throw new IllegalArgumentException("An edit distance applies only to a FUZZY match, not to " + mode + ": " + options.fuzziness());
+        }
+        if (options.boosts().isEmpty()) {
+            return;
+        }
+        List<String> paths = new ArrayList<>(fields.size());
+        for (Expression<?> field : fields) {
+            if (field instanceof PersistentPropertyPath<?> propertyPath) {
+                paths.add(propertyPath.getPathAsString());
+            }
+        }
+        for (String boosted : options.boosts().keySet()) {
+            if (!paths.contains(boosted)) {
+                throw new IllegalArgumentException("The boosted property '" + boosted + "' is not one of the matched fields " + paths);
+            }
+        }
+    }
+
     private static int aliasPosition(String query, String alias) {
         String clause = " AS " + alias;
         int from = 0;
@@ -239,5 +300,17 @@ public final class TextSearchSupport {
      * @param mode The match mode of the keyword
      */
     public record SearchKeyword(String propertyName, MatchMode mode) {
+    }
+
+    /**
+     * The arguments of the synthetic {@link #SCORE_FUNCTION}.
+     *
+     * @param fields The field expressions
+     * @param query The query expression
+     * @param mode The match mode
+     * @param options The boosts and fuzziness
+     * @since 5.3.0
+     */
+    public record ScoreArguments(List<Expression<?>> fields, Expression<String> query, MatchMode mode, TextMatchOptions options) {
     }
 }

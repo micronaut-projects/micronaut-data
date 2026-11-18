@@ -133,7 +133,8 @@ public final class SearchQuery {
     }
 
     /**
-     * @return The maximum edit distance for {@link MatchMode#FUZZY}, {@code 0} for the backend default
+     * @return The maximum edit distance of a {@link MatchMode#FUZZY} match, {@code 0} for the store default
+     * or another mode; matching without edits is the {@link MatchMode#ANY} mode, see {@link Builder#fuzzy(int)}
      */
     public int getFuzziness() {
         return fuzziness;
@@ -318,17 +319,32 @@ public final class SearchQuery {
         }
 
         /**
-         * Requests fuzzy matching with the given maximum edit distance.
+         * Requests the {@link MatchMode#FUZZY} mode with the store's default edit distance.
          *
-         * @param maxEdits The maximum edit distance from {@code 0} to {@code 2}, {@code 0} for the backend default
+         * @return This builder
+         */
+        public Builder fuzzy() {
+            this.mode = MatchMode.FUZZY;
+            this.fuzziness = 0;
+            return this;
+        }
+
+        /**
+         * Requests matching with the given maximum edit distance. {@code 1} or {@code 2} selects the
+         * {@link MatchMode#FUZZY} mode with that distance; {@code 0} matches the terms without edits,
+         * which is the {@link MatchMode#ANY} mode. Like {@link #mode(MatchMode)}, the last of the two
+         * calls decides the mode, and a mode other than {@link MatchMode#FUZZY} drops the edit distance.
+         *
+         * @param maxEdits The maximum edit distance from {@code 0} to {@code 2}
          * @return This builder
          * @throws IllegalArgumentException When the edit distance is outside that range
+         * @see #fuzzy()
          */
         public Builder fuzzy(int maxEdits) {
             if (maxEdits < 0 || maxEdits > 2) {
                 throw new IllegalArgumentException("The fuzzy edit distance must be between 0 and 2: " + maxEdits);
             }
-            this.mode = MatchMode.FUZZY;
+            this.mode = maxEdits == 0 ? MatchMode.ANY : MatchMode.FUZZY;
             this.fuzziness = maxEdits;
             return this;
         }
@@ -336,12 +352,16 @@ public final class SearchQuery {
         /**
          * Boosts matches in the given property.
          *
-         * @param field The property name
-         * @param boost The boost factor
+         * @param field The property name, one of the entity's search fields
+         * @param boost The boost factor, a finite number above 0
          * @return This builder
+         * @throws IllegalArgumentException When the boost is not a finite number above 0
          */
         public Builder boost(String field, double boost) {
-            boosts.put(field, boost);
+            if (!Double.isFinite(boost) || boost <= 0) {
+                throw new IllegalArgumentException("The boost of " + field + " must be a finite number above 0, got " + boost);
+            }
+            boosts.put(Objects.requireNonNull(field, "field must not be null"), boost);
             return this;
         }
 

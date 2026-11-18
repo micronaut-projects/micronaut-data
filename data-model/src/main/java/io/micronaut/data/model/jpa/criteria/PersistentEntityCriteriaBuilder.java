@@ -17,6 +17,7 @@ package io.micronaut.data.model.jpa.criteria;
 
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.data.model.search.MatchMode;
+import io.micronaut.data.model.search.TextMatchOptions;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
@@ -297,6 +298,25 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
     Predicate textMatch(List<Expression<?>> fields, Expression<String> query, MatchMode mode);
 
     /**
+     * Full-text match of the query against several fields with boosts and fuzziness.
+     *
+     * @param fields The field expressions (properties)
+     * @param query The query string expression
+     * @param mode The match mode
+     * @param options The boosts, keyed by the property path of a matched field, and the edit distance of a
+     * {@link MatchMode#FUZZY} match
+     * @return a new predicate
+     * @throws IllegalArgumentException When a boost names no matched field, or an edit distance is set with another mode
+     * @since 5.3.0
+     */
+    default Predicate textMatch(List<Expression<?>> fields, Expression<String> query, MatchMode mode, TextMatchOptions options) {
+        if (!options.isDefault()) {
+            throw new UnsupportedOperationException("Full-text search options are not supported by this criteria builder.");
+        }
+        return textMatch(fields, query, mode);
+    }
+
+    /**
      * The relevance score of a full-text match, usable in a selection or an order.
      *
      * @param fields The field expressions (properties)
@@ -306,6 +326,25 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
      * @since 5.3.0
      */
     Expression<Double> searchScore(List<Expression<?>> fields, Expression<String> query, MatchMode mode);
+
+    /**
+     * The relevance score of a full-text match with boosts and fuzziness, usable in a selection or an order.
+     *
+     * @param fields The field expressions (properties)
+     * @param query The query string expression
+     * @param mode The match mode
+     * @param options The boosts, keyed by the property path of a matched field, and the edit distance of a
+     * {@link MatchMode#FUZZY} match
+     * @return the score expression
+     * @throws IllegalArgumentException When a boost names no matched field, or an edit distance is set with another mode
+     * @since 5.3.0
+     */
+    default Expression<Double> searchScore(List<Expression<?>> fields, Expression<String> query, MatchMode mode, TextMatchOptions options) {
+        if (!options.isDefault()) {
+            throw new UnsupportedOperationException("Full-text search options are not supported by this criteria builder.");
+        }
+        return searchScore(fields, query, mode);
+    }
 
     /**
      * The fragment of a field with the matched terms wrapped in {@code &lt;em&gt;} tags, usable in a selection.
