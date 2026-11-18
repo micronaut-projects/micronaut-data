@@ -1,0 +1,26 @@
+plugins {
+    id "groovy"
+    id "io.micronaut.build.internal.data-example"
+}
+
+application {
+    mainClass = "example.Application"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+    testRuntime "spock"
+}
+
+dependencies {
+    compileOnly projects.micronautDataDocumentProcessor
+    compileOnly projects.micronautDataSearchDocument
+
+    implementation projects.micronautDataSearchElasticsearch
+    implementation mnSerde.micronaut.serde.jackson
+
+    runtimeOnly mnLogging.logback.classic
+    testImplementation(platform(mnTestResources.boms.testcontainers))
+    testImplementation libs.testcontainers.elasticsearch
+}

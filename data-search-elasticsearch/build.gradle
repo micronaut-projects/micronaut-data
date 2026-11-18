@@ -1,0 +1,30 @@
+plugins {
+    id "io.micronaut.build.internal.data-module"
+}
+
+dependencies {
+    annotationProcessor mn.micronaut.inject.java
+    annotationProcessor mn.micronaut.graal
+
+    api projects.micronautDataSearchDocument
+    api mnElasticsearch.micronaut.elasticsearch
+
+    testAnnotationProcessor mn.micronaut.inject.java
+    testAnnotationProcessor projects.micronautDataDocumentProcessor
+    testAnnotationProcessor projects.micronautDataSearchDocument
+    testImplementation projects.micronautDataDocumentProcessor
+    testImplementation projects.micronautDataSearchTck
+    testImplementation mn.micronaut.inject.groovy
+    testImplementation mn.micronaut.inject.java.test
+    testImplementation mnSerde.micronaut.serde.jackson
+    testImplementation(platform(mnTestResources.boms.testcontainers))
+    testImplementation libs.testcontainers.elasticsearch
+    testRuntimeOnly mnLogging.logback.classic
+}
+
+micronautBuild {
+    // New in 5.3.0, so there is no previous release to compare against yet
+    binaryCompatibility {
+        enabledAfter("5.3.0")
+    }
+}
