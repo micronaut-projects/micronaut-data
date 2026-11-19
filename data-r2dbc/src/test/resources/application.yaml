@@ -8,6 +8,8 @@ test-resources:
     mysql:
       startup-timeout: 300s
     oracle:
+      # 23.26.3 slim-faststart as published before the 23.26.4 images of 2026-11-17, which fail the duality view specs
+      image-name: gvenzl/oracle-free@sha256:f5ff19033860d662c821cb04eb10483fa94f14f78eae252d054291ea07028093
       startup-timeout: 300s
     postgres:
       startup-timeout: 300s

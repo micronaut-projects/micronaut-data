@@ -93,8 +93,8 @@ class OracleXEGeoSpec extends AbstractGeoSpec implements OracleTestPropertyProvi
                 (prefix + '.dialect')                        : dialect().name(),
                 (prefix + '.packages')                       : packages(),
                 (prefix + '.enabled')                        : dataSourceEnabled(dataSourceName),
-                "test-resources.containers.oracle.image-name": "gvenzl/oracle-free",
-                "test-resources.containers.oracle.image-tag" : "23.26.3-faststart"
+                // 23.26.3 faststart as published before the 23.26.4 images of 2026-11-17
+                "test-resources.containers.oracle.image-name": "gvenzl/oracle-free@sha256:33322969a450d72c507b08d7f690d9e1d9b60aebaebc35a75b7c0b8ab4baac77"
         ] as Map<String, String>
     }
 
