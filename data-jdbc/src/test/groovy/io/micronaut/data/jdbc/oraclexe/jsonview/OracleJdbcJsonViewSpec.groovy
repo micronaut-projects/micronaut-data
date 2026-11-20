@@ -580,6 +580,23 @@ class OracleJdbcJsonViewSpec extends Specification {
         teacherPersistedView.schedule.name.get(0) == "English"
     }
 
+    def "test_teacher_json_view_classes_with_several_students"() {
+        when:
+        def teacherView = teacherViewRepository.findByName("Mrs. Anna").get()
+        then:
+        teacherView.schedule.collect { it.name }.sort() == ["German", "Math"]
+        teacherView.schedule.find { it.name == "Math" }.students.collect { it.student.name }.sort() == ["Denis", "Fred", "Josh"]
+        teacherView.schedule.find { it.name == "German" }.students.collect { it.student.name }.sort() == ["Denis", "Fred"]
+
+        when:
+        teacherView.setName("Mrs. Ana")
+        teacherViewRepository.update(teacherView)
+        def teacherPersistedView = teacherViewRepository.findById(teacherView.teachID).get()
+        then:
+        teacherPersistedView.name == "Mrs. Ana"
+        teacherPersistedView.schedule.find { it.name == "Math" }.students.size() == 3
+    }
+
     def "test_generate_create_crocodile_view"() {
         when:
         Dialect dialect = Dialect.ORACLE
