@@ -1,6 +1,7 @@
 package io.micronaut.data.jdbc.oraclexe.jsonview
 
 import io.micronaut.data.exceptions.OptimisticLockException
+import io.micronaut.data.jdbc.runtime.JdbcOperations
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.Sort
@@ -66,6 +67,9 @@ class OracleJdbcJsonViewSpec extends Specification {
 
     @Inject
     JsonMapper jsonMapper
+
+    @Inject
+    JdbcOperations jdbcOperations
 
     def setup() {
         studentClassRepository.deleteAll()
@@ -481,6 +485,78 @@ class OracleJdbcJsonViewSpec extends Specification {
         then:
         result.present
         result.get().apartments.size() == 1
+    }
+
+    def "test_generate_create_building_view"() {
+        when:
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
+        String[] sql = builder.buildCreateTableStatements(getRuntimePersistentEntity(BuildingView))
+        then:
+        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW building_view AS SELECT JSON {'_id': b.id, " +
+                "'apartments': [SELECT JSON {UNNEST (SELECT JSON {'buildingId': ap.building_id, 'flatId': ap.flat_id} FROM TBL_APARTMENT ap WITH UPDATE INSERT  " +
+                "WHERE building_apartment.\"APARTMENT_APARTMENT_ID_BUILDING_ID\"=ap.\"BUILDING_ID\" AND building_apartment.\"APARTMENT_APARTMENT_ID_FLAT_ID\"=ap.\"FLAT_ID\")} " +
+                "FROM building_apartment WITH UPDATE INSERT DELETE WHERE b.\"ID\"=building_apartment.\"BUILDING_ID\"]} " +
+                "FROM TBL_BUILDING b WITH UPDATE INSERT DELETE "
+    }
+
+    def "test_generate_create_view_with_no_annotation_left_for_a_table"() {
+        when:
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
+        String[] sql = builder.buildCreateTableStatements(getRuntimePersistentEntity(BuildingDeleteOnlyApartmentsView))
+        then: "the apartment table gets no WITH, because DELETE is its only declared operation and it can't take it"
+        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW building_delete_only_apartments_view AS SELECT JSON {'_id': b.id, " +
+                "'apartments': [SELECT JSON {UNNEST (SELECT JSON {'buildingId': ap.building_id, 'flatId': ap.flat_id} FROM TBL_APARTMENT ap " +
+                "WHERE building_apartment.\"APARTMENT_APARTMENT_ID_BUILDING_ID\"=ap.\"BUILDING_ID\" AND building_apartment.\"APARTMENT_APARTMENT_ID_FLAT_ID\"=ap.\"FLAT_ID\")} " +
+                "FROM building_apartment WITH UPDATE INSERT DELETE WHERE b.\"ID\"=building_apartment.\"BUILDING_ID\"]} " +
+                "FROM TBL_BUILDING b WITH UPDATE INSERT DELETE "
+
+        and: "the schema generator created the view"
+        countRows("SELECT COUNT(*) FROM user_objects WHERE object_name = 'BUILDING_DELETE_ONLY_APARTMENTS_VIEW'") == 1
+    }
+
+    def "test_building_view_with_several_apartments"() {
+        given:
+        def buildingView = new BuildingView()
+        buildingViewRepository.save(buildingView)
+        buildingView.setApartments([
+                new ApartmentSubView(new ApartmentId(buildingView.getId(), 1)),
+                new ApartmentSubView(new ApartmentId(buildingView.getId(), 2))
+        ])
+
+        when:
+        buildingViewRepository.update(buildingView)
+        def result = buildingViewRepository.findById(buildingView.getId())
+
+        then:
+        result.present
+        result.get().apartments.collect { it.apartmentId().flatId() }.sort() == [1L, 2L]
+
+        when: "an apartment is removed from the building"
+        buildingView.setApartments([new ApartmentSubView(new ApartmentId(buildingView.getId(), 1))])
+        buildingViewRepository.update(buildingView)
+
+        then: "its join table row is deleted and the apartment is kept"
+        buildingViewRepository.findById(buildingView.getId()).get().apartments.collect { it.apartmentId().flatId() } == [1L]
+        countRows("SELECT COUNT(*) FROM building_apartment WHERE building_id = " + buildingView.getId()) == 1
+        apartmentViewRepository.findById(new ApartmentId(buildingView.getId(), 2)).present
+
+        when: "the building is deleted through the view"
+        buildingViewRepository.deleteById(buildingView.getId())
+
+        then: "its join table rows are deleted and the apartments are kept"
+        !buildingViewRepository.findById(buildingView.getId()).present
+        countRows("SELECT COUNT(*) FROM building_apartment WHERE building_id = " + buildingView.getId()) == 0
+        apartmentViewRepository.findById(new ApartmentId(buildingView.getId(), 1)).present
+        apartmentViewRepository.findById(new ApartmentId(buildingView.getId(), 2)).present
+    }
+
+    private long countRows(String sql) {
+        // runs on the connection of the test transaction, which holds the rows written through the views
+        return jdbcOperations.prepareStatement(sql) { statement ->
+            def resultSet = statement.executeQuery()
+            resultSet.next()
+            resultSet.getLong(1)
+        }
     }
 
     def "test_generate_drop_json_vew"() {

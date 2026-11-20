@@ -628,7 +628,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             .append(AS_CLAUSE)
             .append(SELECT_JSON_CLAUSE)
             .append(OPEN_CURLY_BRACKET);
-        createJsonViewQuery(sb, viewEntity, entity, true);
+        createJsonViewQuery(sb, viewEntity, entity, true, true);
         createStatements.add(sb.toString());
     }
 
@@ -637,7 +637,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         return annotationMetadata.hasAnnotation(JsonAnyGetter.class) || annotationMetadata.hasAnnotation(JsonAnySetter.class);
     }
 
-    private void createJsonViewQuery(StringBuilder sb, PersistentEntity viewEntity, PersistentEntity entity, boolean isTopLevel) {
+    // deleteAllowed is false where the table can't take the DELETE annotation even when the view declares it
+    private void createJsonViewQuery(StringBuilder sb, PersistentEntity viewEntity, PersistentEntity entity, boolean isTopLevel, boolean deleteAllowed) {
         String alias = entity.getAliasName();
 
         List<PersistentProperty> identities = viewEntity.getIdentityProperties();
@@ -703,14 +704,19 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             .append(FROM_CLAUSE)
             .append(entity.getPersistedName())
             .append(SPACE)
-            .append(alias)
-            .append(WITH_CLAUSE);
-        JsonView.Operation[] supportedOperations = getViewSupportedOperations(viewEntity);
-        for (JsonView.Operation operation: supportedOperations) {
-            sb.append(operation).append(SPACE);
+            .append(alias);
+        StringBuilder tableAnnotations = new StringBuilder();
+        for (JsonView.Operation operation: getViewSupportedOperations(viewEntity)) {
+            if (operation != JsonView.Operation.DELETE || deleteAllowed) {
+                tableAnnotations.append(operation).append(SPACE);
+            }
         }
         if (!viewEntity.getAnnotationMetadata().booleanValue(viewAnnotation, "etagCheck").orElse(true)) {
-            sb.append("NOCHECK ");
+            tableAnnotations.append("NOCHECK ");
+        }
+        // Oracle rejects a WITH that has no annotation after it
+        if (!tableAnnotations.isEmpty()) {
+            sb.append(WITH_CLAUSE).append(tableAnnotations);
         }
         if (isTopLevel) {
             viewEntity.getAnnotationMetadata().stringValue(JsonView.class, "where").ifPresent(where ->
@@ -812,6 +818,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     private String createJsonSubViewQuery(Association association) {
+        return createJsonSubViewQuery(association, true);
+    }
+
+    private String createJsonSubViewQuery(Association association, boolean deleteAllowed) {
         PersistentEntity associatedViewEntity = association.getAssociatedEntity();
         Optional<PersistentEntity> associatedEntityOptional = getJsonSubViewEntity(associatedViewEntity);
         if (associatedEntityOptional.isEmpty()) {
@@ -819,7 +829,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
         PersistentEntity associatedEntity = associatedEntityOptional.get();
         StringBuilder sb = new StringBuilder(SELECT_JSON_CLAUSE).append(OPEN_CURLY_BRACKET);
-        createJsonViewQuery(sb, associatedViewEntity, associatedEntity, false);
+        createJsonViewQuery(sb, associatedViewEntity, associatedEntity, false, deleteAllowed);
 
         PersistentEntity associationOwner = association.getOwner();
         PersistentEntity associationOwnerEntity = null;
@@ -916,17 +926,20 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             case ONE_TO_MANY, MANY_TO_MANY -> {
                 PersistentEntity associatedEntity = associatedEntityOptional.get();
                 if (SqlQueryBuilderUtils.isForeignKeyWithJoinTable(association) && hasEmbeddedId(associatedEntity)) {
-                    sb.append(SPACE)
-                        .append("UNNEST ")
-                        .append(OPEN_BRACKET)
-                        .append(SELECT_JSON_CLAUSE)
-                        .append(OPEN_CURLY_BRACKET);
+                    // The array holds one element per join table row, with the associated row unnested into it.
+                    // The associated table is nested as a single object, and Oracle rejects the DELETE annotation
+                    // on such a table unless a foreign key links it to its parent (ORA-42693, since 23.26.4).
+                    // The generated schema has no foreign keys, so the associated table never gets DELETE.
                     sb.append("'")
                         .append(columnPropertyName)
                         .append("': [")
-                        .append(createJsonSubViewQuery(association))
-                        .append("]");
-                    sb.append(CLOSE_CURLY_BRACKET);
+                        .append(SELECT_JSON_CLAUSE)
+                        .append(OPEN_CURLY_BRACKET)
+                        .append("UNNEST ")
+                        .append(OPEN_BRACKET)
+                        .append(createJsonSubViewQuery(association, false))
+                        .append(CLOSE_BRACKET)
+                        .append(CLOSE_CURLY_BRACKET);
 
                     Association joinAssociation = (Association) entity.getPropertyByName(association.getName());
                     if (joinAssociation == null) {
@@ -945,7 +958,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     PersistentAssociationPath joinAssociationPath = createAssociationPath(entity, association);
                     QueryState queryState = createQueryState(association.getAssociatedEntity());
                     buildJoin(JoinType.LEFT.name(), sb, queryState, joinAssociationPath, entity, joinAssociation.getAssociatedEntity().getAliasName(), entity.getAliasName());
-                    sb.append(CLOSE_BRACKET);
+                    sb.append("]");
                 } else {
                     sb.append("'")
                         .append(columnPropertyName)
