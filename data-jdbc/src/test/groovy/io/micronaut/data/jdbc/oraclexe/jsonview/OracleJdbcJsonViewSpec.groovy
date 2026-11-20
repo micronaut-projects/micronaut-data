@@ -77,6 +77,9 @@ class OracleJdbcJsonViewSpec extends Specification {
     @Inject
     ShelfViewRepository shelfViewRepository
 
+    @Inject
+    ClubViewRepository clubViewRepository
+
     def setup() {
         studentClassRepository.deleteAll()
         classRepository.deleteAll()
@@ -630,6 +633,42 @@ class OracleJdbcJsonViewSpec extends Specification {
         then: "its join table rows are deleted and the books are kept"
         countRows("SELECT COUNT(*) FROM shelf_book WHERE shelf_id = " + shelfView.getId()) == 0
         countRows("SELECT COUNT(*) FROM TBL_BOOK WHERE id IN (1, 2)") == 2
+    }
+
+    def "test_generate_create_view_for_inverse_side_of_many_to_many"() {
+        when:
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
+        String[] sql = builder.buildCreateTableStatements(getRuntimePersistentEntity(ClubView))
+        then: "the view reads the join table that the owning side, Member.clubs, defines, named by Member's naming strategy"
+        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW club_view AS SELECT JSON {'_id': cl.id, 'name': cl.name, " +
+                "'members': [SELECT JSON {UNNEST (SELECT JSON {'id': mbr.id, 'name': mbr.name} FROM TBL_MEMBER mbr WITH UPDATE INSERT  " +
+                "WHERE memberclub.\"MEMBERID\"=mbr.\"ID\")} " +
+                "FROM memberclub WITH UPDATE INSERT DELETE WHERE cl.\"ID\"=memberclub.\"CLUBID\"]} " +
+                "FROM TBL_CLUB cl WITH UPDATE INSERT DELETE "
+    }
+
+    def "test_club_view_with_several_members"() {
+        given:
+        def clubView = new ClubView()
+        clubView.setName("Chess")
+        clubViewRepository.save(clubView)
+        clubView.setMembers([new MemberSubView(11, "Ana"), new MemberSubView(12, "Ivo")])
+
+        when:
+        clubViewRepository.update(clubView)
+        def result = clubViewRepository.findById(clubView.getId())
+
+        then:
+        result.present
+        result.get().members.collect { it.name() }.sort() == ["Ana", "Ivo"]
+        countRows("SELECT COUNT(*) FROM memberclub WHERE clubid = " + clubView.getId()) == 2
+
+        when: "the club is deleted through the view"
+        clubViewRepository.deleteById(clubView.getId())
+
+        then: "its join table rows are deleted and the members are kept"
+        countRows("SELECT COUNT(*) FROM memberclub WHERE clubid = " + clubView.getId()) == 0
+        countRows("SELECT COUNT(*) FROM TBL_MEMBER WHERE id IN (11, 12)") == 2
     }
 
     private long countRows(String sql) {

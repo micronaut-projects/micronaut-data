@@ -923,7 +923,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 PersistentEntity associatedEntity = associatedEntityOptional.get();
                 Association entityAssociation = createAssociationPath(entity, association).getAssociation();
                 // A sub view can also map the join table itself as an entity, then the join table is the array
-                if (SqlQueryBuilderUtils.isForeignKeyWithJoinTable(entityAssociation)
+                if (readsJoinTable(entityAssociation)
                     && entityAssociation.getAssociatedEntity().getName().equals(associatedEntity.getName())) {
                     appendJoinTableArray(sb, association, entityAssociation, entity, associatedEntity, columnPropertyName);
                 } else {
@@ -938,6 +938,16 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 throw new IllegalStateException("Unsupported relation type");
             }
         }
+    }
+
+    // Whether the association goes through a join table: it owns one, or it is the mappedBy side of a many-to-many
+    // whose other side owns one
+    private static boolean readsJoinTable(Association association) {
+        if (SqlQueryBuilderUtils.isForeignKeyWithJoinTable(association)) {
+            return true;
+        }
+        return association.getKind() == Relation.Kind.MANY_TO_MANY
+            && association.getInverseSide().map(SqlQueryBuilderUtils::isForeignKeyWithJoinTable).orElse(false);
     }
 
     // Appends a to-many association that goes through a join table as an array with one element per join table row.
@@ -955,15 +965,17 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         Optional<Association> inverseSide = entityAssociation.getInverseSide().map(Function.identity());
         Association owningAssociation = inverseSide.orElse(entityAssociation);
         boolean isAssociationOwner = inverseSide.isEmpty();
-        NamingStrategy namingStrategy = entity.getNamingStrategy();
+        // Name the join table and its columns like schema generation does, with the naming strategy of the entity
+        // that owns the join table, and the id columns of each entity with that entity's own naming strategy
+        NamingStrategy joinTableNamingStrategy = owningAssociation.getOwner().getNamingStrategy();
         AnnotationMetadata annotationMetadata = owningAssociation.getAnnotationMetadata();
         PersistentEntity targetEntity = entityAssociation.getAssociatedEntity();
         boolean escape = shouldEscape(entity);
 
-        List<String> ownerColumns = resolveJoinTableAssociatedColumns(annotationMetadata, isAssociationOwner, entity, namingStrategy);
-        List<String> ownerJoinTableColumns = SqlQueryBuilderUtils.resolveJoinTableJoinColumns(annotationMetadata, isAssociationOwner, entity, namingStrategy);
-        List<String> targetColumns = resolveJoinTableAssociatedColumns(annotationMetadata, !isAssociationOwner, targetEntity, namingStrategy);
-        List<String> targetJoinTableColumns = SqlQueryBuilderUtils.resolveJoinTableJoinColumns(annotationMetadata, !isAssociationOwner, targetEntity, namingStrategy);
+        List<String> ownerColumns = resolveJoinTableAssociatedColumns(annotationMetadata, isAssociationOwner, entity, entity.getNamingStrategy());
+        List<String> ownerJoinTableColumns = SqlQueryBuilderUtils.resolveJoinTableJoinColumns(annotationMetadata, isAssociationOwner, entity, joinTableNamingStrategy);
+        List<String> targetColumns = resolveJoinTableAssociatedColumns(annotationMetadata, !isAssociationOwner, targetEntity, targetEntity.getNamingStrategy());
+        List<String> targetJoinTableColumns = SqlQueryBuilderUtils.resolveJoinTableJoinColumns(annotationMetadata, !isAssociationOwner, targetEntity, joinTableNamingStrategy);
         if (escape) {
             ownerColumns = ownerColumns.stream().map(this::quote).toList();
             ownerJoinTableColumns = ownerJoinTableColumns.stream().map(this::quote).toList();
@@ -972,7 +984,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
         String joinTableName = annotationMetadata
             .stringValue(SqlQueryBuilderUtils.ANN_JOIN_TABLE, "name")
-            .orElseGet(() -> getMappedName(namingStrategy, entityAssociation));
+            .orElseGet(() -> getMappedName(joinTableNamingStrategy, owningAssociation));
 
         sb.append("'")
             .append(columnPropertyName)
