@@ -818,10 +818,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     private String createJsonSubViewQuery(Association association) {
-        return createJsonSubViewQuery(association, true);
-    }
-
-    private String createJsonSubViewQuery(Association association, boolean deleteAllowed) {
         PersistentEntity associatedViewEntity = association.getAssociatedEntity();
         Optional<PersistentEntity> associatedEntityOptional = getJsonSubViewEntity(associatedViewEntity);
         if (associatedEntityOptional.isEmpty()) {
@@ -829,7 +825,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
         PersistentEntity associatedEntity = associatedEntityOptional.get();
         StringBuilder sb = new StringBuilder(SELECT_JSON_CLAUSE).append(OPEN_CURLY_BRACKET);
-        createJsonViewQuery(sb, associatedViewEntity, associatedEntity, false, deleteAllowed);
+        createJsonViewQuery(sb, associatedViewEntity, associatedEntity, false, true);
 
         PersistentEntity associationOwner = association.getOwner();
         PersistentEntity associationOwnerEntity = null;
@@ -925,40 +921,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             }
             case ONE_TO_MANY, MANY_TO_MANY -> {
                 PersistentEntity associatedEntity = associatedEntityOptional.get();
-                if (SqlQueryBuilderUtils.isForeignKeyWithJoinTable(association) && hasEmbeddedId(associatedEntity)) {
-                    // The array holds one element per join table row, with the associated row unnested into it.
-                    // The associated table is nested as a single object, and Oracle rejects the DELETE annotation
-                    // on such a table unless a foreign key links it to its parent (ORA-42693, since 23.26.4).
-                    // The generated schema has no foreign keys, so the associated table never gets DELETE.
-                    sb.append("'")
-                        .append(columnPropertyName)
-                        .append("': [")
-                        .append(SELECT_JSON_CLAUSE)
-                        .append(OPEN_CURLY_BRACKET)
-                        .append("UNNEST ")
-                        .append(OPEN_BRACKET)
-                        .append(createJsonSubViewQuery(association, false))
-                        .append(CLOSE_BRACKET)
-                        .append(CLOSE_CURLY_BRACKET);
-
-                    Association joinAssociation = (Association) entity.getPropertyByName(association.getName());
-                    if (joinAssociation == null) {
-                        throw new IllegalStateException("Join association missing");
-                    }
-
-                    String joinTableName = joinAssociation.getAnnotationMetadata()
-                        .stringValue(SqlQueryBuilderUtils.ANN_JOIN_TABLE, "name")
-                        .orElseGet(() -> getMappedName(entity.getNamingStrategy(), joinAssociation));
-
-                    sb.append(FROM_CLAUSE)
-                        .append(joinTableName)
-                        .append(SPACE)
-                        .append("WITH UPDATE INSERT DELETE");
-
-                    PersistentAssociationPath joinAssociationPath = createAssociationPath(entity, association);
-                    QueryState queryState = createQueryState(association.getAssociatedEntity());
-                    buildJoin(JoinType.LEFT.name(), sb, queryState, joinAssociationPath, entity, joinAssociation.getAssociatedEntity().getAliasName(), entity.getAliasName());
-                    sb.append("]");
+                Association entityAssociation = createAssociationPath(entity, association).getAssociation();
+                // A sub view can also map the join table itself as an entity, then the join table is the array
+                if (SqlQueryBuilderUtils.isForeignKeyWithJoinTable(entityAssociation)
+                    && entityAssociation.getAssociatedEntity().getName().equals(associatedEntity.getName())) {
+                    appendJoinTableArray(sb, association, entityAssociation, entity, associatedEntity, columnPropertyName);
                 } else {
                     sb.append("'")
                         .append(columnPropertyName)
@@ -973,8 +940,60 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
     }
 
-    private boolean hasEmbeddedId(PersistentEntity entity) {
-        return entity.getIdentity().getAnnotationMetadata().hasAnnotation(EmbeddedId.class);
+    // Appends a to-many association that goes through a join table as an array with one element per join table row.
+    // Each level of a duality view reads one table, so the join table needs a level of its own. UNNEST keeps that
+    // level out of the document, so each element holds the fields of the associated row.
+    // The associated table is nested as a single object, and Oracle rejects the DELETE annotation on such a table
+    // unless a foreign key links it to its parent (ORA-42693, since 23.26.4). The generated schema has no foreign
+    // keys, so the associated table never gets DELETE.
+    private void appendJoinTableArray(StringBuilder sb,
+                                      Association association,
+                                      Association entityAssociation,
+                                      PersistentEntity entity,
+                                      PersistentEntity associatedEntity,
+                                      String columnPropertyName) {
+        Optional<Association> inverseSide = entityAssociation.getInverseSide().map(Function.identity());
+        Association owningAssociation = inverseSide.orElse(entityAssociation);
+        boolean isAssociationOwner = inverseSide.isEmpty();
+        NamingStrategy namingStrategy = entity.getNamingStrategy();
+        AnnotationMetadata annotationMetadata = owningAssociation.getAnnotationMetadata();
+        PersistentEntity targetEntity = entityAssociation.getAssociatedEntity();
+        boolean escape = shouldEscape(entity);
+
+        List<String> ownerColumns = resolveJoinTableAssociatedColumns(annotationMetadata, isAssociationOwner, entity, namingStrategy);
+        List<String> ownerJoinTableColumns = SqlQueryBuilderUtils.resolveJoinTableJoinColumns(annotationMetadata, isAssociationOwner, entity, namingStrategy);
+        List<String> targetColumns = resolveJoinTableAssociatedColumns(annotationMetadata, !isAssociationOwner, targetEntity, namingStrategy);
+        List<String> targetJoinTableColumns = SqlQueryBuilderUtils.resolveJoinTableJoinColumns(annotationMetadata, !isAssociationOwner, targetEntity, namingStrategy);
+        if (escape) {
+            ownerColumns = ownerColumns.stream().map(this::quote).toList();
+            ownerJoinTableColumns = ownerJoinTableColumns.stream().map(this::quote).toList();
+            targetColumns = targetColumns.stream().map(this::quote).toList();
+            targetJoinTableColumns = targetJoinTableColumns.stream().map(this::quote).toList();
+        }
+        String joinTableName = annotationMetadata
+            .stringValue(SqlQueryBuilderUtils.ANN_JOIN_TABLE, "name")
+            .orElseGet(() -> getMappedName(namingStrategy, entityAssociation));
+
+        sb.append("'")
+            .append(columnPropertyName)
+            .append("': [")
+            .append(SELECT_JSON_CLAUSE)
+            .append(OPEN_CURLY_BRACKET)
+            .append("UNNEST ")
+            .append(OPEN_BRACKET)
+            .append(SELECT_JSON_CLAUSE)
+            .append(OPEN_CURLY_BRACKET);
+        createJsonViewQuery(sb, association.getAssociatedEntity(), associatedEntity, false, false);
+        sb.append(WHERE_CLAUSE);
+        buildJoinColumnMatchPart(sb, associatedEntity.getAliasName(), joinTableName, targetJoinTableColumns, targetColumns);
+        sb.append(CLOSE_BRACKET)
+            .append(CLOSE_CURLY_BRACKET)
+            .append(FROM_CLAUSE)
+            .append(joinTableName)
+            .append(" WITH UPDATE INSERT DELETE")
+            .append(WHERE_CLAUSE);
+        buildJoinColumnMatchPart(sb, joinTableName, entity.getAliasName(), ownerColumns, ownerJoinTableColumns);
+        sb.append("]");
     }
 
     private void addTable(SqlTableMapping table, Map<String, SqlTableMapping> sqlTableMappingByTableName) {

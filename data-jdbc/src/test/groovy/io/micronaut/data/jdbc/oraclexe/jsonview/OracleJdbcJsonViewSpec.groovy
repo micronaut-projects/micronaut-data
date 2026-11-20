@@ -71,6 +71,12 @@ class OracleJdbcJsonViewSpec extends Specification {
     @Inject
     JdbcOperations jdbcOperations
 
+    @Inject
+    TenantViewRepository tenantViewRepository
+
+    @Inject
+    ShelfViewRepository shelfViewRepository
+
     def setup() {
         studentClassRepository.deleteAll()
         classRepository.deleteAll()
@@ -548,6 +554,82 @@ class OracleJdbcJsonViewSpec extends Specification {
         countRows("SELECT COUNT(*) FROM building_apartment WHERE building_id = " + buildingView.getId()) == 0
         apartmentViewRepository.findById(new ApartmentId(buildingView.getId(), 1)).present
         apartmentViewRepository.findById(new ApartmentId(buildingView.getId(), 2)).present
+    }
+
+    def "test_generate_create_view_for_many_to_many_join_table"() {
+        when:
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
+        String[] sql = builder.buildCreateTableStatements(getRuntimePersistentEntity(TenantView))
+        then:
+        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW tenant_view AS SELECT JSON {'_id': tn.id, 'name': tn.name, " +
+                "'apartments': [SELECT JSON {UNNEST (SELECT JSON {'buildingId': ap.building_id, 'flatId': ap.flat_id} FROM TBL_APARTMENT ap WITH UPDATE INSERT  " +
+                "WHERE tenant_apartment.\"APARTMENT_APARTMENT_ID_BUILDING_ID\"=ap.\"BUILDING_ID\" AND tenant_apartment.\"APARTMENT_APARTMENT_ID_FLAT_ID\"=ap.\"FLAT_ID\")} " +
+                "FROM tenant_apartment WITH UPDATE INSERT DELETE WHERE tn.\"ID\"=tenant_apartment.\"TENANT_ID\"]} " +
+                "FROM TBL_TENANT tn WITH UPDATE INSERT DELETE "
+    }
+
+    def "test_tenant_view_with_several_apartments"() {
+        given: "two apartments that exist before the tenant rents them"
+        apartmentViewRepository.insert(new ApartmentView(new ApartmentId(901, 1)))
+        apartmentViewRepository.insert(new ApartmentView(new ApartmentId(901, 2)))
+        def tenantView = new TenantView()
+        tenantView.setName("Ana")
+        tenantViewRepository.save(tenantView)
+        tenantView.setApartments([
+                new ApartmentSubView(new ApartmentId(901, 1)),
+                new ApartmentSubView(new ApartmentId(901, 2))
+        ])
+
+        when:
+        tenantViewRepository.update(tenantView)
+        def result = tenantViewRepository.findById(tenantView.getId())
+
+        then:
+        result.present
+        result.get().name == "Ana"
+        result.get().apartments.collect { it.apartmentId().flatId() }.sort() == [1L, 2L]
+
+        when: "the tenant is deleted through the view"
+        tenantViewRepository.deleteById(tenantView.getId())
+
+        then: "its join table rows are deleted and the apartments are kept"
+        countRows("SELECT COUNT(*) FROM tenant_apartment WHERE tenant_id = " + tenantView.getId()) == 0
+        apartmentViewRepository.findById(new ApartmentId(901, 1)).present
+        apartmentViewRepository.findById(new ApartmentId(901, 2)).present
+    }
+
+    def "test_generate_create_view_for_join_table_to_simple_id"() {
+        when:
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
+        String[] sql = builder.buildCreateTableStatements(getRuntimePersistentEntity(ShelfView))
+        then:
+        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW shelf_view AS SELECT JSON {'_id': sh.id, " +
+                "'books': [SELECT JSON {UNNEST (SELECT JSON {'id': bk.id, 'title': bk.title} FROM TBL_BOOK bk WITH UPDATE INSERT  " +
+                "WHERE shelf_book.\"BOOK_ID\"=bk.\"ID\")} " +
+                "FROM shelf_book WITH UPDATE INSERT DELETE WHERE sh.\"ID\"=shelf_book.\"SHELF_ID\"]} " +
+                "FROM TBL_SHELF sh WITH UPDATE INSERT DELETE "
+    }
+
+    def "test_shelf_view_with_several_books"() {
+        given:
+        def shelfView = new ShelfView()
+        shelfViewRepository.save(shelfView)
+        shelfView.setBooks([new BookSubView(1, "Dune"), new BookSubView(2, "Emma")])
+
+        when:
+        shelfViewRepository.update(shelfView)
+        def result = shelfViewRepository.findById(shelfView.getId())
+
+        then:
+        result.present
+        result.get().books.collect { it.title() }.sort() == ["Dune", "Emma"]
+
+        when: "the shelf is deleted through the view"
+        shelfViewRepository.deleteById(shelfView.getId())
+
+        then: "its join table rows are deleted and the books are kept"
+        countRows("SELECT COUNT(*) FROM shelf_book WHERE shelf_id = " + shelfView.getId()) == 0
+        countRows("SELECT COUNT(*) FROM TBL_BOOK WHERE id IN (1, 2)") == 2
     }
 
     private long countRows(String sql) {
