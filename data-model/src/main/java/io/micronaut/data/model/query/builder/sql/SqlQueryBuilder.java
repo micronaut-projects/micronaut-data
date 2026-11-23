@@ -641,12 +641,44 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     private void createJsonViewQuery(StringBuilder sb, PersistentEntity viewEntity, PersistentEntity entity, boolean isTopLevel, boolean deleteAllowed) {
         String alias = entity.getAliasName();
 
-        List<PersistentProperty> identities = viewEntity.getIdentityProperties();
-        Iterator<PersistentProperty> it = identities.iterator();
-
         List<PersistentProperty> allColumns = (List<PersistentProperty>) viewEntity.getPersistentProperties();
         List<PersistentProperty> columns = allColumns.stream().filter(column -> column.getDataType() != DataType.OBJECT || isFlexColumn(column)).toList();
 
+        appendJsonViewIdentities(sb, viewEntity, entity, alias, columns, isTopLevel);
+
+        Iterator<PersistentProperty> it = columns.iterator();
+        while (it.hasNext()) {
+            createJsonViewColumnQuery(sb, it.next(), entity, alias);
+            if (it.hasNext()) {
+                sb.append(COMMA)
+                    .append(SPACE);
+            }
+        }
+        Class<? extends Annotation> viewAnnotation = viewEntity.getAnnotationMetadata().hasAnnotation(JsonView.class) ? JsonView.class : JsonSubView.class;
+        appendJsonViewHiddenFields(sb, viewEntity, viewAnnotation, entity, alias);
+        sb.append(CLOSE_CURLY_BRACKET)
+            .append(FROM_CLAUSE)
+            .append(entity.getPersistedName())
+            .append(SPACE)
+            .append(alias);
+        appendJsonViewTableAnnotations(sb, viewEntity, viewAnnotation, deleteAllowed);
+        if (isTopLevel) {
+            viewEntity.getAnnotationMetadata().stringValue(JsonView.class, "where").ifPresent(where ->
+                sb.append(WHERE_CLAUSE)
+                    .append(where.replaceAll(ALIAS_REPLACE_QUOTED, alias + DOT))
+                    .append(" WITH CHECK OPTION")
+            );
+        }
+    }
+
+    // Appends the id fields of a view or sub view, each followed by a comma when more fields come after it
+    private void appendJsonViewIdentities(StringBuilder sb,
+                                          PersistentEntity viewEntity,
+                                          PersistentEntity entity,
+                                          String alias,
+                                          List<PersistentProperty> columns,
+                                          boolean isTopLevel) {
+        Iterator<PersistentProperty> it = viewEntity.getIdentityProperties().iterator();
         while (it.hasNext()) {
             PersistentProperty identity = it.next();
             String viewPropertyName = identity.getAnnotationMetadata().stringValue(SERDE_CONFIG_ANNOTATION, "property")
@@ -675,16 +707,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     .append(SPACE);
             }
         }
+    }
 
-        it = columns.iterator();
-        while (it.hasNext()) {
-            createJsonViewColumnQuery(sb, it.next(), entity, alias);
-            if (it.hasNext()) {
-                sb.append(COMMA)
-                    .append(SPACE);
-            }
-        }
-        Class<? extends Annotation> viewAnnotation = viewEntity.getAnnotationMetadata().hasAnnotation(JsonView.class) ? JsonView.class : JsonSubView.class;
+    // Appends the hidden fields of a view or sub view, each preceded by a comma
+    private void appendJsonViewHiddenFields(StringBuilder sb,
+                                            PersistentEntity viewEntity,
+                                            Class<? extends Annotation> viewAnnotation,
+                                            PersistentEntity entity,
+                                            String alias) {
         for (String hiddenPropertyName : viewEntity.getAnnotationMetadata().stringValues(viewAnnotation, "hidden")) {
             PersistentProperty hiddenProperty = entity.getPropertyByName(hiddenPropertyName);
             if (hiddenProperty == null) {
@@ -700,11 +730,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 .append(hiddenProperty.getPersistedName())
                 .append(" HIDDEN");
         }
-        sb.append(CLOSE_CURLY_BRACKET)
-            .append(FROM_CLAUSE)
-            .append(entity.getPersistedName())
-            .append(SPACE)
-            .append(alias);
+    }
+
+    // Appends the WITH clause of a table in a view: the declared operations and NOCHECK
+    // deleteAllowed is false where the table can't take the DELETE annotation even when the view declares it
+    private void appendJsonViewTableAnnotations(StringBuilder sb,
+                                                PersistentEntity viewEntity,
+                                                Class<? extends Annotation> viewAnnotation,
+                                                boolean deleteAllowed) {
         StringBuilder tableAnnotations = new StringBuilder();
         for (JsonView.Operation operation: getViewSupportedOperations(viewEntity)) {
             if (operation != JsonView.Operation.DELETE || deleteAllowed) {
@@ -717,13 +750,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         // Oracle rejects a WITH that has no annotation after it
         if (!tableAnnotations.isEmpty()) {
             sb.append(WITH_CLAUSE).append(tableAnnotations);
-        }
-        if (isTopLevel) {
-            viewEntity.getAnnotationMetadata().stringValue(JsonView.class, "where").ifPresent(where ->
-                sb.append(WHERE_CLAUSE)
-                    .append(where.replaceAll(ALIAS_REPLACE_QUOTED, alias + DOT))
-                    .append(" WITH CHECK OPTION")
-            );
         }
     }
 
