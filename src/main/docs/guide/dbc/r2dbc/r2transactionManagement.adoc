@@ -11,6 +11,8 @@ snippet::example.BookControllerTest[project-base="doc-examples/r2dbc-example", s
 
 In the above case the `withTransaction` method is used to initiate a transaction.
 
+NOTE: Reactive transactions do not implement every transaction propagation in the same way as synchronous transactions. See <<reactiveTransactions, Reactive Transactions>> for the propagations and for how failures are handled.
+
 Note however, that transaction management is possibly one of the most challenging areas to get right in reactive programming since you need to propagate the transaction across the reactive flow.
 
 Most R2DBC drivers are implemented in https://projectreactor.io/[Project Reactor] which has the ability to https://projectreactor.io/docs/core/release/reference/#context[propagate a context] across reactive operators and Micronaut Data R2DBC will populate this context and ensure the transaction is re-used if it is found within it.
