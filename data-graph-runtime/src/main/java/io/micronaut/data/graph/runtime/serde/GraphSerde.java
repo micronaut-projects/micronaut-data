@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.graph.runtime.serde;
 
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
@@ -32,10 +33,15 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.serde.Deserializer;
 import io.micronaut.data.runtime.convert.DataConversionService;
+import io.micronaut.serde.NamingStrategyLocator;
 import io.micronaut.serde.SerdeRegistry;
 import io.micronaut.serde.config.annotation.SerdeConfig;
+import io.micronaut.serde.config.naming.PropertyNamingStrategy;
+import io.micronaut.serde.exceptions.SerdeException;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -57,6 +63,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @Internal
 public final class GraphSerde {
 
+    private static final Logger LOG = LoggerFactory.getLogger(GraphSerde.class);
+
     private final SerdeRegistry serdeRegistry;
     private final ConversionService conversionService;
     private final Map<Class<?>, Deserializer<Object>> deserializers = new ConcurrentHashMap<>();
@@ -70,6 +78,13 @@ public final class GraphSerde {
         // Serde caches the deserializer it builds at runtime for a type, with the property deserializers of the first
         // context to ask for it. A registry of its own keeps those of graph reads apart from those of the application
         this.serdeRegistry = serdeRegistry.cloneWithConfiguration(null, null, null);
+        if (this.serdeRegistry == serdeRegistry) {
+            LOG.warn("The serde registry [{}] does not implement cloneWithConfiguration, so graph reads share the deserializers of the application, "
+                + "which can read temporal values of nodes and of JSON the wrong way", serdeRegistry.getClass().getName());
+        } else if (this.serdeRegistry.getClass() != serdeRegistry.getClass()) {
+            LOG.warn("The serde registry [{}] inherits cloneWithConfiguration, so graph reads use a [{}] without its overrides",
+                serdeRegistry.getClass().getName(), this.serdeRegistry.getClass().getName());
+        }
         this.conversionService = conversionService;
     }
 
@@ -208,7 +223,7 @@ public final class GraphSerde {
     }
 
     private Names names(RuntimePersistentEntity<?> entity) {
-        return names.computeIfAbsent(entity.getIntrospection().getBeanType(), type -> Names.of(entity));
+        return names.computeIfAbsent(entity.getIntrospection().getBeanType(), type -> Names.of(entity, serdeRegistry));
     }
 
     private @Nullable Object fetched(RuntimeAssociation<?> association, @Nullable Object value, Schemaless schemaless) {
@@ -279,18 +294,19 @@ public final class GraphSerde {
      */
     private record Names(List<Stored> stored, Map<String, String> serde, Map<String, Object> empty) {
 
-        static Names of(RuntimePersistentEntity<?> entity) {
+        static Names of(RuntimePersistentEntity<?> entity, NamingStrategyLocator strategies) {
+            PropertyNamingStrategy naming = namingStrategy(entity.getIntrospection(), strategies, null);
             List<Stored> stored = new ArrayList<>();
             Map<String, String> serde = new HashMap<>();
             if (entity.hasIdentity()) {
                 RuntimePersistentProperty<?> identity = entity.getIdentity();
-                add(identity, !GraphEntities.isNativeId(identity), stored, serde);
+                add(identity, serdeName(identity, strategies, naming), !GraphEntities.isNativeId(identity), stored, serde);
             }
             if (entity.hasVersion()) {
-                add(entity.getVersion(), true, stored, serde);
+                add(entity.getVersion(), serdeName(entity.getVersion(), strategies, naming), true, stored, serde);
             }
             for (RuntimePersistentProperty<?> property : entity.getPersistentProperties()) {
-                add(property, !(property instanceof RuntimeAssociation<?>) && !GraphEntities.isSchemalessHolder(property), stored, serde);
+                add(property, serdeName(property, strategies, naming), !(property instanceof RuntimeAssociation<?>) && !GraphEntities.isSchemalessHolder(property), stored, serde);
             }
             Map<String, Object> empty = new HashMap<>();
             for (RuntimePersistentProperty<?> property : entity.getPersistentProperties()) {
@@ -303,9 +319,33 @@ public final class GraphSerde {
             return new Names(stored, serde, empty);
         }
 
-        private static void add(RuntimePersistentProperty<?> property, boolean isStored, List<Stored> stored, Map<String, String> serde) {
-            // Serde writes the name it resolves at compile time, such as that of @Serdeable(naming), to this member
-            String name = property.getAnnotationMetadata().stringValue(SerdeConfig.class, SerdeConfig.PROPERTY).orElse(property.getName());
+        /**
+         * Serde writes the name it resolves at compile time, such as that of @Serdeable(naming) with a built-in
+         * strategy, to a member of the property, and looks any other strategy up at runtime.
+         */
+        private static String serdeName(RuntimePersistentProperty<?> property, NamingStrategyLocator strategies, @Nullable PropertyNamingStrategy entityNaming) {
+            AnnotationMetadata metadata = property.getAnnotationMetadata();
+            return metadata.stringValue(SerdeConfig.class, SerdeConfig.PROPERTY).orElseGet(() -> {
+                PropertyNamingStrategy naming = namingStrategy(metadata, strategies, entityNaming);
+                return naming == null ? property.getName() : naming.translate(property.getProperty());
+            });
+        }
+
+        private static @Nullable PropertyNamingStrategy namingStrategy(AnnotationMetadata metadata, NamingStrategyLocator strategies, @Nullable PropertyNamingStrategy defaultNaming) {
+            Class<? extends PropertyNamingStrategy> type = metadata.classValue(SerdeConfig.class, SerdeConfig.RUNTIME_NAMING)
+                .map(strategy -> strategy.asSubclass(PropertyNamingStrategy.class))
+                .orElse(null);
+            if (type == null) {
+                return defaultNaming;
+            }
+            try {
+                return strategies.findNamingStrategy(type);
+            } catch (SerdeException e) {
+                throw new DataAccessException("No naming strategy [" + type.getName() + "]: " + e.getMessage(), e);
+            }
+        }
+
+        private static void add(RuntimePersistentProperty<?> property, String name, boolean isStored, List<Stored> stored, Map<String, String> serde) {
             serde.put(property.getName(), name);
             if (isStored) {
                 stored.add(new Stored(property.getPersistedName(), name));
