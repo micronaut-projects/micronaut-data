@@ -176,6 +176,33 @@ interface AccountRepository extends CrudRepository<Account, Long> {
         queries['deleteReturningName[Account]'] == 'BEGIN DELETE  FROM "ACCOUNTS"  WHERE ("ID" = ?) RETURNING "NAME" INTO ?; END;'
     }
 
+    void "test the update of a node that has only an id and a single relationship sets the id"() {
+        when:
+        def repository = buildRepository('test.TraineeRepository', '''
+@Node(value = "trainees", labels = "Trainee")
+class Trainee {
+    @Id
+    private Long id;
+    @Relationship("MENTORED_BY")
+    private Trainee mentor;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Trainee getMentor() { return mentor; }
+    public void setMentor(Trainee mentor) { this.mentor = mentor; }
+}
+
+@TestOracleRepository
+@PropertyGraph(value = "trainee_graph")
+interface TraineeRepository extends CrudRepository<Trainee, Long> {
+}
+''')
+        def update = repository.executableMethods.find { it.methodName == 'update' }
+
+        then:
+        getQuery(update) == 'UPDATE "TRAINEES" SET "ID"=? WHERE ("ID" = ?)'
+        getParameterProperties(update) == ['id', 'id']
+    }
+
     @Unroll
     void "test #method is rejected"() {
         when:

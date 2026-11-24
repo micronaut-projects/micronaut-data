@@ -267,7 +267,9 @@ class OracleGraphSpec extends Specification {
         customerGraph.updateReturningName(new Customer(1L, "Ann Lee", null)) == "Ann Lee"
         customerGraph.updateReturningName(1L, "Ann Ng") == "Ann Ng"
         customerGraph.findById(1L).get().name() == "Ann Ng"
-        customerGraph.deleteReturningName(new Customer(1L, "Ann Ng", null)) == "Ann Ng"
+        customerGraph.updateByIdInReturningName([1L], "Ann Wu") == "Ann Wu"
+        customerGraph.findById(1L).get().name() == "Ann Wu"
+        customerGraph.deleteReturningName(new Customer(1L, "Ann Wu", null)) == "Ann Wu"
         customerGraph.count() == 0
 
         cleanup:

@@ -192,6 +192,11 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
                 throw new IllegalArgumentException("Cannot update the relationship [" + name + "] of [" + entity.getName() + "]: " + READ_ONLY);
             }
         });
+        if (columns.isEmpty() && generated && entity.hasIdentity()) {
+            // A node whose only properties are relationships: the update sets its identifier, as it does for an entity
+            // that has no other property. The binding of the value follows the property it is set to.
+            columns.put(entity.getIdentity().getName(), definition.propertiesToUpdate().values().iterator().next());
+        }
         return sqlQueryBuilder.buildUpdate(annotationMetadata, new VertexUpdate(definition, OracleVertexTableEntity.of(entity), columns, generated));
     }
 
