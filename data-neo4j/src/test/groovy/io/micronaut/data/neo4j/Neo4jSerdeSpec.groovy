@@ -14,6 +14,8 @@ import io.micronaut.data.neo4j.features.Composer
 import io.micronaut.data.neo4j.features.ComposerRepository
 import io.micronaut.data.neo4j.features.Critic
 import io.micronaut.data.neo4j.features.CriticRepository
+import io.micronaut.data.neo4j.features.Reviewer
+import io.micronaut.data.neo4j.features.ReviewerRepository
 import io.micronaut.data.neo4j.features.Event
 import io.micronaut.data.neo4j.features.EventRepository
 import io.micronaut.data.neo4j.features.KennelRepository
@@ -71,6 +73,9 @@ class Neo4jSerdeSpec extends Specification implements TestPropertyProvider {
 
     @Inject
     CriticRepository criticRepository
+
+    @Inject
+    ReviewerRepository reviewerRepository
 
     @Inject
     KennelRepository kennelRepository
@@ -233,6 +238,32 @@ class Neo4jSerdeSpec extends Specification implements TestPropertyProvider {
         then:
         operations.executeQuery('MATCH (c:Critic) RETURN c.reviewCount AS reviews', [:])[0].get("reviews") == 12L
         criticRepository.findById("Pauline Kael").get() == critic
+    }
+
+    void "a serde naming strategy that is looked up at runtime does not change what the node holds"() {
+        given:
+        def trainee = new Reviewer("Roger Ebert", 3, [])
+
+        when:
+        reviewerRepository.save(new Reviewer("Pauline Kael", 12, [trainee]))
+
+        then:
+        operations.executeQuery('MATCH (r:Reviewer {fullName: "Pauline Kael"}) RETURN r.reviewCount AS reviews', [:])[0].get("reviews") == 12L
+        reviewerRepository.findById("Pauline Kael").get() == new Reviewer("Pauline Kael", 12, [])
+        reviewerRepository.findByFullName("Pauline Kael").get() == new Reviewer("Pauline Kael", 12, [trainee])
+    }
+
+    void "a nested join reads relationships under the name of a serde naming strategy"() {
+        given:
+        def last = new Reviewer("A. O. Scott", 1, [])
+        def middle = new Reviewer("Roger Ebert", 3, [last])
+        def first = new Reviewer("Pauline Kael", 12, [middle])
+
+        when:
+        reviewerRepository.save(first)
+
+        then:
+        reviewerRepository.findByFullNameAndReviewCount("Pauline Kael", 12).get() == first
     }
 
     void "a node fetched through a relationship keeps its schemaless data"() {

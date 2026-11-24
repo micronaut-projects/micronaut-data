@@ -7,6 +7,7 @@ import io.micronaut.data.graph.tck.entities.Movie
 import io.micronaut.data.graph.tck.entities.Person
 import io.micronaut.data.graph.tck.entities.Role
 import io.micronaut.data.model.CursoredPageable
+import io.micronaut.data.model.Limit
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.neo4j.features.Assignment
@@ -181,8 +182,23 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
         and: "a comment that ends the query does not swallow the order"
         tagRepository.withTrailingComment(byName)*.name == ["a", "b", "c"]
 
+        and: "nor does a comment ahead of the limit"
+        tagRepository.withCommentBeforeLimit(byName)*.name == ["a", "b"]
+
         when: "a lowercase limit is still the limit of the query"
         tagRepository.lowerCaseLimitPaged(Pageable.from(0, 1))
+
+        then:
+        def e = thrown(DataAccessException)
+        e.message.contains("declares SKIP or LIMIT itself")
+    }
+
+    void "a limit is not taken for a larger one that the query declares"() {
+        given:
+        ["c", "a", "b"].each { tagRepository.save(new Tag(it)) }
+
+        when:
+        tagRepository.findTop10ByNameContains("", Limit.of(1, 0))
 
         then:
         def e = thrown(DataAccessException)

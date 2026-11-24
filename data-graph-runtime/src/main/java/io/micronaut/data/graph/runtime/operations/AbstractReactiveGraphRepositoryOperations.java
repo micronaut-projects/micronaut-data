@@ -346,7 +346,7 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
     private final class Persister {
         final Map<Object, Object> saved = new IdentityHashMap<>();
         // The nodes of a batch that are written but not yet linked, by the instance the save was called with
-        final Map<Object, Supplier<Mono<Void>>> unlinked = new IdentityHashMap<>();
+        final PendingLinks<Supplier<Mono<Void>>> unlinked = new PendingLinks<>();
         private final ReactiveGraphSession session;
         private final OperationContext context;
 
@@ -435,10 +435,8 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
          * @return A publisher that completes when the node is linked
          */
         Mono<Void> link(Object instance) {
-            return Mono.defer(() -> {
-                Supplier<Mono<Void>> link = unlinked.remove(instance);
-                return link == null ? Mono.empty() : link.get();
-            });
+            // One node at a time, as each step decides whether the nodes ahead of it are still pending
+            return Flux.fromIterable(() -> unlinked.take(instance)).concatMap(Supplier::get, 0).then();
         }
 
         /**
@@ -692,7 +690,7 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
                         for (Data d : pending) {
                             T original = Objects.requireNonNull(originals.get(d));
                             persister.written(original, d.entity);
-                            persister.unlinked.put(original, () -> new RelationshipWriter<>(persister, persistentEntity, addLabels.get(d), created.contains(d)).write(d.entity)
+                            persister.unlinked.add(original, () -> PendingLinks.relatedNodes(mapper, persistentEntity, d.entity), () -> new RelationshipWriter<>(persister, persistentEntity, addLabels.get(d), created.contains(d)).write(d.entity)
                                 .doOnNext(written -> {
                                     d.entity = written;
                                     persister.saved.put(original, written);
