@@ -50,6 +50,10 @@ public final class AgeStatements {
     private static final String PARAMETER_ARGUMENT = "$$, ?)";
     private static final Pattern ALIAS = Pattern.compile("(?is)^(.*\\S)\\s+AS\\s+(`[^`]+`|[A-Za-z_][A-Za-z0-9_]*)$");
     private static final Pattern PARAMETER = Pattern.compile("\\$([A-Za-z_][A-Za-z0-9_]*)");
+    /**
+     * The length of a PostgreSQL name in bytes, each of which is a character of a valid graph name.
+     */
+    private static final int MAX_NAME_LENGTH = 63;
     private static final Pattern GRAPH_NAME = Pattern.compile("[A-Za-z_][A-Za-z0-9_]*");
     private static final Set<String> RESERVED_SCHEMAS = Set.of("public", "ag_catalog", "information_schema");
     private static final String DOLLAR_QUOTE = "$$";
@@ -133,11 +137,15 @@ public final class AgeStatements {
      *
      * @param graph The graph name
      * @return The graph name
-     * @throws IllegalArgumentException if the name is not a valid identifier
+     * @throws IllegalArgumentException if the name is not a valid identifier, or is too long
      */
     public static String validateGraphName(String graph) {
         if (!GRAPH_NAME.matcher(graph).matches()) {
             throw new IllegalArgumentException("Invalid Apache AGE graph name: " + graph);
+        }
+        if (graph.length() > MAX_NAME_LENGTH) {
+            // PostgreSQL truncates a longer name, which could then be that of another graph
+            throw new IllegalArgumentException("Apache AGE graph name [" + graph + "] is longer than " + MAX_NAME_LENGTH + " characters");
         }
         return graph;
     }

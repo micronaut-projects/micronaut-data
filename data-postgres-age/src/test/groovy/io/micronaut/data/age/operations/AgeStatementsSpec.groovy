@@ -71,6 +71,21 @@ class AgeStatementsSpec extends Specification {
         name << ["movies", "public", "PUBLIC", "ag_catalog", "pg_catalog", "pg_toast", "information_schema", "acme; DROP TABLE x"]
     }
 
+    void "a graph name that PostgreSQL would truncate is rejected"() {
+        given:
+        def graph = "g" * 63
+
+        expect:
+        AgeStatements.validateGraphName(graph) == graph
+
+        when: "the name of a tenant is that of the configured graph once it is truncated"
+        AgeStatements.validateTenantGraphName(graph + "x", graph)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains("longer than 63 characters")
+    }
+
     void "a tenant can use a graph of its own"() {
         expect:
         AgeStatements.validateTenantGraphName("acme", "movies") == "acme"
