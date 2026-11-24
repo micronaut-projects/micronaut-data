@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <include file="db.changelog-master.xml" relativeToChangelogFile="true"/>
+
+    <!-- tag::invalidation-function[] -->
+    <changeSet id="postgres-invalidation-function" author="application" dbms="postgresql" runOnChange="true">
+        <sql>SET LOCAL search_path TO public</sql>
+        <sqlFile path="io/micronaut/data/jdbc/notification/postgres/sql/create-invalidation-function.sql"
+                 relativeToChangelogFile="false" splitStatements="false"/>
+    </changeSet>
+    <!-- end::invalidation-function[] -->
+
+    <changeSet id="book-statement-notifications" author="application" dbms="postgresql">
+        <sqlFile path="book-statement-notifications.sql" relativeToChangelogFile="true"/>
+    </changeSet>
+</databaseChangeLog>
