@@ -7,5 +7,5 @@ import io.micronaut.data.graph.annotation.TargetNode;
 import java.math.BigDecimal;
 
 @RelationshipProperties
-public record Exchange(@RelationshipId Long id, BigDecimal amount, @TargetNode Payee payee) {
+public record Exchange(@RelationshipId Long id, BigDecimal amount, @TargetNode Trader trader) {
 }

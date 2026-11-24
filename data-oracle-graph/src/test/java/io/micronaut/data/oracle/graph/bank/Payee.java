@@ -12,6 +12,5 @@ import java.util.List;
  */
 @Node("Account")
 public record Payee(@Id Long id, String name,
-                    @Relationship(type = "TRANSFERS", direction = Direction.INCOMING) List<Receipt> received,
-                    @Relationship(type = "TRANSFERS", direction = Direction.UNDIRECTED) List<Exchange> exchanged) {
+                    @Relationship(type = "TRANSFERS", direction = Direction.INCOMING) List<Receipt> received) {
 }
