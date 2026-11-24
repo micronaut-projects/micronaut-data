@@ -271,8 +271,8 @@ interface NoIdRepository extends GenericRepository<Anonymous, String> {
         allPaths.startsWith('SELECT * FROM GRAPH_TABLE (people MATCH (s IS Person) -[e IS FOLLOWS]->{1,5} (t IS Person) WHERE s.id = ? AND t.id = ? AND COUNT(DISTINCT JSON_SERIALIZE(EDGE_ID(e))) = COUNT(JSON_SERIALIZE(EDGE_ID(e))) ONE ROW PER STEP (v1, x, v2) COLUMNS (MATCHNUM() AS "p__M_", ELEMENT_NUMBER(x) AS "p__I_", ')
         allPaths.endsWith(''''FOLLOWS' AS "x__TYPE_")) ORDER BY "p__M_", "p__I_"''')
 
-        and: "a path over several relationship types tests the label of each step"
-        getQuery(findMethod(sql, 'findAllPathsByRolesOrDirectors')).endsWith('''CASE WHEN x IS LABELED ACTED_IN THEN 'ACTED_IN' WHEN x IS LABELED DIRECTED THEN 'DIRECTED' END AS "x__TYPE_")) ORDER BY "p__M_", "p__I_"''')
+        and: "a path over several relationship types tests the label of each step, and reads the direction and the relationship entity of it"
+        getQuery(findMethod(sql, 'findAllPathsByRolesOrDirectors')).endsWith('''CASE WHEN x IS LABELED ACTED_IN THEN 'ACTED_IN' WHEN x IS LABELED DIRECTED THEN 'DIRECTED' END AS "x__TYPE_", CASE WHEN v1 IS SOURCE OF x THEN 1 ELSE 0 END AS "x__FORWARD_", x.id AS "x__ID_", x.roles AS "x__roles")) ORDER BY "p__M_", "p__I_"''')
     }
 
     void "test relationship finders bind the source and destination of the edge"() {
@@ -382,6 +382,50 @@ interface PetRepository extends GenericRepository<Pet, String> {
         then:
         def e = thrown(RuntimeException)
         e.message.contains('Schemaless properties and dynamic labels are not supported by Oracle property graphs')
+    }
+
+    void "test a relationship entity without an id is compared through its target node only"() {
+        given:
+        def source = { String method -> """
+$MOVIES
+
+@RelationshipProperties
+class Walkon {
+    @TargetNode
+    private Person person;
+    public Person getPerson() { return person; }
+    public void setPerson(Person person) { this.person = person; }
+}
+
+@Node
+class Sitcom {
+    @Id
+    private Long id;
+    @Relationship(type = "WALKED_ON", direction = Direction.INCOMING)
+    private List<Walkon> walkons = new ArrayList<>();
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public List<Walkon> getWalkons() { return walkons; }
+    public void setWalkons(List<Walkon> walkons) { this.walkons = walkons; }
+}
+
+@TestOracleRepository
+@PropertyGraph("sitcoms")
+interface SitcomRepository extends GenericRepository<Sitcom, Long> {
+    $method
+}
+""" }
+
+        expect:
+        getQuery(findMethod(buildRepository('test.SitcomRepository', source('List<Sitcom> findByWalkonsPerson(Person person);')), 'findByWalkonsPerson'))
+            .contains('(n) <-[ar0 IS WALKED_ON]- (a0 IS Person) WHERE (a0.id = ?)')
+
+        when:
+        buildRepository('test.SitcomRepository', source('List<Sitcom> findByWalkons(Walkon walkon);'))
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('Cannot compare [walkons] with a value, as the relationship entity [Walkon] has no @Id or @RelationshipId property')
     }
 
     void "test IsNull on a to-one relationship is rejected"() {

@@ -195,14 +195,29 @@ final class OracleGraphRows {
         GraphNode from = nodes.get("s");
         GraphNode to = nodes.get("t");
         Object id = fields.get(OracleGraphQueryBuilder.ID_COLUMN);
+        return new GraphEdge(id == null ? rowIndex : id, String.valueOf(fields.get(OracleGraphQueryBuilder.TYPE_COLUMN)),
+            from == null ? rowIndex : from.id(), to == null ? rowIndex : to.id(), edgeProperties(fields));
+    }
+
+    private static Map<String, Object> edgeProperties(Map<String, @Nullable Object> fields) {
         Map<String, Object> properties = new LinkedHashMap<>(fields);
         properties.remove(OracleGraphQueryBuilder.ID_COLUMN);
         properties.remove(OracleGraphQueryBuilder.TYPE_COLUMN);
         properties.remove(OracleGraphQueryBuilder.FORWARD_COLUMN);
         // A relationship has no null properties in Cypher, and GraphRelationship does not accept them
         properties.values().removeIf(Objects::isNull);
-        return new GraphEdge(id == null ? rowIndex : id, String.valueOf(fields.get(OracleGraphQueryBuilder.TYPE_COLUMN)),
-            from == null ? rowIndex : from.id(), to == null ? rowIndex : to.id(), properties);
+        return properties;
+    }
+
+    /**
+     * The edge of a step, in its stored direction. An edge without an identifier column is given a synthetic one.
+     */
+    private static GraphEdge pathEdge(Map<String, @Nullable Object> fields, GraphNode start, GraphNode end, String syntheticId) {
+        Object type = fields.get(OracleGraphQueryBuilder.TYPE_COLUMN);
+        Object id = fields.get(OracleGraphQueryBuilder.ID_COLUMN);
+        boolean reversed = fields.get(OracleGraphQueryBuilder.FORWARD_COLUMN) instanceof Number forward && forward.intValue() == 0;
+        return new GraphEdge(id == null ? syntheticId : id, type == null ? "" : type.toString(),
+            reversed ? end.id() : start.id(), reversed ? start.id() : end.id(), edgeProperties(fields));
     }
 
     private static List<GraphRecord> decodePaths(List<String> columns, List<List<@Nullable Object>> rows) {
@@ -241,8 +256,7 @@ final class OracleGraphRows {
             if (i == 0) {
                 nodes.add(start);
             }
-            Object type = step.getOrDefault("x", Map.of()).get(OracleGraphQueryBuilder.TYPE_COLUMN);
-            edges.add(new GraphEdge(key + "/" + i, type == null ? "" : type.toString(), start.id(), end.id(), Map.of()));
+            edges.add(pathEdge(step.getOrDefault("x", Map.of()), start, end, key + "/" + i));
             nodes.add(end);
         }
         return new GraphPathValue(nodes, edges);

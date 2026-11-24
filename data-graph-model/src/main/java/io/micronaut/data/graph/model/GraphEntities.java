@@ -28,6 +28,7 @@ import io.micronaut.data.graph.annotation.TargetNode;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.PersistentPropertyPath;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
@@ -255,6 +256,25 @@ public final class GraphEntities {
             return false;
         }
         return NATIVE_ID_TYPES.contains(identity.getTypeName());
+    }
+
+    /**
+     * Checks that a property can be compared with a value. A relationship entity without an identifier cannot, as
+     * there is nothing of it to bind.
+     *
+     * @param path The path of the property
+     */
+    public static void requireComparable(PersistentPropertyPath path) {
+        if (!(path.getProperty() instanceof Association association) || association.isEmbedded()) {
+            return;
+        }
+        PersistentEntity associated = association.getAssociatedEntity();
+        Association targetNode = associated.hasIdentity() ? null : findTargetNode(associated);
+        if (targetNode != null) {
+            throw new IllegalArgumentException("Cannot compare [" + path.getPath() + "] with a value, as the relationship entity ["
+                + associated.getSimpleName() + "] has no @Id or @RelationshipId property. Compare its target node ["
+                + path.getPath() + '.' + targetNode.getName() + "] instead");
+        }
     }
 
     /**
