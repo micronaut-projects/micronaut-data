@@ -19,12 +19,12 @@ public class PersonView {
 
     @JsonAnyGetter
     @JsonAnySetter
-    private Map<String, Object> extras;
+    private Map<String, Object> extraFields;
 
-    public PersonView(String firstname, String lastname, Map<String, Object> extras) {
+    public PersonView(String firstname, String lastname, Map<String, Object> extraFields) {
         this.firstname = firstname;
         this.lastname = lastname;
-        this.extras = extras;
+        this.extraFields = extraFields;
     }
 
     public Long getId() {
@@ -51,12 +51,12 @@ public class PersonView {
         this.lastname = lastname;
     }
 
-    public Map<String, Object> getExtras() {
-        return extras;
+    public Map<String, Object> getExtraFields() {
+        return extraFields;
     }
 
-    public void setExtras(Map<String, Object> extras) {
-        this.extras = extras;
+    public void setExtraFields(Map<String, Object> extraFields) {
+        this.extraFields = extraFields;
     }
 
     @Override
@@ -64,11 +64,11 @@ public class PersonView {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         PersonView that = (PersonView) o;
-        return Objects.equals(id, that.id) && Objects.equals(firstname, that.firstname) && Objects.equals(lastname, that.lastname) && Objects.equals(extras, that.extras);
+        return Objects.equals(id, that.id) && Objects.equals(firstname, that.firstname) && Objects.equals(lastname, that.lastname) && Objects.equals(extraFields, that.extraFields);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, firstname, lastname, extras);
+        return Objects.hash(id, firstname, lastname, extraFields);
     }
 }

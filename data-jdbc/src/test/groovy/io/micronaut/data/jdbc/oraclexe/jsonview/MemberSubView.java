@@ -9,5 +9,6 @@ import io.micronaut.serde.annotation.Serdeable;
 public record MemberSubView(
     @Id
     Long id,
-    String name
+    String name,
+    String nickName
 ) {}

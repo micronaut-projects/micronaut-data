@@ -643,7 +643,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
         Iterator<PersistentProperty> it = columns.iterator();
         while (it.hasNext()) {
-            createJsonViewColumnQuery(sb, it.next(), entity, alias);
+            createJsonViewColumnQuery(sb, it.next(), entity, alias, List.of());
             if (it.hasNext()) {
                 sb.append(COMMA)
                     .append(SPACE);
@@ -679,22 +679,16 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             String viewPropertyName = identity.getAnnotationMetadata().stringValue(SERDE_CONFIG_ANNOTATION, "property")
                 .orElse(identity.getAnnotationMetadata().stringValue(JSON_PROPERTY_ANNOTATION)
                     .orElse(identity.getName()));
-            String entityPersistedPropertyName = "";
-            if (identity.getAnnotationMetadata().hasAnnotation(MappedProperty.class)) {
-                entityPersistedPropertyName = identity.getPersistedName();
-            } else if (identity.getAnnotationMetadata().hasAnnotation(EmbeddedId.class)) {
+            if (!identity.getAnnotationMetadata().hasAnnotation(MappedProperty.class)
+                && identity.getAnnotationMetadata().hasAnnotation(EmbeddedId.class)) {
                 processEmbeddedIdPropertyForJsonView(sb, entity, identity, alias, it, columns, isTopLevel);
                 continue;
-            } else {
-                PersistentProperty property = entity.getPropertyByName(viewPropertyName);
-                if (property != null) {
-                    entityPersistedPropertyName = property.getPersistedName();
-                }
             }
+            String column = Objects.requireNonNullElse(jsonViewColumnName(identity, viewPropertyName, entity, List.of()), "");
             sb.append("'")
                 .append(viewPropertyName)
                 .append("': ")
-                .append(jsonViewColumn(alias, entityPersistedPropertyName, entity));
+                .append(jsonViewColumn(alias, column, entity));
             if (it.hasNext() || !columns.isEmpty()) {
                 sb.append(COMMA)
                     .append(SPACE);
@@ -750,34 +744,72 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         return alias + DOT + (shouldEscape(entity) ? quote(column) : column);
     }
 
-    private void createJsonViewColumnQuery(StringBuilder sb, PersistentProperty column, PersistentEntity entity, String alias) {
+    // The column a property of a view or sub view reads: the one its @MappedProperty names, otherwise the column of the
+    // entity property at the same path, named like schema generation names it, by the entity's naming strategy and with
+    // the prefix of the embedded objects on the path. The processor adds @MappedProperty without a name to most
+    // properties, so only a name given to it counts.
+    // embeddedPath has the names of the embedded properties that contain the property, from the entity down
+    private @Nullable String jsonViewColumnName(PersistentProperty viewProperty,
+                                                String jsonPropertyName,
+                                                PersistentEntity entity,
+                                                List<String> embeddedPath) {
+        AnnotationMetadata annotationMetadata = viewProperty.getAnnotationMetadata();
+        if (annotationMetadata.stringValue(MappedProperty.class).filter(StringUtils::isNotEmpty).isPresent()) {
+            return viewProperty.getPersistedName();
+        }
+        PersistentPropertyPath entityPath = entityPropertyPath(entity, embeddedPath, viewProperty.getName());
+        if (entityPath == null) {
+            entityPath = entityPropertyPath(entity, embeddedPath, jsonPropertyName);
+        }
+        if (entityPath != null) {
+            return getMappedName(entity.getNamingStrategy(), entityPath);
+        }
+        return annotationMetadata.hasAnnotation(MappedProperty.class) ? viewProperty.getPersistedName() : null;
+    }
+
+    // The entity property at the same path as the view property. A view can group properties into embedded objects that
+    // the entity doesn't have: those levels are not on the entity's path, the levels the entity has are.
+    private static @Nullable PersistentPropertyPath entityPropertyPath(PersistentEntity entity, List<String> embeddedPath, String propertyName) {
+        List<String> path = new ArrayList<>(embeddedPath.size() + 1);
+        PersistentEntity owner = entity;
+        for (String embeddedName : embeddedPath) {
+            if (owner.getPropertyByName(embeddedName) instanceof Association association && association.isEmbedded()) {
+                path.add(embeddedName);
+                owner = association.getAssociatedEntity();
+            }
+        }
+        path.add(propertyName);
+        return entity.getPropertyPath(path.toArray(new String[0]));
+    }
+
+    private void createJsonViewColumnQuery(StringBuilder sb,
+                                           PersistentProperty column,
+                                           PersistentEntity entity,
+                                           String alias,
+                                           List<String> embeddedPath) {
         AnnotationMetadata annotationMetadata = column.getAnnotationMetadata();
         String columnPropertyName = annotationMetadata.stringValue(SERDE_CONFIG_ANNOTATION, "property")
             .orElse(annotationMetadata.stringValue(JSON_PROPERTY_ANNOTATION)
                 .orElse(column.getName()));
         if (column instanceof Association association) {
-            processAssociation(sb, association, entity, columnPropertyName);
+            processAssociation(sb, association, entity, columnPropertyName, embeddedPath);
         } else if (annotationMetadata.hasAnnotation(JsonViewGenerated.class)) {
             createJsonViewGeneratedColumnQuery(sb, column, columnPropertyName, alias);
         } else if (column.getDataType() != DataType.OBJECT) {
-            String entityPersistedPropertyName;
-            if (annotationMetadata.hasAnnotation(MappedProperty.class)) {
-                entityPersistedPropertyName = column.getPersistedName();
-            } else {
-                PersistentProperty property = entity.getPropertyByName(columnPropertyName);
-                if (property == null) {
-                    return;
-                }
-                entityPersistedPropertyName = property.getPersistedName();
+            String entityColumn = jsonViewColumnName(column, columnPropertyName, entity, embeddedPath);
+            if (entityColumn == null) {
+                return;
             }
             sb.append("'")
                 .append(columnPropertyName)
                 .append("': ")
-                .append(jsonViewColumn(alias, entityPersistedPropertyName, entity));
+                .append(jsonViewColumn(alias, entityColumn, entity));
             appendJsonViewFieldAnnotations(sb, annotationMetadata);
         } else {
             if (isFlexColumn(column)) {
-                sb.append(jsonViewColumn(alias, column.getPersistedName(), entity))
+                String entityColumn = Objects.requireNonNullElse(
+                    jsonViewColumnName(column, columnPropertyName, entity, embeddedPath), column.getPersistedName());
+                sb.append(jsonViewColumn(alias, entityColumn, entity))
                     .append(AS_CLAUSE)
                     .append(FLEX_COLUMN);
             }
@@ -823,12 +855,15 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
     }
 
-    private String createJsonEmbeddedProperties(PersistentEntity entity, Association association) {
+    // embeddedPath has the names of the embedded properties that contain this one, which the columns of its properties are named after
+    private String createJsonEmbeddedProperties(PersistentEntity entity, Association association, List<String> embeddedPath) {
         PersistentEntity embedded = association.getAssociatedEntity();
+        List<String> propertiesPath = new ArrayList<>(embeddedPath);
+        propertiesPath.add(association.getName());
         StringBuilder sb = new StringBuilder();
         Iterator<PersistentProperty> properties = ((Collection<PersistentProperty>) embedded.getPersistentProperties()).iterator();
         while (properties.hasNext()) {
-            createJsonViewColumnQuery(sb, properties.next(), entity, entity.getAliasName());
+            createJsonViewColumnQuery(sb, properties.next(), entity, entity.getAliasName(), propertiesPath);
             if (properties.hasNext()) {
                 sb.append(COMMA).append(SPACE);
             }
@@ -899,7 +934,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
     }
 
-    private void processAssociation(StringBuilder sb, Association association, PersistentEntity entity, String columnPropertyName) {
+    private void processAssociation(StringBuilder sb,
+                                    Association association,
+                                    PersistentEntity entity,
+                                    String columnPropertyName,
+                                    List<String> embeddedPath) {
         Relation.Kind kind = association.getKind();
         Optional<PersistentEntity> associatedEntityOptional = getJsonSubViewEntity(association.getAssociatedEntity());
         if (kind != Kind.EMBEDDED && associatedEntityOptional.isEmpty()) {
@@ -923,7 +962,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             }
             case EMBEDDED -> {
                 if (association.getAnnotationMetadata().hasAnnotation(JsonUnwrapped.class)) {
-                    sb.append(createJsonEmbeddedProperties(entity, association));
+                    sb.append(createJsonEmbeddedProperties(entity, association, embeddedPath));
                 } else {
                     sb.append("'")
                         .append(columnPropertyName)
@@ -931,7 +970,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                         .append(OPEN_BRACKET)
                         .append("JSON ")
                         .append(OPEN_CURLY_BRACKET)
-                        .append(createJsonEmbeddedProperties(entity, association))
+                        .append(createJsonEmbeddedProperties(entity, association, embeddedPath))
                         .append(CLOSE_CURLY_BRACKET)
                         .append(CLOSE_BRACKET);
                 }

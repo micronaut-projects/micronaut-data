@@ -8,14 +8,16 @@ import io.micronaut.data.model.naming.NamingStrategies;
 import java.util.List;
 
 /**
- * Owns the many-to-many with {@link Club}. It uses a different naming strategy than {@link Club}, so its join table
- * is named by this strategy: {@code memberclub} with the columns {@code memberid} and {@code clubid}.
+ * Owns the many-to-many with {@link Club}. It uses a different naming strategy than {@link Club} and {@link MemberSubView},
+ * so its join table is named by this strategy, {@code memberclub} with the columns {@code memberid} and {@code clubid},
+ * and {@code nickName} is the column {@code nickname}.
  */
 @MappedEntity(value = "TBL_MEMBER", alias = "mbr", namingStrategy = NamingStrategies.LowerCase.class)
 public record Member(
     @Id
     Long id,
     String name,
+    String nickName,
     @Relation(Relation.Kind.MANY_TO_MANY)
     List<Club> clubs
 ) {}
