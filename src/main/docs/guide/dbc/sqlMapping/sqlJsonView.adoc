@@ -78,6 +78,8 @@ Users can specify sql operations supported for `JsonView` and `JsonSubView` usin
 
 snippet::example.StudentScheduleSubView[project-base="doc-examples/jdbc-example", source="main", tags="class-example"]
 
+NOTE: Since Oracle AI Database 23.26.4, a table nested in the view as a single object, such as a one-to-one or many-to-one ann:data.annotation.JsonSubView[], can take the `DELETE` annotation only if a foreign key links it to its parent table, and that foreign key is not `RELY` and has no `ON DELETE CASCADE` or `ON DELETE SET NULL` action. Otherwise, creating the view fails with `ORA-42693`. The schema that Micronaut Data generates has no foreign keys, so with schema generation declare `operations` without `DELETE` on such sub views, because the default includes it. For a to-many association through a join table, deleting a document through the generated view, or removing an element from its array, deletes only the rows of the join table and keeps the associated rows.
+
 More documentation: https://docs.oracle.com/en/database/oracle/oracle-database/26/jsnvu/overview-json-relational-duality-views.html/[link]
 
 == Filters, hidden fields and generated fields
