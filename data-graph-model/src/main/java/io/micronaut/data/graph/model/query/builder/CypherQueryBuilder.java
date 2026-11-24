@@ -1140,10 +1140,24 @@ public class CypherQueryBuilder implements QueryBuilder {
         void appendParameter(BindingParameter bindingParameter,
                              io.micronaut.data.model.@Nullable PersistentPropertyPath in,
                              io.micronaut.data.model.@Nullable PersistentPropertyPath out) {
+            checkComparable(in);
             int index = state.pushParameter(bindingParameter, BindingParameter.BindingContext.create()
                 .incomingMethodParameterProperty(in)
                 .outgoingQueryParameterProperty(out));
             this.out.append(parameterPlaceholder(index));
+        }
+
+        private static void checkComparable(io.micronaut.data.model.@Nullable PersistentPropertyPath path) {
+            if (path == null || !(path.getProperty() instanceof Association association) || association.isEmbedded()) {
+                return;
+            }
+            PersistentEntity associated = association.getAssociatedEntity();
+            Association targetNode = associated.hasIdentity() ? null : GraphEntities.findTargetNode(associated);
+            if (targetNode != null) {
+                // The argument is a relationship entity, and there is no identifier of it to bind
+                throw new IllegalArgumentException("Cannot compare [" + path.getPath() + "] with a value, as the relationship entity ["
+                    + associated.getSimpleName() + "] has no @Id or @RelationshipId property. Compare its target node [" + path.getPath() + '.' + targetNode.getName() + "] instead");
+            }
         }
 
         @Override
