@@ -727,6 +727,41 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         return bean;
     }
 
+    /**
+     * The nodes that an instance relates to.
+     *
+     * @param entity   The entity
+     * @param instance The instance
+     * @param <T>      The entity type
+     * @return The nodes, as they are held by the instance
+     */
+    final <T> List<Object> relatedNodes(RuntimePersistentEntity<T> entity, T instance) {
+        List<Object> nodes = new ArrayList<>();
+        for (RuntimePersistentProperty<T> property : entity.getPersistentProperties()) {
+            if (property instanceof RuntimeAssociation<T> association && GraphEntities.isRelationship(association)) {
+                RuntimePersistentEntity<?> associated = association.getAssociatedEntity();
+                BeanProperty<Object, Object> targetProperty = GraphEntities.isRelationshipEntity(associated) ? targetNode(associated).getProperty() : null;
+                for (Object item : dynamicTargets(association.getProperty().get(instance))) {
+                    Object node = item == null || targetProperty == null ? item : targetProperty.get(item);
+                    if (node != null) {
+                        nodes.add(node);
+                    }
+                }
+            }
+        }
+        BeanProperty<Object, Object> dynamic = mapper.dynamicRelationshipsProperty(entity);
+        if (dynamic != null && dynamic.get(instance) instanceof Map<?, ?> relationships) {
+            for (Object value : relationships.values()) {
+                dynamicTargets(value).forEach(target -> {
+                    if (target != null) {
+                        nodes.add(target);
+                    }
+                });
+            }
+        }
+        return nodes;
+    }
+
     static RuntimeAssociation<Object> targetNode(RuntimePersistentEntity<?> relationshipEntity) {
         for (RuntimePersistentProperty<?> property : relationshipEntity.getPersistentProperties()) {
             if (property instanceof RuntimeAssociation<?> association && property.getAnnotationMetadata().hasStereotype(TargetNode.class)) {
@@ -1355,8 +1390,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
      */
     private final class Persister {
         final Map<Object, Object> saved = new IdentityHashMap<>();
-        // The nodes of a batch that are written but not yet linked, by the instance the save was called with
-        final Map<Object, Runnable> unlinked = new IdentityHashMap<>();
+        final PendingLinks<Runnable> unlinked = new PendingLinks<>();
         private final GraphSession session;
         private final OperationContext context;
 
@@ -1451,10 +1485,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
          * @param instance The instance the save was called with
          */
         void link(Object instance) {
-            Runnable link = unlinked.remove(instance);
-            if (link != null) {
-                link.run();
-            }
+            unlinked.take(instance).forEachRemaining(Runnable::run);
         }
 
         /**
@@ -1633,7 +1664,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             for (Data d : pending) {
                 T original = Objects.requireNonNull(originals.get(d));
                 persister.written(original, d.entity);
-                persister.unlinked.put(original, () -> {
+                persister.unlinked.add(original, () -> relatedNodes(persistentEntity, d.entity), () -> {
                     d.entity = new RelationshipWriter<>(persister, persistentEntity, original, d.entity, addLabels.get(d), created.contains(d)).write();
                     persister.saved.put(original, d.entity);
                     persister.saved.put(d.entity, d.entity);
