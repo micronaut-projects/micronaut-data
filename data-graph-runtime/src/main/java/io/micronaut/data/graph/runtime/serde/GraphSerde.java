@@ -272,9 +272,10 @@ public final class GraphSerde {
     private Map<String, @Nullable Object> nestedView(RuntimePersistentEntity<?> entity, GraphNode node, Map<?, ?> tree, Schemaless schemaless) {
         Map<String, @Nullable Object> view = nodeView(entity, node, null, schemaless);
         if (tree.get(CypherQueryBuilder.NESTED_KEY) instanceof Map<?, ?> nested) {
+            Names entityNames = names(entity);
             for (RuntimePersistentProperty<?> property : entity.getPersistentProperties()) {
                 if (property instanceof RuntimeAssociation<?> association && nested.containsKey(association.getName())) {
-                    view.put(association.getName(), fetched(association, nested.get(association.getName()), schemaless));
+                    view.put(entityNames.serdeName(association.getName()), fetched(association, nested.get(association.getName()), schemaless));
                 }
             }
         }

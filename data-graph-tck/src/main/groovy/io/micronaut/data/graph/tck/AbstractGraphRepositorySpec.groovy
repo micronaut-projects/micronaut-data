@@ -530,8 +530,8 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         given:
         def ada = new Colleague("Ada")
         def grace = new Colleague("Grace")
-        ada.mentor = new Collaboration("compiler", grace)
-        grace.mentor = new Collaboration("cobol", ada)
+        ada.mentor = new Mentorship("compiler", grace)
+        grace.mentor = new Mentorship("cobol", ada)
 
         when:
         colleagueRepository.save(ada)

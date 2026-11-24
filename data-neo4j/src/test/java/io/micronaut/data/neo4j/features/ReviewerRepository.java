@@ -11,4 +11,8 @@ public interface ReviewerRepository extends CrudRepository<Reviewer, String> {
 
     @Join("trainees")
     Optional<Reviewer> findByFullName(String fullName);
+
+    @Join("trainees")
+    @Join("trainees.trainees")
+    Optional<Reviewer> findByFullNameAndReviewCount(String fullName, Integer reviewCount);
 }
