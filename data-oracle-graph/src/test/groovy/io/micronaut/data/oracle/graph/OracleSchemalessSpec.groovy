@@ -79,6 +79,7 @@ class OracleSchemalessSpec extends Specification {
         given:
         def phone = new Gadget("Phone", 500)
         phone.set("storage", 100)
+        phone.set("memory__gb", 8)
         gadgetGraph.save(phone)
 
         expect:
@@ -87,6 +88,13 @@ class OracleSchemalessSpec extends Specification {
             query.select(GraphCriteria.dynamic(query.from(Gadget), "storage", Integer))
             query
         } as CriteriaQueryBuilder<Integer>) == 100
+
+        and: "a name with the separator of the columns of a graph element"
+        gadgetGraph.findOne({ cb ->
+            def query = cb.createQuery(Integer)
+            query.select(GraphCriteria.dynamic(query.from(Gadget), "memory__gb", Integer))
+            query
+        } as CriteriaQueryBuilder<Integer>) == 8
     }
 
     void "a schemaless property named like a column is rejected when saved"() {

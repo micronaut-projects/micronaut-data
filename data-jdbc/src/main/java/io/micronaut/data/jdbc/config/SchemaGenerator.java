@@ -32,6 +32,7 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.query.builder.sql.validation.SchemaValidationException;
 import io.micronaut.data.jdbc.operations.JdbcSchemaHandler;
+import io.micronaut.data.jdbc.notification.postgres.PostgresNotificationSchemaGenerator;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.IdentifierNamingStrategy;
@@ -71,6 +72,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.Comparator;
 
@@ -202,10 +204,10 @@ public class SchemaGenerator {
                 try {
                     if (configuration.getSchemaGenerateNames() != null && !configuration.getSchemaGenerateNames().isEmpty()) {
                         for (String schemaName : configuration.getSchemaGenerateNames()) {
-                            createOrValidateSchema(connection, configuration, dialectVersion, schemaName, entities, contributions);
+                            createOrValidateSchema(beanLocator, connection, configuration, dialectVersion, schemaName, entities, contributions);
                         }
                     } else {
-                        createOrValidateSchema(connection, configuration, dialectVersion, configuration.getSchemaGenerateName(), entities, contributions);
+                        createOrValidateSchema(beanLocator, connection, configuration, dialectVersion, configuration.getSchemaGenerateName(), entities, contributions);
                     }
                 } finally {
                     if (originalOracleSchema != null) {
@@ -220,7 +222,8 @@ public class SchemaGenerator {
         }
     }
 
-    private void createOrValidateSchema(Connection connection,
+    private void createOrValidateSchema(BeanLocator beanLocator,
+                                        Connection connection,
                                         DataJdbcConfiguration configuration,
                                         @Nullable String dialectVersion,
                                         @Nullable String schemaName,
@@ -238,6 +241,7 @@ public class SchemaGenerator {
             validate(connection, configuration, dialectVersion, entities, dialectSqlTableMappingValidatorMap, definitionProviders);
         } else {
             generate(connection, configuration, dialectVersion, propertyPlaceholderResolver, entities, contributions);
+            generateNotifications(beanLocator, connection, configuration, entities);
         }
     }
 
@@ -348,6 +352,19 @@ public class SchemaGenerator {
         } catch (SQLException e) {
             if (DataSettings.QUERY_LOG.isTraceEnabled()) {
                 DataSettings.QUERY_LOG.trace("Drop Unsuccessful: " + e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Installs opt-in PostgreSQL notification objects after table creation and before listener registration.
+     */
+    private static void generateNotifications(BeanLocator beanLocator, Connection connection,
+                                              DataJdbcConfiguration configuration, PersistentEntity[] entities) throws SQLException {
+        if (configuration.getDialect() == Dialect.POSTGRES) {
+            Optional<PostgresNotificationSchemaGenerator> generator = beanLocator.findBean(PostgresNotificationSchemaGenerator.class);
+            if (generator.isPresent()) {
+                generator.get().generate(connection, configuration, entities);
             }
         }
     }

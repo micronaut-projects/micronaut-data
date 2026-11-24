@@ -7,6 +7,8 @@ import io.micronaut.data.event.EntityEventListener
 import io.micronaut.data.graph.model.criteria.DynamicPropertyExpression
 import io.micronaut.data.graph.model.criteria.GraphCriteria
 import io.micronaut.data.graph.model.criteria.RelatedPredicate
+import io.micronaut.data.graph.model.GraphEntities
+import io.micronaut.data.graph.model.query.builder.entities.Contractor
 import io.micronaut.data.graph.model.query.builder.entities.Movie
 import io.micronaut.data.graph.model.query.builder.entities.Note
 import io.micronaut.data.graph.model.query.builder.entities.Person
@@ -399,6 +401,21 @@ class CypherCriteriaQuerySpec extends Specification {
         PersistentEntityRoot root = query.from(Person)
         definition.call(query, root)
         return build(query).query
+    }
+
+    void "replacing a relationship entity deletes one that has no identifier: #association"() {
+        given:
+        def contractor = new TestEntityRegistry().getEntity(Contractor)
+        def property = contractor.getPropertyByName(association)
+        def target = GraphEntities.targetNodeEntity(property)
+
+        expect:
+        new CypherQueryBuilder().buildUnlinkOtherRelationshipsQuery(property, contractor, target, property.associatedEntity.identity) == query
+
+        where:
+        association  | query
+        'contract'   | 'MATCH (a:Contractor)-[r:CONTRACTED_BY]->(b:Company) WHERE a.name = $from AND (b.name <> $to OR r.number <> $id OR r.number IS NULL) DELETE r RETURN count(*) AS result'
+        'employment' | 'MATCH (a:Contractor)-[r:EMPLOYED_BY]->(b:Company) WHERE a.name = $from AND (b.name <> $to OR id(r) <> $id) DELETE r RETURN count(*) AS result'
     }
 
     private String update(Closure<?> definition) {
