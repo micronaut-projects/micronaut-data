@@ -225,6 +225,8 @@ final class DefaultOracleGraphReactorRepositoryOperations extends AbstractReacti
      */
     private record Session(Connection connection) implements ReactiveGraphSession {
 
+        private static final String PATH_MATCH_ALIAS = '"' + OracleGraphQueryBuilder.PATH_MATCH_COLUMN + '"';
+
         @Override
         public Flux<GraphRecord> stream(String query, Map<String, Object> parameters) {
             return Flux.defer(() -> {
@@ -245,9 +247,13 @@ final class DefaultOracleGraphReactorRepositoryOperations extends AbstractReacti
                 }
                 Statement statement = connection.createStatement(expanded.query());
                 bind(statement, expanded.parameters());
+                Flux<Columns> rows = Flux.from(statement.execute()).concatMap(result -> result.map(Session::read));
+                if (expanded.query().contains(PATH_MATCH_ALIAS)) {
+                    // A path is made of the rows of its steps
+                    return rows.collectList().flatMapIterable(Session::decodePaths);
+                }
                 AtomicInteger rowIndex = new AtomicInteger();
-                return Flux.from(statement.execute())
-                    .concatMap(result -> result.map((row, metadata) -> decode(row, metadata, rowIndex.getAndIncrement())));
+                return rows.map(row -> OracleGraphRows.decodeRow(row.names(), row.values(), rowIndex.getAndIncrement()));
             });
         }
 
@@ -264,19 +270,20 @@ final class DefaultOracleGraphReactorRepositoryOperations extends AbstractReacti
             }
         }
 
-        private static GraphRecord decode(Row row, RowMetadata metadata, int rowIndex) {
-            List<String> columns = new ArrayList<>();
-            List<@Nullable Object> rowValues = new ArrayList<>();
+        private static Columns read(Row row, RowMetadata metadata) {
+            List<String> names = new ArrayList<>();
+            List<@Nullable Object> values = new ArrayList<>();
             List<? extends ColumnMetadata> columnMetadatas = metadata.getColumnMetadatas();
             for (int i = 0; i < columnMetadatas.size(); i++) {
-                String column = columnMetadatas.get(i).getName();
-                columns.add(column);
-                rowValues.add(OracleGraphRows.isJsonText(column) ? row.get(i, String.class) : normalize(row.get(i)));
+                String name = columnMetadatas.get(i).getName();
+                names.add(name);
+                values.add(OracleGraphRows.isJsonText(name) ? row.get(i, String.class) : normalize(row.get(i)));
             }
-            if (columns.contains(OracleGraphQueryBuilder.PATH_MATCH_COLUMN)) {
-                throw new IllegalStateException("Paths are not read over R2DBC: return them from a repository annotated with @OracleGraphRepository");
-            }
-            return OracleGraphRows.decodeRow(columns, rowValues, rowIndex);
+            return new Columns(names, values);
+        }
+
+        private static List<GraphRecord> decodePaths(List<Columns> rows) {
+            return rows.isEmpty() ? List.of() : OracleGraphRows.decode(rows.get(0).names(), rows.stream().map(Columns::values).toList());
         }
 
         /**
@@ -292,5 +299,14 @@ final class DefaultOracleGraphReactorRepositoryOperations extends AbstractReacti
         public Mono<GraphResult> run(String query, Map<String, Object> parameters) {
             return stream(query, parameters).collectList().map(records -> new GraphResult(records, -1));
         }
+    }
+
+    /**
+     * The columns of a row.
+     *
+     * @param names  The names of the columns
+     * @param values The values of the columns
+     */
+    private record Columns(List<String> names, List<@Nullable Object> values) {
     }
 }

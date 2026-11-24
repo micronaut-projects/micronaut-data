@@ -77,6 +77,7 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
     private static final Logger LOG = LoggerFactory.getLogger(DefaultAgeReactorRepositoryOperations.class);
     private static final String JDBC_PARAMETER = "$$, ?)";
     private static final String R2DBC_PARAMETER = "$$, $1)";
+    private static final String CREATE_GRAPH = "SELECT ag_catalog.create_graph($1)";
     private static final String SAVEPOINT = "micronaut_age_create_graph";
     private static final int ABSENT = 0;
     private static final int CURRENT_TRANSACTION = 1;
@@ -243,9 +244,9 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
             default -> Mono.from(connection.createSavepoint(SAVEPOINT))
                 .then(Mono.defer(() -> {
                     LOG.debug("Creating Apache AGE graph [{}]", graph);
-                    return execute(connection, "SELECT ag_catalog.create_graph('" + graph + "')");
+                    return execute(connection, CREATE_GRAPH, graph);
                 }))
-                .then(Mono.defer(() -> execute(connection, "SELECT set_config('" + CREATED_SETTING_PREFIX + graph + "', 'true', true)")))
+                .then(Mono.defer(() -> execute(connection, "SELECT set_config($1, 'true', true)", CREATED_SETTING_PREFIX + graph)))
                 .then(Mono.defer(() -> Mono.from(connection.releaseSavepoint(SAVEPOINT))))
                 .onErrorResume(R2dbcException.class, e -> Mono.from(connection.rollbackTransactionToSavepoint(SAVEPOINT))
                     .then(graphState(connection, graph))
@@ -261,16 +262,18 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
 
     /**
      * @return {@link #ABSENT} when the graph does not exist for the current transaction, {@link #CURRENT_TRANSACTION}
-     * when the current transaction created it, or {@link #COMMITTED} when it exists for good
+     * when the current transaction created it, or {@link #COMMITTED} when it exists for good. The marker covers a
+     * graph created here, in a savepoint, and the transaction of the catalog row one that the application created.
      */
     private static Mono<Integer> graphState(Connection connection, String graph) {
-        return first(connection, "SELECT CASE WHEN current_setting('" + CREATED_SETTING_PREFIX + graph + "', true) = 'true' THEN " + CURRENT_TRANSACTION
-            + " ELSE " + COMMITTED + " END FROM ag_catalog.ag_graph WHERE name = '" + graph + "'").defaultIfEmpty(ABSENT);
+        return first(connection, "SELECT CASE WHEN current_setting($1, true) = 'true'"
+            + " OR xmin::text = (txid_current_if_assigned() % 4294967296)::text THEN " + CURRENT_TRANSACTION
+            + " ELSE " + COMMITTED + " END FROM ag_catalog.ag_graph WHERE name = $2", CREATED_SETTING_PREFIX + graph, graph).defaultIfEmpty(ABSENT);
     }
 
-    private static Mono<Integer> first(Connection connection, String sql) {
+    private static Mono<Integer> first(Connection connection, String sql, String... parameters) {
         // Every row is read, so that the statement completes before the next one runs on the connection
-        return Flux.from(connection.createStatement(sql).execute())
+        return Flux.from(statement(connection, sql, parameters).execute())
             .concatMap(result -> result.map((row, metadata) -> row.get(0, Integer.class)))
             .collectList()
             .flatMap(values -> values.isEmpty() ? Mono.empty() : Mono.justOrEmpty(values.get(0)));
@@ -291,7 +294,7 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
                 return Mono.empty();
             }
             LOG.debug("Creating Apache AGE graph [{}]", graph);
-            return execute(connection, "SELECT ag_catalog.create_graph('" + graph + "')")
+            return execute(connection, CREATE_GRAPH, graph)
                 .onErrorResume(R2dbcException.class, e -> graphExists(connection, graph).flatMap(found -> {
                     if (!found) {
                         return Mono.error(e);
@@ -303,16 +306,24 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
     }
 
     private static Mono<Boolean> graphExists(Connection connection, String graph) {
-        return Flux.from(connection.createStatement("SELECT 1 FROM ag_catalog.ag_graph WHERE name = '" + graph + "'").execute())
+        return Flux.from(statement(connection, "SELECT 1 FROM ag_catalog.ag_graph WHERE name = $1", graph).execute())
             .flatMap(result -> result.map((row, metadata) -> Boolean.TRUE))
             .collectList()
             .map(rows -> !rows.isEmpty());
     }
 
-    private static Mono<Void> execute(Connection connection, String sql) {
-        return Flux.from(connection.createStatement(sql).execute())
+    private static Mono<Void> execute(Connection connection, String sql, String... parameters) {
+        return Flux.from(statement(connection, sql, parameters).execute())
             .concatMap(result -> result.getRowsUpdated())
             .then();
+    }
+
+    private static Statement statement(Connection connection, String sql, String... parameters) {
+        Statement statement = connection.createStatement(sql);
+        for (int i = 0; i < parameters.length; i++) {
+            statement.bind(i, parameters[i]);
+        }
+        return statement;
     }
 
     /**

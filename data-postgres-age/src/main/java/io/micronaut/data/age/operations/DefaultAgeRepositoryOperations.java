@@ -443,11 +443,12 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
 
     /**
      * @return {@link #ABSENT} when the graph does not exist for the current transaction, {@link #CURRENT_TRANSACTION}
-     * when the current transaction created it, or {@link #COMMITTED} when it exists for good
+     * when the current transaction created it, or {@link #COMMITTED} when it exists for good. The marker covers a
+     * graph created here, in a savepoint, and the transaction of the catalog row one that the application created.
      */
     private static int graphState(Connection connection, String graph) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement("SELECT CASE WHEN current_setting(?, true) = 'true' THEN "
-            + CURRENT_TRANSACTION + " ELSE " + COMMITTED + " END FROM ag_catalog.ag_graph WHERE name = ?")) {
+        try (PreparedStatement statement = connection.prepareStatement("SELECT CASE WHEN current_setting(?, true) = 'true'"
+            + " OR xmin::text = (txid_current_if_assigned() % 4294967296)::text THEN " + CURRENT_TRANSACTION + " ELSE " + COMMITTED + " END FROM ag_catalog.ag_graph WHERE name = ?")) {
             statement.setString(1, CREATED_SETTING_PREFIX + graph);
             statement.setString(2, graph);
             try (ResultSet resultSet = statement.executeQuery()) {
