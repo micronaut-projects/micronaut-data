@@ -24,6 +24,7 @@ import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
+import io.micronaut.data.graph.annotation.Direction;
 import io.micronaut.data.graph.annotation.TargetNode;
 import io.micronaut.data.graph.model.GraphEntities;
 import io.micronaut.data.graph.model.GraphPath;
@@ -1076,7 +1077,8 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         /**
          * A relationship entity with an identifier can be replaced by another one to the same node, so all that may
          * stay is the relationship to the given node with the given identifier. Nothing stays of a relationship that
-         * has no identifier yet.
+         * has no identifier yet. The other node may already have linked an undirected relationship to a node that was
+         * only just created.
          */
         private void unlinkOtherRelationships(RuntimeAssociation<T> association,
                                               RuntimePersistentEntity<?> target,
@@ -1084,7 +1086,8 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
                                               @Nullable Object fromId,
                                               @Nullable Object toId,
                                               @Nullable Object relationshipId) {
-            if (created || !association.getKind().isSingleEnded() || fromId == null || toId == null) {
+            boolean unlinked = created && GraphEntities.direction(association) != Direction.UNDIRECTED;
+            if (unlinked || !association.getKind().isSingleEnded() || fromId == null || toId == null) {
                 return;
             }
             String key = "unlinkRelationships:" + persistentEntity.getName() + ":" + association.getName() + ":" + (relationshipId != null);
