@@ -622,11 +622,14 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             }
 
             K entity;
-            // An optional embedded instantiated with its default constructor is null when none of its columns has a value
+            // An optional embedded instantiated with its default constructor is null when none of its columns has a value.
+            // So is an embedded id: all its columns are null when a LEFT JOIN found no row, and that means no entity.
             boolean nullIfNoValue = false;
             if (ArrayUtils.isEmpty(constructorArguments)) {
                 entity = introspection.instantiate();
-                nullIfNoValue = nullableEmbedded;
+                nullIfNoValue = nullableEmbedded
+                    || (ctx.association instanceof Embedded embedded
+                        && embedded.getAnnotationMetadata().hasAnnotation(EmbeddedId.class));
             } else {
                 int len = constructorArguments.length;
                 @Nullable Object[] args = new Object[len];
@@ -976,10 +979,14 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             BeanIntrospection<K> associatedIntrospection = ctx.persistentEntity.getIntrospection();
             Argument<?>[] constructorArgs = associatedIntrospection.getConstructorArguments();
             if (constructorArgs.length == 0) {
-                K associated = associatedIntrospection.instantiate();
                 if (resolvedId == null) {
                     resolvedId = readEntityId(rs, ctx);
                 }
+                // instantiate only if id value is resolved: a null foreign key references no entity
+                if (resolvedId == null) {
+                    return null;
+                }
+                K associated = associatedIntrospection.instantiate();
                 BeanWrapper.getWrapper(associated).setProperty(identity.getName(), resolvedId);
                 return associated;
             }
