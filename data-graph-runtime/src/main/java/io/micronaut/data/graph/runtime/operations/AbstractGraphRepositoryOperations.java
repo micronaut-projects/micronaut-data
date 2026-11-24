@@ -25,6 +25,7 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
+import io.micronaut.data.graph.annotation.Direction;
 import io.micronaut.data.graph.annotation.TargetNode;
 import io.micronaut.data.graph.model.GraphEntities;
 import io.micronaut.data.graph.model.GraphPath;
@@ -965,7 +966,8 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
      * Plans the query that removes the other relationships of a single-valued association to relationship entities.
      * A relationship entity with an identifier can be replaced by another one to the same node, so all that may stay
      * is the relationship to the given node with the given identifier. Nothing stays of a relationship that has no
-     * identifier yet.
+     * identifier yet. The other node may already have linked an undirected relationship to a node that was only just
+     * created.
      *
      * @param association          The association
      * @param owner                The owning entity
@@ -974,7 +976,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
      * @param fromId               The identifier of the owner
      * @param toId                 The identifier of the target
      * @param relationshipId       The identifier of the relationship to keep, or null to keep none
-     * @param created              Whether the owner was only just created, so that nothing can be linked to it yet
+     * @param created              Whether the owner was only just created
      * @return The query, or null when there is nothing to remove
      */
     final @Nullable GraphQuery planUnlinkOtherRelationships(RuntimeAssociation<?> association,
@@ -985,7 +987,8 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
                                                             @Nullable Object toId,
                                                             @Nullable Object relationshipId,
                                                             boolean created) {
-        if (created || !association.getKind().isSingleEnded() || fromId == null || toId == null) {
+        boolean unlinked = created && GraphEntities.direction(association) != Direction.UNDIRECTED;
+        if (unlinked || !association.getKind().isSingleEnded() || fromId == null || toId == null) {
             return null;
         }
         String key = "unlinkRelationships:" + owner.getName() + ":" + association.getName() + ":" + (relationshipId != null);
