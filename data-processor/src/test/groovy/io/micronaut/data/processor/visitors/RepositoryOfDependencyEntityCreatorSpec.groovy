@@ -193,16 +193,17 @@ interface MutableRepository extends CrudRepository<legacy.Mutable, Long> {
             }
         }
         try {
-            for (JavaFileObject output : parser.generate(JavaFileObjects.forSourceString(className, source))) {
-                String path = output.toUri().path
-                if (path.startsWith('/CLASS_OUTPUT/')) {
-                    Path target = dependencyClasses.resolve(path.substring('/CLASS_OUTPUT/'.length()))
-                    Files.createDirectories(target.parent)
-                    output.openInputStream().withCloseable { Files.copy(it, target) }
-                }
-            }
+            parser.generate(JavaFileObjects.forSourceString(className, source))
+                .findAll { it.toUri().path.startsWith('/CLASS_OUTPUT/') }
+                .each { copyClassOutput(it, dependencyClasses) }
         } finally {
             parser.close()
         }
+    }
+
+    private static void copyClassOutput(JavaFileObject output, Path classesDir) {
+        Path target = classesDir.resolve(output.toUri().path.substring('/CLASS_OUTPUT/'.length()))
+        Files.createDirectories(target.parent)
+        output.openInputStream().withCloseable { Files.copy(it, target) }
     }
 }
