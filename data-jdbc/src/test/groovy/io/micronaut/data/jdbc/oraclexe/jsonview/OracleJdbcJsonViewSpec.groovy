@@ -1,6 +1,7 @@
 package io.micronaut.data.jdbc.oraclexe.jsonview
 
 import io.micronaut.data.exceptions.OptimisticLockException
+import io.micronaut.data.jdbc.runtime.JdbcOperations
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.Sort
@@ -66,6 +67,18 @@ class OracleJdbcJsonViewSpec extends Specification {
 
     @Inject
     JsonMapper jsonMapper
+
+    @Inject
+    JdbcOperations jdbcOperations
+
+    @Inject
+    TenantViewRepository tenantViewRepository
+
+    @Inject
+    ShelfViewRepository shelfViewRepository
+
+    @Inject
+    ClubViewRepository clubViewRepository
 
     def setup() {
         studentClassRepository.deleteAll()
@@ -483,6 +496,190 @@ class OracleJdbcJsonViewSpec extends Specification {
         result.get().apartments.size() == 1
     }
 
+    def "test_generate_create_building_view"() {
+        when:
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
+        String[] sql = builder.buildCreateTableStatements(getRuntimePersistentEntity(BuildingView))
+        then:
+        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW building_view AS SELECT JSON {'_id': b.id, " +
+                "'apartments': [SELECT JSON {UNNEST (SELECT JSON {'buildingId': ap.building_id, 'flatId': ap.flat_id} FROM TBL_APARTMENT ap WITH UPDATE INSERT  " +
+                "WHERE building_apartment.\"APARTMENT_APARTMENT_ID_BUILDING_ID\"=ap.\"BUILDING_ID\" AND building_apartment.\"APARTMENT_APARTMENT_ID_FLAT_ID\"=ap.\"FLAT_ID\")} " +
+                "FROM building_apartment WITH UPDATE INSERT DELETE WHERE b.\"ID\"=building_apartment.\"BUILDING_ID\"]} " +
+                "FROM TBL_BUILDING b WITH UPDATE INSERT DELETE "
+    }
+
+    def "test_generate_create_view_with_no_annotation_left_for_a_table"() {
+        when:
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
+        String[] sql = builder.buildCreateTableStatements(getRuntimePersistentEntity(BuildingDeleteOnlyApartmentsView))
+        then: "the apartment table gets no WITH, because DELETE is its only declared operation and it can't take it"
+        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW building_delete_only_apartments_view AS SELECT JSON {'_id': b.id, " +
+                "'apartments': [SELECT JSON {UNNEST (SELECT JSON {'buildingId': ap.building_id, 'flatId': ap.flat_id} FROM TBL_APARTMENT ap " +
+                "WHERE building_apartment.\"APARTMENT_APARTMENT_ID_BUILDING_ID\"=ap.\"BUILDING_ID\" AND building_apartment.\"APARTMENT_APARTMENT_ID_FLAT_ID\"=ap.\"FLAT_ID\")} " +
+                "FROM building_apartment WITH UPDATE INSERT DELETE WHERE b.\"ID\"=building_apartment.\"BUILDING_ID\"]} " +
+                "FROM TBL_BUILDING b WITH UPDATE INSERT DELETE "
+
+        and: "the schema generator created the view"
+        countRows("SELECT COUNT(*) FROM user_objects WHERE object_name = 'BUILDING_DELETE_ONLY_APARTMENTS_VIEW'") == 1
+    }
+
+    def "test_building_view_with_several_apartments"() {
+        given:
+        def buildingView = new BuildingView()
+        buildingViewRepository.save(buildingView)
+        buildingView.setApartments([
+                new ApartmentSubView(new ApartmentId(buildingView.getId(), 1)),
+                new ApartmentSubView(new ApartmentId(buildingView.getId(), 2))
+        ])
+
+        when:
+        buildingViewRepository.update(buildingView)
+        def result = buildingViewRepository.findById(buildingView.getId())
+
+        then:
+        result.present
+        result.get().apartments.collect { it.apartmentId().flatId() }.sort() == [1L, 2L]
+
+        when: "an apartment is removed from the building"
+        buildingView.setApartments([new ApartmentSubView(new ApartmentId(buildingView.getId(), 1))])
+        buildingViewRepository.update(buildingView)
+
+        then: "its join table row is deleted and the apartment is kept"
+        buildingViewRepository.findById(buildingView.getId()).get().apartments.collect { it.apartmentId().flatId() } == [1L]
+        countRows("SELECT COUNT(*) FROM building_apartment WHERE building_id = " + buildingView.getId()) == 1
+        apartmentViewRepository.findById(new ApartmentId(buildingView.getId(), 2)).present
+
+        when: "the building is deleted through the view"
+        buildingViewRepository.deleteById(buildingView.getId())
+
+        then: "its join table rows are deleted and the apartments are kept"
+        !buildingViewRepository.findById(buildingView.getId()).present
+        countRows("SELECT COUNT(*) FROM building_apartment WHERE building_id = " + buildingView.getId()) == 0
+        apartmentViewRepository.findById(new ApartmentId(buildingView.getId(), 1)).present
+        apartmentViewRepository.findById(new ApartmentId(buildingView.getId(), 2)).present
+    }
+
+    def "test_generate_create_view_for_many_to_many_join_table"() {
+        when:
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
+        String[] sql = builder.buildCreateTableStatements(getRuntimePersistentEntity(TenantView))
+        then:
+        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW tenant_view AS SELECT JSON {'_id': tn.id, 'name': tn.name, " +
+                "'apartments': [SELECT JSON {UNNEST (SELECT JSON {'buildingId': ap.building_id, 'flatId': ap.flat_id} FROM TBL_APARTMENT ap WITH UPDATE INSERT  " +
+                "WHERE tenant_apartment.\"APARTMENT_APARTMENT_ID_BUILDING_ID\"=ap.\"BUILDING_ID\" AND tenant_apartment.\"APARTMENT_APARTMENT_ID_FLAT_ID\"=ap.\"FLAT_ID\")} " +
+                "FROM tenant_apartment WITH UPDATE INSERT DELETE WHERE tn.\"ID\"=tenant_apartment.\"TENANT_ID\"]} " +
+                "FROM TBL_TENANT tn WITH UPDATE INSERT DELETE "
+    }
+
+    def "test_tenant_view_with_several_apartments"() {
+        given: "two apartments that exist before the tenant rents them"
+        apartmentViewRepository.insert(new ApartmentView(new ApartmentId(901, 1)))
+        apartmentViewRepository.insert(new ApartmentView(new ApartmentId(901, 2)))
+        def tenantView = new TenantView()
+        tenantView.setName("Ana")
+        tenantViewRepository.save(tenantView)
+        tenantView.setApartments([
+                new ApartmentSubView(new ApartmentId(901, 1)),
+                new ApartmentSubView(new ApartmentId(901, 2))
+        ])
+
+        when:
+        tenantViewRepository.update(tenantView)
+        def result = tenantViewRepository.findById(tenantView.getId())
+
+        then:
+        result.present
+        result.get().name == "Ana"
+        result.get().apartments.collect { it.apartmentId().flatId() }.sort() == [1L, 2L]
+
+        when: "the tenant is deleted through the view"
+        tenantViewRepository.deleteById(tenantView.getId())
+
+        then: "its join table rows are deleted and the apartments are kept"
+        countRows("SELECT COUNT(*) FROM tenant_apartment WHERE tenant_id = " + tenantView.getId()) == 0
+        apartmentViewRepository.findById(new ApartmentId(901, 1)).present
+        apartmentViewRepository.findById(new ApartmentId(901, 2)).present
+    }
+
+    def "test_generate_create_view_for_join_table_to_simple_id"() {
+        when:
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
+        String[] sql = builder.buildCreateTableStatements(getRuntimePersistentEntity(ShelfView))
+        then:
+        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW shelf_view AS SELECT JSON {'_id': sh.id, " +
+                "'books': [SELECT JSON {UNNEST (SELECT JSON {'id': bk.id, 'title': bk.title} FROM TBL_BOOK bk WITH UPDATE INSERT  " +
+                "WHERE shelf_book.\"BOOK_ID\"=bk.\"ID\")} " +
+                "FROM shelf_book WITH UPDATE INSERT DELETE WHERE sh.\"ID\"=shelf_book.\"SHELF_ID\"]} " +
+                "FROM TBL_SHELF sh WITH UPDATE INSERT DELETE "
+    }
+
+    def "test_shelf_view_with_several_books"() {
+        given:
+        def shelfView = new ShelfView()
+        shelfViewRepository.save(shelfView)
+        shelfView.setBooks([new BookSubView(1, "Dune"), new BookSubView(2, "Emma")])
+
+        when:
+        shelfViewRepository.update(shelfView)
+        def result = shelfViewRepository.findById(shelfView.getId())
+
+        then:
+        result.present
+        result.get().books.collect { it.title() }.sort() == ["Dune", "Emma"]
+
+        when: "the shelf is deleted through the view"
+        shelfViewRepository.deleteById(shelfView.getId())
+
+        then: "its join table rows are deleted and the books are kept"
+        countRows("SELECT COUNT(*) FROM shelf_book WHERE shelf_id = " + shelfView.getId()) == 0
+        countRows("SELECT COUNT(*) FROM TBL_BOOK WHERE id IN (1, 2)") == 2
+    }
+
+    def "test_generate_create_view_for_inverse_side_of_many_to_many"() {
+        when:
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
+        String[] sql = builder.buildCreateTableStatements(getRuntimePersistentEntity(ClubView))
+        then: "the view reads the join table that the owning side, Member.clubs, defines, named by Member's naming strategy"
+        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW club_view AS SELECT JSON {'_id': cl.id, 'name': cl.name, " +
+                "'members': [SELECT JSON {UNNEST (SELECT JSON {'id': mbr.id, 'name': mbr.name} FROM TBL_MEMBER mbr WITH UPDATE INSERT  " +
+                "WHERE memberclub.\"MEMBERID\"=mbr.\"ID\")} " +
+                "FROM memberclub WITH UPDATE INSERT DELETE WHERE cl.\"ID\"=memberclub.\"CLUBID\"]} " +
+                "FROM TBL_CLUB cl WITH UPDATE INSERT DELETE "
+    }
+
+    def "test_club_view_with_several_members"() {
+        given:
+        def clubView = new ClubView()
+        clubView.setName("Chess")
+        clubViewRepository.save(clubView)
+        clubView.setMembers([new MemberSubView(11, "Ana"), new MemberSubView(12, "Ivo")])
+
+        when:
+        clubViewRepository.update(clubView)
+        def result = clubViewRepository.findById(clubView.getId())
+
+        then:
+        result.present
+        result.get().members.collect { it.name() }.sort() == ["Ana", "Ivo"]
+        countRows("SELECT COUNT(*) FROM memberclub WHERE clubid = " + clubView.getId()) == 2
+
+        when: "the club is deleted through the view"
+        clubViewRepository.deleteById(clubView.getId())
+
+        then: "its join table rows are deleted and the members are kept"
+        countRows("SELECT COUNT(*) FROM memberclub WHERE clubid = " + clubView.getId()) == 0
+        countRows("SELECT COUNT(*) FROM TBL_MEMBER WHERE id IN (11, 12)") == 2
+    }
+
+    private long countRows(String sql) {
+        // runs on the connection of the test transaction, which holds the rows written through the views
+        return jdbcOperations.prepareStatement(sql) { statement ->
+            def resultSet = statement.executeQuery()
+            resultSet.next()
+            resultSet.getLong(1)
+        }
+    }
+
     def "test_generate_drop_json_vew"() {
         when:
         Dialect dialect = Dialect.ORACLE
@@ -502,6 +699,23 @@ class OracleJdbcJsonViewSpec extends Specification {
         then:
         teacherPersistedView.name == "Mr. Dimitrije"
         teacherPersistedView.schedule.name.get(0) == "English"
+    }
+
+    def "test_teacher_json_view_classes_with_several_students"() {
+        when:
+        def teacherView = teacherViewRepository.findByName("Mrs. Anna").get()
+        then:
+        teacherView.schedule.collect { it.name }.sort() == ["German", "Math"]
+        teacherView.schedule.find { it.name == "Math" }.students.collect { it.student.name }.sort() == ["Denis", "Fred", "Josh"]
+        teacherView.schedule.find { it.name == "German" }.students.collect { it.student.name }.sort() == ["Denis", "Fred"]
+
+        when:
+        teacherView.setName("Mrs. Ana")
+        teacherViewRepository.update(teacherView)
+        def teacherPersistedView = teacherViewRepository.findById(teacherView.teachID).get()
+        then:
+        teacherPersistedView.name == "Mrs. Ana"
+        teacherPersistedView.schedule.find { it.name == "Math" }.students.size() == 3
     }
 
     def "test_generate_create_crocodile_view"() {
