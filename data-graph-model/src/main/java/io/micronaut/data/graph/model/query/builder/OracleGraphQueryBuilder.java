@@ -24,6 +24,7 @@ import io.micronaut.data.graph.annotation.TargetNode;
 import io.micronaut.data.graph.model.GraphEntities;
 import io.micronaut.data.graph.model.query.PathQueryDefinition;
 import io.micronaut.data.model.Association;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.IExpression;
@@ -416,8 +417,63 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             }
             query.column(type.append(" END").toString(), EDGE + SEPARATOR + TYPE_COLUMN);
         }
+        if (definition.direction() != Direction.OUTGOING) {
+            // The vertices of a step follow the walk, which may take an edge from its destination
+            query.column(forward(STEP_START, EDGE), EDGE + SEPARATOR + FORWARD_COLUMN);
+        }
+        appendStepProperties(query, definition.relationships());
         // SQL/PGQ orders the rows of the graph table by their columns
         query.orderBy = alias(PATH_MATCH_COLUMN) + ", " + alias(PATH_STEP_COLUMN);
+    }
+
+    /**
+     * The identifiers and properties of the relationship entities of a path. A step over another edge has none of
+     * them, as SQL/PGQ reads a property that the label of an edge does not expose as null.
+     */
+    private static void appendStepProperties(Query query, List<Association> relationships) {
+        Map<String, PersistentProperty> identities = new LinkedHashMap<>();
+        Map<String, PersistentProperty> properties = new LinkedHashMap<>();
+        for (Association relationship : relationships) {
+            PersistentEntity associated = relationship.getAssociatedEntity();
+            if (GraphEntities.isRelationshipEntity(associated)) {
+                if (associated.getIdentity() != null) {
+                    identities.putIfAbsent(GraphEntities.relationshipType(relationship), associated.getIdentity());
+                }
+                for (PersistentProperty property : associated.getPersistentProperties()) {
+                    if (!(property instanceof Association)) {
+                        properties.putIfAbsent(GraphEntities.propertyName(property), property);
+                    }
+                }
+            }
+        }
+        if (!identities.isEmpty()) {
+            query.column(stepIdentity(identities), EDGE + SEPARATOR + ID_COLUMN);
+        }
+        properties.forEach((name, property) -> query.column(property(EDGE, property), EDGE + SEPARATOR + name));
+    }
+
+    private static String stepIdentity(Map<String, PersistentProperty> identities) {
+        Set<String> references = new LinkedHashSet<>();
+        Set<DataType> types = new LinkedHashSet<>();
+        for (PersistentProperty identity : identities.values()) {
+            references.add(property(EDGE, identity));
+            types.add(identity.getDataType());
+        }
+        if (references.size() == 1) {
+            return references.iterator().next();
+        }
+        StringBuilder sb = new StringBuilder("CASE");
+        identities.forEach((type, identity) -> {
+            String reference = property(EDGE, identity);
+            // The branches of a CASE have one type
+            sb.append(" WHEN ").append(EDGE).append(" IS LABELED ").append(identifier(type)).append(" THEN ")
+                .append(types.size() == 1 ? reference : "TO_CHAR(" + reference + ")");
+        });
+        return sb.append(" END").toString();
+    }
+
+    private static String forward(String startVariable, String edgeVariable) {
+        return "CASE WHEN " + startVariable + " IS SOURCE OF " + edgeVariable + " THEN 1 ELSE 0 END";
     }
 
     private QueryResult buildRelationshipsQuery(PathQueryDefinition definition, PersistentEntity entity, String types) {
@@ -446,7 +502,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
                 query.column(literal(GraphEntities.relationshipType(definition.relationships().get(0))), "r" + SEPARATOR + TYPE_COLUMN);
                 if (direction == Direction.UNDIRECTED) {
                     // s is the first argument here, which may be either end of the edge
-                    query.column("CASE WHEN " + START + " IS SOURCE OF r THEN 1 ELSE 0 END", "r" + SEPARATOR + FORWARD_COLUMN);
+                    query.column(forward(START, "r"), "r" + SEPARATOR + FORWARD_COLUMN);
                 }
             }
         }
@@ -614,6 +670,9 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         }
 
         void push(BindingParameter parameter, io.micronaut.data.model.@Nullable PersistentPropertyPath propertyPath) {
+            if (propertyPath != null) {
+                GraphEntities.requireComparable(propertyPath);
+            }
             int index = position++;
             bindings.add(parameter.bind(BindingParameter.BindingContext.create()
                 .index(index)
