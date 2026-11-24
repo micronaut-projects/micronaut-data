@@ -243,9 +243,9 @@ interface StageRepository extends GenericRepository<Stage, String> {
         getParameterProperties(findMethod(movieRepository, 'findByRolesPerson', 1)) == ['roles.person']
     }
 
-    void "test a criterion on a relationship entity without an id compares the target node"() {
+    void "test a relationship entity without an id is compared through its target node only"() {
         given:
-        def repository = buildRepository('test.CastRepository', """
+        def source = { String methods -> """
 $MOVIES
 
 @RelationshipProperties
@@ -270,12 +270,29 @@ class Show {
 
 @TestGraphRepository
 interface CastRepository extends CrudRepository<Show, String> {
-    List<Show> findByCameos(Cameo cameo);
+    $methods
 }
-""")
+""" }
+        def repository = buildRepository('test.CastRepository', source('List<Show> findByCameosPerson(Person person); List<Show> findByCameosIsNotNull();'))
 
         expect:
-        getQuery(findMethod(repository, 'findByCameos', 1)) == 'MATCH (n:Show), (n)<-[ar0:APPEARED_IN]-(a0:Person:Actor) WHERE elementId(a0) = $p0 WITH DISTINCT n RETURN n'
+        getQuery(findMethod(repository, 'findByCameosPerson', 1)) == 'MATCH (n:Show), (n)<-[ar0:APPEARED_IN]-(a0:Person:Actor) WHERE elementId(a0) = $p0 WITH DISTINCT n RETURN n'
+        getParameterProperties(findMethod(repository, 'findByCameosPerson', 1)) == ['cameos.person']
+        getQuery(findMethod(repository, 'findByCameosIsNotNull', 0)) == 'MATCH (n:Show) WHERE (n)<-[:APPEARED_IN]-() RETURN n'
+
+        when:
+        buildRepository('test.CastRepository', source('List<Show> findByCameos(Cameo cameo);'))
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('Cannot compare [cameos] with a value, as the relationship entity [Cameo] has no @Id or @RelationshipId property. Compare its target node [cameos.person] instead')
+
+        when:
+        buildRepository('test.CastRepository', source('List<Show> findByCameosIn(List<Cameo> cameos);'))
+
+        then:
+        e = thrown(RuntimeException)
+        e.message.contains('Cannot compare [cameos] with a value')
     }
 
     void "test parameters are bound by name"() {
@@ -389,6 +406,30 @@ interface LockedRepository extends CrudRepository<Locked, String> {
         description        | property
         'property'         | '@MappedProperty("__lock") private Long value;'
         'version property' | '@Version @MappedProperty("__lock") private Long value;'
+    }
+
+    void "test a transient property is free to use the name of the lock property"() {
+        when:
+        buildRepository('test.LockedRepository', """
+@Node
+class Locked {
+    @Id
+    private String code;
+    @Transient
+    private Object __lock;
+    public String getCode() { return code; }
+    public void setCode(String code) { this.code = code; }
+    public Object get__lock() { return __lock; }
+    public void set__lock(Object lock) { this.__lock = lock; }
+}
+
+@TestGraphRepository
+interface LockedRepository extends CrudRepository<Locked, String> {
+}
+""")
+
+        then:
+        noExceptionThrown()
     }
 
     void "test a relationship property is free to use the name of the lock property"() {

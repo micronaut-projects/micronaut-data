@@ -28,6 +28,7 @@ import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.EntityExistsException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.exceptions.OptimisticLockException;
+import io.micronaut.data.graph.annotation.Direction;
 import io.micronaut.data.graph.annotation.TargetNode;
 import io.micronaut.data.graph.model.GraphEntities;
 import io.micronaut.data.graph.model.GraphPath;
@@ -509,11 +510,19 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
      */
     private Limit unrenderedLimit(PreparedQuery<?, ?> preparedQuery, StringBuilder query) {
         Limit limit = preparedQuery.getQueryLimit();
-        if (limit.isLimited() && !preparedQuery.isRawQuery()
-            && LiteralMasker.mask(query.toString()).contains(limitClause(limit))) {
-            return Limit.UNLIMITED;
+        return limit.isLimited() && !preparedQuery.isRawQuery() && rendersLimit(query, limit) ? Limit.UNLIMITED : limit;
+    }
+
+    private boolean rendersLimit(StringBuilder query, Limit limit) {
+        String masked = LiteralMasker.mask(query.toString());
+        // A whole clause, as LIMIT 1 is a part of LIMIT 10 and of SKIP 5 LIMIT 1, after the final RETURN
+        Matcher clause = Pattern.compile("(?<!\\b(?:SKIP|OFFSET) \\d{1,19}(?: ROWS)?)" + Pattern.quote(limitClause(limit)) + "(?!\\w)").matcher(masked);
+        int returnIndex = lastClause(masked, RETURN_CLAUSE, -1);
+        int index = -1;
+        while (clause.find()) {
+            index = clause.start();
         }
-        return limit;
+        return index > returnIndex;
     }
 
     /**
@@ -574,7 +583,8 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         }
         String tail = tailIndex < 0 ? "" : " " + query.substring(tailIndex);
         if (tailIndex >= 0) {
-            query.setLength(query.substring(0, tailIndex).stripTrailing().length());
+            // A comment ahead of the tail goes, as a line comment would swallow what is appended
+            query.setLength(masked.substring(0, tailIndex).stripTrailing().length());
         }
         query.append(lastClause(masked, ORDER_BY_CLAUSE, returnIndex) >= 0 ? ", " : " ORDER BY ");
         appendOrderItems(query, entity, sort);
@@ -1333,7 +1343,8 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
      * Plans the query that removes the other relationships of a single-valued association to relationship entities.
      * A relationship entity with an identifier can be replaced by another one to the same node, so all that may stay
      * is the relationship to the given node with the given identifier. Nothing stays of a relationship that has no
-     * identifier yet.
+     * identifier yet. The other node may already have linked an undirected relationship to a node that was only just
+     * created.
      *
      * @param association          The association
      * @param owner                The owning entity
@@ -1342,7 +1353,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
      * @param fromId               The identifier of the owner
      * @param toId                 The identifier of the target
      * @param relationshipId       The identifier of the relationship to keep, or null to keep none
-     * @param created              Whether the owner was only just created, so that nothing can be linked to it yet
+     * @param created              Whether the owner was only just created
      * @return The query, or null when there is nothing to remove
      */
     final @Nullable GraphQuery planUnlinkOtherRelationships(RuntimeAssociation<?> association,
@@ -1353,7 +1364,8 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
                                                             @Nullable Object toId,
                                                             @Nullable Object relationshipId,
                                                             boolean created) {
-        if (created || !association.getKind().isSingleEnded() || fromId == null || toId == null) {
+        boolean unlinked = created && GraphEntities.direction(association) != Direction.UNDIRECTED;
+        if (unlinked || !association.getKind().isSingleEnded() || fromId == null || toId == null) {
             return null;
         }
         String key = "unlinkRelationships:" + owner.getName() + ":" + association.getName() + ":" + (relationshipId != null);
@@ -1577,8 +1589,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
      */
     private final class Persister {
         final Map<Object, Object> saved = new IdentityHashMap<>();
-        // The nodes of a batch that are written but not yet linked, by the instance the save was called with
-        final Map<Object, Runnable> unlinked = new IdentityHashMap<>();
+        final PendingLinks<Runnable> unlinked = new PendingLinks<>();
         private final GraphSession session;
         private final OperationContext context;
 
@@ -1653,10 +1664,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
          * @param instance The instance the save was called with
          */
         void link(Object instance) {
-            Runnable link = unlinked.remove(instance);
-            if (link != null) {
-                link.run();
-            }
+            unlinked.take(instance).forEachRemaining(Runnable::run);
         }
 
         /**
@@ -1835,7 +1843,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             for (Data d : pending) {
                 T original = Objects.requireNonNull(originals.get(d));
                 persister.written(original, d.entity);
-                persister.unlinked.put(original, () -> {
+                persister.unlinked.add(original, () -> PendingLinks.relatedNodes(mapper, persistentEntity, d.entity), () -> {
                     d.entity = new RelationshipWriter<>(persister, persistentEntity, original, d.entity, addLabels.get(d), created.contains(d)).write();
                     persister.saved.put(original, d.entity);
                     persister.saved.put(d.entity, d.entity);
