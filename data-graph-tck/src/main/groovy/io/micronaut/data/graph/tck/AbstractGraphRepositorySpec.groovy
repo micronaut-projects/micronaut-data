@@ -419,6 +419,20 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         colleagueRepository.findMentorships() == ["fifth"]
     }
 
+    void "new nodes that set a single valued undirected relationship entity on each other have one relationship"() {
+        given:
+        def ada = new Colleague("Ada")
+        def grace = new Colleague("Grace")
+        ada.mentor = new Collaboration("compiler", grace)
+        grace.mentor = new Collaboration("cobol", ada)
+
+        when:
+        colleagueRepository.save(ada)
+
+        then:
+        colleagueRepository.findMentorships() == ["compiler"]
+    }
+
     void "find relationships between nodes"() {
         given:
         saveFriends()
