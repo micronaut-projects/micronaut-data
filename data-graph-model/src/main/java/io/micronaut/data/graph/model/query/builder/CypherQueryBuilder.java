@@ -879,8 +879,12 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             query.append(" AND (")
                 .append(identityExpression(target.getIdentity(), LINK_TO)).append(NOT_EQUAL_PARAMETER).append(LINK_TO_PARAMETER)
                 .append(" OR ")
-                .append(identityExpression(relationshipIdentity, PATH_RELATIONSHIP)).append(NOT_EQUAL_PARAMETER).append(ID_PARAMETER)
-                .append(')');
+                .append(identityExpression(relationshipIdentity, PATH_RELATIONSHIP)).append(NOT_EQUAL_PARAMETER).append(ID_PARAMETER);
+            if (!GraphEntities.isNativeId(relationshipIdentity)) {
+                // A relationship that was not written by the mapping may have no identifier, which is not equal to anything
+                query.append(" OR ").append(identityExpression(relationshipIdentity, PATH_RELATIONSHIP)).append(" IS NULL");
+            }
+            query.append(')');
         }
         return query.append(" DELETE ").append(PATH_RELATIONSHIP).append(RETURN_COUNT).toString();
     }
@@ -998,6 +1002,10 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             // the runtime does the same for a bound direction
             direction = Direction.OUTGOING;
         }
+        String onceCondition = definition.matchesEitherDirection() ? onceCondition(label, endLabel) : null;
+        if (onceCondition != null) {
+            conditions.add(definition.whenUndirected(onceCondition));
+        }
         query.append(pathPattern(definition, direction, "(" + PATH_START + label + ")", "[" + PATH_RELATIONSHIP + types + "]", "(" + PATH_END + endLabel + ")"));
         CypherFragments.appendWhere(query, conditions);
         switch (definition.result()) {
@@ -1014,6 +1022,18 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
                 }
             }
         }
+    }
+
+    /**
+     * The condition that keeps an undirected relationship pattern from matching a relationship both ways round, which
+     * it does when the nodes at its ends carry the labels of either end. The match in the stored direction is kept.
+     *
+     * @param startLabel The label expression of the start node
+     * @param endLabel   The label expression of the end node
+     * @return The condition, or null if no node carries the labels of both ends
+     */
+    protected @Nullable String onceCondition(String startLabel, String endLabel) {
+        return "(startNode(" + PATH_RELATIONSHIP + ") = " + PATH_START + " OR NOT (" + PATH_START + endLabel + AND + PATH_END + startLabel + "))";
     }
 
     private void appendPathQuery(StringBuilder query, PathQueryDefinition definition, String label, String endLabel, String types, List<String> conditions) {
@@ -1639,6 +1659,9 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         void appendParameter(BindingParameter bindingParameter,
                              io.micronaut.data.model.@Nullable PersistentPropertyPath in,
                              io.micronaut.data.model.@Nullable PersistentPropertyPath out) {
+            if (in != null) {
+                GraphEntities.requireComparable(in);
+            }
             int index = state.pushParameter(bindingParameter, BindingParameter.BindingContext.create()
                 .incomingMethodParameterProperty(in)
                 .outgoingQueryParameterProperty(out));

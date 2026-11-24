@@ -166,6 +166,19 @@ class OracleGraphCriteriaQuerySpec extends Specification {
         expected << ['''SELECT "c0" AS "legs" FROM GRAPH_TABLE (g MATCH (n IS Pet) COLUMNS (JSON_VALUE(n.attributes, '$."legs"' RETURNING NUMBER) AS "c0"))''']
     }
 
+    void "test a selected dynamic property named like a column of a graph element has an alias of its own"() {
+        given:
+        def query = cb.createQuery(Integer)
+        PersistentEntityRoot root = query.from(Pet)
+        query.select(GraphCriteria.dynamic(root, "storage__gb", Integer))
+
+        expect:
+        ((PersistentEntityCriteriaQueryBuilder) query).build(AnnotationMetadata.EMPTY_METADATA, builder()).query == expected
+
+        where:
+        expected << ['''SELECT "c0" AS "storage_gb" FROM GRAPH_TABLE (g MATCH (n IS Pet) COLUMNS (JSON_VALUE(n.attributes, '$."storage__gb"' RETURNING NUMBER) AS "c0"))''']
+    }
+
     void "test dynamic property of type #type.simpleName reads the JSON value as #returning"() {
         given:
         def query = cb.createQuery(Pet)
@@ -281,7 +294,7 @@ class OracleGraphCriteriaQuerySpec extends Specification {
         'noDepth' | '''!IllegalArgumentException: Oracle property graph path queries need a maximum depth: annotate the method with @PathLimit(n), or add an int parameter annotated with @PathLimit'''
         'boundDepth' | '''SELECT COUNT(*) AS "result" FROM GRAPH_TABLE (g MATCH (s IS Person) -[e IS ACTED_IN]->{1,$__pathLimit} (t IS Person) WHERE COUNT(DISTINCT JSON_SERIALIZE(EDGE_ID(e))) = COUNT(JSON_SERIALIZE(EDGE_ID(e))) COLUMNS (s.id AS "c0"))'''
         'allPaths' | '''SELECT * FROM GRAPH_TABLE (g MATCH (s IS Person) -[e IS ACTED_IN]->{1,3} (t IS Person) WHERE s.id = ? AND t.id = ? AND COUNT(DISTINCT JSON_SERIALIZE(EDGE_ID(e))) = COUNT(JSON_SERIALIZE(EDGE_ID(e))) ONE ROW PER STEP (v1, x, v2) COLUMNS (MATCHNUM() AS "p__M_", ELEMENT_NUMBER(x) AS "p__I_", v1.id AS "v1__ID_", v1.id AS "v1__id", 'Person' AS "v1__LABEL_", v1.name AS "v1__name", v1.age AS "v1__age", v1.active AS "v1__active", v1.status AS "v1__status", v1.tags AS "v1__tags", v2.id AS "v2__ID_", v2.id AS "v2__id", 'Person' AS "v2__LABEL_", v2.name AS "v2__name", v2.age AS "v2__age", v2.active AS "v2__active", v2.status AS "v2__status", v2.tags AS "v2__tags", 'ACTED_IN' AS "x__TYPE_")) ORDER BY "p__M_", "p__I_"'''
-        'allPathsTwo' | '''SELECT * FROM GRAPH_TABLE (g MATCH (s IS Person) -[e IS ACTED_IN]-{1,3} (t IS Person) WHERE s.id = ? AND COUNT(DISTINCT JSON_SERIALIZE(EDGE_ID(e))) = COUNT(JSON_SERIALIZE(EDGE_ID(e))) ONE ROW PER STEP (v1, x, v2) COLUMNS (MATCHNUM() AS "p__M_", ELEMENT_NUMBER(x) AS "p__I_", v1.id AS "v1__ID_", v1.id AS "v1__id", 'Person' AS "v1__LABEL_", v1.name AS "v1__name", v1.age AS "v1__age", v1.active AS "v1__active", v1.status AS "v1__status", v1.tags AS "v1__tags", v2.id AS "v2__ID_", v2.id AS "v2__id", 'Person' AS "v2__LABEL_", v2.name AS "v2__name", v2.age AS "v2__age", v2.active AS "v2__active", v2.status AS "v2__status", v2.tags AS "v2__tags", 'ACTED_IN' AS "x__TYPE_")) ORDER BY "p__M_", "p__I_"'''
+        'allPathsTwo' | '''SELECT * FROM GRAPH_TABLE (g MATCH (s IS Person) -[e IS ACTED_IN]-{1,3} (t IS Person) WHERE s.id = ? AND COUNT(DISTINCT JSON_SERIALIZE(EDGE_ID(e))) = COUNT(JSON_SERIALIZE(EDGE_ID(e))) ONE ROW PER STEP (v1, x, v2) COLUMNS (MATCHNUM() AS "p__M_", ELEMENT_NUMBER(x) AS "p__I_", v1.id AS "v1__ID_", v1.id AS "v1__id", 'Person' AS "v1__LABEL_", v1.name AS "v1__name", v1.age AS "v1__age", v1.active AS "v1__active", v1.status AS "v1__status", v1.tags AS "v1__tags", v2.id AS "v2__ID_", v2.id AS "v2__id", 'Person' AS "v2__LABEL_", v2.name AS "v2__name", v2.age AS "v2__age", v2.active AS "v2__active", v2.status AS "v2__status", v2.tags AS "v2__tags", 'ACTED_IN' AS "x__TYPE_", CASE WHEN v1 IS SOURCE OF x THEN 1 ELSE 0 END AS "x__FORWARD_")) ORDER BY "p__M_", "p__I_"'''
         'allPathsAnyType' | '''!IllegalArgumentException: Paths over any relationship type are not supported by the SQL/PGQ dialect, which cannot read the label of an edge: name the relationships of the path'''
     }
 

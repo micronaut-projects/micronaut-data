@@ -173,6 +173,28 @@ public record PathQueryDefinition(PersistentEntity entity,
     }
 
     /**
+     * Whether a relationship query can match a relationship in both directions: one between any nodes of two entities,
+     * which a node can be of at the same time.
+     *
+     * @return Whether a relationship may be matched twice
+     */
+    public boolean matchesEitherDirection() {
+        return kind == Kind.RELATIONSHIPS && result != Result.EXISTS && hasDifferentEndEntity()
+            && (start == null || end == null) && (directionBound || direction == Direction.UNDIRECTED);
+    }
+
+    /**
+     * Limits a condition to an undirected pattern.
+     *
+     * @param condition The condition
+     * @return The condition, or one that holds when the direction argument is not undirected
+     */
+    public String whenUndirected(String condition) {
+        // The runtime replaces the tokens of the pattern, and these with it
+        return directionBound ? "('" + PATH_LEFT_TOKEN + PATH_RIGHT_TOKEN + "' <> '--' OR " + condition + ')' : condition;
+    }
+
+    /**
      * @param result The result
      * @return This definition returning the given result
      */

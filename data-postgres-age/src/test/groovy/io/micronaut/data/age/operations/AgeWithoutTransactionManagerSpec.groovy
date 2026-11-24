@@ -4,6 +4,8 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.age.tck.AgeMovieRepository
 import io.micronaut.data.age.tck.AgePersonRepository
+import io.micronaut.data.connection.ConnectionDefinition
+import io.micronaut.data.connection.ConnectionOperations
 import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.graph.tck.entities.Movie
 import io.micronaut.data.graph.tck.entities.Person
@@ -12,6 +14,8 @@ import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.transaction.TransactionOperations
 import jakarta.inject.Inject
 import spock.lang.Specification
+
+import java.sql.Connection
 
 /**
  * A data source whose transactions another transaction manager, such as that of JPA, manages has no JDBC transaction
@@ -26,6 +30,9 @@ class AgeWithoutTransactionManagerSpec extends Specification {
 
     @Inject
     AgeRepositoryOperations operations
+
+    @Inject
+    ConnectionOperations<Connection> connectionOperations
 
     @Inject
     AgeMovieRepository movieRepository
@@ -63,5 +70,29 @@ class AgeWithoutTransactionManagerSpec extends Specification {
         thrown(DataAccessException)
         !movieRepository.existsById("Bound")
         personRepository.count() == 0
+    }
+
+    void "a write that fails on a connection in auto-commit mode rolls back without a transaction manager"() {
+        given:
+        def movie = new Movie("Bound", null, 1996)
+        movie.roles = [new Role(["Corky"], new Person("Gina Gershon", 1962)), new Role(["Violet"], null)]
+
+        when:
+        connectionOperations.execute(ConnectionDefinition.DEFAULT) { status ->
+            assert status.connection.autoCommit
+            movieRepository.save(movie)
+        }
+
+        then:
+        thrown(DataAccessException)
+        !movieRepository.existsById("Bound")
+        personRepository.count() == 0
+
+        and: "the connection is back in auto-commit mode"
+        connectionOperations.execute(ConnectionDefinition.DEFAULT) { status ->
+            movieRepository.save(new Movie("Speed", null, 1994))
+            status.connection.autoCommit
+        }
+        movieRepository.existsById("Speed")
     }
 }

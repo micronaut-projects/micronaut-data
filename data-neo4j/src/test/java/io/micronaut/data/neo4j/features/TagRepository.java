@@ -2,6 +2,7 @@ package io.micronaut.data.neo4j.features;
 
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.CursoredPage;
+import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
@@ -36,6 +37,11 @@ public interface TagRepository extends CrudRepository<Tag, Long> {
 
     @Query("MATCH (n:Tag) RETURN n // the tags")
     List<Tag> withTrailingComment(Sort sort);
+
+    @Query("MATCH (n:Tag) RETURN n // the tags\n LIMIT 2")
+    List<Tag> withCommentBeforeLimit(Sort sort);
+
+    List<Tag> findTop10ByNameContains(String part, Limit limit);
 
     @Query("MATCH (n:Tag) RETURN n")
     List<Object[]> tagRows();

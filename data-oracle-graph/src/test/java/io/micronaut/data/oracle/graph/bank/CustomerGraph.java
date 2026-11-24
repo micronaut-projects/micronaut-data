@@ -26,6 +26,8 @@ public interface CustomerGraph extends GenericRepository<Customer, Long> {
 
     String updateReturningName(@Id Long id, String name);
 
+    String updateByIdInReturningName(List<Long> id, String name);
+
     String deleteReturningName(Customer customer);
 
     void deleteById(Long id);

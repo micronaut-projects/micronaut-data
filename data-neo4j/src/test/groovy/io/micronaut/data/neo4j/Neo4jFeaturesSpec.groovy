@@ -7,8 +7,10 @@ import io.micronaut.data.graph.tck.entities.Movie
 import io.micronaut.data.graph.tck.entities.Person
 import io.micronaut.data.graph.tck.entities.Role
 import io.micronaut.data.model.CursoredPageable
+import io.micronaut.data.model.Limit
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
+import io.micronaut.data.graph.annotation.Direction
 import io.micronaut.data.neo4j.features.Assignment
 import io.micronaut.data.neo4j.features.Audit
 import io.micronaut.data.neo4j.features.Chapter
@@ -41,6 +43,7 @@ import io.micronaut.data.neo4j.features.StationRepository
 import io.micronaut.data.neo4j.features.Tag
 import io.micronaut.data.neo4j.features.Member
 import io.micronaut.data.neo4j.features.MemberRepository
+import io.micronaut.data.neo4j.features.GuestRepository
 import io.micronaut.data.neo4j.features.Officer
 import io.micronaut.data.neo4j.features.OfficerRepository
 import io.micronaut.data.neo4j.features.TagRepository
@@ -79,6 +82,9 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
 
     @Inject
     OfficerRepository officerRepository
+
+    @Inject
+    GuestRepository guestRepository
 
     @Inject
     ChapterRepository chapterRepository
@@ -186,8 +192,23 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
         and: "a comment that ends the query does not swallow the order"
         tagRepository.withTrailingComment(byName)*.name == ["a", "b", "c"]
 
+        and: "nor does a comment ahead of the limit"
+        tagRepository.withCommentBeforeLimit(byName)*.name == ["a", "b"]
+
         when: "a lowercase limit is still the limit of the query"
         tagRepository.lowerCaseLimitPaged(Pageable.from(0, 1))
+
+        then:
+        def e = thrown(DataAccessException)
+        e.message.contains("declares SKIP or LIMIT itself")
+    }
+
+    void "a limit is not taken for a larger one that the query declares"() {
+        given:
+        ["c", "a", "b"].each { tagRepository.save(new Tag(it)) }
+
+        when:
+        tagRepository.findTop10ByNameContains("", Limit.of(1, 0))
 
         then:
         def e = thrown(DataAccessException)
@@ -394,6 +415,23 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
 
         expect:
         memberRepository.findShortestPath(new Member(officer.id(), "Cleo", null), officer).isEmpty()
+    }
+
+    void "an undirected relationship between entities that label the same nodes is found once"() {
+        given:
+        operations.executeQuery("""CREATE (a:Host:Guest {name: 'A'}), (b:Host:Guest {name: 'B'}), (c:Guest {name: 'C'}), (d:Guest {name: 'D'}),
+            (a)-[:MET]->(b), (c)-[:MET]->(a), (b)-[:MET]->(d), (c)-[:MET]->(d)""", [:])
+
+        expect: "a relationship needs a host at one end, whichever way it is stored"
+        guestRepository.countRelationshipsByHosts() == 3
+        guestRepository.findRelationshipsByHosts().size() == 3
+        guestRepository.countRelationshipsByHosts(Direction.UNDIRECTED) == 3
+        guestRepository.findRelationshipsByHosts(Direction.UNDIRECTED).size() == 3
+
+        and: "a direction is matched one way"
+        guestRepository.countRelationshipsByHosts(Direction.OUTGOING) == 2
+        guestRepository.countRelationshipsByHosts(Direction.INCOMING) == 2
+        guestRepository.findRelationshipsByHosts(Direction.INCOMING).size() == 2
     }
 
     void "a record that the entity events replace is not created again when another record of the batch links to it"() {

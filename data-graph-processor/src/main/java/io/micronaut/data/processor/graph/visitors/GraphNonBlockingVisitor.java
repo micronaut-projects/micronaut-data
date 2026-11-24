@@ -48,11 +48,13 @@ public final class GraphNonBlockingVisitor implements TypeElementVisitor<GraphRe
             return;
         }
         for (MethodElement method : element.getEnclosedElements(ElementQuery.ALL_METHODS.onlyAbstract())) {
-            if (!method.isSuspend() && !TypeUtils.isReactiveOrFuture(method.getReturnType())) {
+            // The type an inherited method returns on this repository, which can be a type argument of its interface
+            ClassElement returnType = method.getGenericReturnType();
+            if (!method.isSuspend() && !TypeUtils.isReactiveOrFuture(returnType)) {
                 // Reported on the repository: an inherited method may have no source to point at
                 context.fail("This repository runs on non-blocking operations, so the method [" + method.getName()
                     + "] must return a reactive or asynchronous type such as Mono, Flux, Publisher or CompletableFuture, not "
-                    + method.getReturnType().getName(), element);
+                    + returnType.getName(), element);
             }
         }
     }
