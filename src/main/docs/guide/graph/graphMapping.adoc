@@ -74,6 +74,8 @@ Values read from the database are converted to the types of properties by the co
 
 Nodes and relationships are read with https://micronaut-projects.github.io/micronaut-serialization/latest/guide/[Micronaut Serialization]. ann:data.graph.annotation.Node[] and ann:data.graph.annotation.RelationshipProperties[] make a class `@Serdeable`, so no further annotation is needed. Records, and classes with a public no-argument constructor and setters, get a deserializer generated at compile time. Other classes, such as a class that sets some properties through its constructor and others through setters, and Kotlin classes, are read by the deserializer Micronaut Serialization builds at runtime.
 
+Graph reads use a registry of their own, created with `SerdeRegistry.cloneWithConfiguration`, so that the deserializers they cache for a class stay apart from those of JSON. An application that replaces the `SerdeRegistry` bean has to implement that method, returning a registry that behaves like its own. A warning is logged if it does not.
+
 Saving does not use Micronaut Serialization: entities are written through their bean introspections.
 
 The mapping of an entity to the database does not affect its JSON: a property renamed with `@MappedProperty` or by a naming strategy keeps its Java name in JSON, and a `@Transient` property is part of it. Other `@MappedEntity` classes in the application are not made `@Serdeable` by the graph annotation processor.
