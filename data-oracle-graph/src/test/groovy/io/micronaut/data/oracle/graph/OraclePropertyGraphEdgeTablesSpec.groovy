@@ -12,6 +12,8 @@ import io.micronaut.data.oracle.graph.fans.FilmGraph
 import io.micronaut.data.oracle.graph.fans.Novel
 import io.micronaut.data.oracle.graph.fans.NovelGraph
 import io.micronaut.data.oracle.graph.invalid.InvalidEdges
+import io.micronaut.data.oracle.graph.schemas.Item
+import io.micronaut.data.oracle.graph.schemas.Shelf
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Specification
@@ -98,6 +100,17 @@ class OraclePropertyGraphEdgeTablesSpec extends Specification {
         graph.contains('REFERENCES "NOVELS" ("ID")')
         contributor(*entities).buildDropStatements(configuration, entities.collect { entityRegistry.getEntity(it) })
             .containsAll(['DROP TABLE "TEST"."NOVELS_SEQUEL"', 'DROP TABLE "TEST"."NOVELS"'])
+    }
+
+    void "tables with the same name in different schemas have different aliases"() {
+        given:
+        def graph = createStatements(Shelf, Item).find { it.startsWith("CREATE PROPERTY GRAPH") }
+
+        expect:
+        graph.contains('"LIBRARY"."ITEMS" AS "LIBRARY_ITEMS" KEY ("ID") LABEL Shelf')
+        graph.contains('"ITEMS" KEY ("ID") LABEL Item')
+        graph.contains('REFERENCES "LIBRARY_ITEMS" ("ID")')
+        graph.contains('REFERENCES "ITEMS" ("ID")')
     }
 
     void "edge tables that would lose a relationship are rejected"() {
