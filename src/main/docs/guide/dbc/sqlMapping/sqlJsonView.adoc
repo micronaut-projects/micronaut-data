@@ -48,18 +48,18 @@ Given the example entities above the following JSON Duality View definition is g
 
 [source,sql]
 ----
-CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW STUDENT_VIEW AS
+CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW "STUDENT_VIEW" AS
     SELECT JSON {
-        '_id' : S.ID, -- <1>
-        'name' : S.NAME, -- <2>
+        '_id' : S."ID", -- <1>
+        'name' : S."NAME", -- <2>
         'schedule' : [SELECT JSON { -- <3>
-            'id' : SC.ID
+            'id' : SC."ID"
         }
-        FROM TBL_STUDENT_CLASSES SC
+        FROM "TBL_STUDENT_CLASSES" SC
         WITH UPDATE INSERT DELETE -- <4>
         WHERE S."ID" = SC."STUDENT_ID" -- <5>
         ]}
-    FROM TBL_STUDENT S
+    FROM "TBL_STUDENT" S
     WITH UPDATE INSERT DELETE -- <6>
 ----
 
@@ -222,3 +222,4 @@ NOTE: Using `@Version` is not supported in Json Duality View mapped classes.
 == Limitations
 
 * Schema generation creates a duality view with `CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW` after the tables it reads. Classes annotated with `@JsonSubView` are part of their parent view and get no DDL of their own. For production databases, create the views with a migration tool.
+* When a view and the tables it reads are in different schemas, the schemas need to exist and the owner of the view needs privileges on those tables. Schema generation grants no privileges, and it creates a schema only when an entity declares it, not when only a view or a join table does.

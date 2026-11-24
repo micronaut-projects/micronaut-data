@@ -44,7 +44,6 @@ import io.micronaut.data.annotation.JsonSubView;
 import io.micronaut.data.annotation.JsonViewField;
 import io.micronaut.data.annotation.JsonViewGenerated;
 import io.micronaut.data.annotation.MappedProperty;
-import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.Srid;
 import io.micronaut.data.annotation.sql.JoinColumn;
@@ -618,13 +617,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             return;
         }
         PersistentEntity entity = entityOptional.get();
-        String viewName = viewEntity.getPersistedName();
-        if (viewEntity.getAnnotationMetadata().hasAnnotation(MappedEntity.class)) {
-            String schema = viewEntity.getAnnotationMetadata().stringValue(MappedEntity.class, "schema").get();
-            viewName = schema + "." + viewName;
-        }
+        // Named like the queries and the DROP statement name the view: with its schema, and quoted unless escaping is off
         StringBuilder sb = new StringBuilder("CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW ")
-            .append(viewName)
+            .append(getTableName(viewEntity))
             .append(AS_CLAUSE)
             .append(SELECT_JSON_CLAUSE)
             .append(OPEN_CURLY_BRACKET);
@@ -658,7 +653,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         appendJsonViewHiddenFields(sb, viewEntity, viewAnnotation, entity, alias);
         sb.append(CLOSE_CURLY_BRACKET)
             .append(FROM_CLAUSE)
-            .append(entity.getPersistedName())
+            .append(getTableName(entity))
             .append(SPACE)
             .append(alias);
         appendJsonViewTableAnnotations(sb, viewEntity, viewAnnotation, deleteAllowed);
@@ -699,9 +694,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             sb.append("'")
                 .append(viewPropertyName)
                 .append("': ")
-                .append(alias)
-                .append(DOT)
-                .append(entityPersistedPropertyName);
+                .append(jsonViewColumn(alias, entityPersistedPropertyName, entity));
             if (it.hasNext() || !columns.isEmpty()) {
                 sb.append(COMMA)
                     .append(SPACE);
@@ -725,9 +718,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 .append("'")
                 .append(hiddenPropertyName)
                 .append("': ")
-                .append(alias)
-                .append(DOT)
-                .append(hiddenProperty.getPersistedName())
+                .append(jsonViewColumn(alias, hiddenProperty.getPersistedName(), entity))
                 .append(" HIDDEN");
         }
     }
@@ -753,6 +744,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
     }
 
+    // A column of the entity's table as the view reads it: after the alias of the table, and quoted like schema
+    // generation quotes it, so that names such as reserved words work
+    private String jsonViewColumn(String alias, String column, PersistentEntity entity) {
+        return alias + DOT + (shouldEscape(entity) ? quote(column) : column);
+    }
+
     private void createJsonViewColumnQuery(StringBuilder sb, PersistentProperty column, PersistentEntity entity, String alias) {
         AnnotationMetadata annotationMetadata = column.getAnnotationMetadata();
         String columnPropertyName = annotationMetadata.stringValue(SERDE_CONFIG_ANNOTATION, "property")
@@ -776,15 +773,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             sb.append("'")
                 .append(columnPropertyName)
                 .append("': ")
-                .append(alias)
-                .append(DOT)
-                .append(entityPersistedPropertyName);
+                .append(jsonViewColumn(alias, entityPersistedPropertyName, entity));
             appendJsonViewFieldAnnotations(sb, annotationMetadata);
         } else {
             if (isFlexColumn(column)) {
-                sb.append(alias)
-                    .append(DOT)
-                    .append(column.getPersistedName())
+                sb.append(jsonViewColumn(alias, column.getPersistedName(), entity))
                     .append(AS_CLAUSE)
                     .append(FLEX_COLUMN);
             }
@@ -891,9 +884,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             sb.append("'")
                 .append(propertyName)
                 .append("': ")
-                .append(alias)
-                .append(DOT)
-                .append(propertyPersistedName);
+                .append(jsonViewColumn(alias, propertyPersistedName, entity));
             if (i != fields.length - 1) {
                 sb.append(COMMA)
                     .append(SPACE);
@@ -996,21 +987,29 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         NamingStrategy joinTableNamingStrategy = owningAssociation.getOwner().getNamingStrategy();
         AnnotationMetadata annotationMetadata = owningAssociation.getAnnotationMetadata();
         PersistentEntity targetEntity = entityAssociation.getAssociatedEntity();
-        boolean escape = shouldEscape(entity);
+        // Schema generation creates the join table in the schema of @JoinTable, or else of the entity that owns it,
+        // and quotes it and its columns like that entity's table. Each column of a join condition is quoted like the
+        // table it belongs to.
+        PersistentEntity joinTableOwner = owningAssociation.getOwner();
+        boolean escapeJoinTable = shouldEscape(joinTableOwner);
 
-        List<String> ownerColumns = resolveJoinTableAssociatedColumns(annotationMetadata, isAssociationOwner, entity, entity.getNamingStrategy());
-        List<String> ownerJoinTableColumns = SqlQueryBuilderUtils.resolveJoinTableJoinColumns(annotationMetadata, isAssociationOwner, entity, joinTableNamingStrategy);
-        List<String> targetColumns = resolveJoinTableAssociatedColumns(annotationMetadata, !isAssociationOwner, targetEntity, targetEntity.getNamingStrategy());
-        List<String> targetJoinTableColumns = SqlQueryBuilderUtils.resolveJoinTableJoinColumns(annotationMetadata, !isAssociationOwner, targetEntity, joinTableNamingStrategy);
-        if (escape) {
-            ownerColumns = ownerColumns.stream().map(this::quote).toList();
-            ownerJoinTableColumns = ownerJoinTableColumns.stream().map(this::quote).toList();
-            targetColumns = targetColumns.stream().map(this::quote).toList();
-            targetJoinTableColumns = targetJoinTableColumns.stream().map(this::quote).toList();
-        }
+        List<String> ownerColumns = quoteColumns(shouldEscape(entity),
+            resolveJoinTableAssociatedColumns(annotationMetadata, isAssociationOwner, entity, entity.getNamingStrategy()));
+        List<String> ownerJoinTableColumns = quoteColumns(escapeJoinTable,
+            SqlQueryBuilderUtils.resolveJoinTableJoinColumns(annotationMetadata, isAssociationOwner, entity, joinTableNamingStrategy));
+        List<String> targetColumns = quoteColumns(shouldEscape(targetEntity),
+            resolveJoinTableAssociatedColumns(annotationMetadata, !isAssociationOwner, targetEntity, targetEntity.getNamingStrategy()));
+        List<String> targetJoinTableColumns = quoteColumns(escapeJoinTable,
+            SqlQueryBuilderUtils.resolveJoinTableJoinColumns(annotationMetadata, !isAssociationOwner, targetEntity, joinTableNamingStrategy));
         String joinTableName = annotationMetadata
             .stringValue(SqlQueryBuilderUtils.ANN_JOIN_TABLE, "name")
             .orElseGet(() -> getMappedName(joinTableNamingStrategy, owningAssociation));
+        String joinTableSchema = annotationMetadata
+            .stringValue(SqlQueryBuilderUtils.ANN_JOIN_TABLE, SqlMembers.SCHEMA)
+            .filter(StringUtils::isNotEmpty)
+            .orElseGet(() -> SqlQueryBuilderUtils.getSchemaName(joinTableOwner));
+        String joinTable = getObjectName(joinTableSchema, joinTableName, escapeJoinTable, true);
+        String joinTableQualifier = escapeJoinTable ? quote(joinTableName, true) : joinTableName;
 
         sb.append("'")
             .append(columnPropertyName)
@@ -1023,15 +1022,19 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             .append(OPEN_CURLY_BRACKET);
         createJsonViewQuery(sb, association.getAssociatedEntity(), associatedEntity, false, false);
         sb.append(WHERE_CLAUSE);
-        buildJoinColumnMatchPart(sb, associatedEntity.getAliasName(), joinTableName, targetJoinTableColumns, targetColumns);
+        buildJoinColumnMatchPart(sb, associatedEntity.getAliasName(), joinTableQualifier, targetJoinTableColumns, targetColumns);
         sb.append(CLOSE_BRACKET)
             .append(CLOSE_CURLY_BRACKET)
             .append(FROM_CLAUSE)
-            .append(joinTableName)
+            .append(joinTable)
             .append(" WITH UPDATE INSERT DELETE")
             .append(WHERE_CLAUSE);
-        buildJoinColumnMatchPart(sb, joinTableName, entity.getAliasName(), ownerColumns, ownerJoinTableColumns);
+        buildJoinColumnMatchPart(sb, joinTableQualifier, entity.getAliasName(), ownerColumns, ownerJoinTableColumns);
         sb.append("]");
+    }
+
+    private List<String> quoteColumns(boolean escape, List<String> columns) {
+        return escape ? columns.stream().map(this::quote).toList() : columns;
     }
 
     private void addTable(SqlTableMapping table, Map<String, SqlTableMapping> sqlTableMappingByTableName) {
@@ -2259,6 +2262,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                       PersistentPropertyPath rightPropertyPath) {
 
         final boolean escape = shouldEscape(associationOwner);
+        boolean jsonView = queryState.baseQueryDefinition().persistentEntity().getAnnotationMetadata().hasAnnotation(JsonSubView.class);
+        // In a JSON view, the columns of the associated table are quoted like that table, the way schema generation
+        // creates it. Other queries keep quoting both sides like the owner's table.
+        final boolean escapeAssociated = jsonView ? shouldEscape(associatedEntity) : escape;
         List<String> onLeftColumns = new ArrayList<>();
         List<String> onRightColumns = new ArrayList<>();
 
@@ -2302,7 +2309,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 onRightColumns.add(column);
             });
         }
-        if (queryState.baseQueryDefinition().persistentEntity().getAnnotationMetadata().hasAnnotation(JsonSubView.class)) {
+        if (jsonView) {
             sb.append(WHERE_CLAUSE);
         }
         join(sb,
@@ -2312,7 +2319,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             rightTableAlias,
             leftTableAlias,
             escape ? onLeftColumns.stream().map(this::quote).toList() : onLeftColumns,
-            escape ? onRightColumns.stream().map(this::quote).toList() : onRightColumns);
+            escapeAssociated ? onRightColumns.stream().map(this::quote).toList() : onRightColumns);
     }
 
     private void join(StringBuilder builder,

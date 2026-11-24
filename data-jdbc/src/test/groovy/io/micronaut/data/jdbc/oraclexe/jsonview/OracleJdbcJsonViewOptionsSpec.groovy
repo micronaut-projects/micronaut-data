@@ -31,14 +31,14 @@ class OracleJdbcJsonViewOptionsSpec extends Specification {
         String[] sql = builder.buildCreateTableStatements(new RuntimePersistentEntity(ProductView))
 
         then:
-        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW product_view AS SELECT JSON {" +
-                "'_id': pr.id, 'name': pr.name, 'region': pr.region, 'sku': pr.sku WITH NOUPDATE NOCHECK, " +
+        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW \"PRODUCT_VIEW\" AS SELECT JSON {" +
+                "'_id': pr.\"ID\", 'name': pr.\"NAME\", 'region': pr.\"REGION\", 'sku': pr.\"SKU\" WITH NOUPDATE NOCHECK, " +
                 "'total': GENERATED USING PATH '\$.price * \$.quantity', 'label': GENERATED USING (UPPER(pr.name)), " +
-                "'supplier': (SELECT JSON {'supplierId': su.id, 'name': su.name, " +
+                "'supplier': (SELECT JSON {'supplierId': su.\"ID\", 'name': su.\"NAME\", " +
                 "'domain': GENERATED USING (SUBSTR(su.contact_email, INSTR(su.contact_email, '@') + 1)), " +
-                "'contactEmail': su.contact_email HIDDEN} FROM TBL_SUPPLIER su WITH UPDATE NOCHECK  WHERE pr.\"SUPPLIER_ID\"=su.\"ID\"), " +
-                "'price': pr.price HIDDEN, 'quantity': pr.quantity HIDDEN} " +
-                "FROM TBL_PRODUCT pr WITH UPDATE INSERT DELETE  WHERE pr.region = 'EU' WITH CHECK OPTION"
+                "'contactEmail': su.\"CONTACT_EMAIL\" HIDDEN} FROM \"TBL_SUPPLIER\" su WITH UPDATE NOCHECK  WHERE pr.\"SUPPLIER_ID\"=su.\"ID\"), " +
+                "'price': pr.\"PRICE\" HIDDEN, 'quantity': pr.\"QUANTITY\" HIDDEN} " +
+                "FROM \"TBL_PRODUCT\" pr WITH UPDATE INSERT DELETE  WHERE pr.region = 'EU' WITH CHECK OPTION"
     }
 
     void "test reading a duality view with a where filter, hidden and generated fields"() {
