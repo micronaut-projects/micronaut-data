@@ -2,7 +2,7 @@ Micronaut Data repositories are defined as interfaces that are annotated with th
 
 The ann:data.annotation.Repository[] annotation accepts an optional string value which represents the name of the connection or datasource in a multiple datasource scenario. By default, Micronaut Data will look for the default datasource.
 
-It's possible to annotate the repository injection point with ann:data.annotation.Repository[] and set the data source name. Note that you cannot inject generic repositories, each repository needs to be bound to an entity.
+It's possible to annotate the repository injection point with ann:data.annotation.Repository[] and set the data source name. A repository does not have to extend api:data.repository.GenericRepository[]: such a repository is not bound to a single entity, and each of its methods establishes the root entity from its own signature, for example a ann:data.annotation.Query[] method returning an entity.
 
 == Repository scope
 
