@@ -510,11 +510,19 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
      */
     private Limit unrenderedLimit(PreparedQuery<?, ?> preparedQuery, StringBuilder query) {
         Limit limit = preparedQuery.getQueryLimit();
-        if (limit.isLimited() && !preparedQuery.isRawQuery()
-            && LiteralMasker.mask(query.toString()).contains(limitClause(limit))) {
-            return Limit.UNLIMITED;
+        return limit.isLimited() && !preparedQuery.isRawQuery() && rendersLimit(query, limit) ? Limit.UNLIMITED : limit;
+    }
+
+    private boolean rendersLimit(StringBuilder query, Limit limit) {
+        String masked = LiteralMasker.mask(query.toString());
+        // A whole clause, as LIMIT 1 is a part of LIMIT 10 and of SKIP 5 LIMIT 1, after the final RETURN
+        Matcher clause = Pattern.compile("(?<!\\b(?:SKIP|OFFSET) \\d{1,19}(?: ROWS)?)" + Pattern.quote(limitClause(limit)) + "(?!\\w)").matcher(masked);
+        int returnIndex = lastClause(masked, RETURN_CLAUSE, -1);
+        int index = -1;
+        while (clause.find()) {
+            index = clause.start();
         }
-        return limit;
+        return index > returnIndex;
     }
 
     /**
@@ -575,7 +583,8 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         }
         String tail = tailIndex < 0 ? "" : " " + query.substring(tailIndex);
         if (tailIndex >= 0) {
-            query.setLength(query.substring(0, tailIndex).stripTrailing().length());
+            // A comment ahead of the tail goes, as a line comment would swallow what is appended
+            query.setLength(masked.substring(0, tailIndex).stripTrailing().length());
         }
         query.append(lastClause(masked, ORDER_BY_CLAUSE, returnIndex) >= 0 ? ", " : " ORDER BY ");
         appendOrderItems(query, entity, sort);
