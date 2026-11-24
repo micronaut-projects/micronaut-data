@@ -105,7 +105,8 @@ class ExistingCosmosDbSpec extends Specification implements AzureCosmosTestPrope
             familyContainerProperties.uniqueKeyPolicy.uniqueKeys[0].paths == Arrays.asList("/lastName", "/registered")
             familyContainerProperties.indexingPolicy.includedPaths == Arrays.asList(new IncludedPath("/*"), new IncludedPath("/lastName/*"))
 
-            familyContainerProperties.indexingPolicy.excludedPaths.size() == 1
+            // Added "_etag" to excluded paths
+            familyContainerProperties.indexingPolicy.excludedPaths.size() == 2
             familyContainerProperties.indexingPolicy.excludedPaths.contains(new ExcludedPath("/address/*"))
     }
 
