@@ -79,6 +79,24 @@ class OracleGraphR2dbcSpec extends Specification {
         walletGraph.findById(2L).block().owner() == "Bob"
     }
 
+    void "paths are read over R2DBC, shortest first"() {
+        given:
+        sql("INSERT INTO payments VALUES (3, 1, 3, 50)")
+
+        when:
+        def paths = walletGraph.findAllPathsByPayments(1L, 3L).collectList().block()
+
+        then:
+        walletGraph.countPathsByPayments(1L, 3L).block() == 2
+        paths.collect { it.nodes()*.owner() } == [["Alice", "Carol"], ["Alice", "Bob", "Carol"]]
+        paths[1].relationships()*.type() == ["PAID", "PAID"]
+        paths[1].relationships()*.id()*.longValue() == [1L, 2L]
+        paths[1].relationships()*.properties()*.amount*.longValue() == [500L, 1500L]
+
+        and: "no path is an empty list"
+        walletGraph.findAllPathsByPayments(3L, 1L).collectList().block() == []
+    }
+
     void "temporal columns read as they do over JDBC"() {
         when:
         def alice = walletGraph.findById(1L).block()
