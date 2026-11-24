@@ -16927,6 +16927,18 @@ class StudentScheduleSubView {
 }</code></pre>
 </div>
 </div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Since Oracle AI Database 23.26.4, a table nested in the view as a single object, such as a one-to-one or many-to-one <a href="../api/io/micronaut/data/annotation/JsonSubView.html">@JsonSubView</a>, can take the <code>DELETE</code> annotation only if a foreign key links it to its parent table, and that foreign key is not <code>RELY</code> and has no <code>ON DELETE CASCADE</code> or <code>ON DELETE SET NULL</code> action. Otherwise, creating the view fails with <code>ORA-42693</code>. The schema that Micronaut Data generates has no foreign keys, so with schema generation declare <code>operations</code> without <code>DELETE</code> on such sub views, because the default includes it. For a to-many association through a join table, deleting a document through the generated view, or removing an element from its array, deletes only the rows of the join table and keeps the associated rows.
+</td>
+</tr>
+</table>
+</div>
 <div class="paragraph">
 <p>More documentation: <a href="https://docs.oracle.com/en/database/oracle/oracle-database/26/jsnvu/overview-json-relational-duality-views.html/">link</a></p>
 </div>
