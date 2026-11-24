@@ -603,8 +603,12 @@ interface BlockingRepository extends $parent {
         def definition = buildRepository('test.ReactiveRepository', """
 $MOVIES
 
+interface Counts<R> {
+    R countByReleasedLessThan(int year);
+}
+
 @TestNonBlockingRepository(graph = "movies")
-interface ReactiveRepository extends io.micronaut.data.repository.reactive.ReactorCrudRepository<Movie, String> {
+interface ReactiveRepository extends io.micronaut.data.repository.reactive.ReactorCrudRepository<Movie, String>, Counts<java.util.concurrent.CompletableFuture<Long>> {
     reactor.core.publisher.Flux<Movie> findByReleased(int year);
     org.reactivestreams.Publisher<Movie> findByTitle(String title);
     java.util.concurrent.CompletableFuture<Long> countByReleased(int year);
