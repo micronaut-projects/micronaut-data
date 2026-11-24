@@ -11,6 +11,7 @@ import io.micronaut.data.oracle.graph.bank.Customer
 import io.micronaut.data.oracle.graph.bank.CustomerGraph
 import io.micronaut.data.oracle.graph.bank.PayeeGraph
 import io.micronaut.data.oracle.graph.bank.PeerGraph
+import io.micronaut.data.oracle.graph.bank.TraderGraph
 import io.micronaut.data.oracle.graph.bank.Transfer
 import io.micronaut.data.oracle.graph.operations.OracleGraphRepositoryOperations
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
@@ -40,6 +41,9 @@ class OracleGraphSpec extends Specification {
 
     @Inject
     PeerGraph peerGraph
+
+    @Inject
+    TraderGraph traderGraph
 
     @Inject
     OracleGraphRepositoryOperations operations
@@ -398,7 +402,7 @@ class OracleGraphSpec extends Specification {
         received[1].relationships()*.properties()*.amount*.longValue() == [1500L, 500L]
 
         when: "the path follows them from either end"
-        def exchanged = payeeGraph.findAllPathsByExchanged(2L, 3L)
+        def exchanged = traderGraph.findAllPathsByExchanged(2L, 3L)
 
         then:
         exchanged.collect { it.nodes()*.name() } == [["Bob", "Carol"], ["Bob", "Alice", "Carol"]]
