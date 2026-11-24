@@ -64,6 +64,18 @@ class AgeR2dbcSingleConnectionGraphSpec extends Specification {
         !withConnection { Connection connection -> graphExists(connection) }
     }
 
+    void "an operation does not take a graph that the application created in the transaction for a committed one"() {
+        when:
+        transactionOperations.withTransactionMono { status ->
+            execute(status.connection as Connection, "SELECT ag_catalog.create_graph('reactive_single_connection')")
+                .thenMany(operations.reactive().executeQuery(QUERY, [:]))
+                .then(Mono.fromRunnable { status.setRollbackOnly() })
+        }.block(TIMEOUT)
+
+        then: "the rollback undid the graph"
+        !withConnection { Connection connection -> graphExists(connection) }
+    }
+
     void "the next operation creates the graph again"() {
         when:
         operations.reactive().executeQuery(QUERY, [:]).blockLast(TIMEOUT)

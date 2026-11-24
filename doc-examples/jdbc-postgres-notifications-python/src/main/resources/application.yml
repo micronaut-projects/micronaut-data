@@ -1,0 +1,15 @@
+datasources:
+  default:
+    db-type: postgresql
+    dialect: POSTGRES
+    schema-generate: NONE
+    maximum-pool-size: 4
+liquibase:
+  datasources:
+    default:
+      change-log: classpath:db/changelog/db.changelog-master.xml
+micronaut:
+  lifecycle:
+    graceful-shutdown:
+      enabled: true
+      grace-period: 15s
