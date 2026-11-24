@@ -20,6 +20,7 @@ import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Transient;
 import io.micronaut.data.graph.annotation.DynamicAttributes;
 import io.micronaut.data.graph.annotation.Node;
 import io.micronaut.data.graph.annotation.RelationshipProperties;
@@ -51,7 +52,9 @@ public final class GraphIdentityVisitor implements TypeElementVisitor<Object, Ob
             if (element.hasStereotype(RelationshipProperties.class) && property.hasAnnotation(DynamicAttributes.class)) {
                 context.fail("@DynamicAttributes is not supported on a relationship entity: " + property.getName(), property);
             }
+            // A transient property is not stored
             if (element.hasStereotype(Node.class)
+                && !property.hasStereotype(Transient.class)
                 && GraphEntities.LOCK_PROPERTY.equals(property.stringValue(MappedProperty.class).orElse(property.getName()))) {
                 context.fail("Property name [" + GraphEntities.LOCK_PROPERTY + "] is reserved for locking a node during versioned writes, map the property to another name: " + property.getName(), property);
             }

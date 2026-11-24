@@ -384,8 +384,15 @@ public final class OraclePropertyGraphSchema {
 
     private static String createPropertyGraph(String name, Set<PersistentEntity> vertices, Schema schema) {
         Set<String> names = vertices.stream().map(PersistentEntity::getName).collect(Collectors.toSet());
-        // An edge references the alias of a vertex table, which is the table name without its schema
-        Function<PersistentEntity, String> aliasOf = entity -> quote(schema.vertex(entity).table.name());
+        List<Edge> edges = schema.edges.stream()
+            .filter(edge -> names.contains(edge.source.getName()) && names.contains(edge.destination.getName()))
+            .toList();
+        List<SqlTableMapping> tables = new ArrayList<>();
+        vertices.forEach(entity -> tables.add(schema.vertex(entity).table));
+        edges.forEach(edge -> tables.add(edge.table));
+        Map<String, String> aliases = aliases(tables);
+        // An edge references the alias of a vertex table
+        Function<PersistentEntity, String> aliasOf = entity -> alias(schema.vertex(entity).table, aliases);
         Function<PersistentEntity, String> keyOf = entity -> quote(identityColumn(entity).getName());
         StringBuilder sql = new StringBuilder("CREATE OR REPLACE PROPERTY GRAPH ").append(identifier(name)).append(" VERTEX TABLES (");
         List<String> vertexTables = new ArrayList<>();
@@ -394,7 +401,7 @@ public final class OraclePropertyGraphSchema {
             List<String> properties = new ArrayList<>();
             table.primaryKeyColumns().forEach(column -> properties.add(column.getName()));
             table.columns().forEach(column -> properties.add(column.getName()));
-            StringBuilder vertex = new StringBuilder(tableName(table))
+            StringBuilder vertex = new StringBuilder(elementTable(table, aliases))
                 .append(" KEY (").append(keyOf.apply(entity)).append(')');
             for (String label : GraphEntities.labels(entity)) {
                 vertex.append(" LABEL ").append(identifier(label)).append(' ').append(properties(properties));
@@ -403,11 +410,8 @@ public final class OraclePropertyGraphSchema {
         }
         sql.append(String.join(", ", vertexTables)).append(')');
         List<String> edgeTables = new ArrayList<>();
-        for (Edge edge : schema.edges) {
-            if (!names.contains(edge.source.getName()) || !names.contains(edge.destination.getName())) {
-                continue;
-            }
-            edgeTables.add(tableName(edge.table)
+        for (Edge edge : edges) {
+            edgeTables.add(elementTable(edge.table, aliases)
                 + " KEY (" + edge.keyColumns.stream().map(OraclePropertyGraphSchema::quote).collect(Collectors.joining(", ")) + ")"
                 + " SOURCE KEY (" + quote(edge.sourceColumn) + ") REFERENCES " + aliasOf.apply(edge.source) + " (" + keyOf.apply(edge.source) + ")"
                 + " DESTINATION KEY (" + quote(edge.destinationColumn) + ") REFERENCES " + aliasOf.apply(edge.destination) + " (" + keyOf.apply(edge.destination) + ")"
@@ -417,6 +421,42 @@ public final class OraclePropertyGraphSchema {
             sql.append(" EDGE TABLES (").append(String.join(", ", edgeTables)).append(')');
         }
         return sql.toString();
+    }
+
+    /**
+     * The aliases of the tables of a graph. The alias of a table is its name without its schema, so the tables that
+     * have the same name in different schemas take an alias that has the schema.
+     */
+    private static Map<String, String> aliases(List<SqlTableMapping> tables) {
+        Map<String, Set<String>> tablesByName = new LinkedHashMap<>();
+        for (SqlTableMapping table : tables) {
+            tablesByName.computeIfAbsent(quote(table.name()), name -> new LinkedHashSet<>()).add(tableName(table));
+        }
+        Map<String, String> aliases = new LinkedHashMap<>();
+        Set<String> used = new HashSet<>(tablesByName.keySet());
+        for (SqlTableMapping table : tables) {
+            String schema = table.schema();
+            String name = quote(table.name());
+            boolean shared = schema != null && !schema.isEmpty() && tablesByName.getOrDefault(name, Set.of()).size() > 1;
+            aliases.computeIfAbsent(tableName(table), key -> {
+                String alias = name;
+                for (int i = 1; shared && !used.add(alias); i++) {
+                    alias = quote(schema + "_" + table.name() + (i == 1 ? "" : "_" + i));
+                }
+                return alias;
+            });
+        }
+        return aliases;
+    }
+
+    private static String elementTable(SqlTableMapping table, Map<String, String> aliases) {
+        String name = tableName(table);
+        String alias = alias(table, aliases);
+        return quote(table.name()).equals(alias) ? name : name + " AS " + alias;
+    }
+
+    private static String alias(SqlTableMapping table, Map<String, String> aliases) {
+        return aliases.getOrDefault(tableName(table), quote(table.name()));
     }
 
     private static String properties(List<String> columns) {

@@ -271,7 +271,9 @@ final class DefaultOracleGraphRepositoryOperations extends AbstractGraphReposito
     private void checkVertexWrites(Class<?> rootEntity, Iterable<?> nodes) {
         RuntimePersistentEntity<?> entity = getEntity(rootEntity);
         for (Object node : nodes) {
-            OracleGraphQueryBuilder.checkVertexWrite(entity, node);
+            if (rootEntity.isInstance(node)) {
+                OracleGraphQueryBuilder.checkVertexWrite(entity, node);
+            }
         }
     }
 
@@ -287,8 +289,9 @@ final class DefaultOracleGraphRepositoryOperations extends AbstractGraphReposito
             for (Object parameter : preparedQuery.getParameterArray()) {
                 if (preparedQuery.getRootEntity().isInstance(parameter)) {
                     OracleGraphQueryBuilder.checkVertexWrite(getEntity(preparedQuery.getRootEntity()), parameter);
-                } else if (parameter instanceof Iterable<?> nodes) {
-                    checkVertexWrites(preparedQuery.getRootEntity(), nodes);
+                } else if (parameter instanceof Iterable<?> values) {
+                    // A collection of nodes, or of values such as identifiers
+                    checkVertexWrites(preparedQuery.getRootEntity(), values);
                 }
             }
         }
