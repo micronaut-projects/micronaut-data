@@ -12,7 +12,4 @@ public interface PayeeGraph extends GenericRepository<Payee, Long> {
 
     @PathLimit(3)
     List<GraphPath<Payee>> findAllPathsByReceived(Long from, Long to);
-
-    @PathLimit(3)
-    List<GraphPath<Payee>> findAllPathsByExchanged(Long from, Long to);
 }
