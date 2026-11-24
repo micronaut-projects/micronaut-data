@@ -685,6 +685,35 @@ interface SitcomRepository extends GenericRepository<Sitcom, Long> {
         e.message.contains('Cannot compare [walkons] with a value, as the relationship entity [Walkon] has no @Id or @RelationshipId property')
     }
 
+    void "test an undirected relationship finder between entities that share a label matches a relationship once"() {
+        when:
+        def repository = buildRepository('test.GuestRepository', """
+import io.micronaut.data.graph.model.*;
+
+@Node(labels = {"Host", "Guest"})
+record Host(@Id Long id) {
+}
+
+@Node
+record Guest(@Id Long id, @Relationship(type = "MET", direction = Direction.UNDIRECTED) List<Host> hosts) {
+}
+
+@TestOracleRepository
+@PropertyGraph("guests")
+interface GuestRepository extends GenericRepository<Guest, Long> {
+    long countRelationshipsByHosts();
+    List<GraphRelationship<Guest, Host>> findRelationshipsByHosts(Long from, Long to);
+}
+""")
+
+        then:
+        getQuery(findMethod(repository, 'countRelationshipsByHosts')) ==
+            'SELECT COUNT(*) AS "result" FROM GRAPH_TABLE (guests MATCH (s IS Guest) -[r IS MET]- (t IS Host) WHERE (s IS SOURCE OF r OR NOT (s IS LABELED Host AND t IS LABELED Guest)) COLUMNS (s.id AS "c0"))'
+
+        and: "both ends are known, so the relationship is matched once"
+        getQuery(findMethod(repository, 'findRelationshipsByHosts')).contains('-[r IS MET]- (t IS Host) WHERE s.id = ? AND t.id = ? COLUMNS')
+    }
+
     void "test IsNull on a to-one relationship is rejected"() {
         when:
         buildRepository('test.MentorRepository', """

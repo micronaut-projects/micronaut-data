@@ -610,9 +610,9 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         Query query = new Query(entity);
         query.pattern = pathPattern(definition, direction, node(startVariable, entity), edge("r", types, ""), node(endVariable, definition.endNodeEntity()));
         endpoints(query, definition, startVariable, endVariable);
-        if (definition.matchesEitherDirection()) {
+        if (definition.matchesEitherDirection() && shareLabel(entity, definition.endNodeEntity())) {
             // Both vertices can carry the labels of either end, so the edge is matched both ways round: the match in the
-            // stored direction is kept
+            // stored direction is kept. A label test that no vertex table can satisfy is an error (ORA-49043)
             query.and(definition.whenUndirected("(" + startVariable + " IS SOURCE OF r OR NOT (" + labeled(startVariable, definition.endNodeEntity())
                 + AND + labeled(endVariable, entity) + "))"));
         }
@@ -629,6 +629,14 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             text += buildLimitAndOffset(1, 0);
         }
         return QueryResult.of(text, List.of(text), query.bindings, Map.of());
+    }
+
+    /**
+     * Whether the vertex table of one entity carries the label that the other is matched by.
+     */
+    private static boolean shareLabel(PersistentEntity entity, PersistentEntity other) {
+        return GraphEntities.labels(entity).contains(GraphEntities.primaryLabel(other))
+            || GraphEntities.labels(other).contains(GraphEntities.primaryLabel(entity));
     }
 
     private static String labeled(String variable, PersistentEntity entity) {
