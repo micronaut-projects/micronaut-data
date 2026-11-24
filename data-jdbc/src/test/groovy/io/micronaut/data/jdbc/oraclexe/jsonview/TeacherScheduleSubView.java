@@ -1,6 +1,5 @@
 package io.micronaut.data.jdbc.oraclexe.jsonview;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import io.micronaut.data.annotation.JsonSubView;
 import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.Id;
@@ -11,6 +10,7 @@ import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.sql.JoinColumn;
 
 import java.time.LocalTime;
+import java.util.List;
 
 @Embeddable
 @JsonSubView(entity = Class.class, operations = { JsonView.Operation.UPDATE, JsonView.Operation.INSERT })
@@ -24,9 +24,8 @@ public class TeacherScheduleSubView {
     private String name;
 
     @JoinColumn(name = "id", referencedColumnName = "class_id")
-    @JsonProperty("class")
-    @Relation(Relation.Kind.MANY_TO_ONE)
-    private TeacherStudentSubView clazz;
+    @Relation(Relation.Kind.ONE_TO_MANY)
+    private List<TeacherStudentSubView> students;
 
     private String room;
     private LocalTime time;
@@ -63,7 +62,11 @@ public class TeacherScheduleSubView {
         this.name = name;
     }
 
-    public TeacherStudentSubView getClazz() { return clazz; }
+    public List<TeacherStudentSubView> getStudents() {
+        return students;
+    }
 
-    public void setClazz(TeacherStudentSubView clazz) { this.clazz = clazz; }
+    public void setStudents(List<TeacherStudentSubView> students) {
+        this.students = students;
+    }
 }
