@@ -16,11 +16,19 @@
 package io.micronaut.data.graph.runtime.operations;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.beans.BeanProperty;
+import io.micronaut.data.graph.model.GraphEntities;
+import io.micronaut.data.graph.runtime.GraphEntityMapper;
+import io.micronaut.data.model.runtime.RuntimeAssociation;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.function.Supplier;
@@ -62,6 +70,42 @@ final class PendingLinks<L> {
         Walk walk = new Walk();
         walk.enter(instance);
         return walk;
+    }
+
+    /**
+     * The nodes that an instance relates to.
+     *
+     * @param mapper   The mapper
+     * @param entity   The entity
+     * @param instance The instance
+     * @param <T>      The entity type
+     * @return The nodes, as they are held by the instance
+     */
+    static <T> List<Object> relatedNodes(GraphEntityMapper mapper, RuntimePersistentEntity<T> entity, T instance) {
+        List<Object> nodes = new ArrayList<>();
+        for (RuntimePersistentProperty<T> property : entity.getPersistentProperties()) {
+            if (property instanceof RuntimeAssociation<T> association && GraphEntities.isRelationship(association)) {
+                RuntimePersistentEntity<?> associated = association.getAssociatedEntity();
+                BeanProperty<Object, Object> targetProperty = GraphEntities.isRelationshipEntity(associated) ? AbstractGraphRepositoryOperations.targetNode(associated).getProperty() : null;
+                for (Object item : AbstractGraphRepositoryOperations.dynamicTargets(association.getProperty().get(instance))) {
+                    Object node = item == null || targetProperty == null ? item : targetProperty.get(item);
+                    if (node != null) {
+                        nodes.add(node);
+                    }
+                }
+            }
+        }
+        BeanProperty<Object, Object> dynamic = mapper.dynamicRelationshipsProperty(entity);
+        if (dynamic != null && dynamic.get(instance) instanceof Map<?, ?> relationships) {
+            for (Object value : relationships.values()) {
+                AbstractGraphRepositoryOperations.dynamicTargets(value).forEach(target -> {
+                    if (target != null) {
+                        nodes.add(target);
+                    }
+                });
+            }
+        }
+        return nodes;
     }
 
     private record Pending<L>(Supplier<? extends Iterable<?>> related, L link) {
