@@ -580,8 +580,12 @@ public class CypherQueryBuilder implements QueryBuilder {
             query.append(" AND (")
                 .append(identityExpression(target.getIdentity(), LINK_TO)).append(NOT_EQUAL_PARAMETER).append(LINK_TO_PARAMETER)
                 .append(" OR ")
-                .append(identityExpression(relationshipIdentity, PATH_RELATIONSHIP)).append(NOT_EQUAL_PARAMETER).append(ID_PARAMETER)
-                .append(')');
+                .append(identityExpression(relationshipIdentity, PATH_RELATIONSHIP)).append(NOT_EQUAL_PARAMETER).append(ID_PARAMETER);
+            if (!GraphEntities.isNativeId(relationshipIdentity)) {
+                // A relationship that was not written by the mapping may have no identifier, which is not equal to anything
+                query.append(" OR ").append(identityExpression(relationshipIdentity, PATH_RELATIONSHIP)).append(" IS NULL");
+            }
+            query.append(')');
         }
         return query.append(" DELETE ").append(PATH_RELATIONSHIP).append(RETURN_COUNT).toString();
     }
@@ -1194,10 +1198,24 @@ public class CypherQueryBuilder implements QueryBuilder {
         void appendParameter(BindingParameter bindingParameter,
                              io.micronaut.data.model.@Nullable PersistentPropertyPath in,
                              io.micronaut.data.model.@Nullable PersistentPropertyPath out) {
+            checkComparable(in);
             int index = state.pushParameter(bindingParameter, BindingParameter.BindingContext.create()
                 .incomingMethodParameterProperty(in)
                 .outgoingQueryParameterProperty(out));
             this.out.append(parameterPlaceholder(index));
+        }
+
+        private static void checkComparable(io.micronaut.data.model.@Nullable PersistentPropertyPath path) {
+            if (path == null || !(path.getProperty() instanceof Association association) || association.isEmbedded()) {
+                return;
+            }
+            PersistentEntity associated = association.getAssociatedEntity();
+            Association targetNode = associated.hasIdentity() ? null : GraphEntities.findTargetNode(associated);
+            if (targetNode != null) {
+                // The argument is a relationship entity, and there is no identifier of it to bind
+                throw new IllegalArgumentException("Cannot compare [" + path.getPath() + "] with a value, as the relationship entity ["
+                    + associated.getSimpleName() + "] has no @Id or @RelationshipId property. Compare its target node [" + path.getPath() + '.' + targetNode.getName() + "] instead");
+            }
         }
 
         @Override
