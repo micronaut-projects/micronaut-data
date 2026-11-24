@@ -150,7 +150,7 @@ public class AgeConfiguration {
     /**
      * The graph of a tenant: its entry in {@link #getTenantGraphs()}, else its id after {@link #getTenantGraphPrefix()}.
      * Tenant ids are compared in their hyphenated form, as configuration binds them, so the entry {@code tenant-a} is
-     * that of the tenant {@code tenantA}. A tenant cannot use {@link #getGraph()}, a reserved schema of the database, or
+     * that of the tenant {@code tenantA}, and of any other id with that form. A tenant cannot use {@link #getGraph()}, a reserved schema of the database, or
      * the graph mapped to another tenant.
      *
      * @param tenantId The tenant id

@@ -162,7 +162,7 @@ interface MovieRepository extends CrudRepository<Movie, String> {
         'existsRelationshipByRoles'                     | 0 | 'MATCH (s:Movie)-[r:ACTED_IN]-(e:Person:Actor) RETURN true AS result LIMIT 1'
         'existsRelationshipByDirectorsBetweenTitleAndName' | 2 | 'MATCH (s:Movie)<-[r:DIRECTED]-(e:Person:Actor) WHERE s.title = $p0 AND e.name = $p1 RETURN true AS result LIMIT 1'
         'existsRelationshipByDirectorsBetweenReleasedAndId' | 2 | 'MATCH (s:Movie)<-[r:DIRECTED]-(e:Person:Actor) WHERE s.released = $p0 AND elementId(e) = $p1 RETURN true AS result LIMIT 1'
-        'countRelationshipsByDirectors'                 | 1 | 'MATCH (s:Movie)$__pathLeft[r:DIRECTED]$__pathRight(e:Person:Actor) RETURN count(r) AS result'
+        'countRelationshipsByDirectors'                 | 1 | 'MATCH (s:Movie)$__pathLeft[r:DIRECTED]$__pathRight(e:Person:Actor) WHERE (\'$__pathLeft$__pathRight\' <> \'--\' OR (startNode(r) = s OR NOT (s:Person:Actor AND e:Movie))) RETURN count(r) AS result'
         'findAllPathsToPerson'                          | 2 | 'MATCH (s:Movie), (e:Person:Actor) WHERE s.title = $p0 AND elementId(e) = $p1 MATCH p = (s)-[*1..3]-(e) RETURN p ORDER BY length(p)'
         'findShortestPath'                              | 2 | 'MATCH (s:Movie), (e:Person:Actor) WHERE s.title = $p0 AND elementId(e) = $p1 AND s <> e MATCH p = shortestPath((s)-[*]-(e)) RETURN p'
         'existsPathToPersonByDirectorsBetweenTitleAndName' | 2 | 'MATCH (s:Movie), (e:Person:Actor) WHERE s.title = $p0 AND e.name = $p1 AND s <> e MATCH p = shortestPath((s)<-[:DIRECTED*1..2]-(e)) RETURN true AS result LIMIT 1'

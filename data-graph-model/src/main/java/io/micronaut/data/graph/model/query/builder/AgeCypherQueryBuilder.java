@@ -345,6 +345,14 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
         return super.identityExpression(identity, variable);
     }
 
+    /**
+     * A vertex has one label, so only the ends of a pattern with the same label can be swapped.
+     */
+    @Override
+    protected @Nullable String onceCondition(String startLabel, String endLabel) {
+        return startLabel.equals(endLabel) ? "startNode(" + PATH_RELATIONSHIP + ") = " + PATH_START : null;
+    }
+
     @Override
     protected String labelExpression(PersistentEntity entity) {
         List<String> labels = GraphEntities.labels(entity);
