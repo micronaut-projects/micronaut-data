@@ -4,6 +4,7 @@ import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
 import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.model.Limit
 import io.micronaut.data.model.Pageable
+import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.model.runtime.PagedQuery
 import io.micronaut.data.model.Sort
@@ -452,6 +453,20 @@ class OracleGraphSpec extends Specification {
 
         and: "descending by the highest transfer, Carol comes first"
         bankGraph.findByIdGreaterThanOrderByTransfersAmountDesc(0)*.name() == ["Carol", "Bob", "Alice", "Dave"]
+    }
+
+    void "the parameters of a selection and a filter are bound in their order in the query"() {
+        expect: "a filter on the node comes before the columns, a filter on a relationship after them"
+        bankGraph.findAll({ cb ->
+            def query = cb.createQuery(Long)
+            def root = query.from(Account)
+            query.select(cb.sum(root.get("id"), 10L)).where(cb.equal(root.get("name"), "Carol"))
+        } as CriteriaQueryBuilder<Long>) == [13L]
+        bankGraph.findAll({ cb ->
+            def query = cb.createQuery(Long)
+            def root = query.from(Account)
+            query.select(cb.sum(root.get("id"), 10L)).where(cb.greaterThan(root.join("transfers").get("amount"), 1000G))
+        } as CriteriaQueryBuilder<Long>) == [12L]
     }
 
     void "run a query with named parameters"() {

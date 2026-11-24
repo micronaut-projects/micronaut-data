@@ -81,7 +81,44 @@ class OracleGraphCriteriaQuerySpec extends Specification {
         'order by relationship ignoring case' | { q, r -> q.orderBy(new DefaultOrder(r.join("movies").get("title"), true, true)) } | '''SELECT * FROM GRAPH_TABLE (g MATCH (n IS Person) COLUMNS (n.id AS "n__ID_", n.id AS "n__id", 'Person' AS "n__LABEL_", n.name AS "n__name", n.age AS "n__age", n.active AS "n__active", n.status AS "n__status", n.tags AS "n__tags")) ORDER BY (SELECT MIN(LOWER("o0_0")) FROM GRAPH_TABLE (g MATCH (n IS Person), (n) -[IS ACTED_IN]-> (a0 IS Movie) COLUMNS (a0.title AS "o0_0", n.id AS "o0_1")) WHERE "o0_1" = "n__ID_") ASC'''
         'cast' | { q, r -> q.where(cb.equal(r.get("age").cast(String), "3")) } | '''SELECT * FROM GRAPH_TABLE (g MATCH (n IS Person) WHERE (CAST(n.age AS VARCHAR2(4000)) = ?) COLUMNS (n.id AS "n__ID_", n.id AS "n__id", 'Person' AS "n__LABEL_", n.name AS "n__name", n.age AS "n__age", n.active AS "n__active", n.status AS "n__status", n.tags AS "n__tags"))'''
         'cast selection' | { q, r -> q.select(r.get("age").cast(String)) } | '''SELECT "c0" AS "result" FROM GRAPH_TABLE (g MATCH (n IS Person) COLUMNS (CAST(n.age AS VARCHAR2(4000)) AS "c0"))'''
+        'cast character selection' | { q, r -> q.select(r.get("name").cast(Character)) } | '''SELECT "c0" AS "result" FROM GRAPH_TABLE (g MATCH (n IS Person) COLUMNS (CAST(n.name AS CHAR(1)) AS "c0"))'''
         'current timestamp selection' | { q, r -> q.select(cb.currentTimestamp()) } | '''SELECT "c0" AS "result" FROM GRAPH_TABLE (g MATCH (n IS Person) COLUMNS (CURRENT_TIMESTAMP AS "c0"))'''
+    }
+
+    void "test parameters are bound in the order of their placeholders: #description"() {
+        given:
+        def query = cb.createQuery(Person)
+        PersistentEntityRoot root = query.from(Person)
+        definition.call(query, root)
+
+        when:
+        def result = ((PersistentEntityCriteriaQueryBuilder) query).build(AnnotationMetadata.EMPTY_METADATA, builder())
+
+        then:
+        result.query.contains(fragment)
+        result.query.count('?') == values.size()
+        result.parameterBindings*.value == values
+        result.parameterBindings*.name == (0..<values.size()).collect { 'p' + it }
+
+        where:
+        description                    | definition                                                                                                                            | fragment                                                      || values
+        'selection and where'          | { q, r -> q.select(cb.sum(r.get("age"), 1)).where(cb.equal(r.get("name"), "a")) }                                                     | 'WHERE (n.name = ?) COLUMNS ((n.age + ?) AS "c0")'            || ["a", 1]
+        'sort and where'               | { q, r -> q.where(cb.equal(r.get("name"), "a")).orderBy(cb.asc(cb.sum(r.get("age"), 1))) }                                            | 'WHERE (n.name = ?) COLUMNS ('                                || ["a", 1]
+        'selection, sort and where'    | { q, r -> q.select(cb.sum(r.get("age"), 1)).where(cb.equal(r.get("name"), "a")).orderBy(cb.asc(cb.prod(r.get("age"), 2))) }           | 'WHERE (n.name = ?) COLUMNS ((n.age + ?) AS "c0", (n.age * ?) AS "c1")' || ["a", 1, 2]
+        'selection and subquery'       | { q, r -> q.select(cb.sum(r.get("age"), 1)).where(cb.equal(r.join("movies").get("title"), "a")) }                                     | 'COLUMNS ((n.age + ?) AS "c0", n.id AS "c1")) WHERE "c1" IN (' || [1, "a"]
+        'selection of a filtered node' | { q, r -> def m = r.join("movies"); q.multiselect(m.get("title"), cb.sum(r.get("age"), 1)).where(cb.equal(m.get("title"), "a")) }     | 'WHERE (a0.title = ?) COLUMNS ('                              || ["a", 1]
+    }
+
+    void "test CAST to #type.simpleName is rejected"() {
+        when:
+        select(builder(), { q, r -> q.select(r.get("name").cast(type)) })
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message == "CAST has no Oracle type for " + type.name
+
+        where:
+        type << [byte[], String[], Person]
     }
 
     void "test select #description fails"() {

@@ -387,8 +387,12 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         } else if (query.patterns.isEmpty()) {
             query.semiJoin(filter);
         } else {
-            // The relationships returned are the ones the filter matches
+            // The relationships returned are the ones the filter matches. The graph table renders its conditions before
+            // its columns, so their parameters come first.
+            List<Parameter> columnParameters = List.copyOf(query.parameters);
+            query.parameters.clear();
             appendFilter(query, definition);
+            query.parameters.addAll(columnParameters);
         }
         boolean distinct = definition.isDistinct() || (selectionRenderer.entity && !query.patterns.isEmpty());
         String text = query.render(distinct);
@@ -397,7 +401,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         } else if (selectionRenderer.literal) {
             text += buildLimitAndOffset(1, 0);
         }
-        return QueryResult.of(text, List.of(text), query.bindings, Map.of());
+        return QueryResult.of(text, List.of(text), query.bindings(), Map.of());
     }
 
     private void appendFilter(Query query, SelectQueryDefinition definition) {
@@ -544,7 +548,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         if (definition.result() == PathQueryDefinition.Result.EXISTS) {
             text += buildLimitAndOffset(1, 0);
         }
-        return QueryResult.of(text, List.of(text), query.bindings, Map.of());
+        return QueryResult.of(text, List.of(text), query.bindings(), Map.of());
     }
 
     private void excludeRepeats(Query query, PathQueryDefinition definition, PersistentEntity entity) {
@@ -611,7 +615,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         if (definition.result() == PathQueryDefinition.Result.EXISTS) {
             text += buildLimitAndOffset(1, 0);
         }
-        return QueryResult.of(text, List.of(text), query.bindings, Map.of());
+        return QueryResult.of(text, List.of(text), query.bindings(), Map.of());
     }
 
     private static void requireSupportedRelationships(PathQueryDefinition definition) {
@@ -825,14 +829,15 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             throw new IllegalArgumentException("CAST needs a Java type: " + type);
         }
         DataType dataType = DataType.forType(ReflectionUtils.getWrapperType(classType.getJavaType()));
-        if (dataType == DataType.OBJECT) {
-            throw new IllegalArgumentException("CAST has no Oracle type for " + classType.getJavaType().getName());
-        }
-        if (dataType == DataType.STRING) {
+        return switch (dataType) {
             // Oracle needs the length of a string
-            return "VARCHAR2(4000)";
-        }
-        return new SqlColumnMapping("cast", dataType, SqlDbType.BLOB).getSqlType(Dialect.ORACLE);
+            case STRING -> "VARCHAR2(4000)";
+            case CHARACTER -> "CHAR(1)";
+            case BIGDECIMAL, BOOLEAN, BYTE, DATE, DOUBLE, DURATION, FLOAT, INTEGER, LONG, PERIOD, SHORT, TIME, TIMESTAMP, UUID ->
+                new SqlColumnMapping("cast", dataType, SqlDbType.BLOB).getSqlType(Dialect.ORACLE).trim();
+            // CAST has no large object, JSON or array target
+            default -> throw new IllegalArgumentException("CAST has no Oracle type for " + classType.getJavaType().getName());
+        };
     }
 
     private static String alias(String name) {
@@ -856,6 +861,15 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     }
 
     /**
+     * A parameter of a query.
+     *
+     * @param parameter    The parameter
+     * @param propertyPath The property the parameter is compared with
+     */
+    private record Parameter(BindingParameter parameter, io.micronaut.data.model.@Nullable PersistentPropertyPath propertyPath) {
+    }
+
+    /**
      * A query being built: its patterns, conditions, columns and parameters.
      */
     private final class Query {
@@ -864,7 +878,10 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         final StringBuilder where = new StringBuilder();
         final List<String> select = new ArrayList<>();
         final Map<String, String> columns = new LinkedHashMap<>();
-        final List<QueryParameterBinding> bindings = new ArrayList<>();
+        /**
+         * The parameters in the order of their placeholders in the text.
+         */
+        final List<Parameter> parameters = new ArrayList<>();
         /**
          * The SQL/PGQ conditions on the columns of the graph table, which can use subqueries.
          */
@@ -880,33 +897,28 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         @Nullable String pattern;
         @Nullable String rowsPer;
         @Nullable String orderBy;
-        int position;
 
         Query(PersistentEntity entity) {
-            this(entity, "c", 0);
+            this(entity, "c");
         }
 
-        Query(PersistentEntity entity, String prefix, int position) {
+        Query(PersistentEntity entity, String prefix) {
             this.entity = entity;
             this.prefix = prefix;
-            this.position = position;
         }
 
-        /**
-         * Starts a subquery whose parameters follow the parameters of this query.
-         */
         Query subquery(String subqueryPrefix) {
-            return new Query(entity, subqueryPrefix, position);
+            return new Query(entity, subqueryPrefix);
         }
 
         /**
-         * Takes the conditions and parameters of a filter that matched no relationship.
+         * Takes the conditions and parameters of a filter that matched no relationship. The graph table renders its
+         * conditions before its columns, so the parameters come before the ones of the columns.
          */
         void inline(Query filter) {
             where.append(filter.where);
             absent.addAll(filter.absent);
-            bindings.addAll(filter.bindings);
-            position = filter.position;
+            parameters.addAll(0, filter.parameters);
         }
 
         /**
@@ -918,8 +930,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             absent.addAll(filter.absent);
             filter.absent.clear();
             outer.add(rootId() + " IN (" + filter.render(false) + ")");
-            bindings.addAll(filter.bindings);
-            position = filter.position;
+            parameters.addAll(filter.parameters);
         }
 
         String rootId() {
@@ -948,12 +959,20 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         }
 
         void push(BindingParameter parameter, io.micronaut.data.model.@Nullable PersistentPropertyPath propertyPath) {
-            int index = position++;
-            bindings.add(parameter.bind(BindingParameter.BindingContext.create()
-                .index(index)
-                .name("p" + index)
-                .incomingMethodParameterProperty(propertyPath)
-                .outgoingQueryParameterProperty(propertyPath)));
+            parameters.add(new Parameter(parameter, propertyPath));
+        }
+
+        List<QueryParameterBinding> bindings() {
+            List<QueryParameterBinding> bindings = new ArrayList<>(parameters.size());
+            for (Parameter parameter : parameters) {
+                int index = bindings.size();
+                bindings.add(parameter.parameter().bind(BindingParameter.BindingContext.create()
+                    .index(index)
+                    .name("p" + index)
+                    .incomingMethodParameterProperty(parameter.propertyPath())
+                    .outgoingQueryParameterProperty(parameter.propertyPath())));
+            }
+            return bindings;
         }
 
         /**

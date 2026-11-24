@@ -11,6 +11,7 @@ import io.micronaut.data.graph.model.GraphPath;
 import io.micronaut.data.graph.model.GraphRelationship;
 import io.micronaut.data.oracle.graph.annotation.OracleGraphRepository;
 import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder;
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 
 import java.math.BigDecimal;
@@ -48,6 +49,8 @@ public interface BankGraph extends GenericRepository<Account, Long> {
     List<Account> findByIdGreaterThan(Long id, Sort sort);
 
     List<Account> findAll(PredicateSpecification<Account> spec, Limit limit);
+
+    List<Long> findAll(CriteriaQueryBuilder<Long> builder);
 
     List<Account> findByIdGreaterThanOrderByName(Long id, Sort sort);
 
