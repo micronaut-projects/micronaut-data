@@ -6,6 +6,7 @@ import io.micronaut.data.model.runtime.PagedQuery
 import io.micronaut.data.model.Sort
 import io.micronaut.data.oracle.graph.bank.Account
 import io.micronaut.data.oracle.graph.bank.BankGraph
+import io.micronaut.data.oracle.graph.bank.PayeeGraph
 import io.micronaut.data.oracle.graph.bank.PeerGraph
 import io.micronaut.data.oracle.graph.bank.Transfer
 import io.micronaut.data.oracle.graph.operations.OracleGraphRepositoryOperations
@@ -26,6 +27,9 @@ class OracleGraphSpec extends Specification {
 
     @Inject
     BankGraph bankGraph
+
+    @Inject
+    PayeeGraph payeeGraph
 
     @Inject
     PeerGraph peerGraph
@@ -154,11 +158,34 @@ class OracleGraphSpec extends Specification {
         paths.collect { it.nodes()*.name() } == [["Alice", "Carol"], ["Alice", "Bob", "Carol"]]
         paths[1].relationships()*.type() == ["TRANSFERS", "TRANSFERS"]
 
+        and: "the relationships of a path have the identifier and properties of the relationship entity"
+        paths[1].relationships()*.id()*.longValue() == [1L, 2L]
+        paths[1].relationships()*.properties()*.amount*.longValue() == [500L, 1500L]
+
         and: "the one-step cycle is a path of its own, taken once"
         bankGraph.findAllPathsByTransfers(4L, 4L).collect { it.nodes()*.name() } == [["Dave", "Dave"]]
 
         and: "no path is an empty list"
         bankGraph.findAllPathsByTransfers(3L, 1L).isEmpty()
+    }
+
+    void "the relationships of a path keep the direction they are stored in"() {
+        when: "the path follows transfers from their destination"
+        def received = payeeGraph.findAllPathsByReceived(3L, 1L)
+
+        then:
+        received.collect { it.nodes()*.name() } == [["Carol", "Alice"], ["Carol", "Bob", "Alice"]]
+        received[1].relationships().collect { [it.from().name(), it.to().name()] } == [["Bob", "Carol"], ["Alice", "Bob"]]
+        received[1].relationships()*.id()*.longValue() == [2L, 1L]
+        received[1].relationships()*.properties()*.amount*.longValue() == [1500L, 500L]
+
+        when: "the path follows them from either end"
+        def exchanged = payeeGraph.findAllPathsByExchanged(2L, 3L)
+
+        then:
+        exchanged.collect { it.nodes()*.name() } == [["Bob", "Carol"], ["Bob", "Alice", "Carol"]]
+        exchanged[0].relationships().collect { [it.from().name(), it.to().name()] } == [["Bob", "Carol"]]
+        exchanged[1].relationships().collect { [it.from().name(), it.to().name()] } == [["Alice", "Bob"], ["Alice", "Carol"]]
     }
 
     void "read and match temporal properties"() {
