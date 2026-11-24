@@ -121,6 +121,19 @@ class OracleGraphCriteriaQuerySpec extends Specification {
         expected << ['''SELECT "c0" AS "legs" FROM GRAPH_TABLE (g MATCH (n IS Pet) COLUMNS (JSON_VALUE(n.attributes, '$."legs"' RETURNING NUMBER) AS "c0"))''']
     }
 
+    void "test a selected dynamic property named like a column of a graph element has an alias of its own"() {
+        given:
+        def query = cb.createQuery(Integer)
+        PersistentEntityRoot root = query.from(Pet)
+        query.select(GraphCriteria.dynamic(root, "storage__gb", Integer))
+
+        expect:
+        ((PersistentEntityCriteriaQueryBuilder) query).build(AnnotationMetadata.EMPTY_METADATA, builder()).query == expected
+
+        where:
+        expected << ['''SELECT "c0" AS "storage_gb" FROM GRAPH_TABLE (g MATCH (n IS Pet) COLUMNS (JSON_VALUE(n.attributes, '$."storage__gb"' RETURNING NUMBER) AS "c0"))''']
+    }
+
     void "test dynamic property of type #type.simpleName reads the JSON value as #returning"() {
         given:
         def query = cb.createQuery(Pet)

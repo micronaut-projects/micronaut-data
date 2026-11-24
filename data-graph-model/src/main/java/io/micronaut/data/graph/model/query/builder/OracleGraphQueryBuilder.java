@@ -1573,7 +1573,8 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
 
         @Override
         public void visit(DynamicPropertyExpression<?, ?> expression) {
-            item(expression, expression.getName(), null);
+            // A column with the separator in its name is read as a property of a graph element
+            item(expression, expression.getName().replaceAll(SEPARATOR + "+", "_"), null);
         }
 
         @Override
