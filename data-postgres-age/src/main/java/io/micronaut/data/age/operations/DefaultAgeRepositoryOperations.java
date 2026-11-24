@@ -267,9 +267,15 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
     @Override
     protected <R> R writeInTransaction(AnnotationMetadata annotationMetadata, Function<GraphSession, R> work) {
         if (transactionOperations == null) {
-            // Transactions of the data source are managed elsewhere, such as by JPA: write() joins the connection of
-            // the current one, or else commits or rolls back on a connection of its own
-            return write(annotationMetadata, work);
+            // Transactions of the data source are managed elsewhere, such as by JPA: the write joins the transaction of
+            // the current connection, or else commits or rolls back on it, or on a connection of its own
+            String graph = currentGraph();
+            return connectionOperations.findConnectionStatus()
+                .map(status -> inTransaction(status.getConnection(), graph, work))
+                .orElseGet(() -> connectionOperations.execute(
+                    ConnectionDefinition.DEFAULT.withAnnotationMetadata(annotationMetadata),
+                    status -> inTransaction(status.getConnection(), graph, work)
+                ));
         }
         // Joins the current transaction, or begins one so that the statements of the write commit or roll back together
         String graph = currentGraph();
