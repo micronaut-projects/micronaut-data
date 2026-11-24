@@ -466,6 +466,21 @@ abstract class AbstractGraphRepositorySpec extends Specification {
     }
 
     @Requires({ instance.supportsRelationshipWrites() && instance.supportsCypher() })
+    void "new nodes that set a single valued undirected relationship entity on each other have one relationship"() {
+        given:
+        def ada = new Colleague("Ada")
+        def grace = new Colleague("Grace")
+        ada.mentor = new Collaboration("compiler", grace)
+        grace.mentor = new Collaboration("cobol", ada)
+
+        when:
+        colleagueRepository.save(ada)
+
+        then:
+        colleagueRepository.findMentorships() == ["compiler"]
+    }
+
+    @Requires({ instance.supportsRelationshipWrites() && instance.supportsCypher() })
     void "find relationships between nodes"() {
         given:
         saveFriends()

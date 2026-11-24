@@ -53,7 +53,7 @@ Relationships are not loaded unless a finder asks for them with ann:data.annotat
 
 == Encoding values
 
-Property and parameter values are encoded into values the database accepts by the encoder registered for their type in api:data.graph.runtime.GraphValueEncoders[], or for their nearest supertype. Strings, booleans, temporal values and the `long`, `int`, `short`, `byte`, `double` and `float` number types are written as they are, enums by name, and collections and maps element by element. `BigDecimal`, `BigInteger`, `UUID`, `URI`, `URL`, `Locale` and `Currency` values are written as strings, so a range finder on a `BigDecimal` or `BigInteger` property compares strings rather than numbers: use a `Long` or `Double` property where the order matters. A value of a type with no encoder fails with a `DataAccessException` naming the type. Each database replaces encoders for types it stores differently: Apache AGE writes temporal values as ISO-8601 strings, for example.
+Property and parameter values are encoded into values the database accepts by the encoder registered for their type in api:data.graph.runtime.GraphValueEncoders[], or for their nearest supertype. Strings, booleans, temporal values and the `long`, `int`, `short`, `byte`, `double` and `float` number types are written as they are, enums by name, and collections and maps element by element. `BigDecimal`, `BigInteger`, `UUID`, `URI`, `URL`, `Locale` and `Currency` values are written as strings, so on Neo4j and Apache AGE a range finder on a `BigDecimal` or `BigInteger` property compares strings rather than numbers. Where the order matters, use a `Long` property, which stores an amount of money in its smallest unit without losing precision, or a `Double` property where an approximate value is enough. Oracle property graphs compare numbers, as the property is a `NUMBER` column. A value of a type with no encoder fails with a `DataAccessException` naming the type. Each database replaces encoders for types it stores differently: Apache AGE writes temporal values as ISO-8601 strings, for example.
 
 A bean of type api:data.graph.runtime.GraphValueEncoderRegistrar[] adds encoders for application types, or replaces those of the database:
 
@@ -73,6 +73,8 @@ Values read from the database are converted to the types of properties by the co
 == Reading with Micronaut Serialization
 
 Nodes and relationships are read with https://micronaut-projects.github.io/micronaut-serialization/latest/guide/[Micronaut Serialization]. ann:data.graph.annotation.Node[] and ann:data.graph.annotation.RelationshipProperties[] make a class `@Serdeable`, so no further annotation is needed. Records, and classes with a public no-argument constructor and setters, get a deserializer generated at compile time. Other classes, such as a class that sets some properties through its constructor and others through setters, and Kotlin classes, are read by the deserializer Micronaut Serialization builds at runtime.
+
+Graph reads use a registry of their own, created with `SerdeRegistry.cloneWithConfiguration`, so that the deserializers they cache for a class stay apart from those of JSON. An application that replaces the `SerdeRegistry` bean has to implement that method, returning a registry that behaves like its own. A warning is logged if it does not.
 
 Saving does not use Micronaut Serialization: entities are written through their bean introspections.
 
