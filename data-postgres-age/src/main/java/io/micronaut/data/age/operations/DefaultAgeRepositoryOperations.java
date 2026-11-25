@@ -112,6 +112,9 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
     private static final int ABSENT = 0;
     private static final int CURRENT_TRANSACTION = 1;
     private static final int COMMITTED = 2;
+    private static final String SESSION_STATE_QUERY = "SELECT CASE WHEN coalesce(current_setting(?, true), '') = '' THEN " + ABSENT
+        + " WHEN coalesce(current_setting(?, true), '') = transaction_timestamp()::text THEN " + CURRENT_TRANSACTION
+        + " ELSE " + COMMITTED + " END";
     /**
      * Puts the AGE catalog last on the search path, unless it is on it: the agtype operators Cypher writes use
      * resolve through the search path, and ag_catalog goes last so that unqualified DDL run on the same pooled
@@ -459,10 +462,7 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
      * transaction set it, or {@link #COMMITTED} when an earlier transaction did
      */
     private static int sessionState(Connection connection, String setting) throws SQLException {
-        String value = "coalesce(current_setting(?, true), '')";
-        try (PreparedStatement statement = connection.prepareStatement("SELECT CASE WHEN " + value + " = '' THEN " + ABSENT
-            + " WHEN " + value + " = transaction_timestamp()::text THEN " + CURRENT_TRANSACTION
-            + " ELSE " + COMMITTED + " END")) {
+        try (PreparedStatement statement = connection.prepareStatement(SESSION_STATE_QUERY)) {
             statement.setString(1, setting);
             statement.setString(2, setting);
             try (ResultSet resultSet = statement.executeQuery()) {
