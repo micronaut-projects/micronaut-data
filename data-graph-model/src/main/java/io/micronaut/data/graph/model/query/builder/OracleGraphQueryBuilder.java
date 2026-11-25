@@ -157,6 +157,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     private static final String COUNT_AS = "COUNT(*) AS ";
     private static final String LOWER = "LOWER(";
     private static final String AND = " AND ";
+    private static final String IS_LABELED = " IS LABELED ";
     private static final String READ_ONLY = "Oracle property graphs are views over tables: nodes are written to their vertex tables with SQL, "
         + "and relationships to their edge tables with a JDBC repository";
 
@@ -536,7 +537,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             // SQL/PGQ has no function returning the label, so each step tests the labels of the path
             StringBuilder type = new StringBuilder("CASE");
             for (String name : types) {
-                type.append(" WHEN ").append(EDGE).append(" IS LABELED ").append(identifier(name)).append(" THEN ").append(literal(name));
+                type.append(" WHEN ").append(EDGE).append(IS_LABELED).append(identifier(name)).append(" THEN ").append(literal(name));
             }
             query.column(type.append(" END").toString(), EDGE + SEPARATOR + TYPE_COLUMN);
         }
@@ -589,7 +590,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         identities.forEach((type, identity) -> {
             String reference = property(EDGE, identity);
             // The branches of a CASE have one type
-            sb.append(" WHEN ").append(EDGE).append(" IS LABELED ").append(identifier(type)).append(" THEN ")
+            sb.append(" WHEN ").append(EDGE).append(IS_LABELED).append(identifier(type)).append(" THEN ")
                 .append(types.size() == 1 ? reference : "TO_CHAR(" + reference + ")");
         });
         return sb.append(" END").toString();
@@ -640,7 +641,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     }
 
     private static String labeled(String variable, PersistentEntity entity) {
-        return variable + " IS LABELED " + identifier(GraphEntities.primaryLabel(entity));
+        return variable + IS_LABELED + identifier(GraphEntities.primaryLabel(entity));
     }
 
     private static void requireSupportedRelationships(PathQueryDefinition definition) {
