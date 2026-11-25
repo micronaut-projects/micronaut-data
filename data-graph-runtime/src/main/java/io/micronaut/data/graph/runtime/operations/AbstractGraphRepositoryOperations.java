@@ -1177,6 +1177,18 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     }
 
     /**
+     * The targets of a dynamic relationship: a collection of them, or a single one.
+     */
+    @SuppressWarnings("unchecked")
+    static Iterable<Object> dynamicTargets(@Nullable Object value) {
+        if (value instanceof Iterable<?> iterable) {
+            // Only read
+            return (Iterable<Object>) iterable;
+        }
+        return value == null ? List.of() : List.of(value);
+    }
+
+    /**
      * Relationship entities are not persisted on their own, so nothing else populates an identifier that is not
      * assigned by the database.
      *
@@ -1185,16 +1197,6 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
      * @param relationship The relationship
      * @return The relationship with its identifier
      */
-    /**
-     * The targets of a dynamic relationship: a collection of them, or a single one.
-     */
-    static Iterable<?> dynamicTargets(@Nullable Object value) {
-        if (value instanceof Iterable<?> iterable) {
-            return iterable;
-        }
-        return value == null ? List.of() : List.of(value);
-    }
-
     final Object populateRelationshipId(RuntimePersistentEntity<Object> associated, RuntimePersistentProperty<Object> identity, Object relationship) {
         DefaultEntityEventContext<Object> event = new DefaultEntityEventContext<>(associated, relationship);
         entityEventRegistry.prePersist(event);
