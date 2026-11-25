@@ -85,27 +85,40 @@ final class PendingLinks<L> {
         List<Object> nodes = new ArrayList<>();
         for (RuntimePersistentProperty<T> property : entity.getPersistentProperties()) {
             if (property instanceof RuntimeAssociation<T> association && GraphEntities.isRelationship(association)) {
-                RuntimePersistentEntity<?> associated = association.getAssociatedEntity();
-                BeanProperty<Object, Object> targetProperty = GraphEntities.isRelationshipEntity(associated) ? AbstractGraphRepositoryOperations.targetNode(associated).getProperty() : null;
-                for (Object item : AbstractGraphRepositoryOperations.dynamicTargets(association.getProperty().get(instance))) {
-                    Object node = item == null || targetProperty == null ? item : targetProperty.get(item);
-                    if (node != null) {
-                        nodes.add(node);
-                    }
-                }
+                addRelatedNodes(association, instance, nodes);
             }
         }
         BeanProperty<Object, Object> dynamic = mapper.dynamicRelationshipsProperty(entity);
         if (dynamic != null && dynamic.get(instance) instanceof Map<?, ?> relationships) {
             for (Object value : relationships.values()) {
-                AbstractGraphRepositoryOperations.dynamicTargets(value).forEach(target -> {
-                    if (target != null) {
-                        nodes.add(target);
-                    }
-                });
+                addNodes(AbstractGraphRepositoryOperations.dynamicTargets(value), nodes);
             }
         }
         return nodes;
+    }
+
+    private static <T> void addRelatedNodes(RuntimeAssociation<T> association, T instance, List<Object> nodes) {
+        Iterable<Object> items = AbstractGraphRepositoryOperations.dynamicTargets(association.getProperty().get(instance));
+        RuntimePersistentEntity<?> associated = association.getAssociatedEntity();
+        if (!GraphEntities.isRelationshipEntity(associated)) {
+            addNodes(items, nodes);
+            return;
+        }
+        BeanProperty<Object, Object> targetProperty = AbstractGraphRepositoryOperations.targetNode(associated).getProperty();
+        for (Object item : items) {
+            Object node = item == null ? null : targetProperty.get(item);
+            if (node != null) {
+                nodes.add(node);
+            }
+        }
+    }
+
+    private static void addNodes(Iterable<Object> items, List<Object> nodes) {
+        for (Object item : items) {
+            if (item != null) {
+                nodes.add(item);
+            }
+        }
     }
 
     private record Pending<L>(Supplier<? extends Iterable<?>> related, L link) {
