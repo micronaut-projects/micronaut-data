@@ -1,40 +1,22 @@
 [versions]
-micronaut = "5.2.23"
 micronaut-platform = "5.2.6"
 micronaut-docs = "3.0.0"
 micronaut-gradle-plugin = "5.0.2"
 micronaut-testresources = "4.3.1"
 
-micronaut-azure = "6.2.0"
-micronaut-reactor = "4.3.0"
-micronaut-rxjava3 = "4.1.0"
-micronaut-r2dbc = "7.2.0"
-micronaut-sql = "7.2.1"
-micronaut-serde = "3.2.6"
-micronaut-spring = "6.1.0"
-micronaut-test = "5.1.1"
-micronaut-mongo = "6.2.0"
-micronaut-kotlin = "5.1.0"
-micronaut-multitenancy = "6.1.0"
-micronaut-validation = "5.2.1"
-micronaut-logging = "2.1.0"
-micronaut-flyway = "8.1.1"
 micronaut-liquibase = "7.2.1"
 micronaut-coherence = "7.1.0"
-micronaut-sourcegen = "2.2.4"
 
 groovy = "5.1.3"
 
 managed-javax-persistence = "2.2"
 managed-jakarta-data = "1.1.0-M4"
-jakarta-servlet-api = "6.1.0"
 managed-pg-vector = "0.1.6"
 
 spring-data = "4.1.2"
 
 # Lombok
 
-lombok = "1.18.48"
 
 # Testing and benchmarking
 
@@ -60,32 +42,17 @@ antlr = "4.13.2"
 jackson-override = "2.23.0"
 micrometer-override = "1.17.2"
 commons-lang3 = "3.22.0"
-guava = "33.7.2-jre"
 
 [libraries]
-micronaut-core = { module = 'io.micronaut:micronaut-core-bom', version.ref = 'micronaut' }
 
-micronaut-testresources-client = { module = 'io.micronaut.testresources:micronaut-test-resources-client', version.ref = "micronaut-testresources" }
-micronaut-testresources-extensions-junit-platform = { module = 'io.micronaut.testresources:micronaut-test-resources-extensions-junit-platform', version.ref = "micronaut-testresources" }
+micronaut-testresources-client = { module = 'io.micronaut.testresources:micronaut-test-resources-client' }
+micronaut-testresources-extensions-junit-platform = { module = 'io.micronaut.testresources:micronaut-test-resources-extensions-junit-platform' }
 
 # BOMs
 
-micronaut-reactor = { module = 'io.micronaut.reactor:micronaut-reactor-bom', version.ref = "micronaut-reactor" }
-micronaut-rxjava3 = { module = 'io.micronaut.rxjava3:micronaut-rxjava3-bom', version.ref = "micronaut-rxjava3" }
-micronaut-kotlin = { module = 'io.micronaut.kotlin:micronaut-kotlin-bom', version.ref = "micronaut-kotlin" }
-micronaut-multitenancy = { module = 'io.micronaut.multitenancy:micronaut-multitenancy-bom', version.ref = "micronaut-multitenancy" }
 micronaut-testresources = { module = 'io.micronaut.testresources:micronaut-test-resources-bom', version.ref = "micronaut-testresources" }
-micronaut-validation = { module = 'io.micronaut.validation:micronaut-validation-bom', version.ref = "micronaut-validation" }
-micronaut-logging = { module = "io.micronaut.logging:micronaut-logging-bom", version.ref = "micronaut-logging" }
-micronaut-mongo = { module = "io.micronaut.mongodb:micronaut-mongo-bom", version.ref = "micronaut-mongo" }
-micronaut-spring = { module = "io.micronaut.spring:micronaut-spring-bom", version.ref = "micronaut-spring" }
-micronaut-sql = { module = "io.micronaut.sql:micronaut-sql-bom", version.ref = "micronaut-sql" }
-micronaut-r2dbc = { module = "io.micronaut.r2dbc:micronaut-r2dbc-bom", version.ref = "micronaut-r2dbc" }
-micronaut-flyway = { module = "io.micronaut.flyway:micronaut-flyway-bom", version.ref = "micronaut-flyway" }
 micronaut-liquibase = { module = "io.micronaut.liquibase:micronaut-liquibase-bom", version.ref = "micronaut-liquibase" }
-micronaut-serde = { module = "io.micronaut.serde:micronaut-serde-bom", version.ref = "micronaut-serde" }
 micronaut-coherence = { module = "io.micronaut.coherence:micronaut-coherence-bom", version.ref = "micronaut-coherence" }
-micronaut-sourcegen = { module = "io.micronaut.sourcegen:micronaut-sourcegen-bom", version.ref = "micronaut-sourcegen" }
 
 micronaut-docs = { module = "io.micronaut.docs:micronaut-docs-asciidoc-config-props", version.ref = "micronaut-docs" }
 
@@ -104,11 +71,11 @@ spring-data-commons = { module = "org.springframework.data:spring-data-commons",
 
 # Lombok
 
-lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
+lombok = { module = "org.projectlombok:lombok" }
 
 # AZURE COSMOS
 
-micronaut-azure-cosmos = { module = "io.micronaut.azure:micronaut-azure-cosmos", version.ref = "micronaut-azure" }
+micronaut-azure-cosmos = { module = "io.micronaut.azure:micronaut-azure-cosmos" }
 jackson-core-override = { module = "com.fasterxml.jackson.core:jackson-core", version.ref = "jackson-override" }
 jackson-databind-override = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson-override" }
 micrometer-core-override = { module = "io.micrometer:micrometer-core", version.ref = "micrometer-override" }
@@ -126,7 +93,7 @@ groovy-sql = { module = "org.apache.groovy:groovy-sql" }
 groovy-dateutil = { module = "org.apache.groovy:groovy-dateutil", version.ref = "groovy" }
 
 jakarta-data-tck = { module = 'jakarta.data:jakarta.data-tck', version.ref = "managed-jakarta-data" }
-jakarta-servlet-api = { module = 'jakarta.servlet:jakarta.servlet-api', version.ref = "jakarta-servlet-api" }
+jakarta-servlet-api = { module = 'jakarta.servlet:jakarta.servlet-api' }
 junit-platform-suite-engine = { module = "org.junit.platform:junit-platform-suite-engine" }
 
 nullaway = { module = "com.uber.nullaway:nullaway", version.ref = "nullaway" }
@@ -136,7 +103,7 @@ groovy-yaml = { module = "org.apache.groovy:groovy-yaml", version.ref = "groovy_
 h2gis = { module = "org.orbisgis:h2gis", version.ref = "h2gis"}
 
 commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
-guava = { module = "com.google.guava:guava", version.ref = "guava" }
+guava = { module = "com.google.guava:guava" }
 
 # Benchmark
 

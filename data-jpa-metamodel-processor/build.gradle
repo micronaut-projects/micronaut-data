@@ -25,13 +25,13 @@ dependencies {
     compileOnly mn.micronaut.inject.java
 
     compileOnly projects.micronautDataProcessor
-    compileOnly mn.micronaut.sourcegen.model
+    compileOnly mnSourcegen.micronaut.sourcegen.model
 
-    implementation mn.micronaut.sourcegen.generator
-    implementation mn.micronaut.sourcegen.generator.java
+    implementation mnSourcegen.micronaut.sourcegen.generator
+    implementation mnSourcegen.micronaut.sourcegen.generator.java
 
     testImplementation mnSql.jakarta.persistence.api
-    testImplementation mn.micronaut.sourcegen.annotations
+    testImplementation mnSourcegen.micronaut.sourcegen.annotations
     testImplementation mn.micronaut.inject.java.test
 }
 

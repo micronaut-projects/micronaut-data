@@ -1,18 +1,33 @@
+import io.micronaut.build.MicronautBom
+
 pluginManagement {
     repositories {
+        //Temporary just for testing
+        mavenLocal {
+            content {
+                includeGroupByRegex 'io[.]micronaut[.]build[.].*'
+            }
+        }
         gradlePluginPortal()
         mavenCentral()
     }
 }
 
 plugins {
-    id 'io.micronaut.build.shared.settings' version '8.1.4'
+    //Temporary just for testing
+    id 'io.micronaut.build.shared.settings' version '8.2.2-SNAPSHOT'
 }
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 dependencyResolutionManagement {
     repositories {
+        //Temporary just for testing
+        mavenLocal {
+            content {
+                includeGroupByRegex 'io[.]micronaut[.]build[.].*'
+            }
+        }
         mavenCentral()
     }
 }
@@ -22,20 +37,21 @@ rootProject.name = 'data-parent'
 micronautBuild {
     useStandardizedProjectNames = true
     importMicronautCatalog()
-    importMicronautCatalog("micronaut-reactor")
-    importMicronautCatalog("micronaut-rxjava3")
-    importMicronautCatalog("micronaut-r2dbc")
-    importMicronautCatalog("micronaut-spring")
-    importMicronautCatalog("micronaut-serde")
-    importMicronautCatalog("micronaut-sql")
-    importMicronautCatalog("micronaut-kotlin")
-    importMicronautCatalog("micronaut-multitenancy")
-    importMicronautCatalog("micronaut-testresources")
-    importMicronautCatalog("micronaut-validation")
-    importMicronautCatalog("micronaut-mongo")
-    importMicronautCatalog("micronaut-flyway")
-    importMicronautCatalog("micronaut-liquibase")
-    importMicronautCatalog("micronaut-coherence")
+    importMicronautCatalog(MicronautBom.REACTOR)
+    importMicronautCatalog(MicronautBom.RXJAVA3)
+    importMicronautCatalog(MicronautBom.R2DBC)
+    importMicronautCatalog(MicronautBom.SPRING)
+    importMicronautCatalog(MicronautBom.SERDE)
+    importMicronautCatalog(MicronautBom.SQL)
+    importMicronautCatalog(MicronautBom.KOTLIN)
+    importMicronautCatalog(MicronautBom.MULTITENANCY)
+    importMicronautCatalog(MicronautBom.TEST_RESOURCES)
+    importMicronautCatalog(MicronautBom.VALIDATION)
+    importMicronautCatalog(MicronautBom.MONGO)
+    importMicronautCatalog(MicronautBom.FLYWAY)
+    importMicronautCatalog(MicronautBom.LIQUIBASE)
+    importMicronautCatalog(MicronautBom.COHERENCE)
+    importMicronautCatalog(MicronautBom.SOURCEGEN)
 }
 
 include 'data-bom'
