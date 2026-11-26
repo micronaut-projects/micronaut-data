@@ -80,6 +80,9 @@ class OracleJdbcJsonViewSpec extends Specification {
     @Inject
     ClubViewRepository clubViewRepository
 
+    @Inject
+    ParcelViewRepository parcelViewRepository
+
     def setup() {
         studentClassRepository.deleteAll()
         classRepository.deleteAll()
@@ -455,7 +458,7 @@ class OracleJdbcJsonViewSpec extends Specification {
         PersistentEntity studentViewEntity = getRuntimePersistentEntity(StudentView)
         String[] sql = builder.buildCreateTableStatements(studentViewEntity)
         then:
-        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW student_view AS SELECT JSON {'_id': s.id, 'name': s.name, 'birthDate': s.birth_date, 'averageGrade': s.average_grade, 'startDateTime': s.start_date_time, 'active': s.active, 'classes': [SELECT JSON {'id': sc.id, 'class': (SELECT JSON {'classID': c.id, 'teacher': (SELECT JSON {'teachID': t.id, 'teacher': t.name} FROM TBL_TEACHER t WITH UPDATE INSERT  WHERE c.\"TEACHER_ID\"=t.\"ID\"), 'room': c.room, 'time': c.time, 'name': c.name} FROM TBL_CLASS c WITH UPDATE  WHERE sc.\"CLASS_ID\"=c.\"ID\")} FROM TBL_STUDENT_CLASSES sc WITH UPDATE INSERT DELETE  WHERE s.\"ID\"=sc.\"STUDENT_ID\"], 'address': (SELECT JSON {'addressID': a.id, 'street': a.street, 'city': a.city} FROM TBL_ADDRESS a WITH UPDATE INSERT  WHERE s.\"ADDRESS_ID\"=a.\"ID\")} FROM TBL_STUDENT s WITH UPDATE INSERT DELETE "
+        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW \"STUDENT_VIEW\" AS SELECT JSON {'_id': s.\"ID\", 'name': s.\"NAME\", 'birthDate': s.\"BIRTH_DATE\", 'averageGrade': s.\"AVERAGE_GRADE\", 'startDateTime': s.\"START_DATE_TIME\", 'active': s.\"ACTIVE\", 'classes': [SELECT JSON {'id': sc.\"ID\", 'class': (SELECT JSON {'classID': c.\"ID\", 'teacher': (SELECT JSON {'teachID': t.\"ID\", 'teacher': t.\"NAME\"} FROM \"TBL_TEACHER\" t WITH UPDATE INSERT  WHERE c.\"TEACHER_ID\"=t.\"ID\"), 'room': c.\"ROOM\", 'time': c.\"TIME\", 'name': c.\"NAME\"} FROM \"TBL_CLASS\" c WITH UPDATE  WHERE sc.\"CLASS_ID\"=c.\"ID\")} FROM \"TBL_STUDENT_CLASSES\" sc WITH UPDATE INSERT DELETE  WHERE s.\"ID\"=sc.\"STUDENT_ID\"], 'address': (SELECT JSON {'addressID': a.\"ID\", 'street': a.\"STREET\", 'city': a.\"CITY\"} FROM \"TBL_ADDRESS\" a WITH UPDATE INSERT  WHERE s.\"ADDRESS_ID\"=a.\"ID\")} FROM \"TBL_STUDENT\" s WITH UPDATE INSERT DELETE "
     }
 
     def "test_generate_create_apartment_view"() {
@@ -465,7 +468,7 @@ class OracleJdbcJsonViewSpec extends Specification {
         PersistentEntity apartmentViewEntity = getRuntimePersistentEntity(ApartmentView)
         String[] sql = builder.buildCreateTableStatements(apartmentViewEntity)
         then:
-        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW apartment_view AS SELECT JSON {'_id': {'buildingId': ap.building_id, 'flatId': ap.flat_id}} FROM TBL_APARTMENT ap WITH UPDATE INSERT DELETE "
+        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW \"APARTMENT_VIEW\" AS SELECT JSON {'_id': {'buildingId': ap.\"BUILDING_ID\", 'flatId': ap.\"FLAT_ID\"}} FROM \"TBL_APARTMENT\" ap WITH UPDATE INSERT DELETE "
     }
 
     def "test_apartment_view_repository"() {
@@ -501,11 +504,11 @@ class OracleJdbcJsonViewSpec extends Specification {
         SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
         String[] sql = builder.buildCreateTableStatements(getRuntimePersistentEntity(BuildingView))
         then:
-        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW building_view AS SELECT JSON {'_id': b.id, " +
-                "'apartments': [SELECT JSON {UNNEST (SELECT JSON {'buildingId': ap.building_id, 'flatId': ap.flat_id} FROM TBL_APARTMENT ap WITH UPDATE INSERT  " +
-                "WHERE building_apartment.\"APARTMENT_APARTMENT_ID_BUILDING_ID\"=ap.\"BUILDING_ID\" AND building_apartment.\"APARTMENT_APARTMENT_ID_FLAT_ID\"=ap.\"FLAT_ID\")} " +
-                "FROM building_apartment WITH UPDATE INSERT DELETE WHERE b.\"ID\"=building_apartment.\"BUILDING_ID\"]} " +
-                "FROM TBL_BUILDING b WITH UPDATE INSERT DELETE "
+        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW \"BUILDING_VIEW\" AS SELECT JSON {'_id': b.\"ID\", " +
+                "'apartments': [SELECT JSON {UNNEST (SELECT JSON {'buildingId': ap.\"BUILDING_ID\", 'flatId': ap.\"FLAT_ID\"} FROM \"TBL_APARTMENT\" ap WITH UPDATE INSERT  " +
+                "WHERE \"BUILDING_APARTMENT\".\"APARTMENT_APARTMENT_ID_BUILDING_ID\"=ap.\"BUILDING_ID\" AND \"BUILDING_APARTMENT\".\"APARTMENT_APARTMENT_ID_FLAT_ID\"=ap.\"FLAT_ID\")} " +
+                "FROM \"BUILDING_APARTMENT\" WITH UPDATE INSERT DELETE WHERE b.\"ID\"=\"BUILDING_APARTMENT\".\"BUILDING_ID\"]} " +
+                "FROM \"TBL_BUILDING\" b WITH UPDATE INSERT DELETE "
     }
 
     def "test_generate_create_view_with_no_annotation_left_for_a_table"() {
@@ -513,11 +516,11 @@ class OracleJdbcJsonViewSpec extends Specification {
         SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
         String[] sql = builder.buildCreateTableStatements(getRuntimePersistentEntity(BuildingDeleteOnlyApartmentsView))
         then: "the apartment table gets no WITH, because DELETE is its only declared operation and it can't take it"
-        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW building_delete_only_apartments_view AS SELECT JSON {'_id': b.id, " +
-                "'apartments': [SELECT JSON {UNNEST (SELECT JSON {'buildingId': ap.building_id, 'flatId': ap.flat_id} FROM TBL_APARTMENT ap " +
-                "WHERE building_apartment.\"APARTMENT_APARTMENT_ID_BUILDING_ID\"=ap.\"BUILDING_ID\" AND building_apartment.\"APARTMENT_APARTMENT_ID_FLAT_ID\"=ap.\"FLAT_ID\")} " +
-                "FROM building_apartment WITH UPDATE INSERT DELETE WHERE b.\"ID\"=building_apartment.\"BUILDING_ID\"]} " +
-                "FROM TBL_BUILDING b WITH UPDATE INSERT DELETE "
+        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW \"BUILDING_DELETE_ONLY_APARTMENTS_VIEW\" AS SELECT JSON {'_id': b.\"ID\", " +
+                "'apartments': [SELECT JSON {UNNEST (SELECT JSON {'buildingId': ap.\"BUILDING_ID\", 'flatId': ap.\"FLAT_ID\"} FROM \"TBL_APARTMENT\" ap " +
+                "WHERE \"BUILDING_APARTMENT\".\"APARTMENT_APARTMENT_ID_BUILDING_ID\"=ap.\"BUILDING_ID\" AND \"BUILDING_APARTMENT\".\"APARTMENT_APARTMENT_ID_FLAT_ID\"=ap.\"FLAT_ID\")} " +
+                "FROM \"BUILDING_APARTMENT\" WITH UPDATE INSERT DELETE WHERE b.\"ID\"=\"BUILDING_APARTMENT\".\"BUILDING_ID\"]} " +
+                "FROM \"TBL_BUILDING\" b WITH UPDATE INSERT DELETE "
 
         and: "the schema generator created the view"
         countRows("SELECT COUNT(*) FROM user_objects WHERE object_name = 'BUILDING_DELETE_ONLY_APARTMENTS_VIEW'") == 1
@@ -564,11 +567,11 @@ class OracleJdbcJsonViewSpec extends Specification {
         SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
         String[] sql = builder.buildCreateTableStatements(getRuntimePersistentEntity(TenantView))
         then:
-        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW tenant_view AS SELECT JSON {'_id': tn.id, 'name': tn.name, " +
-                "'apartments': [SELECT JSON {UNNEST (SELECT JSON {'buildingId': ap.building_id, 'flatId': ap.flat_id} FROM TBL_APARTMENT ap WITH UPDATE INSERT  " +
-                "WHERE tenant_apartment.\"APARTMENT_APARTMENT_ID_BUILDING_ID\"=ap.\"BUILDING_ID\" AND tenant_apartment.\"APARTMENT_APARTMENT_ID_FLAT_ID\"=ap.\"FLAT_ID\")} " +
-                "FROM tenant_apartment WITH UPDATE INSERT DELETE WHERE tn.\"ID\"=tenant_apartment.\"TENANT_ID\"]} " +
-                "FROM TBL_TENANT tn WITH UPDATE INSERT DELETE "
+        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW \"TENANT_VIEW\" AS SELECT JSON {'_id': tn.\"ID\", 'name': tn.\"NAME\", " +
+                "'apartments': [SELECT JSON {UNNEST (SELECT JSON {'buildingId': ap.\"BUILDING_ID\", 'flatId': ap.\"FLAT_ID\"} FROM \"TBL_APARTMENT\" ap WITH UPDATE INSERT  " +
+                "WHERE \"TENANT_APARTMENT\".\"APARTMENT_APARTMENT_ID_BUILDING_ID\"=ap.\"BUILDING_ID\" AND \"TENANT_APARTMENT\".\"APARTMENT_APARTMENT_ID_FLAT_ID\"=ap.\"FLAT_ID\")} " +
+                "FROM \"TENANT_APARTMENT\" WITH UPDATE INSERT DELETE WHERE tn.\"ID\"=\"TENANT_APARTMENT\".\"TENANT_ID\"]} " +
+                "FROM \"TBL_TENANT\" tn WITH UPDATE INSERT DELETE "
     }
 
     def "test_tenant_view_with_several_apartments"() {
@@ -605,11 +608,11 @@ class OracleJdbcJsonViewSpec extends Specification {
         when:
         SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
         String[] sql = builder.buildCreateTableStatements(getRuntimePersistentEntity(ShelfView))
-        then:
-        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW shelf_view AS SELECT JSON {'_id': sh.id, " +
-                "'books': [SELECT JSON {UNNEST (SELECT JSON {'id': bk.id, 'title': bk.title} FROM TBL_BOOK bk WITH UPDATE INSERT  " +
-                "WHERE shelf_book.\"BOOK_ID\"=bk.\"ID\")} " +
-                "FROM shelf_book WITH UPDATE INSERT DELETE WHERE sh.\"ID\"=shelf_book.\"SHELF_ID\"]} " +
+        then: "Shelf and its join table are not quoted, while each column of Book is quoted, in the join conditions too"
+        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW \"SHELF_VIEW\" AS SELECT JSON {'_id': sh.id, " +
+                "'books': [SELECT JSON {UNNEST (SELECT JSON {'id': bk.\"BOOK-KEY\", 'title': bk.\"TITLE\"} FROM \"TBL_BOOK\" bk WITH UPDATE INSERT  " +
+                "WHERE shelf_book.book_id=bk.\"BOOK-KEY\")} " +
+                "FROM shelf_book WITH UPDATE INSERT DELETE WHERE sh.id=shelf_book.shelf_id]} " +
                 "FROM TBL_SHELF sh WITH UPDATE INSERT DELETE "
     }
 
@@ -632,7 +635,21 @@ class OracleJdbcJsonViewSpec extends Specification {
 
         then: "its join table rows are deleted and the books are kept"
         countRows("SELECT COUNT(*) FROM shelf_book WHERE shelf_id = " + shelfView.getId()) == 0
-        countRows("SELECT COUNT(*) FROM TBL_BOOK WHERE id IN (1, 2)") == 2
+        countRows("SELECT COUNT(*) FROM TBL_BOOK WHERE \"BOOK-KEY\" IN (1, 2)") == 2
+    }
+
+    def "test_generate_create_view_for_many_to_one_between_quoted_and_not_quoted_tables"() {
+        when:
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
+        String[] sql = builder.buildCreateTableStatements(getRuntimePersistentEntity(LoanView))
+        then: "the foreign key of Loan is not quoted, while the id of Book is quoted, in the join condition too"
+        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW \"LOAN_VIEW\" AS SELECT JSON {'_id': ln.id, " +
+                "'book': (SELECT JSON {'id': bk.\"BOOK-KEY\", 'title': bk.\"TITLE\"} FROM \"TBL_BOOK\" bk WITH UPDATE  " +
+                "WHERE ln.book_id=bk.\"BOOK-KEY\")} " +
+                "FROM TBL_LOAN ln WITH UPDATE INSERT DELETE "
+
+        and: "the schema generator created the view"
+        countRows("SELECT COUNT(*) FROM user_objects WHERE object_name = 'LOAN_VIEW'") == 1
     }
 
     def "test_generate_create_view_for_inverse_side_of_many_to_many"() {
@@ -640,11 +657,11 @@ class OracleJdbcJsonViewSpec extends Specification {
         SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
         String[] sql = builder.buildCreateTableStatements(getRuntimePersistentEntity(ClubView))
         then: "the view reads the join table that the owning side, Member.clubs, defines, named by Member's naming strategy"
-        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW club_view AS SELECT JSON {'_id': cl.id, 'name': cl.name, " +
-                "'members': [SELECT JSON {UNNEST (SELECT JSON {'id': mbr.id, 'name': mbr.name} FROM TBL_MEMBER mbr WITH UPDATE INSERT  " +
-                "WHERE memberclub.\"MEMBERID\"=mbr.\"ID\")} " +
-                "FROM memberclub WITH UPDATE INSERT DELETE WHERE cl.\"ID\"=memberclub.\"CLUBID\"]} " +
-                "FROM TBL_CLUB cl WITH UPDATE INSERT DELETE "
+        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW \"CLUB_VIEW\" AS SELECT JSON {'_id': cl.\"ID\", 'name': cl.\"NAME\", " +
+                "'members': [SELECT JSON {UNNEST (SELECT JSON {'id': mbr.\"ID\", 'name': mbr.\"NAME\", 'nickName': mbr.\"NICKNAME\"} FROM \"TBL_MEMBER\" mbr WITH UPDATE INSERT  " +
+                "WHERE \"MEMBERCLUB\".\"MEMBERID\"=mbr.\"ID\")} " +
+                "FROM \"MEMBERCLUB\" WITH UPDATE INSERT DELETE WHERE cl.\"ID\"=\"MEMBERCLUB\".\"CLUBID\"]} " +
+                "FROM \"TBL_CLUB\" cl WITH UPDATE INSERT DELETE "
     }
 
     def "test_club_view_with_several_members"() {
@@ -652,7 +669,7 @@ class OracleJdbcJsonViewSpec extends Specification {
         def clubView = new ClubView()
         clubView.setName("Chess")
         clubViewRepository.save(clubView)
-        clubView.setMembers([new MemberSubView(11, "Ana"), new MemberSubView(12, "Ivo")])
+        clubView.setMembers([new MemberSubView(11, "Ana", "Annie"), new MemberSubView(12, "Ivo", "Ivko")])
 
         when:
         clubViewRepository.update(clubView)
@@ -661,6 +678,8 @@ class OracleJdbcJsonViewSpec extends Specification {
         then:
         result.present
         result.get().members.collect { it.name() }.sort() == ["Ana", "Ivo"]
+        result.get().members.collect { it.nickName() }.sort() == ["Annie", "Ivko"]
+        countRows("SELECT COUNT(*) FROM TBL_MEMBER WHERE nickname IN ('Annie', 'Ivko')") == 2
         countRows("SELECT COUNT(*) FROM memberclub WHERE clubid = " + clubView.getId()) == 2
 
         when: "the club is deleted through the view"
@@ -725,10 +744,36 @@ class OracleJdbcJsonViewSpec extends Specification {
         PersistentEntity crocodileViewEntity = getRuntimePersistentEntity(CrocodileView)
         String[] sql = builder.buildCreateTableStatements(crocodileViewEntity)
         then:
-        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW crocodile_view AS SELECT JSON " +
-                "{'_id': crocodile_.id, 'name': crocodile_.name, 'characteristics': " +
-                "(JSON {'weight': crocodile_.weight, 'length': crocodile_.length})" +
-                "} FROM crocodile crocodile_ WITH UPDATE INSERT DELETE "
+        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW \"CROCODILE_VIEW\" AS SELECT JSON " +
+                "{'_id': crocodile_.\"ID\", 'name': crocodile_.\"NAME\", 'characteristics': " +
+                "(JSON {'weight': crocodile_.\"WEIGHT\", 'length': crocodile_.\"LENGTH\"})" +
+                "} FROM \"CROCODILE\" crocodile_ WITH UPDATE INSERT DELETE "
+    }
+
+    def "test_generate_create_parcel_view"() {
+        when:
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE)
+        String[] sql = builder.buildCreateTableStatements(getRuntimePersistentEntity(ParcelView))
+        then: "embedded properties read the columns named with their object's prefix, and properties of an object only the view has read the entity's columns"
+        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW \"PARCEL_VIEW\" AS SELECT JSON {'_id': pc.\"ID\", 'label': pc.\"PARCEL_LABEL\", " +
+                "'details': (JSON {'label': pc.\"LABEL\"}), 'destination': (JSON {'city': pc.\"DEST_CITY\"}), " +
+                "'parties': (JSON {'sender': pc.\"SENDER\"})} " +
+                "FROM \"TBL_PARCEL\" pc WITH UPDATE INSERT DELETE "
+    }
+
+    def "test_parcel_view_with_embedded_objects"() {
+        when:
+        def saved = parcelViewRepository.save(new ParcelView(null, "P-1", new Parcel.Details("Fragile"),
+                new Parcel.Destination("Split"), new ParcelView.Parties("Ana")))
+        def result = parcelViewRepository.findById(saved.id())
+
+        then:
+        result.present
+        result.get().label() == "P-1"
+        result.get().details().label() == "Fragile"
+        result.get().destination().city() == "Split"
+        result.get().parties().sender() == "Ana"
+        countRows("SELECT COUNT(*) FROM TBL_PARCEL WHERE parcel_label = 'P-1' AND label = 'Fragile' AND dest_city = 'Split' AND sender = 'Ana'") == 1
     }
 
     def "test_flex_column_table"() {
@@ -738,7 +783,7 @@ class OracleJdbcJsonViewSpec extends Specification {
         PersistentEntity personEntity = getRuntimePersistentEntity(Person)
         String[] sql = builder.buildCreateTableStatements(personEntity)
         then:
-        sql[0] == "CREATE TABLE \"TBL_PERSON\" (\"ID\" NUMBER(19) GENERATED BY DEFAULT ON NULL AS IDENTITY (MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE) PRIMARY KEY,\"FIRSTNAME\" VARCHAR(255) NOT NULL,\"LASTNAME\" VARCHAR(255) NOT NULL,\"EXTRAS\" JSON(OBJECT) NOT NULL)"
+        sql[0] == "CREATE TABLE \"TBL_PERSON\" (\"ID\" NUMBER(19) GENERATED BY DEFAULT ON NULL AS IDENTITY (MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE) PRIMARY KEY,\"FIRSTNAME\" VARCHAR(255) NOT NULL,\"LASTNAME\" VARCHAR(255) NOT NULL,\"EXTRAFIELDS\" JSON(OBJECT) NOT NULL)"
     }
 
     def "test_flex_column_view"() {
@@ -748,7 +793,7 @@ class OracleJdbcJsonViewSpec extends Specification {
         PersistentEntity personViewEntity = getRuntimePersistentEntity(PersonView)
         String[] sql = builder.buildCreateTableStatements(personViewEntity)
         then:
-        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW person_view AS SELECT JSON {'_id': p.id, 'firstname': p.firstname, 'lastname': p.lastname, p.extras AS FLEX COLUMN} FROM TBL_PERSON p WITH UPDATE INSERT DELETE "
+        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW \"PERSON_VIEW\" AS SELECT JSON {'_id': p.\"ID\", 'firstname': p.\"FIRSTNAME\", 'lastname': p.\"LASTNAME\", p.\"EXTRAFIELDS\" AS FLEX COLUMN} FROM \"TBL_PERSON\" p WITH UPDATE INSERT DELETE "
     }
 
     def "test_insert_flex_column"() {
@@ -758,8 +803,10 @@ class OracleJdbcJsonViewSpec extends Specification {
         def personView = new PersonView("Dimitrije", "Zdravkovic", map)
         personViewRepository.save(personView)
         def result = personViewRepository.findAll()
-        then:
+        then: "the field that the view doesn't map is stored in the flex column, which Person's naming strategy names"
         result.size() == 1
+        result[0].extraFields.extra_key == "extra_value"
+        countRows("SELECT COUNT(*) FROM TBL_PERSON WHERE JSON_VALUE(extrafields, '\$.extra_key') = 'extra_value'") == 1
     }
 
     def "test_json_unwrapped_embedded_sql"() {
@@ -769,7 +816,7 @@ class OracleJdbcJsonViewSpec extends Specification {
         PersistentEntity airplaneViewEntity = getRuntimePersistentEntity(AirplaneView)
         String[] sql = builder.buildCreateTableStatements(airplaneViewEntity)
         then:
-        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW airplane_view AS SELECT JSON {'_id': airplane_.id, 'model': airplane_.model, 'year': airplane_.year} FROM TBL_AIRPLANE airplane_ WITH UPDATE INSERT DELETE "
+        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW \"AIRPLANE_VIEW\" AS SELECT JSON {'_id': airplane_.\"ID\", 'model': airplane_.\"MODEL\", 'year': airplane_.\"YEAR\"} FROM \"TBL_AIRPLANE\" airplane_ WITH UPDATE INSERT DELETE "
     }
 
     def "test_json_unwrapped_embedded_usage"() {
@@ -789,7 +836,7 @@ class OracleJdbcJsonViewSpec extends Specification {
         PersistentEntity carViewEntity = getRuntimePersistentEntity(CarView)
         String[] sql = builder.buildCreateTableStatements(carViewEntity)
         then:
-        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW car_view AS SELECT JSON {'_id': car.id, UNNEST (SELECT JSON {'id': cd.id, 'model': cd.model, 'year': cd.year} FROM TBL_CAR_DETAILS cd WITH UPDATE INSERT  WHERE car.\"CAR_DETAILS_ID\"=cd.\"ID\")} FROM TBL_CAR car WITH UPDATE INSERT DELETE "
+        sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW \"CAR_VIEW\" AS SELECT JSON {'_id': car.\"ID\", UNNEST (SELECT JSON {'id': cd.\"ID\", 'model': cd.\"MODEL\", 'year': cd.\"YEAR\"} FROM \"TBL_CAR_DETAILS\" cd WITH UPDATE INSERT  WHERE car.\"CAR_DETAILS_ID\"=cd.\"ID\")} FROM \"TBL_CAR\" car WITH UPDATE INSERT DELETE "
     }
 
     def "test_json_unwrapped_subview_usage"() {

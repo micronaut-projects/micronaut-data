@@ -7,7 +7,10 @@ import io.micronaut.data.annotation.Relation;
 
 import java.util.List;
 
-@MappedEntity(value = "TBL_SHELF", alias = "sh")
+/**
+ * Not escaped, so its table, its join table and their columns are not quoted, while {@link Book} is quoted.
+ */
+@MappedEntity(value = "TBL_SHELF", alias = "sh", escape = false)
 public record Shelf(
     @Id
     @GeneratedValue(GeneratedValue.Type.IDENTITY)

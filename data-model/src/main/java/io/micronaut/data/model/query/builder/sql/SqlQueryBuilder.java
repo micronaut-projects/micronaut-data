@@ -44,7 +44,6 @@ import io.micronaut.data.annotation.JsonSubView;
 import io.micronaut.data.annotation.JsonViewField;
 import io.micronaut.data.annotation.JsonViewGenerated;
 import io.micronaut.data.annotation.MappedProperty;
-import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.Srid;
 import io.micronaut.data.annotation.sql.JoinColumn;
@@ -618,13 +617,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             return;
         }
         PersistentEntity entity = entityOptional.get();
-        String viewName = viewEntity.getPersistedName();
-        if (viewEntity.getAnnotationMetadata().hasAnnotation(MappedEntity.class)) {
-            String schema = viewEntity.getAnnotationMetadata().stringValue(MappedEntity.class, "schema").get();
-            viewName = schema + "." + viewName;
-        }
+        // Named like the queries and the DROP statement name the view: with its schema, and quoted unless escaping is off
         StringBuilder sb = new StringBuilder("CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW ")
-            .append(viewName)
+            .append(getTableName(viewEntity))
             .append(AS_CLAUSE)
             .append(SELECT_JSON_CLAUSE)
             .append(OPEN_CURLY_BRACKET);
@@ -648,7 +643,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
         Iterator<PersistentProperty> it = columns.iterator();
         while (it.hasNext()) {
-            createJsonViewColumnQuery(sb, it.next(), entity, alias);
+            createJsonViewColumnQuery(sb, it.next(), entity, alias, List.of());
             if (it.hasNext()) {
                 sb.append(COMMA)
                     .append(SPACE);
@@ -658,7 +653,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         appendJsonViewHiddenFields(sb, viewEntity, viewAnnotation, entity, alias);
         sb.append(CLOSE_CURLY_BRACKET)
             .append(FROM_CLAUSE)
-            .append(entity.getPersistedName())
+            .append(getTableName(entity))
             .append(SPACE)
             .append(alias);
         appendJsonViewTableAnnotations(sb, viewEntity, viewAnnotation, deleteAllowed);
@@ -684,24 +679,16 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             String viewPropertyName = identity.getAnnotationMetadata().stringValue(SERDE_CONFIG_ANNOTATION, "property")
                 .orElse(identity.getAnnotationMetadata().stringValue(JSON_PROPERTY_ANNOTATION)
                     .orElse(identity.getName()));
-            String entityPersistedPropertyName = "";
-            if (identity.getAnnotationMetadata().hasAnnotation(MappedProperty.class)) {
-                entityPersistedPropertyName = identity.getPersistedName();
-            } else if (identity.getAnnotationMetadata().hasAnnotation(EmbeddedId.class)) {
+            if (!identity.getAnnotationMetadata().hasAnnotation(MappedProperty.class)
+                && identity.getAnnotationMetadata().hasAnnotation(EmbeddedId.class)) {
                 processEmbeddedIdPropertyForJsonView(sb, entity, identity, alias, it, columns, isTopLevel);
                 continue;
-            } else {
-                PersistentProperty property = entity.getPropertyByName(viewPropertyName);
-                if (property != null) {
-                    entityPersistedPropertyName = property.getPersistedName();
-                }
             }
+            String column = Objects.requireNonNullElse(jsonViewColumnName(identity, viewPropertyName, entity, List.of()), "");
             sb.append("'")
                 .append(viewPropertyName)
                 .append("': ")
-                .append(alias)
-                .append(DOT)
-                .append(entityPersistedPropertyName);
+                .append(jsonViewColumn(alias, column, entity));
             if (it.hasNext() || !columns.isEmpty()) {
                 sb.append(COMMA)
                     .append(SPACE);
@@ -725,9 +712,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 .append("'")
                 .append(hiddenPropertyName)
                 .append("': ")
-                .append(alias)
-                .append(DOT)
-                .append(hiddenProperty.getPersistedName())
+                .append(jsonViewColumn(alias, hiddenProperty.getPersistedName(), entity))
                 .append(" HIDDEN");
         }
     }
@@ -753,38 +738,78 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
     }
 
-    private void createJsonViewColumnQuery(StringBuilder sb, PersistentProperty column, PersistentEntity entity, String alias) {
+    // A column of the entity's table as the view reads it: after the alias of the table, and quoted like schema
+    // generation quotes it, so that names such as reserved words work
+    private String jsonViewColumn(String alias, String column, PersistentEntity entity) {
+        return alias + DOT + (shouldEscape(entity) ? quote(column) : column);
+    }
+
+    // The column a property of a view or sub view reads: the one its @MappedProperty names, otherwise the column of the
+    // entity property at the same path, named like schema generation names it, by the entity's naming strategy and with
+    // the prefix of the embedded objects on the path. The processor adds @MappedProperty without a name to most
+    // properties, so only a name given to it counts.
+    // embeddedPath has the names of the embedded properties that contain the property, from the entity down
+    private @Nullable String jsonViewColumnName(PersistentProperty viewProperty,
+                                                String jsonPropertyName,
+                                                PersistentEntity entity,
+                                                List<String> embeddedPath) {
+        AnnotationMetadata annotationMetadata = viewProperty.getAnnotationMetadata();
+        if (annotationMetadata.stringValue(MappedProperty.class).filter(StringUtils::isNotEmpty).isPresent()) {
+            return viewProperty.getPersistedName();
+        }
+        PersistentPropertyPath entityPath = entityPropertyPath(entity, embeddedPath, viewProperty.getName());
+        if (entityPath == null) {
+            entityPath = entityPropertyPath(entity, embeddedPath, jsonPropertyName);
+        }
+        if (entityPath != null) {
+            return getMappedName(entity.getNamingStrategy(), entityPath);
+        }
+        return annotationMetadata.hasAnnotation(MappedProperty.class) ? viewProperty.getPersistedName() : null;
+    }
+
+    // The entity property at the same path as the view property. A view can group properties into embedded objects that
+    // the entity doesn't have: those levels are not on the entity's path, the levels the entity has are.
+    private static @Nullable PersistentPropertyPath entityPropertyPath(PersistentEntity entity, List<String> embeddedPath, String propertyName) {
+        List<String> path = new ArrayList<>(embeddedPath.size() + 1);
+        PersistentEntity owner = entity;
+        for (String embeddedName : embeddedPath) {
+            if (owner.getPropertyByName(embeddedName) instanceof Association association && association.isEmbedded()) {
+                path.add(embeddedName);
+                owner = association.getAssociatedEntity();
+            }
+        }
+        path.add(propertyName);
+        return entity.getPropertyPath(path.toArray(new String[0]));
+    }
+
+    private void createJsonViewColumnQuery(StringBuilder sb,
+                                           PersistentProperty column,
+                                           PersistentEntity entity,
+                                           String alias,
+                                           List<String> embeddedPath) {
         AnnotationMetadata annotationMetadata = column.getAnnotationMetadata();
         String columnPropertyName = annotationMetadata.stringValue(SERDE_CONFIG_ANNOTATION, "property")
             .orElse(annotationMetadata.stringValue(JSON_PROPERTY_ANNOTATION)
                 .orElse(column.getName()));
         if (column instanceof Association association) {
-            processAssociation(sb, association, entity, columnPropertyName);
+            processAssociation(sb, association, entity, columnPropertyName, embeddedPath);
         } else if (annotationMetadata.hasAnnotation(JsonViewGenerated.class)) {
             createJsonViewGeneratedColumnQuery(sb, column, columnPropertyName, alias);
         } else if (column.getDataType() != DataType.OBJECT) {
-            String entityPersistedPropertyName;
-            if (annotationMetadata.hasAnnotation(MappedProperty.class)) {
-                entityPersistedPropertyName = column.getPersistedName();
-            } else {
-                PersistentProperty property = entity.getPropertyByName(columnPropertyName);
-                if (property == null) {
-                    return;
-                }
-                entityPersistedPropertyName = property.getPersistedName();
+            String entityColumn = jsonViewColumnName(column, columnPropertyName, entity, embeddedPath);
+            if (entityColumn == null) {
+                return;
             }
             sb.append("'")
                 .append(columnPropertyName)
                 .append("': ")
-                .append(alias)
-                .append(DOT)
-                .append(entityPersistedPropertyName);
+                .append(jsonViewColumn(alias, entityColumn, entity));
             appendJsonViewFieldAnnotations(sb, annotationMetadata);
         } else {
             if (isFlexColumn(column)) {
-                sb.append(alias)
-                    .append(DOT)
-                    .append(column.getPersistedName())
+                String entityColumn = Objects.requireNonNullElse(
+                    jsonViewColumnName(column, columnPropertyName, entity, embeddedPath), column.getPersistedName());
+                sb.append(jsonViewColumn(alias, entityColumn, entity))
                     .append(AS_CLAUSE)
                     .append(FLEX_COLUMN);
             }
@@ -830,12 +855,15 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
     }
 
-    private String createJsonEmbeddedProperties(PersistentEntity entity, Association association) {
+    // embeddedPath has the names of the embedded properties that contain this one, which the columns of its properties are named after
+    private String createJsonEmbeddedProperties(PersistentEntity entity, Association association, List<String> embeddedPath) {
         PersistentEntity embedded = association.getAssociatedEntity();
+        List<String> propertiesPath = new ArrayList<>(embeddedPath);
+        propertiesPath.add(association.getName());
         StringBuilder sb = new StringBuilder();
         Iterator<PersistentProperty> properties = ((Collection<PersistentProperty>) embedded.getPersistentProperties()).iterator();
         while (properties.hasNext()) {
-            createJsonViewColumnQuery(sb, properties.next(), entity, entity.getAliasName());
+            createJsonViewColumnQuery(sb, properties.next(), entity, entity.getAliasName(), propertiesPath);
             if (properties.hasNext()) {
                 sb.append(COMMA).append(SPACE);
             }
@@ -891,9 +919,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             sb.append("'")
                 .append(propertyName)
                 .append("': ")
-                .append(alias)
-                .append(DOT)
-                .append(propertyPersistedName);
+                .append(jsonViewColumn(alias, propertyPersistedName, entity));
             if (i != fields.length - 1) {
                 sb.append(COMMA)
                     .append(SPACE);
@@ -908,7 +934,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
     }
 
-    private void processAssociation(StringBuilder sb, Association association, PersistentEntity entity, String columnPropertyName) {
+    private void processAssociation(StringBuilder sb,
+                                    Association association,
+                                    PersistentEntity entity,
+                                    String columnPropertyName,
+                                    List<String> embeddedPath) {
         Relation.Kind kind = association.getKind();
         Optional<PersistentEntity> associatedEntityOptional = getJsonSubViewEntity(association.getAssociatedEntity());
         if (kind != Kind.EMBEDDED && associatedEntityOptional.isEmpty()) {
@@ -932,7 +962,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             }
             case EMBEDDED -> {
                 if (association.getAnnotationMetadata().hasAnnotation(JsonUnwrapped.class)) {
-                    sb.append(createJsonEmbeddedProperties(entity, association));
+                    sb.append(createJsonEmbeddedProperties(entity, association, embeddedPath));
                 } else {
                     sb.append("'")
                         .append(columnPropertyName)
@@ -940,7 +970,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                         .append(OPEN_BRACKET)
                         .append("JSON ")
                         .append(OPEN_CURLY_BRACKET)
-                        .append(createJsonEmbeddedProperties(entity, association))
+                        .append(createJsonEmbeddedProperties(entity, association, embeddedPath))
                         .append(CLOSE_CURLY_BRACKET)
                         .append(CLOSE_BRACKET);
                 }
@@ -996,21 +1026,29 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         NamingStrategy joinTableNamingStrategy = owningAssociation.getOwner().getNamingStrategy();
         AnnotationMetadata annotationMetadata = owningAssociation.getAnnotationMetadata();
         PersistentEntity targetEntity = entityAssociation.getAssociatedEntity();
-        boolean escape = shouldEscape(entity);
+        // Schema generation creates the join table in the schema of @JoinTable, or else of the entity that owns it,
+        // and quotes it and its columns like that entity's table. Each column of a join condition is quoted like the
+        // table it belongs to.
+        PersistentEntity joinTableOwner = owningAssociation.getOwner();
+        boolean escapeJoinTable = shouldEscape(joinTableOwner);
 
-        List<String> ownerColumns = resolveJoinTableAssociatedColumns(annotationMetadata, isAssociationOwner, entity, entity.getNamingStrategy());
-        List<String> ownerJoinTableColumns = SqlQueryBuilderUtils.resolveJoinTableJoinColumns(annotationMetadata, isAssociationOwner, entity, joinTableNamingStrategy);
-        List<String> targetColumns = resolveJoinTableAssociatedColumns(annotationMetadata, !isAssociationOwner, targetEntity, targetEntity.getNamingStrategy());
-        List<String> targetJoinTableColumns = SqlQueryBuilderUtils.resolveJoinTableJoinColumns(annotationMetadata, !isAssociationOwner, targetEntity, joinTableNamingStrategy);
-        if (escape) {
-            ownerColumns = ownerColumns.stream().map(this::quote).toList();
-            ownerJoinTableColumns = ownerJoinTableColumns.stream().map(this::quote).toList();
-            targetColumns = targetColumns.stream().map(this::quote).toList();
-            targetJoinTableColumns = targetJoinTableColumns.stream().map(this::quote).toList();
-        }
+        List<String> ownerColumns = quoteColumns(shouldEscape(entity),
+            resolveJoinTableAssociatedColumns(annotationMetadata, isAssociationOwner, entity, entity.getNamingStrategy()));
+        List<String> ownerJoinTableColumns = quoteColumns(escapeJoinTable,
+            SqlQueryBuilderUtils.resolveJoinTableJoinColumns(annotationMetadata, isAssociationOwner, entity, joinTableNamingStrategy));
+        List<String> targetColumns = quoteColumns(shouldEscape(targetEntity),
+            resolveJoinTableAssociatedColumns(annotationMetadata, !isAssociationOwner, targetEntity, targetEntity.getNamingStrategy()));
+        List<String> targetJoinTableColumns = quoteColumns(escapeJoinTable,
+            SqlQueryBuilderUtils.resolveJoinTableJoinColumns(annotationMetadata, !isAssociationOwner, targetEntity, joinTableNamingStrategy));
         String joinTableName = annotationMetadata
             .stringValue(SqlQueryBuilderUtils.ANN_JOIN_TABLE, "name")
             .orElseGet(() -> getMappedName(joinTableNamingStrategy, owningAssociation));
+        String joinTableSchema = annotationMetadata
+            .stringValue(SqlQueryBuilderUtils.ANN_JOIN_TABLE, SqlMembers.SCHEMA)
+            .filter(StringUtils::isNotEmpty)
+            .orElseGet(() -> SqlQueryBuilderUtils.getSchemaName(joinTableOwner));
+        String joinTable = getObjectName(joinTableSchema, joinTableName, escapeJoinTable, true);
+        String joinTableQualifier = escapeJoinTable ? quote(joinTableName, true) : joinTableName;
 
         sb.append("'")
             .append(columnPropertyName)
@@ -1023,15 +1061,19 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             .append(OPEN_CURLY_BRACKET);
         createJsonViewQuery(sb, association.getAssociatedEntity(), associatedEntity, false, false);
         sb.append(WHERE_CLAUSE);
-        buildJoinColumnMatchPart(sb, associatedEntity.getAliasName(), joinTableName, targetJoinTableColumns, targetColumns);
+        buildJoinColumnMatchPart(sb, associatedEntity.getAliasName(), joinTableQualifier, targetJoinTableColumns, targetColumns);
         sb.append(CLOSE_BRACKET)
             .append(CLOSE_CURLY_BRACKET)
             .append(FROM_CLAUSE)
-            .append(joinTableName)
+            .append(joinTable)
             .append(" WITH UPDATE INSERT DELETE")
             .append(WHERE_CLAUSE);
-        buildJoinColumnMatchPart(sb, joinTableName, entity.getAliasName(), ownerColumns, ownerJoinTableColumns);
+        buildJoinColumnMatchPart(sb, joinTableQualifier, entity.getAliasName(), ownerColumns, ownerJoinTableColumns);
         sb.append("]");
+    }
+
+    private List<String> quoteColumns(boolean escape, List<String> columns) {
+        return escape ? columns.stream().map(this::quote).toList() : columns;
     }
 
     private void addTable(SqlTableMapping table, Map<String, SqlTableMapping> sqlTableMappingByTableName) {
@@ -2259,6 +2301,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                       PersistentPropertyPath rightPropertyPath) {
 
         final boolean escape = shouldEscape(associationOwner);
+        boolean jsonView = queryState.baseQueryDefinition().persistentEntity().getAnnotationMetadata().hasAnnotation(JsonSubView.class);
+        // In a JSON view, the columns of the associated table are quoted like that table, the way schema generation
+        // creates it. Other queries keep quoting both sides like the owner's table.
+        final boolean escapeAssociated = jsonView ? shouldEscape(associatedEntity) : escape;
         List<String> onLeftColumns = new ArrayList<>();
         List<String> onRightColumns = new ArrayList<>();
 
@@ -2302,7 +2348,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 onRightColumns.add(column);
             });
         }
-        if (queryState.baseQueryDefinition().persistentEntity().getAnnotationMetadata().hasAnnotation(JsonSubView.class)) {
+        if (jsonView) {
             sb.append(WHERE_CLAUSE);
         }
         join(sb,
@@ -2312,7 +2358,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             rightTableAlias,
             leftTableAlias,
             escape ? onLeftColumns.stream().map(this::quote).toList() : onLeftColumns,
-            escape ? onRightColumns.stream().map(this::quote).toList() : onRightColumns);
+            escapeAssociated ? onRightColumns.stream().map(this::quote).toList() : onRightColumns);
     }
 
     private void join(StringBuilder builder,

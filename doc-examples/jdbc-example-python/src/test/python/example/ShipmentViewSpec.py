@@ -13,9 +13,9 @@ class ShipmentViewSpec:
     def dualityViewDefinition(self):
         sql = SqlQueryBuilder(Dialect.ORACLE).buildCreateTableStatements(PersistentEntity.of(ShipmentView))[0]
 
-        assert sql.startswith("CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW EU_SHIPMENT_VIEW AS SELECT JSON {"), sql
-        assert "'trackingCode': sh.tracking_code WITH NOUPDATE" in sql, sql
+        assert sql.startswith("CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW \"EU_SHIPMENT_VIEW\" AS SELECT JSON {"), sql
+        assert "'trackingCode': sh.\"TRACKING_CODE\" WITH NOUPDATE" in sql, sql
         assert "'cost': GENERATED USING PATH '$.weight * $.rate'" in sql, sql
         assert "'label': GENERATED USING (UPPER(sh.reference))" in sql, sql
-        assert "'weight': sh.weight HIDDEN, 'rate': sh.rate HIDDEN}" in sql, sql
+        assert "'weight': sh.\"WEIGHT\" HIDDEN, 'rate': sh.\"RATE\" HIDDEN}" in sql, sql
         assert sql.endswith("WHERE sh.country IN ('FR', 'DE', 'IT') WITH CHECK OPTION"), sql

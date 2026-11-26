@@ -12,11 +12,11 @@ class ShipmentViewSpec extends Specification {
         String sql = new SqlQueryBuilder(Dialect.ORACLE).buildCreateTableStatements(PersistentEntity.of(ShipmentView))[0]
 
         then:
-        sql.startsWith("CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW EU_SHIPMENT_VIEW AS SELECT JSON {")
-        sql.contains("'trackingCode': sh.tracking_code WITH NOUPDATE")
+        sql.startsWith("CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW \"EU_SHIPMENT_VIEW\" AS SELECT JSON {")
+        sql.contains("'trackingCode': sh.\"TRACKING_CODE\" WITH NOUPDATE")
         sql.contains('\'cost\': GENERATED USING PATH \'$.weight * $.rate\'')
         sql.contains("'label': GENERATED USING (UPPER(sh.reference))")
-        sql.contains("'weight': sh.weight HIDDEN, 'rate': sh.rate HIDDEN}")
+        sql.contains("'weight': sh.\"WEIGHT\" HIDDEN, 'rate': sh.\"RATE\" HIDDEN}")
         sql.endsWith("WHERE sh.country IN ('FR', 'DE', 'IT') WITH CHECK OPTION")
     }
 }
