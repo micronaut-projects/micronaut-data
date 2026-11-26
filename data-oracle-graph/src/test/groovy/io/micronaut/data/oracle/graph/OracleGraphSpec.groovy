@@ -4,6 +4,7 @@ import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
 import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.model.Limit
 import io.micronaut.data.model.Pageable
+import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.model.runtime.PagedQuery
 import io.micronaut.data.model.Sort
@@ -463,9 +464,42 @@ class OracleGraphSpec extends Specification {
         2L    | 1L
     }
 
-    void "the relationship queries the builder rejects still work as explicit queries"() {
-        expect: "NOT EXISTS is allowed outside GRAPH_TABLE, where a query with @Query can use it"
+    void "test the absence of a relationship outside GRAPH_TABLE"() {
+        expect: "Carol is the only account without an outgoing transfer"
+        bankGraph.findByTransfersIsEmpty()*.name() == ["Carol"]
+        bankGraph.countByTransfersIsEmpty() == 1
+        bankGraph.findByNameStartsWithAndTransfersIsEmpty("C")*.name() == ["Carol"]
+        bankGraph.findByNameStartsWithAndTransfersIsEmpty("A").isEmpty()
+
+        and: "an explicit query can do the same with NOT EXISTS"
         bankGraph.findWithoutTransfers()*.name() == ["Carol"]
+    }
+
+    void "a filter on a relationship returns each node once"() {
+        expect: "Alice has two transfers over 40"
+        bankGraph.findNameByTransfersAmountGreaterThan(40).sort() == ["Alice", "Bob"]
+    }
+
+    void "sort on a relationship keeps the nodes without it"() {
+        expect: "ascending by the lowest transfer, Carol has none and comes last"
+        bankGraph.findByIdGreaterThanOrderByTransfersAmount(0)*.name() == ["Dave", "Alice", "Bob", "Carol"]
+
+        and: "descending by the highest transfer, Carol comes first"
+        bankGraph.findByIdGreaterThanOrderByTransfersAmountDesc(0)*.name() == ["Carol", "Bob", "Alice", "Dave"]
+    }
+
+    void "the parameters of a selection and a filter are bound in their order in the query"() {
+        expect: "a filter on the node comes before the columns, a filter on a relationship after them"
+        bankGraph.findAll({ cb ->
+            def query = cb.createQuery(Long)
+            def root = query.from(Account)
+            query.select(cb.sum(root.get("id"), 10L)).where(cb.equal(root.get("name"), "Carol"))
+        } as CriteriaQueryBuilder<Long>) == [13L]
+        bankGraph.findAll({ cb ->
+            def query = cb.createQuery(Long)
+            def root = query.from(Account)
+            query.select(cb.sum(root.get("id"), 10L)).where(cb.greaterThan(root.join("transfers").get("amount"), 1000G))
+        } as CriteriaQueryBuilder<Long>) == [12L]
     }
 
     void "run a query with named parameters"() {

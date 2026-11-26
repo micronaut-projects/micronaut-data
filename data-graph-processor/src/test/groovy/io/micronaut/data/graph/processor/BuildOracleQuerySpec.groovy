@@ -129,7 +129,26 @@ interface SqlPersonRepository extends GenericRepository<Person, String> {
     Optional<Person> findById(String id);
 }
 """)
+        outside = buildRepository('test.OutsideRepository', """
+$MOVIES
+
+@TestOracleRepository
+@PropertyGraph("movies")
+interface OutsideRepository extends GenericRepository<Movie, String> {
+    List<Movie> findByDirectorsIsEmpty();
+    List<Movie> findByDirectorsIdIsEmpty();
+    List<Movie> findByRolesIsNull();
+    List<Movie> findByTitleAndDirectorsIsEmpty(String title);
+    List<Movie> findByDirectorsNameAndRolesIsEmpty(String name);
+    long countByDirectorsIsEmpty();
+    List<Movie> findByReleasedOrderByDirectorsBorn(Integer released);
+    List<Movie> findByDirectorsNameOrderByDirectorsBornDesc(String name);
+}
+""")
     }
+
+    @Shared
+    BeanDefinition<?> outside
 
     @Shared
     BeanDefinition<?> sqlPeople
@@ -156,15 +175,15 @@ interface SqlPersonRepository extends GenericRepository<Person, String> {
         'findByTitleEndsWith'                      | 1     | "SELECT * FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.title LIKE '%' || ?) COLUMNS ($COLUMNS))"
         'countByReleasedLessThan'                  | 1     | 'SELECT COUNT(*) AS "result" FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.released < ?) COLUMNS (n.title AS "c0"))'
         'existsByTitle'                            | 1     | 'SELECT TRUE AS "result" FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.title = ?) COLUMNS (n.title AS "c0")) FETCH NEXT 1 ROWS ONLY'
-        'findByDirectorsName'                      | 1     | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) WHERE (a0.name = ?) COLUMNS ($COLUMNS))"
-        'findByRolesIsNotEmpty'                    | 0     | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[ar0 IS ACTED_IN]- (a0 IS Person) WHERE (ar0.id IS NOT NULL) COLUMNS ($COLUMNS))"
-        'findByRolesRolesIsNotNull'                | 0     | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[ar0 IS ACTED_IN]- (a0 IS Person) WHERE (ar0.roles IS NOT NULL) COLUMNS ($COLUMNS))"
-        'findByRolesIsNotNull'                     | 0     | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[ar0 IS ACTED_IN]- (a0 IS Person) WHERE (ar0.id IS NOT NULL) COLUMNS ($COLUMNS))"
-        'findByRoles'                              | 1     | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[ar0 IS ACTED_IN]- (a0 IS Person) WHERE (ar0.id = ?) COLUMNS ($COLUMNS))"
-        'findByRolesPerson'                        | 1     | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[ar0 IS ACTED_IN]- (a0 IS Person) WHERE (a0.id = ?) COLUMNS ($COLUMNS))"
-        'findByTitle'                              | 1     | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) WHERE (n.title = ?) COLUMNS ($COLUMNS))"
-        'countByTitle'                             | 1     | 'SELECT COUNT(DISTINCT "c0") AS "result" FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) WHERE (n.title = ?) COLUMNS (n.title AS "c0"))'
-        'findTitleByReleased'                      | 1     | 'SELECT "c0" AS "title" FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) WHERE (n.released = ?) COLUMNS (n.title AS "c0"))'
+        'findByDirectorsName'                      | 1     | "SELECT * FROM GRAPH_TABLE (movies MATCH (n IS Movie) COLUMNS ($COLUMNS)) WHERE \"n__ID_\" IN (SELECT \"f0\" FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) WHERE (a0.name = ?) COLUMNS (n.title AS \"f0\")))"
+        'findByRolesIsNotEmpty'                    | 0     | "SELECT * FROM GRAPH_TABLE (movies MATCH (n IS Movie) COLUMNS ($COLUMNS)) WHERE \"n__ID_\" IN (SELECT \"f0\" FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[ar0 IS ACTED_IN]- (a0 IS Person) WHERE (ar0.id IS NOT NULL) COLUMNS (n.title AS \"f0\")))"
+        'findByRolesRolesIsNotNull'                | 0     | "SELECT * FROM GRAPH_TABLE (movies MATCH (n IS Movie) COLUMNS ($COLUMNS)) WHERE \"n__ID_\" IN (SELECT \"f0\" FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[ar0 IS ACTED_IN]- (a0 IS Person) WHERE (ar0.roles IS NOT NULL) COLUMNS (n.title AS \"f0\")))"
+        'findByRolesIsNotNull'                     | 0     | "SELECT * FROM GRAPH_TABLE (movies MATCH (n IS Movie) COLUMNS ($COLUMNS)) WHERE \"n__ID_\" IN (SELECT \"f0\" FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[ar0 IS ACTED_IN]- (a0 IS Person) WHERE (ar0.id IS NOT NULL) COLUMNS (n.title AS \"f0\")))"
+        'findByRoles'                              | 1     | "SELECT * FROM GRAPH_TABLE (movies MATCH (n IS Movie) COLUMNS ($COLUMNS)) WHERE \"n__ID_\" IN (SELECT \"f0\" FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[ar0 IS ACTED_IN]- (a0 IS Person) WHERE (ar0.id = ?) COLUMNS (n.title AS \"f0\")))"
+        'findByRolesPerson'                        | 1     | "SELECT * FROM GRAPH_TABLE (movies MATCH (n IS Movie) COLUMNS ($COLUMNS)) WHERE \"n__ID_\" IN (SELECT \"f0\" FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[ar0 IS ACTED_IN]- (a0 IS Person) WHERE (a0.id = ?) COLUMNS (n.title AS \"f0\")))"
+        'findByTitle'                              | 1     | "SELECT * FROM GRAPH_TABLE (movies MATCH (n IS Movie) COLUMNS ($COLUMNS)) WHERE \"n__ID_\" IN (SELECT \"f0\" FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) WHERE (n.title = ?) COLUMNS (n.title AS \"f0\")))"
+        'countByTitle'                             | 1     | "SELECT COUNT(DISTINCT \"c0\") AS \"result\" FROM GRAPH_TABLE (movies MATCH (n IS Movie) COLUMNS (n.title AS \"c0\")) WHERE \"c0\" IN (SELECT \"f0\" FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) WHERE (n.title = ?) COLUMNS (n.title AS \"f0\")))"
+        'findTitleByReleased'                      | 1     | "SELECT \"c0\" AS \"title\" FROM GRAPH_TABLE (movies MATCH (n IS Movie) COLUMNS (n.title AS \"c0\")) WHERE \"c0\" IN (SELECT \"f0\" FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) WHERE (n.released = ?) COLUMNS (n.title AS \"f0\")))"
         'findTitleByReleasedGreaterThan'           | 1     | 'SELECT "c0" AS "title" FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.released > ?) COLUMNS (n.title AS "c0"))'
         'findMaxReleased'                          | 0     | 'SELECT MAX("c0") AS "result" FROM GRAPH_TABLE (movies MATCH (n IS Movie) COLUMNS (n.released AS "c0"))'
         'findByReleasedLessThan'                   | 1     | 'SELECT "c0" AS "title", "c1" AS "released" FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.released < ?) COLUMNS (n.title AS "c0", n.released AS "c1"))'
@@ -192,8 +211,8 @@ interface SqlPersonRepository extends GenericRepository<Person, String> {
         method               | query
         'findById'           | "SELECT * FROM GRAPH_TABLE (people MATCH (n IS Person) WHERE (n.id = ?) COLUMNS ($PERSON_COLUMNS))"
         'findByName'         | "SELECT * FROM GRAPH_TABLE (people MATCH (n IS Person) WHERE (n.name = ?) COLUMNS ($PERSON_COLUMNS))"
-        'findByMentorName'   | "SELECT DISTINCT * FROM GRAPH_TABLE (people MATCH (n IS Person), (n) -[IS FOLLOWS]-> (a0 IS Person) WHERE (a0.name = ?) COLUMNS ($PERSON_COLUMNS))"
-        'findByMentor'       | "SELECT DISTINCT * FROM GRAPH_TABLE (people MATCH (n IS Person), (n) -[IS FOLLOWS]-> (a0 IS Person) WHERE (a0.id = ?) COLUMNS ($PERSON_COLUMNS))"
+        'findByMentorName'   | "SELECT * FROM GRAPH_TABLE (people MATCH (n IS Person) COLUMNS ($PERSON_COLUMNS)) WHERE \"n__ID_\" IN (SELECT \"f0\" FROM GRAPH_TABLE (people MATCH (n IS Person), (n) -[IS FOLLOWS]-> (a0 IS Person) WHERE (a0.name = ?) COLUMNS (n.id AS \"f0\")))"
+        'findByMentor'       | "SELECT * FROM GRAPH_TABLE (people MATCH (n IS Person) COLUMNS ($PERSON_COLUMNS)) WHERE \"n__ID_\" IN (SELECT \"f0\" FROM GRAPH_TABLE (people MATCH (n IS Person), (n) -[IS FOLLOWS]-> (a0 IS Person) WHERE (a0.id = ?) COLUMNS (n.id AS \"f0\")))"
     }
 
     void "test writes are compiled to SQL for the vertex table"() {
@@ -329,7 +348,7 @@ interface AccountRepository extends GenericRepository<Account, Long> {
 
         where:
         method                            | query                                                                                                                       | countQuery
-        'findByReleasedGreaterThanEquals' | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) WHERE (n.released >= ?) COLUMNS ($COLUMNS))" | 'SELECT COUNT(DISTINCT "c0") AS "result" FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) WHERE (n.released >= ?) COLUMNS (n.title AS "c0"))'
+        'findByReleasedGreaterThanEquals' | "SELECT * FROM GRAPH_TABLE (movies MATCH (n IS Movie) COLUMNS ($COLUMNS)) WHERE \"n__ID_\" IN (SELECT \"f0\" FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) WHERE (n.released >= ?) COLUMNS (n.title AS \"f0\")))" | 'SELECT COUNT(DISTINCT "c0") AS "result" FROM GRAPH_TABLE (movies MATCH (n IS Movie) COLUMNS (n.title AS "c0")) WHERE "c0" IN (SELECT "f0" FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) WHERE (n.released >= ?) COLUMNS (n.title AS "f0")))'
         'findByReleasedLessThanEquals'    | "SELECT * FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.released <= ?) COLUMNS ($COLUMNS))" | 'SELECT COUNT(DISTINCT "c0") AS "result" FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.released <= ?) COLUMNS (n.title AS "c0"))'
     }
 
@@ -595,13 +614,8 @@ interface UnsupportedRepository extends GenericRepository<Movie, String> {
 
         where:
         description            | method                                                              | message
-        'IsEmpty on a relationship' | 'List<Movie> findByDirectorsIsEmpty();'                             | 'using @Query instead'
-        'IsEmpty on a relationship identifier' | 'List<Movie> findByDirectorsIdIsEmpty();'                           | 'Testing that a relationship is absent is not supported for Oracle property graphs'
-        'IsNull on a relationship' | 'List<Movie> findByDirectorsIsNull();'                              | 'Testing that a relationship is absent is not supported for Oracle property graphs'
-        'IsNull on a relationship entity' | 'List<Movie> findByRolesIsNull();'                       | 'Testing that a relationship is absent is not supported for Oracle property graphs'
-        'IsNull on a nested to-one relationship' | 'List<Movie> findByDirectorsMentorIsNull();'                        | 'Testing that a relationship is absent is not supported for Oracle property graphs'
-        'sort on a relationship' | 'List<Movie> findByReleasedOrderByDirectorsBorn(Integer released);' | 'Sorting on a relationship is not supported for Oracle property graphs'
-        'sort on a bound relationship' | 'List<Movie> findByDirectorsNameOrderByDirectorsBorn(String name);' | 'Sorting on a relationship is not supported for Oracle property graphs'
+        'IsNull on a nested to-one relationship' | 'List<Movie> findByDirectorsMentorIsNull();'                        | 'only supported for Oracle property graphs on a relationship of the queried node'
+        'IsEmpty on a relationship in OR' | 'List<Movie> findByTitleOrDirectorsIsEmpty(String title);'          | 'not inside OR or NOT'
         'fetch joins'          | '@Join("directors") List<Movie> findByReleased(Integer released);' | 'not supported for Oracle property graphs'
         'shortest paths in SQL/PGQ' | '@PathLimit(3) Optional<GraphPath<Movie>> findShortestPath(String from, String to);' | 'Shortest paths are not supported by the SQL/PGQ dialect'
         'any-type paths in SQL/PGQ' | '@PathLimit(3) List<GraphPath<Movie>> findAllPaths(String from, String to);' | 'Paths over any relationship type are not supported by the SQL/PGQ dialect'
@@ -714,9 +728,26 @@ interface GuestRepository extends GenericRepository<Guest, Long> {
         getQuery(findMethod(repository, 'findRelationshipsByHosts')).contains('-[r IS MET]- (t IS Host) WHERE s.id = ? AND t.id = ? COLUMNS')
     }
 
-    void "test IsNull on a to-one relationship is rejected"() {
+    @Unroll
+    void "test SQL/PGQ tests the absence of a relationship and sorts on it outside GRAPH_TABLE for #method"() {
+        expect:
+        getQuery(findMethod(outside, method, arity)) == query
+
+        where:
+        method                                     | arity | query
+        'findByDirectorsIsEmpty'                   | 0     | "SELECT * FROM GRAPH_TABLE (movies MATCH (n IS Movie) COLUMNS ($COLUMNS)) WHERE \"n__ID_\" NOT IN (SELECT \"r0_0\" FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) COLUMNS (n.title AS \"r0_0\")))"
+        'findByDirectorsIdIsEmpty'                 | 0     | "SELECT * FROM GRAPH_TABLE (movies MATCH (n IS Movie) COLUMNS ($COLUMNS)) WHERE \"n__ID_\" NOT IN (SELECT \"r0_0\" FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) COLUMNS (n.title AS \"r0_0\")))"
+        'findByRolesIsNull'                        | 0     | "SELECT * FROM GRAPH_TABLE (movies MATCH (n IS Movie) COLUMNS ($COLUMNS)) WHERE \"n__ID_\" NOT IN (SELECT \"r0_0\" FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[ar0 IS ACTED_IN]- (a0 IS Person) COLUMNS (n.title AS \"r0_0\")))"
+        'findByTitleAndDirectorsIsEmpty'           | 1     | "SELECT * FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.title = ?) COLUMNS ($COLUMNS)) WHERE \"n__ID_\" NOT IN (SELECT \"r0_0\" FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) COLUMNS (n.title AS \"r0_0\")))"
+        'findByDirectorsNameAndRolesIsEmpty'       | 1     | "SELECT * FROM GRAPH_TABLE (movies MATCH (n IS Movie) COLUMNS ($COLUMNS)) WHERE \"n__ID_\" IN (SELECT \"f0\" FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) WHERE (a0.name = ?) COLUMNS (n.title AS \"f0\"))) AND \"n__ID_\" NOT IN (SELECT \"r1_0\" FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[ar0 IS ACTED_IN]- (a0 IS Person) COLUMNS (n.title AS \"r1_0\")))"
+        'countByDirectorsIsEmpty'                  | 0     | "SELECT COUNT(DISTINCT \"c0\") AS \"result\" FROM GRAPH_TABLE (movies MATCH (n IS Movie) COLUMNS (n.title AS \"c0\")) WHERE \"c0\" NOT IN (SELECT \"r0_0\" FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) COLUMNS (n.title AS \"r0_0\")))"
+        'findByReleasedOrderByDirectorsBorn'       | 1     | "SELECT * FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.released = ?) COLUMNS ($COLUMNS)) ORDER BY (SELECT MIN(\"o0_0\") FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) COLUMNS (a0.born AS \"o0_0\", n.title AS \"o0_1\")) WHERE \"o0_1\" = \"n__ID_\") ASC"
+        'findByDirectorsNameOrderByDirectorsBornDesc' | 1  | "SELECT * FROM GRAPH_TABLE (movies MATCH (n IS Movie) COLUMNS ($COLUMNS)) WHERE \"n__ID_\" IN (SELECT \"f0\" FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) WHERE (a0.name = ?) COLUMNS (n.title AS \"f0\"))) ORDER BY (SELECT MAX(\"o0_0\") FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) COLUMNS (a0.born AS \"o0_0\", n.title AS \"o0_1\")) WHERE \"o0_1\" = \"n__ID_\") DESC"
+    }
+
+    void "test SQL/PGQ tests the absence of a to-one relationship"() {
         when:
-        buildRepository('test.MentorRepository', """
+        def repository = buildRepository('test.MentorRepository', """
 $MOVIES
 
 @TestOracleRepository
@@ -727,9 +758,7 @@ interface MentorRepository extends GenericRepository<Person, String> {
 """)
 
         then:
-        def e = thrown(RuntimeException)
-        e.message.contains('Testing that a relationship is absent is not supported for Oracle property graphs')
-        e.message.contains('NOT EXISTS outside GRAPH_TABLE')
+        getQuery(findMethod(repository, 'findByMentorIsNull')) == "SELECT * FROM GRAPH_TABLE (people MATCH (n IS Person) COLUMNS ($PERSON_COLUMNS)) WHERE \"n__ID_\" NOT IN (SELECT \"r0_0\" FROM GRAPH_TABLE (people MATCH (n IS Person), (n) -[IS FOLLOWS]-> (a0 IS Person) COLUMNS (n.id AS \"r0_0\")))"
     }
 
     @Unroll
