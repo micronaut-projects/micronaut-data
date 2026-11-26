@@ -39,6 +39,8 @@ import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.StoredQuery;
 
 import java.lang.annotation.Annotation;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -238,26 +240,46 @@ public final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperatio
                                                   @NonNull ConversionService conversionService) {
         Argument<?>[] arguments = methodContext.getArguments();
         Object[] values = methodContext.getParameterValues();
-        if (arguments.length == 0 || values.length == 0) {
-            return List.of();
+        List<T> parameters = null;
+        for (int i = 0; i < Math.min(arguments.length, values.length); i++) {
+            T parameter = parameterOfType(type, arguments[i], values[i], conversionService);
+            if (parameter != null) {
+                if (parameters == null) {
+                    parameters = new ArrayList<>(2);
+                }
+                parameters.add(parameter);
+            }
         }
-        return java.util.stream.IntStream.range(0, Math.min(arguments.length, values.length))
-            .mapToObj(i -> {
-                Object value = values[i];
-                if (value == null) {
-                    return Stream.<T>empty();
-                }
-                if (type.isInstance(value)) {
-                    //noinspection unchecked
-                    return Stream.of((T) value);
-                }
-                if (type.getType().isAssignableFrom(arguments[i].getType())) {
-                    return conversionService.convert(value, type).stream();
-                }
-                return Stream.<T>empty();
-            })
-            .flatMap(s -> s)
-            .toList();
+        return parameters == null ? List.of() : Collections.unmodifiableList(parameters);
+    }
+
+    /**
+     * Returns the value of a method parameter as the given type: the value itself when it is an instance of the type,
+     * the converted value when the parameter is declared as a subtype of the type, otherwise {@code null}.
+     *
+     * @param type              The type
+     * @param argument          The declared parameter
+     * @param value             The parameter value
+     * @param conversionService The conversion service
+     * @param <T>               The type
+     * @return The value as the type, or {@code null}
+     */
+    @Nullable
+    private static <T> T parameterOfType(Argument<T> type,
+                                         Argument<?> argument,
+                                         @Nullable Object value,
+                                         ConversionService conversionService) {
+        if (value == null) {
+            return null;
+        }
+        if (type.isInstance(value)) {
+            //noinspection unchecked
+            return (T) value;
+        }
+        if (type.getType().isAssignableFrom(argument.getType())) {
+            return conversionService.convert(value, type).orElse(null);
+        }
+        return null;
     }
 
     @Override
