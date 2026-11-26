@@ -1,0 +1,23 @@
+# Risk tier rules for this repository, read by the "Risk tier" workflow on top of the global rules in
+# micronaut-project-template (.github/risk-tiers.global.toml), which it fetches on every run. Values set here overwrite
+# the global ones: tables merge key by key, any other value replaces the global one. Not synced: edit it here.
+# See MAINTAINING.md, "Risk tiers and AI disclosure".
+
+[tiers.T2]
+description = """Public API, query building and SQL generation, query execution, transactions and connections, a \
+change of default behaviour, or anything breaking."""
+paths = [
+  "data-model/src/main/**",
+  "data-processor/src/main/**",
+  "data-document-model/src/main/**",
+  "data-document-processor/src/main/**",
+  "data-runtime/src/main/**",
+  "data-jdbc/src/main/**",
+  "data-r2dbc/src/main/**",
+  "data-tx*/src/main/**",
+  "data-connection*/src/main/**",
+]
+
+[review]
+# Enforce the review policy here: T1 needs a maintainer's approval, T2 one from the owners in .github/CODEOWNERS.
+enforce = true
