@@ -47,7 +47,7 @@ class OracleChangeNotificationLifecycleSpec extends Specification {
     boolean databaseStopped
 
     void setupSpec() {
-        database = new GenericContainer(DockerImageName.parse('gvenzl/oracle-free:23.26.3-slim-faststart'))
+        database = new GenericContainer(DockerImageName.parse('gvenzl/oracle-free@sha256:f5ff19033860d662c821cb04eb10483fa94f14f78eae252d054291ea07028093'))
             .withEnv('ORACLE_PASSWORD', 'test')
             .withEnv('APP_USER', 'test')
             .withEnv('APP_USER_PASSWORD', 'test')
