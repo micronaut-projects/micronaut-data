@@ -4,8 +4,12 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.model.CursoredPageable
+import io.micronaut.data.model.Limit
 import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.vector.DoubleVector
+import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.model.Sort
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.runtime.query.internal.DefaultPagedQuery
 import io.micronaut.data.runtime.search.SearchIndexOperations
 import io.micronaut.data.search.document.conf.DocumentSearchConfiguration
@@ -46,6 +50,9 @@ class DocumentSearchOperationsSpec extends Specification {
     CounterRepository counters
 
     @Inject
+    FlagRepository flags
+
+    @Inject
     MeetingRepository meetings
 
     @Inject
@@ -70,6 +77,66 @@ class DocumentSearchOperationsSpec extends Specification {
         operations.getIndexName(Note) == "test_notes"
         operations.transport.is(transport)
         transport.createdIndexes.containsKey("test_notes")
+    }
+
+    void "documents carry the persistent property names, so an isX boolean matches its mapping and its queries"() {
+        when:
+        Flag saved = flags.save(new Flag(label: "pinned", active: true))
+        Map<String, Object> document = transport.indexes["test_flags"][saved.id]
+
+        then:
+        document.keySet() == ["id", "label", "isActive"] as Set
+        document.isActive == true
+        flags.findById(saved.id).get().isActive()
+        flags.findById(saved.id).get().label == "pinned"
+
+        when:
+        flags.findByIsActiveTrue()
+
+        then:
+        transport.lastBody().contains('"isActive"')
+        !transport.lastBody().contains('"active"')
+    }
+
+    void "embedded objects and vectors are stored under their property names and read back"() {
+        when:
+        Flag saved = flags.save(new Flag(label: "weighted", active: false, detail: new Detail("first", 1), weights: Vector.of(0.5d, 1.5d) as DoubleVector))
+        Map<String, Object> document = transport.indexes["test_flags"][saved.id]
+
+        then:
+        document.detail == [note: "first", rank: 1]
+        document.weights == [0.5d, 1.5d]
+        transport.createdIndexes["test_flags"].contains('"detail":{"properties":{')
+
+        when:
+        Flag found = flags.findById(saved.id).get()
+
+        then:
+        found.detail == new Detail("first", 1)
+        found.weights.toDoubleArray() == [0.5d, 1.5d] as double[]
+    }
+
+    void "a Limit parameter sets the offset and size, and a null ordering renders as missing"() {
+        when:
+        notes.findByPagesGreaterThan(1, Limit.of(3, 5))
+
+        then:
+        transport.lastBody().contains('"from":5')
+        transport.lastBody().contains('"size":3')
+
+        when:
+        notes.findByPagesLessThan(5, Pageable.from(0, 10, Sort.of(new Sort.Order("title", Sort.Order.Direction.ASC, false, Sort.Order.NullOrdering.FIRST))))
+
+        then:
+        transport.lastBody().contains('"sort":[{"title.keyword":{"order":"asc","missing":"_first"}}]')
+    }
+
+    void "the escape character of a LIKE bound at runtime is applied to the wildcard pattern"() {
+        when:
+        flags.findAll({ root, criteriaBuilder -> criteriaBuilder.like(root.get("label"), "Port%--_%", '-' as char) } as PredicateSpecification)
+
+        then:
+        transport.lastBody().contains('"wildcard":{"label":{"value":"Port*-?*"}}')
     }
 
     void "creating an index that a concurrent create made in the meantime leaves it alone"() {
@@ -308,7 +375,7 @@ class DocumentSearchOperationsSpec extends Specification {
         given:
         def executor = context.getBean(SearchQueryExecutor)
         notes.saveAll([new Note("Coffee", "Roasting beans", 120), new Note("Bread", "Sourdough", 0)])
-        def injection = 'x"}}, "size": 10000, "query": {"match_all": {}}, "x": {"y": "'
+        def injection = 'x"}}, "size": 3, "query": {"match_all": {}}, "x": {"y": "'
         def body = '{"query": {"bool": {"must": {"match": {"title": ":title"}}, "filter": {"terms": {"pages": ":pages"}}}}}'
 
         when:
@@ -320,7 +387,9 @@ class DocumentSearchOperationsSpec extends Specification {
         sent.query.bool.must == [match: [title: injection]]
         sent.query.bool.filter == [terms: [pages: [120, 0]]]
         sent.track_total_hits == true
-        !sent.containsKey("size")
+
+        and: "a body without a size gets the max-results ceiling of an unpaged query method"
+        sent.size == DocumentSearchConfiguration.DEFAULT_MAX_RESULTS
 
         when:
         def found = executor.find(Note, body, [title: "Coffee", pages: [120]])
@@ -329,6 +398,13 @@ class DocumentSearchOperationsSpec extends Specification {
         found*.title == ["Coffee", "Bread"]
         jsonMapper.readValue(transport.lastBody(), Map).query.bool.must == [match: [title: "Coffee"]]
         !jsonMapper.readValue(transport.lastBody(), Map).containsKey("track_total_hits")
+        jsonMapper.readValue(transport.lastBody(), Map).size == DocumentSearchConfiguration.DEFAULT_MAX_RESULTS
+
+        when: "the body declares its own size"
+        executor.find(Note, '{"size": 1, "query": {"match_all": {}}}')
+
+        then: "it is kept"
+        jsonMapper.readValue(transport.lastBody(), Map).size == 1
 
         when:
         def count = executor.count(Note, body, [title: "Coffee", pages: [120]])
@@ -456,6 +532,37 @@ class DocumentSearchOperationsSpec extends Specification {
         transport.lastBody().contains('"sort":[{"title.keyword":{"order":"desc"}},{"id":{"order":"asc"}}]')
     }
 
+    void "the string form of a native sort is kept ahead of the pageable sort"() {
+        when:
+        notes.sortedByTitle(Pageable.from(0, 10, Sort.of(Sort.Order.asc("body"))))
+
+        then: "the declared entries are sent as written, the pageable's sort after them"
+        transport.lastBody().contains('"sort":["title.keyword",{"pages":"desc"},{"body.keyword":{"order":"asc"}}]')
+
+        when: "a single entry instead of a list"
+        notes.sortedByScore(Pageable.from(0, 10, Sort.of(Sort.Order.asc("body"))))
+
+        then:
+        transport.lastBody().contains('"sort":["_score",{"body.keyword":{"order":"asc"}}]')
+    }
+
+    void "a cursored page turns the string form of a native sort into objects it can reverse"() {
+        given:
+        notes.saveAll([new Note("Coffee", "Roasting beans", 120), new Note("Bread", "Sourdough", 80)])
+
+        when:
+        notes.sortedByTitle(CursoredPageable.from(10, Sort.of(Sort.Order.asc("body"))))
+
+        then:
+        transport.lastBody().contains('"sort":[{"title.keyword":{"order":"asc"}},{"pages":{"order":"desc"}},{"body.keyword":{"order":"asc"}},{"id":{"order":"asc"}}]')
+
+        when: "a backward page reverses every entry, the score from its default descending order"
+        notes.sortedByScore(Pageable.beforeCursor(Pageable.Cursor.of(1.0d, "id"), 1, 10, Sort.UNSORTED))
+
+        then:
+        transport.lastBody().contains('"sort":[{"_score":{"order":"asc"}},{"id":{"order":"desc"}}]')
+    }
+
     void "deletes remove documents by id and by query"() {
         given:
         def saved = notes.saveAll([new Note("Coffee", "Roasting beans", 120), new Note("Bread", "Sourdough", 80), new Note("Tea", "Green", 40)])
@@ -488,20 +595,20 @@ class DocumentSearchOperationsSpec extends Specification {
 
         where:
         method                                                | args                     | expected
-        "findByTitleStartsWith"                               | ["Co*"]                  | '{"query":{"wildcard":{"title.keyword":{"value":"Co\\\\**"}}}}'
-        "findByTitleStartsWithIgnoreCase"                     | ["co"]                   | '{"query":{"wildcard":{"title.keyword":{"value":"co*","case_insensitive":true}}}}'
-        "findByTitleEndsWith"                                 | ["fee"]                  | '{"query":{"wildcard":{"title.keyword":{"value":"*fee"}}}}'
-        "findByTitleContains"                                 | ["ff"]                   | '{"query":{"wildcard":{"title.keyword":{"value":"*ff*"}}}}'
-        "findByTitleLike"                                     | ["C_f%"]                 | '{"query":{"wildcard":{"title.keyword":{"value":"C?f*"}}}}'
-        "findByTitleIgnoreCase"                               | ["coffee"]               | '{"query":{"term":{"title.keyword":{"value":"coffee","case_insensitive":true}}}}'
-        "findByTitleRegex"                                    | ["Co.*"]                 | '{"query":{"regexp":{"title.keyword":"Co.*"}}}'
-        "findByPagesGreaterThanEqualsAndPagesLessThanEquals"  | [10, 20]                 | '{"query":{"bool":{"must":[{"range":{"pages":{"gte":10}}},{"range":{"pages":{"lte":20}}}]}}}'
-        "findByTitleIsEmpty"                                  | []                       | '{"query":{"bool":{"should":[{"bool":{"must_not":{"exists":{"field":"title"}}}},{"term":{"title.keyword":""}}],"minimum_should_match":1}}}'
-        "findByTitleIsNotEmpty"                               | []                       | '{"query":{"bool":{"must_not":{"bool":{"should":[{"bool":{"must_not":{"exists":{"field":"title"}}}},{"term":{"title.keyword":""}}],"minimum_should_match":1}}}}}'
-        "findByTitleOrBody"                                   | ["Coffee", "Beans"]      | '{"query":{"bool":{"should":[{"term":{"title.keyword":"Coffee"}},{"term":{"body.keyword":"Beans"}}],"minimum_should_match":1}}}'
-        "findByTitleNotInList"                                | [["Coffee", "Tea"]]      | '{"query":{"bool":{"must_not":{"terms":{"title.keyword":["Coffee","Tea"]}}}}}'
-        "findByTitleInList"                                   | [["Coffee", "Tea"] as String[]] | '{"query":{"terms":{"title.keyword":["Coffee","Tea"]}}}'
-        "findByTitleNotEqual"                                 | ["Coffee"]               | '{"query":{"bool":{"must_not":{"term":{"title.keyword":"Coffee"}}}}}'
+        "findByTitleStartsWith"                               | ["Co*"]                  | '{"query":{"wildcard":{"title.keyword":{"value":"Co\\\\**"}}},"size":10000}'
+        "findByTitleStartsWithIgnoreCase"                     | ["co"]                   | '{"query":{"wildcard":{"title.keyword":{"value":"co*","case_insensitive":true}}},"size":10000}'
+        "findByTitleEndsWith"                                 | ["fee"]                  | '{"query":{"wildcard":{"title.keyword":{"value":"*fee"}}},"size":10000}'
+        "findByTitleContains"                                 | ["ff"]                   | '{"query":{"wildcard":{"title.keyword":{"value":"*ff*"}}},"size":10000}'
+        "findByTitleLike"                                     | ["C_f%"]                 | '{"query":{"wildcard":{"title.keyword":{"value":"C?f*"}}},"size":10000}'
+        "findByTitleIgnoreCase"                               | ["coffee"]               | '{"query":{"term":{"title.keyword":{"value":"coffee","case_insensitive":true}}},"size":10000}'
+        "findByTitleRegex"                                    | ["Co.*"]                 | '{"query":{"regexp":{"title.keyword":"Co.*"}},"size":10000}'
+        "findByPagesGreaterThanEqualsAndPagesLessThanEquals"  | [10, 20]                 | '{"query":{"bool":{"must":[{"range":{"pages":{"gte":10}}},{"range":{"pages":{"lte":20}}}]}},"size":10000}'
+        "findByTitleIsEmpty"                                  | []                       | '{"query":{"bool":{"should":[{"bool":{"must_not":{"exists":{"field":"title"}}}},{"term":{"title.keyword":""}}],"minimum_should_match":1}},"size":10000}'
+        "findByTitleIsNotEmpty"                               | []                       | '{"query":{"bool":{"must_not":{"bool":{"should":[{"bool":{"must_not":{"exists":{"field":"title"}}}},{"term":{"title.keyword":""}}],"minimum_should_match":1}}}},"size":10000}'
+        "findByTitleOrBody"                                   | ["Coffee", "Beans"]      | '{"query":{"bool":{"should":[{"term":{"title.keyword":"Coffee"}},{"term":{"body.keyword":"Beans"}}],"minimum_should_match":1}},"size":10000}'
+        "findByTitleNotInList"                                | [["Coffee", "Tea"]]      | '{"query":{"bool":{"must_not":{"terms":{"title.keyword":["Coffee","Tea"]}}}},"size":10000}'
+        "findByTitleInList"                                   | [["Coffee", "Tea"] as String[]] | '{"query":{"terms":{"title.keyword":["Coffee","Tea"]}},"size":10000}'
+        "findByTitleNotEqual"                                 | ["Coffee"]               | '{"query":{"bool":{"must_not":{"term":{"title.keyword":"Coffee"}}}},"size":10000}'
     }
 
     void "dates, temporals and enums are bound in the form the documents store them"() {

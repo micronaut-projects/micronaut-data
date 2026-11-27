@@ -38,6 +38,11 @@ public class DocumentSearchConfiguration {
     public static final String CREATE_INDEXES_PROPERTY = PREFIX + ".create-indexes";
 
     /**
+     * The default of {@link #getMaxResults()}.
+     */
+    public static final int DEFAULT_MAX_RESULTS = 10_000;
+
+    /**
      * The default number of documents of one bulk request.
      */
     public static final int DEFAULT_BULK_SIZE = 1000;
@@ -47,6 +52,8 @@ public class DocumentSearchConfiguration {
     private Refresh refresh = Refresh.WAIT_FOR;
     private boolean createIndexes = true;
     private SchemaGenerate schemaGenerate = SchemaGenerate.CREATE;
+    private int maxResults = DEFAULT_MAX_RESULTS;
+    private boolean uniqueResultOnFindOne;
     private int bulkSize = DEFAULT_BULK_SIZE;
 
     /**
@@ -107,6 +114,41 @@ public class DocumentSearchConfiguration {
      */
     public void setCreateIndexes(boolean createIndexes) {
         this.createIndexes = createIndexes;
+    }
+
+    /**
+     * @return The most hits a query without a {@code Pageable} or limit fetches and deserializes,
+     * {@value #DEFAULT_MAX_RESULTS} by default, the stores' default {@code index.max_result_window}
+     */
+    public int getMaxResults() {
+        return maxResults;
+    }
+
+    /**
+     * @param maxResults The most hits an unpaged query fetches; a lower value bounds the memory a query
+     *                   can use, a higher one needs a larger {@code index.max_result_window} on the index
+     */
+    public void setMaxResults(int maxResults) {
+        if (maxResults < 1) {
+            throw new IllegalArgumentException("micronaut.data.search.max-results must be positive, got " + maxResults);
+        }
+        this.maxResults = maxResults;
+    }
+
+    /**
+     * @return Whether a query for one entity fails with a {@code NonUniqueResultException} when it
+     * matches more than one document, as Jakarta Data requires; by default it returns the first hit
+     */
+    public boolean isUniqueResultOnFindOne() {
+        return uniqueResultOnFindOne;
+    }
+
+    /**
+     * @param uniqueResultOnFindOne Whether a query for one entity fails when it matches more than one
+     *                              document, which fetches a second hit to find out
+     */
+    public void setUniqueResultOnFindOne(boolean uniqueResultOnFindOne) {
+        this.uniqueResultOnFindOne = uniqueResultOnFindOne;
     }
 
     /**

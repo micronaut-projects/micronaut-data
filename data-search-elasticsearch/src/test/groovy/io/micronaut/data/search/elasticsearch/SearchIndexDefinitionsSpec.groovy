@@ -23,6 +23,15 @@ class SearchIndexDefinitionsSpec extends Specification {
         body.contains('"id":{"type":"keyword"}')
     }
 
+    void "an autocomplete field keeps the keyword sub-field that exact matches and sorts use"() {
+        when:
+        def body = SearchIndexDefinitions.mappingFor(new RuntimePersistentEntity<io.micronaut.data.search.elasticsearch.memory.Recipe>(io.micronaut.data.search.elasticsearch.memory.Recipe), null)
+
+        then:
+        body.contains('"name":{"type":"search_as_you_type","analyzer":"standard","fields":{"keyword":{')
+        body.contains('"cuisine":{"type":"keyword"}')
+    }
+
     void "a declared mapping of an analysed field gets the keyword sub-field unless it declares one"() {
         when:
         def body = SearchIndexDefinitions.mappingFor(new RuntimePersistentEntity<KeywordMappedBook>(KeywordMappedBook), null)

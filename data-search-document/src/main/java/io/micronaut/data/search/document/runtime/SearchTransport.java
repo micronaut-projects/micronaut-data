@@ -80,10 +80,11 @@ public interface SearchTransport {
     }
 
     /**
-     * Indexes several new documents in one request, each a create-only write like
-     * {@link #create(String, String, Map, DocumentSearchConfiguration.Refresh)}, or, for a document with
-     * a version, an externally versioned write like
-     * {@link #index(String, String, Map, Long, DocumentSearchConfiguration.Refresh)}. The default sends one
+     * Indexes several documents in one request: a document marked {@link SearchTransport.BulkDocument#create()}
+     * is a create-only write like {@link #create(String, String, Map, DocumentSearchConfiguration.Refresh)},
+     * any other one a replacing write like
+     * {@link #index(String, String, Map, Long, DocumentSearchConfiguration.Refresh)}, externally versioned
+     * when it has a version. The default sends one
      * request per document and stops at the first failure.
      *
      * @param index The index name
@@ -98,7 +99,7 @@ public interface SearchTransport {
         List<String> ids = new java.util.ArrayList<>(documents.size());
         for (BulkDocument document : documents) {
             try {
-                ids.add(document.version() == null
+                ids.add(document.create()
                     ? create(index, document.id(), document.source(), refresh)
                     : index(index, document.id(), document.source(), document.version(), refresh));
             } catch (RuntimeException e) {
@@ -259,8 +260,20 @@ public interface SearchTransport {
      * @param id The document id, or {@code null} to let the store assign one
      * @param source The document
      * @param version The external version, or {@code null} for an unconditional write
+     * @param create Whether the write fails when a document with the id exists, rather than replacing it
      */
-    record BulkDocument(@Nullable String id, Map<String, Object> source, @Nullable Long version) {
+    record BulkDocument(@Nullable String id, Map<String, Object> source, @Nullable Long version, boolean create) {
+
+        /**
+         * A new document, created only when no document has the id, or written at its version.
+         *
+         * @param id The document id, or {@code null}
+         * @param source The document
+         * @param version The external version, or {@code null}
+         */
+        public BulkDocument(@Nullable String id, Map<String, Object> source, @Nullable Long version) {
+            this(id, source, version, version == null);
+        }
 
         /**
          * @param id The document id, or {@code null}

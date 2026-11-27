@@ -32,7 +32,9 @@ import java.util.Map;
  * cannot change the structure of the request.</p>
  *
  * <p>The body is sent as written apart from the parameters: its {@code size} decides how many hits
- * {@link #search} and {@link #find} return, the store's default of 10 when it has none. {@link #search}
+ * {@link #search} and {@link #find} return, and a body without one gets the
+ * {@code micronaut.data.search.max-results} ceiling (10,000 by default) of a query method without a
+ * {@code Pageable}. {@link #search}
  * adds {@code track_total_hits: true} unless the body sets it, so {@link SearchResults#totalHits()} is
  * exact.</p>
  *
