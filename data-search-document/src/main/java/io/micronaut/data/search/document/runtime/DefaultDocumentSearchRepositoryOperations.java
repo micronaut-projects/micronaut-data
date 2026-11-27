@@ -20,6 +20,7 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
@@ -52,6 +53,8 @@ import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.json.JsonMapper;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Named;
+import java.io.IOException;
+import java.util.Objects;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -73,7 +76,7 @@ import java.util.stream.Stream;
 @Internal
 @EachBean(SearchTransport.class)
 public final class DefaultDocumentSearchRepositoryOperations extends AbstractDocumentSearchRepositoryOperations
-    implements DocumentSearchRepositoryOperations, MethodContextAwareStoredQueryDecorator, ReactiveCapableRepository, AsyncCapableRepository {
+    implements DocumentSearchRepositoryOperations, SearchQueryExecutor, MethodContextAwareStoredQueryDecorator, ReactiveCapableRepository, AsyncCapableRepository {
 
     private final String name;
     private final SearchTransport transport;
@@ -161,6 +164,39 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
         return reactive() instanceof DefaultDocumentSearchReactiveRepositoryOperations reactor
             ? new ReactorToAsyncOperationsAdaptor(reactor, executorServiceResolver.get())
             : new ExecutorAsyncOperations(this, executorServiceResolver.get());
+    }
+
+    // ---------- raw bodies
+
+    @Override
+    public <T> SearchResults<T> search(Class<T> entityType, String body, Map<String, ?> parameters) {
+        RuntimePersistentEntity<T> entity = runtimeEntityRegistry.getEntity(entityType);
+        Map<String, Object> request = parseBody(body, parameters);
+        // totalHits is exact, as for a SearchResults method, unless the body asks otherwise
+        request.putIfAbsent("track_total_hits", true);
+        return toSearchResults(transport.search(indexName(entity), searchJson(request, entity)), entity, null);
+    }
+
+    @Override
+    public <T> List<T> find(Class<T> entityType, String body, Map<String, ?> parameters) {
+        RuntimePersistentEntity<T> entity = runtimeEntityRegistry.getEntity(entityType);
+        return search(parseBody(body, parameters), entity, null);
+    }
+
+    @Override
+    public long count(Class<?> entityType, String body, Map<String, ?> parameters) {
+        RuntimePersistentEntity<?> entity = runtimeEntityRegistry.getEntity(entityType);
+        return transport.count(indexName(entity), queryOnly(parseBody(body, parameters)));
+    }
+
+    private Map<String, Object> parseBody(String body, Map<String, ?> parameters) {
+        Map<String, Object> parsed;
+        try {
+            parsed = Objects.requireNonNull(jsonMapper.readValue(body, Argument.mapOf(String.class, Object.class)), "body");
+        } catch (IOException e) {
+            throw new DataAccessException("Cannot parse the search request body: " + e.getMessage(), e);
+        }
+        return DocumentStoredQuery.bindNamed(parsed, parameters, jsonMapper);
     }
 
     // ---------- reads
