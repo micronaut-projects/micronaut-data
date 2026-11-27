@@ -15,6 +15,8 @@ import io.micronaut.data.neo4j.features.Engineer
 import io.micronaut.data.neo4j.features.Ensemble
 import io.micronaut.data.neo4j.features.EnsembleRepository
 import io.micronaut.data.neo4j.features.EngineerRepository
+import io.micronaut.data.neo4j.features.Note
+import io.micronaut.data.neo4j.features.NoteRepository
 import io.micronaut.data.neo4j.features.Project
 import io.micronaut.data.neo4j.features.Reading
 import io.micronaut.data.neo4j.features.ReadingRepository
@@ -61,6 +63,9 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
 
     @Inject
     ReadingRepository readingRepository
+
+    @Inject
+    NoteRepository noteRepository
 
     @Inject
     ReactiveMovieRepository reactiveMovieRepository
@@ -389,6 +394,20 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
 
         then:
         employeeRepository.findById("Bob").get().created == created
+    }
+
+    void "a collection property absent from the node stays null"() {
+        when:
+        noteRepository.save(new Note("a", null))
+
+        then:
+        noteRepository.findById("a").get().tags() == null
+
+        when:
+        noteRepository.save(new Note("b", ["x"]))
+
+        then:
+        noteRepository.findById("b").get().tags() == ["x"]
     }
 
     void "bound parameters are encoded once"() {

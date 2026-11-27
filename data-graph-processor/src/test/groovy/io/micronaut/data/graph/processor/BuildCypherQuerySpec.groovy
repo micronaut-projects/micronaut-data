@@ -146,6 +146,49 @@ interface PersonRepository extends CrudRepository<Person, String> {
         'findAll'                                  | 0     | 'MATCH (n:Movie) RETURN n'
     }
 
+    void "test a relationship entity has no dynamic attributes"() {
+        when:
+        buildRepository('test.StageRepository', """
+@RelationshipProperties
+class Billing {
+    @RelationshipId
+    @GeneratedValue
+    private Long id;
+    @TargetNode
+    private Stage stage;
+    @DynamicAttributes
+    private Map<String, Object> attributes = new HashMap<>();
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Stage getStage() { return stage; }
+    public void setStage(Stage stage) { this.stage = stage; }
+    public Map<String, Object> getAttributes() { return attributes; }
+    public void setAttributes(Map<String, Object> attributes) { this.attributes = attributes; }
+}
+
+@Node
+class Stage {
+    @Id
+    private String name;
+    @Relationship("BILLED")
+    private List<Billing> billings = new ArrayList<>();
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public List<Billing> getBillings() { return billings; }
+    public void setBillings(List<Billing> billings) { this.billings = billings; }
+}
+
+@TestGraphRepository
+interface StageRepository extends GenericRepository<Stage, String> {
+    Optional<Stage> findByName(String name);
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('@DynamicAttributes is not supported on a relationship entity')
+    }
+
     void "test the count query of a pageable finder"() {
         given:
         ExecutableMethod<?, ?> method = movieRepository.executableMethods.find {
