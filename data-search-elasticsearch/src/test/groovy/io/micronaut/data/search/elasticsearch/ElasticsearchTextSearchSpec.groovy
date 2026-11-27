@@ -27,6 +27,6 @@ class ElasticsearchTextSearchSpec extends AbstractTextSearchSpec implements Test
 
     @Override
     Set<SearchCapability> capabilities() {
-        return EnumSet.of(SearchCapability.PHRASE, SearchCapability.PREFIX, SearchCapability.FUZZY, SearchCapability.FIELD_SCOPE, SearchCapability.BOOST, SearchCapability.HIGHLIGHT, SearchCapability.MIN_SCORE, SearchCapability.VECTOR, SearchCapability.HYBRID)
+        return EnumSet.of(SearchCapability.PHRASE, SearchCapability.PREFIX, SearchCapability.FUZZY, SearchCapability.FIELD_SCOPE, SearchCapability.BOOST, SearchCapability.HIGHLIGHT, SearchCapability.MIN_SCORE, SearchCapability.VECTOR, SearchCapability.HYBRID, SearchCapability.FUZZINESS)
     }
 }

@@ -1,5 +1,6 @@
 package example
 
+import io.micronaut.data.model.search.SearchQuery
 import jakarta.inject.Singleton
 
 @Singleton
@@ -14,6 +15,17 @@ class BookService(private val bookRepository: BookRepository) {
         }
         val hits = bookRepository.countHits(query) // <4>
         // end::search[]
+        return results.results().map { it.entity().title }
+    }
+
+    fun titlesLike(query: String): List<String> {
+        // tag::options[]
+        val boosted = SearchQuery.builder(query)
+            .boost("title", 5.0) // <1>
+            .fuzzy(2) // <2>
+            .build()
+        val results = bookRepository.search(boosted)
+        // end::options[]
         return results.results().map { it.entity().title }
     }
 }

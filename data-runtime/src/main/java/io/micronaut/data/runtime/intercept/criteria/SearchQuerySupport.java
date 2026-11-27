@@ -29,6 +29,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.search.SearchCapability;
 import io.micronaut.data.model.search.SearchQuery;
+import io.micronaut.data.model.search.TextMatchOptions;
 import io.micronaut.data.model.search.TextSearchSupport;
 import io.micronaut.data.model.search.UnsupportedSearchFeatureException;
 import io.micronaut.data.model.vector.Vector;
@@ -74,9 +75,6 @@ public final class SearchQuerySupport {
     public static SearchQuery findSearchQuery(MethodInvocationContext<?, ?> context) {
         for (Object value : context.getParameterValues()) {
             if (value instanceof SearchQuery searchQuery) {
-                if (!searchQuery.getBoosts().isEmpty()) {
-                    throw new UnsupportedSearchFeatureException(SearchCapability.BOOST, OPERATION);
-                }
                 if (searchQuery.getLanguage() != null) {
                     throw new UnsupportedSearchFeatureException(SearchCapability.LANGUAGE_OVERRIDE, OPERATION);
                 }
@@ -104,8 +102,9 @@ public final class SearchQuerySupport {
         PersistentEntityRoot<Object> root = criteriaQuery.from(rootEntity);
         List<Expression<?>> fields = resolveFields(root, searchQuery);
         ParameterExpression<String> queryParameter = cb.parameter(String.class, null, searchQuery.getQuery());
-        Expression<Double> score = cb.searchScore(fields, queryParameter, searchQuery.getMode());
-        Predicate match = cb.textMatch(fields, queryParameter, searchQuery.getMode());
+        TextMatchOptions options = textMatchOptions(root, searchQuery);
+        Expression<Double> score = cb.searchScore(fields, queryParameter, searchQuery.getMode(), options);
+        Predicate match = cb.textMatch(fields, queryParameter, searchQuery.getMode(), options);
         if (searchQuery.getMinScore() != null && !searchQuery.isHybrid()) {
             // the store drops the hits below the threshold, so the page and the total are exact; a hybrid
             // threshold compares the fused score instead, in fuse()
@@ -339,14 +338,40 @@ public final class SearchQuerySupport {
         return entity;
     }
 
+    private static Set<String> searchFieldNames(PersistentEntityRoot<Object> root) {
+        Set<String> names = new LinkedHashSet<>();
+        for (PersistentProperty property : TextSearchSupport.searchFields(root.getPersistentEntity())) {
+            names.add(property.getName());
+        }
+        return names;
+    }
+
     /** A field named by a SearchQuery, which must be one of the entity's search fields. */
     private static String requireSearchField(PersistentEntityRoot<Object> root, String field) {
-        List<String> searchFields = TextSearchSupport.searchFields(root.getPersistentEntity()).stream().map(PersistentProperty::getName).toList();
+        Set<String> searchFields = searchFieldNames(root);
         if (!searchFields.contains(field)) {
             throw new IllegalArgumentException("Property '" + field + "' of entity " + root.getPersistentEntity().getSimpleName()
                 + " is not a @SearchField; the search fields are " + searchFields);
         }
         return field;
+    }
+
+    /**
+     * The boosts and the edit distance of a SearchQuery; each boost must name one of the searched fields,
+     * as a boost of a property that is not searched would otherwise be ignored silently.
+     */
+    private static TextMatchOptions textMatchOptions(PersistentEntityRoot<Object> root, SearchQuery searchQuery) {
+        Set<String> searched = searchQuery.getFields().isEmpty()
+            ? searchFieldNames(root)
+            : searchQuery.getFields();
+        for (String boosted : searchQuery.getBoosts().keySet()) {
+            requireSearchField(root, boosted);
+            if (!searched.contains(boosted)) {
+                throw new IllegalArgumentException("Property '" + boosted + "' of entity " + root.getPersistentEntity().getSimpleName()
+                    + " is boosted but not searched; the searched fields are " + searched);
+            }
+        }
+        return TextMatchOptions.of(searchQuery);
     }
 
     private static List<Expression<?>> resolveFields(PersistentEntityRoot<Object> root, SearchQuery searchQuery) {
