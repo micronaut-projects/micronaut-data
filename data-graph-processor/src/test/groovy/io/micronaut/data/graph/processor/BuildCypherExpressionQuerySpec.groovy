@@ -116,9 +116,9 @@ interface AwardRepository extends CrudRepository<Award, String> {
         'updatePointsByYear'                           | 'MATCH (n:Award) WHERE n.year = \$p0 SET n.points = \$p1 RETURN count(*)'
     }
 
-    void "test LIKE is rejected with a hint"() {
+    void "test LIKE on an entity without relationships"() {
         when:
-        buildRepository('test.LikeRepository', """
+        def repository = buildRepository('test.LikeRepository', """
 @Node
 class Film {
     @Id
@@ -134,7 +134,6 @@ interface LikeRepository extends GenericRepository<Film, String> {
 """)
 
         then:
-        def e = thrown(RuntimeException)
-        e.message.contains('Use StartsWith, EndsWith, Contains or Regex')
+        getQuery(repository.executableMethods.find { it.methodName == 'findByTitleLike' }) == "MATCH (n:Film) WHERE n.title =~ ('(?s)' + \$p0) RETURN n"
     }
 }
