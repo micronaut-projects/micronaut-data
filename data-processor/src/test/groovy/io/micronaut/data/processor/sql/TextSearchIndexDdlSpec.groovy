@@ -32,19 +32,30 @@ class TextSearchIndexDdlSpec extends AbstractDataSpec {
         statements.last() == 'CREATE INDEX IF NOT EXISTS "book_text_idx" ON "book" USING GIN (to_tsvector(\'english\',"title"));'
     }
 
-    void "a @Searchable(name) that is not a plain identifier is rejected instead of changing the index DDL"() {
+    void "@Searchable(name) prefixes the Oracle CONTEXT index of each search field"() {
+        given:
+        def entity = searchableEntity('book_text_idx')
+
+        when:
+        def statements = new SqlQueryBuilder(Dialect.ORACLE).buildCreateTableStatements(entity)
+
+        then:
+        statements.last() == 'CREATE INDEX "BOOK_TEXT_IDX_TITLE" ON "BOOK" ("TITLE") INDEXTYPE IS CTXSYS.CONTEXT PARAMETERS (\'SYNC (ON COMMIT)\');'
+    }
+
+    void "a @Searchable(name) that is not a plain identifier is rejected instead of changing the #dialect index DDL"() {
         given:
         def entity = searchableEntity(name)
 
         when:
-        new SqlQueryBuilder(Dialect.POSTGRES).buildCreateTableStatements(entity)
+        new SqlQueryBuilder(dialect).buildCreateTableStatements(entity)
 
         then:
         def e = thrown(IllegalArgumentException)
         e.message.contains('A search index name must be an identifier of letters, digits and underscores')
 
         where:
-        name << ['idx\\"; DROP TABLE book; --', 'idx book', '1idx', 'idx-book']
+        [name, dialect] << [['idx\\"; DROP TABLE book; --', 'idx book', '1idx', 'idx-book'], [Dialect.POSTGRES, Dialect.ORACLE]].combinations()
     }
 
     private def searchableEntity(String indexName) {
