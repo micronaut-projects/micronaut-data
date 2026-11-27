@@ -21,4 +21,5 @@ class BookRepository(CrudRepository[Book, int], SearchRepository[Book, int]):  #
     def findBySearchAndAuthor(self, query: str, author: str) -> list[Book]: ...  # <6>
 
     def searchByTitleSearch(self, query: str, minScore: Score) -> SearchResults[Book]: ...  # <7>
+    def findByTitleSearchFuzzy(self, query: str) -> list[Book]: ...  # <8>
 # end::repository[]
