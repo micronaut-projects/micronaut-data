@@ -39,7 +39,7 @@ public class Article {
     @Nullable
     private UUID id;
 
-    @SearchField(weight = SearchWeight.HIGH)
+    @SearchField(weight = SearchWeight.HIGH, highlightable = true)
     private String title;
 
     @SearchField

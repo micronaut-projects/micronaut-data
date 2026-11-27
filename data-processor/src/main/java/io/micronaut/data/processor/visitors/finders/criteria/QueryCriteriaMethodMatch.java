@@ -49,6 +49,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.VectorScoringDialectSupport;
 import io.micronaut.data.model.search.MatchMode;
+import io.micronaut.data.model.search.SearchCapability;
 import io.micronaut.data.model.search.TextSearchSupport;
 import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.model.vector.search.SearchResults;
@@ -707,8 +708,20 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             if (textPredicate == null) {
                 throw new MatchFailedException("Unable to resolve a vector or text search property for SearchResults query");
             }
-            Expression<Double> scoreExpr = textScoreExpression(matchContext, cb, (PersistentEntityRoot<Object>) root, textPredicate);
-            query.multiselect(root, scoreExpr.alias(TextSearchSupport.SCORE_ALIAS));
+            TextSearch textSearch = textSearch(matchContext, cb, (PersistentEntityRoot<Object>) root, textPredicate);
+            List<Selection<?>> selections = new ArrayList<>();
+            selections.add(root);
+            selections.add(cb.searchScore(textSearch.fields(), textSearch.query(), textSearch.mode()).alias(TextSearchSupport.SCORE_ALIAS));
+            // highlightable search fields are projected by default, where the store can highlight
+            boolean highlight = matchContext.getQueryBuilder().supportsSearchCapability(matchContext.getRootEntity(), SearchCapability.HIGHLIGHT);
+            for (Expression<?> field : textSearch.fields()) {
+                if (highlight && field instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath
+                    && TextSearchSupport.isHighlightable(propertyPath.getProperty())) {
+                    selections.add(cb.searchHighlight(field, textSearch.query(), textSearch.mode())
+                        .alias(TextSearchSupport.highlightAlias(propertyPath.getProperty().getName())));
+                }
+            }
+            query.multiselect(selections);
             return true;
         }
 
@@ -774,6 +787,17 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                                                    PersistentEntityCriteriaBuilder cb,
                                                    PersistentEntityRoot<Object> root,
                                                    TextPredicate textPredicate) {
+        TextSearch textSearch = textSearch(matchContext, cb, root, textPredicate);
+        return cb.searchScore(textSearch.fields(), textSearch.query(), textSearch.mode());
+    }
+
+    /**
+     * Resolves the fields, the bound query parameter and the mode of the text predicate of a method.
+     */
+    private TextSearch textSearch(MethodMatchContext matchContext,
+                                  PersistentEntityCriteriaBuilder cb,
+                                  PersistentEntityRoot<Object> root,
+                                  TextPredicate textPredicate) {
         List<ParameterElement> parameters = matchContext.getParametersNotInRole();
         if (textPredicate.parameterIndex() >= parameters.size()) {
             throw new ProcessingException(matchContext.getMethodElement(), "Text search predicate requires a String parameter");
@@ -791,7 +815,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         }
         SourcePersistentEntityCriteriaBuilder scb = (SourcePersistentEntityCriteriaBuilder) cb;
         ParameterExpression<String> queryParameter = scb.parameter(queryElement, null);
-        return cb.searchScore(fields, queryParameter, textPredicate.mode());
+        return new TextSearch(fields, queryParameter, textPredicate.mode());
     }
 
     /**
@@ -993,6 +1017,9 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
     }
 
     private record VectorPredicate(String propertyName, int parameterIndex) {
+    }
+
+    private record TextSearch(List<Expression<?>> fields, ParameterExpression<String> query, MatchMode mode) {
     }
 
     private record TextPredicate(String propertyName, MatchMode mode, int parameterIndex) {

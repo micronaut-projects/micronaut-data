@@ -1,6 +1,7 @@
 package io.micronaut.data.search.opensearch
 
 import io.micronaut.data.exceptions.DataAccessException
+import io.micronaut.data.search.document.runtime.SearchTransport
 import io.micronaut.data.search.opensearch.transport.OpenSearchAsyncSearchTransport
 import io.micronaut.data.search.opensearch.transport.OpenSearchSearchTransport
 import org.opensearch.client.json.JsonpMapper
@@ -55,6 +56,7 @@ class OpenSearchTransportFailureSpec extends Specification {
         "search"          | { OpenSearchSearchTransport t -> t.search("books", BODY) }
         "count"           | { OpenSearchSearchTransport t -> t.count("books", BODY) }
         "index"           | { OpenSearchSearchTransport t -> t.index("books", "1", [title: "Kotlin"], NONE) }
+        "bulk"            | { OpenSearchSearchTransport t -> t.bulkIndex("books", [new SearchTransport.BulkDocument("1", [title: "Kotlin"])], NONE) }
         "get"             | { OpenSearchSearchTransport t -> t.get("books", "1") }
         "delete"          | { OpenSearchSearchTransport t -> t.delete("books", "1", NONE) }
         "delete by query" | { OpenSearchSearchTransport t -> t.deleteByQuery("books", BODY, NONE) }
@@ -79,6 +81,7 @@ class OpenSearchTransportFailureSpec extends Specification {
         operation | call
         "search"  | { OpenSearchSearchTransport t -> t.search("books", BODY) }
         "get"     | { OpenSearchSearchTransport t -> t.get("books", "1") }
+        "bulk"    | { OpenSearchSearchTransport t -> t.bulkIndex("books", [new SearchTransport.BulkDocument("1", [title: "Kotlin"])], NONE) }
         "index"   | { OpenSearchSearchTransport t -> t.create("books", "1", [title: "Kotlin"], NONE) }
     }
 

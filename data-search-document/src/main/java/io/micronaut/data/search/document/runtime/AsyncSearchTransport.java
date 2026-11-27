@@ -19,8 +19,11 @@ import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.search.document.conf.DocumentSearchConfiguration;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.function.ToIntFunction;
@@ -64,6 +67,35 @@ public interface AsyncSearchTransport {
      * @return The document id
      */
     CompletionStage<String> index(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh);
+
+    /**
+     * Indexes several new documents in one request, each a create-only write like
+     * {@link #create(String, String, Map, DocumentSearchConfiguration.Refresh)}. The default sends one
+     * request per document, in sequence, and stops at the first failure.
+     *
+     * @param index The index name
+     * @param documents The documents, in order
+     * @param refresh The refresh policy
+     * @return The document ids, in the same order, failing with a {@link BulkIndexException} when the
+     * store rejected some of the documents and wrote the others
+     */
+    default CompletionStage<List<String>> bulkIndex(String index, List<SearchTransport.BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
+        List<String> ids = new ArrayList<>(documents.size());
+        CompletionStage<List<String>> written = CompletableFuture.completedFuture(ids);
+        for (SearchTransport.BulkDocument document : documents) {
+            written = written.thenCompose(list -> create(index, document.id(), document.source(), refresh).thenApply(id -> {
+                list.add(id);
+                return list;
+            }));
+        }
+        return written.handle((list, failure) -> {
+            if (failure != null) {
+                Throwable cause = failure instanceof CompletionException && failure.getCause() != null ? failure.getCause() : failure;
+                throw new CompletionException(BulkResponses.stopped(ids, documents.size(), cause));
+            }
+            return list;
+        });
+    }
 
     /**
      * Indexes a new document, failing when a document with the same id exists. The default replaces
