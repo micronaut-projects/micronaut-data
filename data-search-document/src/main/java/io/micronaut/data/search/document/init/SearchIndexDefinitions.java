@@ -16,14 +16,20 @@
 package io.micronaut.data.search.document.init;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.search.SearchField;
 import io.micronaut.data.annotation.search.SearchFieldType;
+import io.micronaut.data.annotation.search.SearchIndexSettings;
+import io.micronaut.data.annotation.search.SearchMapping;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.search.TextSearchSupport;
+import io.micronaut.data.search.document.query.DocumentSearchQueryBuilder;
 import io.micronaut.data.search.document.query.SearchJson;
+import io.micronaut.json.JsonMapper;
+import java.io.IOException;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.data.search.document.runtime.SearchTransport;
 import io.micronaut.data.model.vector.Vector;
@@ -78,7 +84,8 @@ public final class SearchIndexDefinitions {
             addVectorMappings(entity, transport, properties);
         }
         for (PersistentProperty property : TextSearchSupport.searchFields(entity)) {
-            properties.put(property.getName(), searchFieldMapping(property, analyzer));
+            Map<String, Object> declaredMapping = declaredMapping(property);
+            properties.put(property.getName(), declaredMapping != null ? declaredMapping : searchFieldMapping(property, analyzer));
         }
         // The other string properties are compared exactly by the derived queries, so they are
         // keywords rather than the analyzed text a dynamic mapping would give them; the id is one of
@@ -88,16 +95,86 @@ public final class SearchIndexDefinitions {
             others.add(entity.getIdentity());
         }
         for (PersistentProperty property : others) {
-            if (!properties.containsKey(property.getName()) && !(property instanceof Association) && isKeyword(property)) {
-                properties.put(property.getName(), Map.of(TYPE, KEYWORD));
+            Map<String, Object> declaredMapping = declaredMapping(property);
+            String key = property.getName();
+            if (declaredMapping != null) {
+                properties.put(key, declaredMapping);
+            } else if (!properties.containsKey(key) && !(property instanceof Association) && isKeyword(property)) {
+                properties.put(key, Map.of(TYPE, KEYWORD));
             }
         }
         Map<String, Object> body = new LinkedHashMap<>();
-        if (transport != null && !transport.indexSettings().isEmpty()) {
-            body.put("settings", transport.indexSettings());
+        Map<String, Object> settings = new LinkedHashMap<>();
+        if (transport != null) {
+            settings.putAll(transport.indexSettings());
+        }
+        entity.getAnnotationMetadata().stringValue(SearchIndexSettings.class)
+            .filter(json -> !json.isBlank())
+            .ifPresent(json -> deepMerge(settings, readJson(json, "@SearchIndexSettings of " + entity.getName())));
+        if (!settings.isEmpty()) {
+            body.put("settings", settings);
         }
         body.put("mappings", Map.of("properties", properties));
         return SearchJson.write(body);
+    }
+
+    /**
+     * @param property A property
+     * @return Its {@code @SearchMapping} JSON as a map, or {@code null} when it declares none
+     */
+    @Nullable
+    private static Map<String, Object> declaredMapping(PersistentProperty property) {
+        return property.getAnnotationMetadata().stringValue(SearchMapping.class)
+            .filter(json -> !json.isBlank())
+            .map(json -> withKeywordSubField(property, readJson(json, "@SearchMapping of " + property.getName())))
+            .orElse(null);
+    }
+
+    /**
+     * Adds the {@code keyword} sub-field to the declared mapping of an analysed search field, unless it declares
+     * one, as the derived equality, range and sort queries address {@code <field>.keyword}.
+     */
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> withKeywordSubField(PersistentProperty property, Map<String, Object> mapping) {
+        if (!DocumentSearchQueryBuilder.isAnalysed(property)) {
+            return mapping;
+        }
+        Map<String, Object> fields = mapping.get(FIELDS) instanceof Map<?, ?> declared
+            ? new LinkedHashMap<>((Map<String, Object>) declared)
+            : new LinkedHashMap<>();
+        if (fields.containsKey(KEYWORD)) {
+            return mapping;
+        }
+        fields.putAll(KEYWORD_SUB_FIELD);
+        Map<String, Object> merged = new LinkedHashMap<>(mapping);
+        merged.put(FIELDS, fields);
+        return merged;
+    }
+
+    /**
+     * Merges the declared settings into the store's defaults: nested objects are merged key by key, so
+     * declaring {@code "index": {...}} keeps the defaults under {@code index} it does not name.
+     */
+    @SuppressWarnings("unchecked")
+    private static void deepMerge(Map<String, Object> target, Map<String, Object> source) {
+        for (Map.Entry<String, Object> entry : source.entrySet()) {
+            if (entry.getValue() instanceof Map<?, ?> nested && target.get(entry.getKey()) instanceof Map<?, ?> existing) {
+                Map<String, Object> merged = new LinkedHashMap<>((Map<String, Object>) existing);
+                deepMerge(merged, (Map<String, Object>) nested);
+                target.put(entry.getKey(), merged);
+            } else {
+                target.put(entry.getKey(), entry.getValue());
+            }
+        }
+    }
+
+    private static Map<String, Object> readJson(String json, String what) {
+        try {
+            Map<String, Object> map = JsonMapper.createDefault().readValue(json, Argument.mapOf(String.class, Object.class));
+            return map == null ? Map.of() : map;
+        } catch (IOException e) {
+            throw new IllegalStateException("Cannot parse the " + what + ": " + e.getMessage(), e);
+        }
     }
 
     /**
