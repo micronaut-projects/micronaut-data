@@ -50,9 +50,7 @@ public final class GraphEntities {
     private static final java.util.Set<String> NATIVE_ID_TYPES = java.util.Set.of(
         String.class.getName(),
         Long.class.getName(),
-        "long",
-        Integer.class.getName(),
-        "int"
+        Integer.class.getName()
     );
 
     private GraphEntities() {

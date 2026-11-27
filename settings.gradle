@@ -33,6 +33,7 @@ micronautBuild {
     importMicronautCatalog("micronaut-testresources")
     importMicronautCatalog("micronaut-validation")
     importMicronautCatalog("micronaut-mongo")
+    importMicronautCatalog("micronaut-neo4j")
     importMicronautCatalog("micronaut-flyway")
     importMicronautCatalog("micronaut-liquibase")
     importMicronautCatalog("micronaut-coherence")
@@ -48,11 +49,13 @@ include 'data-connection'
 include 'data-document-model'
 include 'data-graph-model'
 include 'data-graph-processor'
+include 'data-graph-runtime'
 include 'data-jpa'
 
 // Test Compatibility Kit
 include 'data-tck'
 include 'data-document-tck'
+include 'data-graph-tck'
 
 // implementations
 
@@ -71,6 +74,7 @@ include 'data-tx-jdbc'
 
 include 'data-r2dbc'
 include 'data-mongodb'
+include 'data-neo4j'
 include 'data-azure-cosmos'
 
 // Spring compatibility
