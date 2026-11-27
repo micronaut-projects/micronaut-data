@@ -1,9 +1,9 @@
 package example
 
-import io.micronaut.core.annotation.Introspected
+import io.micronaut.serde.annotation.Serdeable
 
 // tag::view[]
-@Introspected
+@Serdeable
 class TransferView {
     String source
     String target
