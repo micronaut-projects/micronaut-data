@@ -61,5 +61,9 @@ public enum SearchCapability {
     /**
      * Combined text and vector ranking.
      */
-    HYBRID
+    HYBRID,
+    /**
+     * A minimum relevance score as a restriction, the {@code Score} parameter of a derived search method.
+     */
+    MIN_SCORE
 }

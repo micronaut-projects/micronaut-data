@@ -21,7 +21,13 @@ class OracleTextSearchSpec extends AbstractTextSearchSpec implements Oracle23Tes
 
     @Override
     Set<SearchCapability> capabilities() {
-        return EnumSet.of(SearchCapability.PHRASE, SearchCapability.PREFIX, SearchCapability.FUZZY, SearchCapability.FIELD_SCOPE, SearchCapability.HIGHLIGHT, SearchCapability.VECTOR)
+        return EnumSet.of(SearchCapability.PHRASE, SearchCapability.PREFIX, SearchCapability.FUZZY, SearchCapability.FIELD_SCOPE, SearchCapability.HIGHLIGHT, SearchCapability.VECTOR, SearchCapability.MIN_SCORE)
+    }
+
+    @Override
+    String noStemmingLanguage() {
+        // Oracle Text ignores the @Language column; the default lexer has no stemming anyway
+        return null
     }
 
     @Override

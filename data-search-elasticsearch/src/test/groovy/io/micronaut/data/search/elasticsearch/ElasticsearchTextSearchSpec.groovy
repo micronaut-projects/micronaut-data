@@ -20,7 +20,13 @@ class ElasticsearchTextSearchSpec extends AbstractTextSearchSpec implements Test
     }
 
     @Override
+    String noStemmingLanguage() {
+        // the analyzer is fixed per field in the index mapping
+        return null
+    }
+
+    @Override
     Set<SearchCapability> capabilities() {
-        return EnumSet.of(SearchCapability.PHRASE, SearchCapability.PREFIX, SearchCapability.FUZZY, SearchCapability.FIELD_SCOPE, SearchCapability.BOOST, SearchCapability.HIGHLIGHT)
+        return EnumSet.of(SearchCapability.PHRASE, SearchCapability.PREFIX, SearchCapability.FUZZY, SearchCapability.FIELD_SCOPE, SearchCapability.BOOST, SearchCapability.HIGHLIGHT, SearchCapability.MIN_SCORE)
     }
 }

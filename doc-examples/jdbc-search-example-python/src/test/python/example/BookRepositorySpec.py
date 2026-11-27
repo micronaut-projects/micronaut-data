@@ -2,6 +2,7 @@ from typing import Annotated
 
 from jakarta.inject import Inject
 from micronaut.data.model.search import SearchQuery
+from micronaut.data.model.vector.search import Score
 from micronaut.data.model.vector import Vector
 from micronaut.test.extensions.junit5.annotation import MicronautTest
 from org.junit.jupiter.api import BeforeEach, Test
@@ -43,6 +44,8 @@ class BookRepositorySpec:
         assert len(self.repository.findByDescriptionSearchPhrase("beans coffee")) == 0
         assert len(self.repository.findByTitleSearchPrefix("coff")) == 2
         assert len(self.repository.findBySearchAndAuthor("coffee", "Bean")) == 1
+        assert self.repository.searchByTitleSearch("coffee", Score(0.0)).totalHits() == 2
+        assert self.repository.searchByTitleSearch("coffee", Score(100.0)).totalHits() == 0
 
     @Test
     def programmaticSearchQuery(self):
