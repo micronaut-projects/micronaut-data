@@ -1,0 +1,43 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
+plugins {
+    id "groovy"
+    id "io.micronaut.build.internal.data-example"
+    id "io.micronaut.test-resources"
+}
+
+application {
+    mainClass = "example.Application"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+    testRuntime "spock"
+    testResources {
+        enabled = true
+        inferClasspath = false
+        additionalModules.add(KnownModules.R2DBC_ORACLE_FREE)
+        additionalModules.add(KnownModules.JDBC_ORACLE_FREE)
+        clientTimeout = 600
+        version = libs.versions.micronaut.testresources.get()
+    }
+}
+
+dependencies {
+    compileOnly projects.micronautDataProcessor // Override app plugin version
+    compileOnly projects.micronautDataGraphProcessor
+
+    implementation projects.micronautDataOracleGraphR2dbc
+    implementation(mnSql.jakarta.persistence.api)
+
+    runtimeOnly mnR2dbc.r2dbc.oracle
+    runtimeOnly mnLogging.logback.classic
+
+    // A JDBC data source in the tests makes test resources start the Oracle container with the script that creates the graph
+    testRuntimeOnly mnSql.micronaut.jdbc.hikari
+    testRuntimeOnly mnSql.ojdbc11
+    testResourcesService mnSql.ojdbc11
+    // The script that creates the tables and the property graph is run by the test resources service
+    testResourcesService files("../oracle-graph-example-java/src/test/sql")
+}

@@ -1,6 +1,7 @@
 package io.micronaut.data.oracle.graph.operations
 
 import io.micronaut.data.graph.runtime.GraphEdge
+import io.micronaut.data.graph.runtime.oracle.OracleGraphRows
 import io.micronaut.data.graph.runtime.GraphNode
 import io.micronaut.data.graph.runtime.GraphPathValue
 import spock.lang.Specification
