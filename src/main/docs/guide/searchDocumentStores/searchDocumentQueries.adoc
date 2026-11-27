@@ -27,6 +27,14 @@ The search string uses the portable grammar and is converted to Lucene `simple_q
 
 A api:data.model.search.SearchQuery[] passed to `search(SearchQuery)` builds the same `simple_query_string` request at runtime, as described in the <<sqlTextSearch, SQL full-text search section>>: its `fields` select the fields to search, with their declared weights as boosts, and its `mode` selects the operator and the prefix or fuzzy suffix, and its `highlight` properties are requested in the `highlight` clause, with `number_of_fragments: 1` and a `fragment_size` of 100 characters, and returned through `SearchResult.highlights()` with the default `<em>` tags, at most one fragment per property.
 
+== Vector and hybrid search
+
+A derived method with the `Near` keyword on a vector property, `searchByEmbeddingNear(Vector vector, Score maxDistance)`, renders a `knn` query with the maximum cosine distance turned into the store's similarity threshold. Its `k`, the number of nearest neighbours the store returns, covers the hits the request asks for: the method's limit, or the end of the page of a `Pageable` passed at runtime. A method with neither returns the stores' default of 10 hits, as any request without a size does, so declare a limit (`findTop50By...`) or pass a `Pageable` to get more. `k` and `num_candidates` are capped at 10,000, the most Elasticsearch accepts, so a vector search returns at most the 10,000 nearest neighbours and a page beyond them is empty.
+
+The other AND conditions of the method, including those of nested conjunctions such as a `Specification` combined with `and` or a tenant restriction, become the `filter` of the `knn` query, so the nearest neighbours are searched among the documents they select instead of the top `k` being filtered afterwards. With a minimum `Score` on a text search in the same method they also stay scoring clauses beside the `knn` query, because `min_score` compares the sum of the scores. A `CursoredPageable` is rejected for a vector search with `UnsupportedOperationException`: `search_after` pages through the `k` nearest neighbours and a cursor does not tell how many precede it, so use an offset `Pageable`.
+
+Hits carry the store's similarity score rather than the distance the SQL stores return, highest first. api:data.model.search.SearchQuery[]`.vector(property, vector)` runs the same nearest-neighbour query and fuses it with the text ranking as described in the <<sqlTextSearch, SQL full-text search section>>; the native `rrf` retriever and the OpenSearch hybrid pipeline are not used, so hybrid search works on the basic licence.
+
 == Paging and sorting
 
 `Pageable` and `Sort` parameters set `from`, `size` and `sort`; a `Page` is built with `track_total_hits` so its total is exact. Sorting on an analysed search field sorts on its `keyword` sub-field. Without a sort the store returns hits in `_score` order, so an unsorted `Pageable` or `Sort` of a `SearchResults` method keeps the relevance order, best match first, as on SQL and MongoDB; a `Pageable` or `Sort` with orders replaces it.
@@ -67,4 +75,4 @@ Saving an entity whose id is already used by a document fails with a `DataAccess
 
 - Joins, `@Where`, update queries (`updateBy...`) and subqueries are not supported; update entities with `update(...)`.
 - `@Transactional` is not supported; see above.
-- Highlighting, aggregations and the raw query DSL are not exposed yet.
+- Aggregations and the raw query DSL are not exposed yet.
