@@ -23,7 +23,7 @@ import io.micronaut.serde.annotation.Serdeable;
 import org.jspecify.annotations.Nullable;
 
 /**
- * A searchable note whose String id the store generates.
+ * A searchable note whose String id Micronaut Data generates when it is {@code null}.
  */
 @MappedEntity("notes")
 @Searchable

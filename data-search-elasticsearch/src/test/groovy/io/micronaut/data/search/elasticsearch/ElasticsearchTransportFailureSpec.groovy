@@ -10,7 +10,10 @@ import co.elastic.clients.transport.DefaultTransportOptions
 import co.elastic.clients.transport.ElasticsearchTransport
 import co.elastic.clients.transport.Endpoint
 import co.elastic.clients.transport.TransportOptions
+import co.elastic.clients.transport.TransportException
+import co.elastic.clients.transport.http.TransportHttpClient
 import io.micronaut.data.exceptions.DataAccessException
+import io.micronaut.data.exceptions.OptimisticLockException
 import io.micronaut.data.search.document.runtime.SearchTransport
 import io.micronaut.data.search.elasticsearch.transport.ElasticsearchAsyncSearchTransport
 import io.micronaut.data.search.elasticsearch.transport.ElasticsearchSearchTransport
@@ -57,8 +60,11 @@ class ElasticsearchTransportFailureSpec extends Specification {
         "count"           | { ElasticsearchSearchTransport t -> t.count("books", BODY) }
         "index"           | { ElasticsearchSearchTransport t -> t.index("books", "1", [title: "Kotlin"], NONE) }
         "bulk"            | { ElasticsearchSearchTransport t -> t.bulkIndex("books", [new SearchTransport.BulkDocument("1", [title: "Kotlin"])], NONE) }
+        "index"           | { ElasticsearchSearchTransport t -> t.index("books", "1", [title: "Kotlin"], 2L, NONE) }
         "get"             | { ElasticsearchSearchTransport t -> t.get("books", "1") }
+        "get"             | { ElasticsearchSearchTransport t -> t.getHit("books", "1") }
         "delete"          | { ElasticsearchSearchTransport t -> t.delete("books", "1", NONE) }
+        "delete"          | { ElasticsearchSearchTransport t -> t.delete("books", "1", 2L, NONE) }
         "delete by query" | { ElasticsearchSearchTransport t -> t.deleteByQuery("books", BODY, NONE) }
         "index exists"    | { ElasticsearchSearchTransport t -> t.indexExists("books") }
         "create index"    | { ElasticsearchSearchTransport t -> t.createIndex("books", '{"mappings":{}}') }
@@ -81,8 +87,30 @@ class ElasticsearchTransportFailureSpec extends Specification {
         operation | call
         "search"  | { ElasticsearchSearchTransport t -> t.search("books", BODY) }
         "get"     | { ElasticsearchSearchTransport t -> t.get("books", "1") }
+        "get"     | { ElasticsearchSearchTransport t -> t.getHit("books", "1") }
+        "index"   | { ElasticsearchSearchTransport t -> t.index("books", "1", [title: "Kotlin"], 2L, NONE) }
+        "delete"  | { ElasticsearchSearchTransport t -> t.delete("books", "1", 2L, NONE) }
         "bulk"    | { ElasticsearchSearchTransport t -> t.bulkIndex("books", [new SearchTransport.BulkDocument("1", [title: "Kotlin"])], NONE) }
         "index"   | { ElasticsearchSearchTransport t -> t.create("books", "1", [title: "Kotlin"], NONE) }
+    }
+
+    void "a version conflict of a versioned #operation is an OptimisticLockException"() {
+        given:
+        def failure = storeError(409)
+        fake.failure = failure
+
+        when:
+        call.call(transport)
+
+        then:
+        OptimisticLockException e = thrown()
+        e.message.startsWith("Document 1 was modified concurrently: ")
+        e.cause.is(failure)
+
+        where:
+        operation | call
+        "index"   | { ElasticsearchSearchTransport t -> t.index("books", "1", [title: "Kotlin"], 2L, NONE) }
+        "delete"  | { ElasticsearchSearchTransport t -> t.delete("books", "1", 2L, NONE) }
     }
 
     void "a create of an existing id says the document exists and other create errors are wrapped"() {
@@ -135,6 +163,42 @@ class ElasticsearchTransportFailureSpec extends Specification {
         then:
         CompletionException e = thrown()
         e.cause.is(failure)
+    }
+
+    void "an async versioned #operation answered with HTTP 409 by the low-level client is an OptimisticLockException"() {
+        given: "the async client reports a store response as the exception of its HTTP client"
+        def failure = new TransportException(Stub(TransportHttpClient.Response) { statusCode() >> 409 }, "version conflict", "es/test")
+        fake.failure = failure
+
+        when:
+        call.call(asyncTransport).toCompletableFuture().join()
+
+        then:
+        CompletionException e = thrown()
+        e.cause instanceof OptimisticLockException
+        e.cause.message.startsWith("Document 1 was modified concurrently: ")
+        e.cause.message.endsWith("version conflict")
+        e.cause.cause.is(failure)
+
+        where:
+        operation | call
+        "index"   | { ElasticsearchAsyncSearchTransport t -> t.index("books", "1", [title: "Kotlin"], 2L, NONE) }
+        "delete"  | { ElasticsearchAsyncSearchTransport t -> t.delete("books", "1", 2L, NONE) }
+    }
+
+    void "an async versioned index answered with another status by the low-level client is a DataAccessException"() {
+        given:
+        def failure = new TransportException(Stub(TransportHttpClient.Response) { statusCode() >> 500 }, "boom", "es/test")
+        fake.failure = failure
+
+        when:
+        asyncTransport.index("books", "1", [title: "Kotlin"], 2L, NONE).toCompletableFuture().join()
+
+        then:
+        CompletionException e = thrown()
+        e.cause instanceof DataAccessException
+        !(e.cause instanceof OptimisticLockException)
+        e.cause.cause.is(failure)
     }
 
     /**
