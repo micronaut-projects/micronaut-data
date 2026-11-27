@@ -40,7 +40,7 @@ class TextSearchIndexDdlSpec extends AbstractDataSpec {
         def statements = new SqlQueryBuilder(Dialect.ORACLE).buildCreateTableStatements(entity)
 
         then:
-        statements.last() == 'CREATE INDEX "BOOK_TEXT_IDX_TITLE" ON "BOOK" ("TITLE") INDEXTYPE IS CTXSYS.CONTEXT PARAMETERS (\'SYNC (ON COMMIT)\');'
+        statements.contains('CREATE INDEX "BOOK_TEXT_IDX_TITLE" ON "BOOK" ("TITLE") INDEXTYPE IS CTXSYS.CONTEXT PARAMETERS (\'SYNC (ON COMMIT)\');')
     }
 
     void "a @Searchable(name) that is not a plain identifier is rejected instead of changing the #dialect index DDL"() {

@@ -21,6 +21,17 @@ class BookService:
         # end::search[]
         return [hit.entity().title for hit in results]
 
+    def highlighted_titles(self, query: str) -> list[str]:
+        # tag::highlight[]
+        search_query = (SearchQuery.builder(query)
+                        .highlight("title")  # <1>
+                        .build())
+        fragments = []
+        for hit in self.repository.search(search_query):
+            fragments.extend(hit.highlights()["title"])  # <2>
+        # end::highlight[]
+        return fragments
+
     def titles_containing_every_word(self, query: str) -> list[str]:
         # tag::searchQuery[]
         search_query = (SearchQuery.builder(query)  # <1>

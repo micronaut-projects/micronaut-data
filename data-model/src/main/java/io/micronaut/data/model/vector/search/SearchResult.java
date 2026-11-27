@@ -33,7 +33,10 @@ import java.util.Map;
  * @param highlights Highlighted fragments by property name, empty when none were requested. Each
  *                   fragment is document text with {@code <em>} and {@code </em>} around the matched
  *                   terms and is not HTML-escaped: use {@link #escapedHighlights()} before rendering it
- *                   as HTML
+ *                   as HTML. Every store returns at most one fragment per property; its length is
+ *                   store-specific (the {@code ts_headline} defaults on PostgreSQL, the
+ *                   {@code CTX_DOC.POLICY_SNIPPET} default on Oracle, about 100 characters on
+ *                   Elasticsearch and OpenSearch)
  * @since 5.0.0
  */
 @Experimental
