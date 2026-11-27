@@ -17,7 +17,6 @@ package io.micronaut.data.age.operations;
 
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
-import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.connection.ConnectionDefinition;
@@ -36,6 +35,7 @@ import io.micronaut.data.graph.runtime.GraphSession;
 import io.micronaut.data.graph.runtime.GraphValueEncoderRegistrar;
 import io.micronaut.data.graph.runtime.serde.GraphSerde;
 import io.micronaut.data.graph.runtime.GraphValueEncoders;
+import io.micronaut.data.graph.runtime.age.AgeConfiguration;
 import io.micronaut.data.graph.runtime.age.AgeParameters;
 import io.micronaut.data.graph.runtime.age.Agtype;
 import io.micronaut.data.graph.runtime.operations.AbstractGraphRepositoryOperations;
@@ -120,10 +120,9 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
 
     @SuppressWarnings("ParameterNumber")
     DefaultAgeRepositoryOperations(@Parameter ConnectionOperations<Connection> connectionOperations,
+                                   @Parameter String dataSourceName,
+                                   AgeConfiguration configuration,
                                    JsonMapper jsonMapper,
-                                   @Value("${micronaut.data.age.graph:graph}") String graph,
-                                   @Value("${micronaut.data.age.create-extension:false}") boolean createExtension,
-                                   @Value("${micronaut.data.age.create-graph:true}") boolean createGraph,
                                    DateTimeProvider<Object> dateTimeProvider,
                                    RuntimeEntityRegistry runtimeEntityRegistry,
                                    DataConversionService conversionService,
@@ -133,9 +132,9 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
                                    GraphSerde graphSerde) {
         super(new AgeCypherQueryBuilder(), dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry, executorService, encoderRegistrars, graphSerde);
         this.connectionOperations = connectionOperations;
-        this.graph = AgeStatements.validateGraphName(graph);
-        this.createExtension = createExtension;
-        this.createGraph = createGraph;
+        this.graph = AgeStatements.validateGraphName(configuration.graphFor(dataSourceName));
+        this.createExtension = configuration.isCreateExtension();
+        this.createGraph = configuration.isCreateGraph();
         this.jsonMapper = jsonMapper;
     }
 

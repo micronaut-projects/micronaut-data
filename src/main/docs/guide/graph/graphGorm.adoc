@@ -20,7 +20,7 @@ Micronaut Data Graph covers the querying features of https://grails.apache.org/d
 |`operations.executeQuery(query, parameters)` and `operations.executeQuery(query, parameters, Club.class)`
 
 |`name index: true`, `unique: true`
-|Declare indexes and constraints in Cypher migrations
+|ann:data.annotation.Index[] on the entity, with `unique = true` for a constraint; created at startup when `create-indexes` is enabled, see <<graphIndexesAndLocking>>
 
 |`Person.findShortestPath(fred, joe, 15)`
 |`findShortestPath(Person from, Person to, @PathLimit int maxDepth)`
