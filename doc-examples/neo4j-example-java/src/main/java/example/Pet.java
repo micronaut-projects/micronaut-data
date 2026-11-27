@@ -1,5 +1,9 @@
 package example;
 
+import io.micronaut.data.graph.annotation.DynamicRelationships;
+
+import java.util.List;
+
 // tag::pet[]
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.graph.annotation.DynamicAttributes;
@@ -38,6 +42,19 @@ public class Pet implements DynamicAttributeHolder { // <1>
 
     public void setAttributes(Map<String, Object> attributes) {
         this.attributes = attributes;
+    }
+
+    // tag::relationships[]
+    @DynamicRelationships // <1>
+    private Map<String, List<Object>> related = new HashMap<>();
+    // end::relationships[]
+
+    public Map<String, List<Object>> getRelated() {
+        return related;
+    }
+
+    public void setRelated(Map<String, List<Object>> related) {
+        this.related = related;
     }
 // tag::pet[]
 }

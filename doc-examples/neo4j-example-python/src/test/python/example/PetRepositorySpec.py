@@ -32,3 +32,16 @@ class PetRepositorySpec:
 
         assert goes_in_patch is True
         assert [p.name for p in in_patch] == ["Dino"]
+
+    @Test
+    def testDynamicRelationships(self):
+        # tag::dynamicRelationships[]
+        dino = Pet("Dino")
+        dino.related["PLAYS_WITH"] = [Pet("Hoppy")]  # <1>
+        self.petRepository.save(dino)  # <2>
+
+        found = self.petRepository.findById("Dino").get()
+        plays_with = found.related["PLAYS_WITH"]  # <3>
+        # end::dynamicRelationships[]
+
+        assert [p.name for p in plays_with] == ["Hoppy"]
