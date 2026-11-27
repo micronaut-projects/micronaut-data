@@ -3,6 +3,7 @@ package example
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.search.MatchMode
 import io.micronaut.data.model.search.SearchQuery
+import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.model.vector.search.SearchResult
 import io.micronaut.data.model.vector.search.SearchResults
 import jakarta.inject.Singleton
@@ -37,6 +38,20 @@ class BookService {
         SearchResults<Book> results = bookRepository.search(searchQuery) // <4>
         SearchResults<Book> firstPage = bookRepository.search(searchQuery, Pageable.from(0, 10)) // <5>
         // end::searchQuery[]
+        return results.results()*.entity()*.title
+    }
+
+    List<String> hybridTitles(String query, Vector embedding) {
+        // tag::hybrid[]
+        SearchQuery searchQuery = SearchQuery.builder(query)
+            .vector("embedding", embedding) // <1>
+            .textWeight(1.0).vectorWeight(1.0).candidates(50) // <2>
+            .build()
+        SearchResults<Book> results = bookRepository.search(searchQuery)
+        for (SearchResult<Book> hit : results) {
+            double fusedScore = hit.score().value() // <3>
+        }
+        // end::hybrid[]
         return results.results()*.entity()*.title
     }
 

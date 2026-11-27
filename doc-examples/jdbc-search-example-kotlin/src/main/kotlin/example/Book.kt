@@ -6,6 +6,8 @@ import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.search.SearchField
 import io.micronaut.data.annotation.search.SearchWeight
 import io.micronaut.data.annotation.search.Searchable
+import io.micronaut.data.model.vector.Vector
+import jakarta.persistence.Column
 
 // tag::entity[]
 @MappedEntity
@@ -21,6 +23,9 @@ data class Book(
     @field:SearchField // <3>
     val description: String,
 
-    val author: String
+    val author: String,
+
+    @field:Column(length = 3)
+    val embedding: Vector? = null
 )
 // end::entity[]
