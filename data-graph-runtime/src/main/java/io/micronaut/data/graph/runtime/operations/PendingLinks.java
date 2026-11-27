@@ -104,7 +104,7 @@ final class PendingLinks<L> {
             addNodes(items, nodes);
             return;
         }
-        BeanProperty<Object, Object> targetProperty = AbstractGraphRepositoryOperations.targetNode(associated).getProperty();
+        BeanProperty<Object, Object> targetProperty = RelationshipTarget.targetNode(associated).getProperty();
         for (Object item : items) {
             Object node = item == null ? null : targetProperty.get(item);
             if (node != null) {

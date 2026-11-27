@@ -47,9 +47,30 @@ snippet::example.Role[project-base="doc-examples/neo4j-example", source="main", 
 
 == Saving relationships
 
-Saving an entity writes its node, then saves the nodes it relates to and creates the relationships between them. A related node that has an identifier is updated rather than created again. Saving does not remove relationships missing from a collection: use an explicit query to delete relationships.
+Saving an entity writes its node, then saves the nodes it relates to and merges the relationships between them. A related node that has an identifier is updated rather than created again, unless the relationship declares otherwise, see <<graphCascade, Cascading to related nodes>>. Saving does not remove relationships missing from a collection: use an explicit query to delete relationships.
 
-On Neo4j and Apache AGE, `saveAll` and `updateAll` write the nodes of one entity with a single `UNWIND` query per kind of write: nodes to create, nodes to update and nodes whose `@Version` is checked. Reactive repositories batch their writes the same way. Entity events still run for each entity, an instance passed more than once is written once, and the relationships of each node are written after all the nodes. A batch with two instances that have the same identifier is written one instance at a time, so that they conflict as two saves do and the instances written before the conflict stay unless a transaction rolls them back. When a versioned `updateAll` finds a node that was changed since it was read, its query updates none of the nodes and fails with `OptimisticLockException`; likewise a `saveAll` of new versioned entities inserts none of them when one of their identifiers is taken. Writes of other kinds and of relationships run as separate statements, so run the batch in a transaction for it to be rolled back as a whole. Apache AGE writes nodes with assigned identifiers one at a time, as it only merges the first node of an `UNWIND`, and runs the writes in the current transaction or else in a transaction of its own, so that a node that fails its version or identifier check rolls the others back.
+Each `save`, `update`, `saveAll`, `updateAll` and `delete` joins the active transaction, or runs in a transaction of its own when none is active, so the statements of a cascading save either all apply or none: a save whose related node cannot be written leaves no node behind, and a versioned `updateAll` that finds a node changed since it was read writes nothing.
+
+On Neo4j and Apache AGE, `saveAll` and `updateAll` write the nodes of one entity with a single `UNWIND` query per kind of write: nodes to create, nodes to update and nodes whose `@Version` is checked. The nodes a relationship property relates an entity to are written the same way, and its relationships are merged with one `UNWIND` query per set of relationship properties: saving a person who follows ten people runs one query for the people and one for the `FOLLOWS` relationships. A relationship entity with an identifier is written on its own instead, as two of them may connect the same nodes: it is updated by its identifier, or created when no relationship has it. Reactive repositories batch their writes the same way. Entity events still run for each entity, an instance passed more than once is written once, and the relationships of each node are written after all the nodes. A batch with two instances that have the same identifier is written one instance at a time, so that they conflict as two saves do. When a versioned `updateAll` finds a node that was changed since it was read, its query updates none of the nodes and fails with `OptimisticLockException`; likewise a `saveAll` of new versioned entities inserts none of them when one of their identifiers is taken. Apache AGE writes nodes with assigned identifiers one at a time, as it only merges the first node of an `UNWIND`.
+
+[[graphCascade]]
+=== Cascading to related nodes
+
+By default a save cascades to the related nodes: a node without an identifier is created and one with an identifier is updated, so its properties are written again and its `@Version` advances. The `cascade` member of ann:data.graph.annotation.Relationship[] limits what a save does to the related nodes, with the values of `Relation.Cascade`:
+
+* `ALL`, the default, creates new related nodes and updates existing ones.
+* `PERSIST` creates new related nodes and links existing ones without updating them.
+* `UPDATE` updates existing related nodes; a new one cannot be linked, and the save fails.
+* `NONE` merges the relationship only: the related node must already exist with an identifier.
+
+snippet::example.Person[project-base="doc-examples/neo4j-example", source="main", tags="cascade", languages="java,kotlin,groovy,python"]
+
+<1> Saving a person links the people they know without saving them.
+
+snippet::example.PersonRepositorySpec[project-base="doc-examples/neo4j-example", tags="cascade", indent="0", languages="java,kotlin,groovy,python"]
+
+<1> A person who is known must be saved first, so that they have an identifier.
+<2> Saving Carrie merges the `KNOWS` relationship and leaves Keanu as he was. A related node without an identifier, or one that does not exist, fails the save with a `DataAccessException`, and nothing is written.
 
 Relationships are not loaded unless a finder asks for them with ann:data.annotation.Join[], see <<graphTraversal, Querying Relationships>>. Collections of relationships that were not fetched are empty.
 

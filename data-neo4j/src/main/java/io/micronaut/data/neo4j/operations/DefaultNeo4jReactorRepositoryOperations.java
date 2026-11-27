@@ -25,9 +25,11 @@ import io.micronaut.data.graph.runtime.GraphRecord;
 import io.micronaut.data.graph.runtime.GraphResult;
 import io.micronaut.data.graph.runtime.ReactiveGraphSession;
 import io.micronaut.data.graph.runtime.operations.AbstractReactiveGraphRepositoryOperations;
+import io.micronaut.data.graph.runtime.operations.GraphWriteTransaction;
 import io.micronaut.data.neo4j.session.Neo4jDriverRegistration;
 import io.micronaut.data.neo4j.session.Neo4jReactiveConnection;
 import io.micronaut.data.neo4j.session.Neo4jReactorConnectionOperations;
+import io.micronaut.data.neo4j.transaction.Neo4jReactorTransactionOperations;
 import org.neo4j.driver.exceptions.Neo4jException;
 import org.neo4j.driver.summary.SummaryCounters;
 import org.slf4j.Logger;
@@ -52,11 +54,14 @@ final class DefaultNeo4jReactorRepositoryOperations extends AbstractReactiveGrap
     private static final Logger LOG = LoggerFactory.getLogger(DefaultNeo4jReactorRepositoryOperations.class);
 
     private final Neo4jReactorConnectionOperations connectionOperations;
+    private final Neo4jReactorTransactionOperations transactionOperations;
 
     DefaultNeo4jReactorRepositoryOperations(@Parameter DefaultNeo4jRepositoryOperations operations,
-                                            @Parameter Neo4jReactorConnectionOperations connectionOperations) {
+                                            @Parameter Neo4jReactorConnectionOperations connectionOperations,
+                                            @Parameter Neo4jReactorTransactionOperations transactionOperations) {
         super(operations);
         this.connectionOperations = connectionOperations;
+        this.transactionOperations = transactionOperations;
     }
 
     @Override
@@ -73,6 +78,17 @@ final class DefaultNeo4jReactorRepositoryOperations extends AbstractReactiveGrap
             ConnectionDefinition.DEFAULT.withAnnotationMetadata(annotationMetadata),
             status -> work.apply(new Session(status.getConnection()))
         );
+    }
+
+    @Override
+    protected <R> Mono<R> withTransactionMono(AnnotationMetadata annotationMetadata, Function<ReactiveGraphSession, Mono<R>> work) {
+        // Joins the transaction of the Reactor context, or begins one so that the statements of the write commit or roll back together
+        return transactionOperations.withTransactionMono(GraphWriteTransaction.of(annotationMetadata), status -> work.apply(new Session(status.getConnection())));
+    }
+
+    @Override
+    protected <R> Flux<R> withTransactionFlux(AnnotationMetadata annotationMetadata, Function<ReactiveGraphSession, Flux<R>> work) {
+        return transactionOperations.withTransactionFlux(GraphWriteTransaction.of(annotationMetadata), status -> work.apply(new Session(status.getConnection())));
     }
 
     private static DataAccessException error(String query, Neo4jException e) {

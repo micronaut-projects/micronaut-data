@@ -13,6 +13,8 @@ interface PersonRepository extends CrudRepository<Person, UUID> {
 
     Optional<Person> findByName(String name)
 
+    List<Person> findByKnowsName(String name)
+
     // tag::paths[]
     Optional<GraphPath<Person>> findShortestPath(Person from, Person to) // <1>
 

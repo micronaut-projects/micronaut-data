@@ -69,6 +69,20 @@ class PersonRepositorySpec extends AbstractNeo4jSpec {
         labels == ["Actor"] as Set
     }
 
+    void "link a node without saving it"() {
+        when:
+        // tag::cascade[]
+        def keanu = personRepository.save(new Person(name: "Keanu Reeves", born: 1964)) // <1>
+        def carrie = new Person(name: "Carrie-Anne Moss", born: 1967)
+        carrie.knows = [keanu] // <2>
+        personRepository.save(carrie)
+        // end::cascade[]
+
+        then:
+        personRepository.findByKnowsName("Keanu Reeves")*.name == ["Carrie-Anne Moss"]
+        personRepository.findByName("Keanu Reeves").get().born == 1964
+    }
+
     void "path options"() {
         expect:
         personRepository.findShortestPathByFollowsBetweenName("Fred", "Joe", 3).get().end().name == "Joe"

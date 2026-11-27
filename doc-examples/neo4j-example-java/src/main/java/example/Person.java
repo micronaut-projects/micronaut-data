@@ -3,6 +3,7 @@ package example;
 // tag::person[]
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.graph.annotation.Labels;
 import io.micronaut.data.graph.annotation.Node;
 import io.micronaut.data.graph.annotation.Relationship;
@@ -37,6 +38,19 @@ public class Person {
     @Labels // <1>
     private Set<String> labels = new LinkedHashSet<>();
     // end::labels[]
+
+    // tag::cascade[]
+    @Relationship(value = "KNOWS", cascade = Relation.Cascade.NONE) // <1>
+    private List<Person> knows = new ArrayList<>();
+    // end::cascade[]
+
+    public List<Person> getKnows() {
+        return knows;
+    }
+
+    public void setKnows(List<Person> knows) {
+        this.knows = knows;
+    }
 
     public Set<String> getLabels() {
         return labels;

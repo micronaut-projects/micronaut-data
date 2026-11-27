@@ -1,5 +1,6 @@
 package io.micronaut.data.graph.tck.repositories;
 
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.graph.annotation.Direction;
 import io.micronaut.data.graph.annotation.PathDirection;
 import io.micronaut.data.graph.annotation.PathLimit;
@@ -13,6 +14,13 @@ import java.util.UUID;
 public interface PersonRepository extends CrudRepository<Person, UUID> {
 
     Optional<Person> findByName(String name);
+
+    @Query("MATCH (a:Person)-[r:KNOWS]->(b:Person) RETURN count(r)")
+    long countAcquaintances();
+
+    List<Person> findByAcquaintancesName(String name);
+
+    List<Person> findByEndorsersName(String name);
 
     List<Person> findByMentorName(String name);
 
