@@ -1,1 +1,2 @@
 io.micronaut.data.graph.processor.matchers.GraphRawQueryMethodMatcher
+io.micronaut.data.graph.processor.matchers.GraphPathMethodMatcher
