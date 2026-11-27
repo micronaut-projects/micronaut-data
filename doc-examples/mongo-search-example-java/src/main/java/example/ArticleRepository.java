@@ -1,5 +1,6 @@
 package example;
 
+import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.model.vector.search.Score;
 import io.micronaut.data.model.vector.search.SearchResults;
 import io.micronaut.data.mongodb.annotation.MongoRepository;
@@ -16,5 +17,6 @@ public interface ArticleRepository extends CrudRepository<Article, String>, Sear
     SearchResults<Article> searchByBodySearchFuzzy(String query); // <3>
     SearchResults<Article> searchBySearch(String query, Score minScore); // <4>
     List<Article> findBySearchAndAuthor(String query, String author); // <5>
+    SearchResults<Article> searchByEmbeddingNear(Vector embedding, Score maxDistance); // <6>
 }
 // end::repository[]

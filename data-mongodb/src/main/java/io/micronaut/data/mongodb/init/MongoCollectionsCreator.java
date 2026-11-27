@@ -108,8 +108,18 @@ public final class MongoCollectionsCreator extends AbstractMongoCollectionsCreat
                 }
 
                 @Override
+                public org.bson.@Nullable Document findSearchIndex(MongoDatabase database, String collection, String name) {
+                    return database.getCollection(collection).listSearchIndexes().name(name).first();
+                }
+
+                @Override
                 public void createSearchIndex(MongoDatabase database, String collection, SearchIndexDefinition definition) {
                     database.getCollection(collection).createSearchIndex(definition.name(), definition.definition());
+                }
+
+                @Override
+                public void createVectorIndex(MongoDatabase database, String collection, VectorIndexDefinition definition) {
+                    database.getCollection(collection).createSearchIndexes(List.of(definition.model()));
                 }
             };
         }, mongoCollectionNameProvider);
