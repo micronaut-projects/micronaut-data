@@ -116,4 +116,16 @@ class MovieRepositorySpec extends AbstractNeo4jSpec {
         recent*.title.sort() == ["The Matrix", "The Matrix Reloaded"]
         byLana == 2
     }
+
+    void "graph criteria"() {
+        when:
+        // tag::useGraphCriteria[]
+        def withCast = movieSpecificationRepository.count(MovieSpecifications.withRoles()) // <1>
+        def nearSpeed = movieSpecificationRepository.findAll(MovieSpecifications.connectedTo("Speed", 2)) // <2>
+        // end::useGraphCriteria[]
+
+        then:
+        withCast == 3
+        nearSpeed*.title.sort() == ["The Matrix", "The Matrix Reloaded"]
+    }
 }

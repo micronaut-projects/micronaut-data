@@ -57,6 +57,12 @@ public record PathQueryDefinition(PersistentEntity entity,
     public static final String PATH_LIMIT_TOKEN = "$__pathLimit";
 
     /**
+     * The token in a query, followed by a depth, that holds the depth of a criterion. The runtime checks the depth
+     * against the configured maximum and replaces the token with it.
+     */
+    public static final String CRITERIA_DEPTH_TOKEN = "$__pathDepth";
+
+    /**
      * A definition whose endpoints are matched by identifier.
      *
      * @param entity        The node entity at both ends

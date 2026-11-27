@@ -9,5 +9,6 @@
     <suppress checks="FileLength" files=".*/SqlQueryBuilder\.java" />
     <suppress checks="FileLength" files=".*/DefaultJdbcRepositoryOperations\.java" />
     <suppress checks="FileLength" files=".*/CypherQueryBuilder\.java" />
+    <suppress checks="FileLength" files=".*/AbstractGraphRepositoryOperations\.java" />
     <suppress files="[\\/]generated-src[\\/]" checks="[a-zA-Z0-9]*"/>
 </suppressions>

@@ -7,7 +7,10 @@ import io.micronaut.data.event.EntityEventListener
 import io.micronaut.data.graph.annotation.Direction
 import io.micronaut.data.graph.annotation.PropertyGraph
 import io.micronaut.data.graph.model.query.PathQueryDefinition
+import io.micronaut.data.graph.model.criteria.GraphCriteria
+import io.micronaut.data.graph.model.query.builder.entities.Chimera
 import io.micronaut.data.graph.model.query.builder.entities.Person
+import io.micronaut.data.graph.model.query.builder.entities.Pet
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQueryBuilder
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot
@@ -19,6 +22,12 @@ import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
 import io.micronaut.inject.annotation.MutableAnnotationMetadata
 import spock.lang.Shared
 import spock.lang.Specification
+
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZonedDateTime
 
 /**
  * Checks the SQL/PGQ rendered for queries built with the criteria API and for path queries.
@@ -82,6 +91,123 @@ class OracleGraphCriteriaQuerySpec extends Specification {
         'order by relationship property' | { q, r -> q.orderBy(cb.asc(r.join("movies").get("released"))) } | 'UnsupportedOperationException' | '''Sorting on a relationship is not supported for Oracle property graphs, which have no OPTIONAL MATCH, so nodes without the relationship would be dropped: movies.released'''
         'order by bound relationship' | { q, r -> q.where(cb.equal(r.join("movies").get("title"), "a")).orderBy(cb.desc(r.join("movies").get("released"))) } | 'UnsupportedOperationException' | '''Sorting on a relationship is not supported for Oracle property graphs, which have no OPTIONAL MATCH, so nodes without the relationship would be dropped: movies.released'''
         'order by lower relationship' | { q, r -> q.orderBy(cb.asc(cb.lower(r.join("movies").get("title")))) } | 'UnsupportedOperationException' | '''Sorting on a relationship is not supported for Oracle property graphs, which have no OPTIONAL MATCH, so nodes without the relationship would be dropped: movies.title'''
+        'related' | { q, r -> q.where(GraphCriteria.related(r, "movies")) } | 'UnsupportedOperationException' | '''Relationship criteria are not supported for Oracle property graphs: use a finder on the relationship property'''
+        'dynamic without attributes' | { q, r -> q.where(cb.isTrue(GraphCriteria.dynamic(r, "active", Boolean))) } | 'IllegalArgumentException' | '''Entity [io.micronaut.data.graph.model.query.builder.entities.Person] has no @DynamicAttributes property to read [active] from'''
+    }
+
+    void "test dynamic properties read the JSON column"() {
+        given:
+        def query = cb.createQuery(Pet)
+        PersistentEntityRoot root = query.from(Pet)
+        query.where(cb.greaterThan(GraphCriteria.dynamic(root, "legs", Integer), 2))
+
+        expect:
+        ((PersistentEntityCriteriaQueryBuilder) query).build(AnnotationMetadata.EMPTY_METADATA, builder()).query.contains(fragment)
+
+        where:
+        fragment << ["WHERE (JSON_VALUE(n.attributes, '\$.\"legs\"' RETURNING NUMBER) > ?)"]
+    }
+
+    void "test selecting a dynamic property reads the JSON column"() {
+        given:
+        def query = cb.createQuery(Integer)
+        PersistentEntityRoot root = query.from(Pet)
+        query.select(GraphCriteria.dynamic(root, "legs", Integer))
+
+        expect:
+        ((PersistentEntityCriteriaQueryBuilder) query).build(AnnotationMetadata.EMPTY_METADATA, builder()).query == expected
+
+        where:
+        expected << ['''SELECT "c0" AS "legs" FROM GRAPH_TABLE (g MATCH (n IS Pet) COLUMNS (JSON_VALUE(n.attributes, '$."legs"' RETURNING NUMBER) AS "c0"))''']
+    }
+
+    void "test a selected dynamic property named like a column of a graph element has an alias of its own"() {
+        given:
+        def query = cb.createQuery(Integer)
+        PersistentEntityRoot root = query.from(Pet)
+        query.select(GraphCriteria.dynamic(root, "storage__gb", Integer))
+
+        expect:
+        ((PersistentEntityCriteriaQueryBuilder) query).build(AnnotationMetadata.EMPTY_METADATA, builder()).query == expected
+
+        where:
+        expected << ['''SELECT "c0" AS "storage_gb" FROM GRAPH_TABLE (g MATCH (n IS Pet) COLUMNS (JSON_VALUE(n.attributes, '$."storage__gb"' RETURNING NUMBER) AS "c0"))''']
+    }
+
+    void "test dynamic property of type #type.simpleName reads the JSON value as #returning"() {
+        given:
+        def query = cb.createQuery(Pet)
+        PersistentEntityRoot root = query.from(Pet)
+        query.where(cb.isNotNull(GraphCriteria.dynamic(root, "value", type)))
+
+        expect:
+        ((PersistentEntityCriteriaQueryBuilder) query).build(AnnotationMetadata.EMPTY_METADATA, builder()).query
+            .contains("WHERE (JSON_VALUE(n.attributes, '\$.\"value\"'" + returning + ") IS NOT NULL)")
+
+        where:
+        type           | returning
+        Integer        | ' RETURNING NUMBER'
+        int            | ' RETURNING NUMBER'
+        Long           | ' RETURNING NUMBER'
+        Double         | ' RETURNING NUMBER'
+        BigDecimal     | ' RETURNING NUMBER'
+        Boolean        | ' RETURNING BOOLEAN'
+        boolean        | ' RETURNING BOOLEAN'
+        LocalDate      | ' RETURNING DATE'
+        LocalDateTime  | ' RETURNING TIMESTAMP'
+        OffsetDateTime | ' RETURNING TIMESTAMP WITH TIME ZONE'
+        ZonedDateTime  | ' RETURNING TIMESTAMP WITH TIME ZONE'
+        Instant        | ' RETURNING TIMESTAMP WITH TIME ZONE'
+        String         | ''
+        Object         | ''
+    }
+
+    void "test dynamic property names are quoted keys of the JSON path: #name"() {
+        given:
+        def query = cb.createQuery(Pet)
+        PersistentEntityRoot root = query.from(Pet)
+        query.where(cb.equal(GraphCriteria.dynamic(root, name, String), "x"))
+
+        expect:
+        ((PersistentEntityCriteriaQueryBuilder) query).build(AnnotationMetadata.EMPTY_METADATA, builder()).query
+            .contains("WHERE (JSON_VALUE(n.attributes, " + path + ") = ?)")
+
+        where:
+        name          | path
+        'first.name'  | $/'$."first.name"'/$
+        'nick name'   | $/'$."nick name"'/$
+        "it's"        | $/'$."it''s"'/$
+    }
+
+    void "test dynamic property names a JSON path would need to escape are rejected: #name"() {
+        given:
+        def query = cb.createQuery(Pet)
+        PersistentEntityRoot root = query.from(Pet)
+        query.where(cb.equal(GraphCriteria.dynamic(root, name, String), "x"))
+
+        when:
+        ((PersistentEntityCriteriaQueryBuilder) query).build(AnnotationMetadata.EMPTY_METADATA, builder())
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message == "Schemaless property [" + name + "] cannot be read from an Oracle property graph: its name holds a double quote or a backslash, which a JSON path would need to escape"
+
+        where:
+        name << ['say "hi"', 'back\\slash']
+    }
+
+    void "test a dynamic property of an entity with two attribute maps is rejected"() {
+        given:
+        def query = cb.createQuery(Chimera)
+        PersistentEntityRoot root = query.from(Chimera)
+        query.where(cb.isNotNull(GraphCriteria.dynamic(root, "legs", Integer)))
+
+        when:
+        ((PersistentEntityCriteriaQueryBuilder) query).build(AnnotationMetadata.EMPTY_METADATA, builder())
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message == 'Entity [io.micronaut.data.graph.model.query.builder.entities.Chimera] has more than one @DynamicAttributes property: [attributes] and [extra]'
     }
 
     void "test path query #description"() {
