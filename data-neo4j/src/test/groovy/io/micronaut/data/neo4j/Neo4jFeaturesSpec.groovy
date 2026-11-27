@@ -10,6 +10,7 @@ import io.micronaut.data.model.CursoredPageable
 import io.micronaut.data.model.Limit
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
+import io.micronaut.data.graph.annotation.Direction
 import io.micronaut.data.neo4j.features.Assignment
 import io.micronaut.data.neo4j.features.Audit
 import io.micronaut.data.neo4j.features.Chapter
@@ -42,6 +43,9 @@ import io.micronaut.data.neo4j.features.StationRepository
 import io.micronaut.data.neo4j.features.Tag
 import io.micronaut.data.neo4j.features.Member
 import io.micronaut.data.neo4j.features.MemberRepository
+import io.micronaut.data.neo4j.features.GuestRepository
+import io.micronaut.data.neo4j.features.Officer
+import io.micronaut.data.neo4j.features.OfficerRepository
 import io.micronaut.data.neo4j.features.TagRepository
 import io.micronaut.data.neo4j.features.Team
 import io.micronaut.data.neo4j.features.TeamRepository
@@ -75,6 +79,12 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
 
     @Inject
     MemberRepository memberRepository
+
+    @Inject
+    OfficerRepository officerRepository
+
+    @Inject
+    GuestRepository guestRepository
 
     @Inject
     ChapterRepository chapterRepository
@@ -387,6 +397,41 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
         saved[0].mentor().id() == saved[1].id()
         memberRepository.count() == 2
         operations.executeQuery("MATCH (:Member {name: 'Ada'})-[:MENTORED_BY]->(m:Member {name: 'Grace'}) RETURN count(m)", [:], Long) == [1L]
+    }
+
+    void "a path finder matches the end node by its native identifier while the start node is matched by a property"() {
+        given:
+        def saved = memberRepository.saveAll([new Member(null, "Ada", new Member(null, "Grace", null))])
+        def mentor = saved[0].mentor()
+
+        expect:
+        memberRepository.existsPathByMentorBetweenNameAndId("Ada", mentor.id())
+        !memberRepository.existsPathByMentorBetweenNameAndId("Grace", saved[0].id())
+    }
+
+    void "a shortest path between entities that label the same node finds nothing from a node to itself"() {
+        given:
+        def officer = officerRepository.save(new Officer(null, "Cleo"))
+
+        expect:
+        memberRepository.findShortestPath(new Member(officer.id(), "Cleo", null), officer).isEmpty()
+    }
+
+    void "an undirected relationship between entities that label the same nodes is found once"() {
+        given:
+        operations.executeQuery("""CREATE (a:Host:Guest {name: 'A'}), (b:Host:Guest {name: 'B'}), (c:Guest {name: 'C'}), (d:Guest {name: 'D'}),
+            (a)-[:MET]->(b), (c)-[:MET]->(a), (b)-[:MET]->(d), (c)-[:MET]->(d)""", [:])
+
+        expect: "a relationship needs a host at one end, whichever way it is stored"
+        guestRepository.countRelationshipsByHosts() == 3
+        guestRepository.findRelationshipsByHosts().size() == 3
+        guestRepository.countRelationshipsByHosts(Direction.UNDIRECTED) == 3
+        guestRepository.findRelationshipsByHosts(Direction.UNDIRECTED).size() == 3
+
+        and: "a direction is matched one way"
+        guestRepository.countRelationshipsByHosts(Direction.OUTGOING) == 2
+        guestRepository.countRelationshipsByHosts(Direction.INCOMING) == 2
+        guestRepository.findRelationshipsByHosts(Direction.INCOMING).size() == 2
     }
 
     void "a record that the entity events replace is not created again when another record of the batch links to it"() {

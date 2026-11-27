@@ -1,5 +1,7 @@
 package example;
 
+import io.micronaut.data.graph.model.GraphPath;
+import io.micronaut.data.graph.model.GraphRelationship;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
@@ -124,6 +126,41 @@ class MovieRepositorySpec extends AbstractNeo4jTest {
     void testProjections() {
         assertEquals(List.of("Speed", "The Matrix", "The Matrix Reloaded"), movieRepository.findTitleByReleasedGreaterThanOrderByTitle(1990));
         assertEquals(2, movieRepository.findByReleasedBetween(1990, 2000).size());
+    }
+
+    @Test
+    void testPathsToPeople() {
+        Person keanu = personRepository.findByName("Keanu Reeves").orElseThrow();
+        Person lana = personRepository.findByName("Lana Wachowski").orElseThrow();
+
+        // tag::crossType[]
+        GraphRelationship<Person, Movie> directed = movieRepository.findRelationshipsByDirectors("The Matrix", lana.getId()).get(0);
+        String director = directed.from().getName(); // <1>
+
+        GraphPath<Object> path = movieRepository.findShortestPathToPersonBetweenTitleAndName("Speed", "Carrie-Anne Moss").orElseThrow();
+        Object end = path.end(); // <2>
+        // end::crossType[]
+
+        assertEquals("Lana Wachowski", director);
+        assertEquals("The Matrix", directed.to().getTitle());
+        assertEquals(3, path.length());
+        assertEquals("Carrie-Anne Moss", ((Person) end).getName());
+        assertTrue(path.start() instanceof Movie);
+        assertEquals(1, movieRepository.findAllPathsToPerson("The Matrix", keanu.getId()).get(0).length());
+    }
+
+    @Test
+    void testRelationshipEntities() {
+        Person keanu = personRepository.findByName("Keanu Reeves").orElseThrow();
+
+        // tag::relationshipEntities[]
+        Role role = movieRepository.findRelationshipsByRoles("The Matrix", keanu.getId()).get(0);
+        List<String> characters = role.getRoles(); // <1>
+        Person actor = role.getPerson(); // <2>
+        // end::relationshipEntities[]
+
+        assertEquals(List.of("Neo"), characters);
+        assertEquals("Keanu Reeves", actor.getName());
     }
 
     @Test

@@ -345,6 +345,14 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
         return super.identityExpression(identity, variable);
     }
 
+    /**
+     * A vertex has one label, so only the ends of a pattern with the same label can be swapped.
+     */
+    @Override
+    protected @Nullable String onceCondition(String startLabel, String endLabel) {
+        return startLabel.equals(endLabel) ? "startNode(" + PATH_RELATIONSHIP + ") = " + PATH_START : null;
+    }
+
     @Override
     protected String labelExpression(PersistentEntity entity) {
         List<String> labels = GraphEntities.labels(entity);
@@ -401,9 +409,9 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
      * so the second match binds {@value #ALL_SHORTEST_PATH}, returned as the path.
      */
     @Override
-    protected void appendPathMatch(StringBuilder query, PathQueryDefinition.Kind kind, String relationship, Direction direction) {
-        String pattern = directed("(" + PATH_START + ")", relationship, "(" + PATH_END + ")", direction);
-        if (kind == PathQueryDefinition.Kind.ALL_SHORTEST) {
+    protected void appendPathMatch(StringBuilder query, PathQueryDefinition definition, String relationship) {
+        String pattern = pathPattern(definition, definition.direction(), "(" + PATH_START + ")", relationship, "(" + PATH_END + ")");
+        if (definition.kind() == PathQueryDefinition.Kind.ALL_SHORTEST) {
             query.append(MATCH).append(PATH).append(" = ").append(pattern)
                 .append(WITH).append(PATH_START).append(", ").append(PATH_END)
                 .append(", min(length(").append(PATH).append(")) AS shortest");

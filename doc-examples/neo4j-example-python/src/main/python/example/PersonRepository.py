@@ -34,6 +34,11 @@ class PersonRepository(CrudRepository[Person, UUID]):
     def existsPathByFollowsBetweenName(self, start: str, end: str) -> bool: ...
     # end::pathOptions[]
 
+    # tag::pathDirection[]
+    @PathLimit(4)
+    def hasPathByFollows(self, start: Person, end: Person, direction: Annotated[Direction, PathDirection]) -> bool: ...  # <1>
+    # end::pathDirection[]
+
     # tag::relationships[]
     def findRelationships(self, start: Person, end: Person) -> list[GraphRelationship[Person, Person]]: ...
 

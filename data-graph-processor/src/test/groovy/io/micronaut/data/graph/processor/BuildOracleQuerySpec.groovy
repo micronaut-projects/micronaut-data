@@ -18,6 +18,9 @@ class BuildOracleQuerySpec extends AbstractGraphDataSpec {
     @Shared
     BeanDefinition<?> paths
 
+    @Shared
+    BeanDefinition<?> moviePaths
+
     void setupSpec() {
         sql = buildRepository('test.SqlRepository', """
 import io.micronaut.data.graph.model.*;
@@ -91,6 +94,27 @@ interface PathRepository extends GenericRepository<Person, String> {
     @PathLimit(5)
     List<GraphPath<Person>> findAllPathsByMentor(String from, String to);
     List<GraphRelationship<Person, Person>> findRelationshipsByMentor(String from, String to);
+    @PathLimit(5)
+    boolean existsPathByMentor(String from, String to, @PathDirection Direction direction);
+    List<GraphRelationship<Person, Person>> findRelationshipsByMentor(String from, String to, @PathDirection Direction direction);
+}
+""")
+        moviePaths = buildRepository('test.MoviePathRepository', """
+import io.micronaut.data.graph.model.*;
+
+$MOVIES
+
+@TestOracleRepository
+@PropertyGraph(value = "movies")
+interface MoviePathRepository extends GenericRepository<Movie, String> {
+    long countRelationshipsByDirectors();
+    boolean existsRelationshipByDirectorsBetweenTitleAndName(String title, String name);
+    List<GraphRelationship<Person, Movie>> findRelationshipsByDirectors(String title, String director);
+    long countRelationshipsByDirectors(@PathDirection Direction direction);
+    List<GraphRelationship<Person, Movie>> findRelationshipsByDirectors(String title, String director, @PathDirection Direction direction);
+    @PathDirection(Direction.UNDIRECTED)
+    boolean existsRelationshipByDirectors();
+    boolean existsRelationshipByDirectorsBetweenReleasedAndId(int released, String director);
 }
 """)
         sqlPeople = buildRepository('test.SqlPersonRepository', """
@@ -450,7 +474,7 @@ interface NoIdRepository extends GenericRepository<Anonymous, String> {
 
     void "test SQL/PGQ path finders"() {
         expect: "the shortest kinds exclude the empty path from a node to itself, as the Cypher builder does"
-        getQuery(findMethod(paths, 'existsPathByMentor')) ==
+        getQuery(findMethod(paths, 'existsPathByMentor', 2)) ==
             'SELECT 1 AS "result" FROM GRAPH_TABLE (people MATCH (s IS Person) -[e IS FOLLOWS]->{1,5} (t IS Person) WHERE s.id = ? AND t.id = ? AND s.id <> t.id AND COUNT(DISTINCT JSON_SERIALIZE(EDGE_ID(e))) = COUNT(JSON_SERIALIZE(EDGE_ID(e))) COLUMNS (s.id AS "c0")) FETCH NEXT 1 ROWS ONLY'
 
         and: "all paths from a node to itself are its cycles, each taking an edge once, as a Cypher path does"
@@ -513,6 +537,43 @@ interface FollowerRepository extends GenericRepository<Follower, String> {
         !getQuery(findMethod(repository, 'findRelationshipsByFollowers')).contains('r__FORWARD_')
     }
 
+    void "test path finders with a direction argument"() {
+        expect:
+        getQuery(findMethod(paths, 'existsPathByMentor', 3)) ==
+            'SELECT 1 AS "result" FROM GRAPH_TABLE (people MATCH (s IS Person) $__pathLeft[e IS FOLLOWS]$__pathRight{1,5} (t IS Person) WHERE s.id = ? AND t.id = ? AND s.id <> t.id AND COUNT(DISTINCT JSON_SERIALIZE(EDGE_ID(e))) = COUNT(JSON_SERIALIZE(EDGE_ID(e))) COLUMNS (s.id AS "c0")) FETCH NEXT 1 ROWS ONLY'
+        getQuery(findMethod(moviePaths, 'countRelationshipsByDirectors', 1)).contains(
+            'MATCH (s IS Movie) $__pathLeft[r IS DIRECTED]$__pathRight (t IS Person)')
+    }
+
+    void "test relationship finders between movies and people"() {
+        expect:
+        getQuery(findMethod(moviePaths, 'countRelationshipsByDirectors', 0)).startsWith(
+            'SELECT COUNT(*) AS "result" FROM GRAPH_TABLE (movies MATCH (s IS Movie) <-[r IS DIRECTED]- (t IS Person) COLUMNS (')
+        getQuery(findMethod(moviePaths, 'existsRelationshipByDirectorsBetweenTitleAndName')).startsWith(
+            'SELECT 1 AS "result" FROM GRAPH_TABLE (movies MATCH (s IS Movie) <-[r IS DIRECTED]- (t IS Person) WHERE s.title = ? AND t.name = ? COLUMNS (')
+        getQuery(findMethod(moviePaths, 'existsRelationshipByDirectorsBetweenTitleAndName')).endsWith(' FETCH NEXT 1 ROWS ONLY')
+
+        and: "the relationship is matched from the movie, with s bound to the first argument"
+        def found = getQuery(findMethod(moviePaths, 'findRelationshipsByDirectors', 2))
+        found.contains('MATCH (t IS Movie) <-[r IS DIRECTED]- (s IS Person)')
+        found.contains('s.id AS "s__ID_"')
+        found.contains('t.title AS "t__ID_"')
+        found.contains('\'DIRECTED\' AS "r__TYPE_"')
+
+        and: "a direction argument leaves s at the first argument, and the rows ask the edge for its source"
+        def directed = getQuery(findMethod(moviePaths, 'findRelationshipsByDirectors', 3))
+        directed.contains('MATCH (s IS Movie) \$__pathLeft[r IS DIRECTED]\$__pathRight (t IS Person)')
+        directed.contains('CASE WHEN s IS SOURCE OF r THEN 1 ELSE 0 END AS "r__FORWARD_"')
+        getQuery(findMethod(paths, 'findRelationshipsByMentor', 3)).contains('CASE WHEN s IS SOURCE OF r THEN 1 ELSE 0 END AS "r__FORWARD_"')
+
+        and: "an undirected finder between different entities without endpoints stays undirected"
+        getQuery(findMethod(moviePaths, 'existsRelationshipByDirectors', 0)).contains('MATCH (s IS Movie) -[r IS DIRECTED]- (t IS Person)')
+
+        and: "the end node is matched by its own identity"
+        getQuery(findMethod(moviePaths, 'existsRelationshipByDirectorsBetweenReleasedAndId', 2)).contains(
+            '(s IS Movie) <-[r IS DIRECTED]- (t IS Person) WHERE s.released = ? AND t.id = ?')
+    }
+
     @Unroll
     void "test unsupported #description"() {
         when:
@@ -545,6 +606,8 @@ interface UnsupportedRepository extends GenericRepository<Movie, String> {
         'shortest paths in SQL/PGQ' | '@PathLimit(3) Optional<GraphPath<Movie>> findShortestPath(String from, String to);' | 'Shortest paths are not supported by the SQL/PGQ dialect'
         'any-type paths in SQL/PGQ' | '@PathLimit(3) List<GraphPath<Movie>> findAllPaths(String from, String to);' | 'Paths over any relationship type are not supported by the SQL/PGQ dialect'
         'unbounded paths'      | 'Optional<GraphPath<Movie>> findShortestPath(String from, String to);' | 'need a maximum depth'
+        'relationship entities' | 'List<Role> findRelationshipsByRoles(String title, String person);'  | 'return GraphRelationship, not the relationship entity'
+        'paths to another entity' | '@PathLimit(3) boolean existsPathToPerson(String title, String person);' | 'the end node cannot be a'
         'array contains'       | 'List<Movie> findByRolesRolesArrayContains(String role);'          | 'ArrayContains is not supported'
     }
 
@@ -620,6 +683,35 @@ interface SitcomRepository extends GenericRepository<Sitcom, Long> {
         then:
         def e = thrown(RuntimeException)
         e.message.contains('Cannot compare [walkons] with a value, as the relationship entity [Walkon] has no @Id or @RelationshipId property')
+    }
+
+    void "test an undirected relationship finder between entities that share a label matches a relationship once"() {
+        when:
+        def repository = buildRepository('test.GuestRepository', """
+import io.micronaut.data.graph.model.*;
+
+@Node(labels = {"Host", "Guest"})
+record Host(@Id Long id) {
+}
+
+@Node
+record Guest(@Id Long id, @Relationship(type = "MET", direction = Direction.UNDIRECTED) List<Host> hosts) {
+}
+
+@TestOracleRepository
+@PropertyGraph("guests")
+interface GuestRepository extends GenericRepository<Guest, Long> {
+    long countRelationshipsByHosts();
+    List<GraphRelationship<Guest, Host>> findRelationshipsByHosts(Long from, Long to);
+}
+""")
+
+        then:
+        getQuery(findMethod(repository, 'countRelationshipsByHosts')) ==
+            'SELECT COUNT(*) AS "result" FROM GRAPH_TABLE (guests MATCH (s IS Guest) -[r IS MET]- (t IS Host) WHERE (s IS SOURCE OF r OR NOT (s IS LABELED Host AND t IS LABELED Guest)) COLUMNS (s.id AS "c0"))'
+
+        and: "both ends are known, so the relationship is matched once"
+        getQuery(findMethod(repository, 'findRelationshipsByHosts')).contains('-[r IS MET]- (t IS Host) WHERE s.id = ? AND t.id = ? COLUMNS')
     }
 
     void "test IsNull on a to-one relationship is rejected"() {

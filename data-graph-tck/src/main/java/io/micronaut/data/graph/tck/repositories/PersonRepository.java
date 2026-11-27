@@ -4,6 +4,7 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.graph.annotation.Direction;
 import io.micronaut.data.graph.annotation.PathDirection;
 import io.micronaut.data.graph.annotation.PathLimit;
+import io.micronaut.data.graph.model.GraphRelationship;
 import io.micronaut.data.graph.tck.entities.Person;
 import io.micronaut.data.repository.CrudRepository;
 
@@ -30,4 +31,12 @@ public interface PersonRepository extends CrudRepository<Person, UUID> {
     @PathLimit(5)
     @PathDirection(Direction.INCOMING)
     boolean hasPathByMentorBetweenName(String from, String to);
+
+    @PathLimit(5)
+    long countPathsByMentorBetweenName(String from, String to, @PathDirection Direction direction);
+
+    @PathLimit(5)
+    boolean existsPathByMentorBetweenNameAndId(String from, UUID to);
+
+    List<GraphRelationship<Person, Person>> findRelationshipsByMentorBetweenName(String from, String to, @PathDirection Direction direction);
 }

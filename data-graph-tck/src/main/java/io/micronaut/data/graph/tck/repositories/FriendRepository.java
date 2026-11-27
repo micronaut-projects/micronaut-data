@@ -1,5 +1,7 @@
 package io.micronaut.data.graph.tck.repositories;
 
+import io.micronaut.data.graph.annotation.Direction;
+import io.micronaut.data.graph.annotation.PathDirection;
 import io.micronaut.data.graph.annotation.PathLimit;
 import io.micronaut.data.graph.model.GraphPath;
 import io.micronaut.data.graph.model.GraphRelationship;
@@ -25,4 +27,9 @@ public interface FriendRepository extends CrudRepository<Friend, String> {
     List<GraphRelationship<Friend, Friend>> findRelationships(String from, String to);
 
     long countRelationshipsByFriends();
+
+    @PathLimit(4)
+    boolean existsPathByFriends(String from, String to, @PathDirection Direction direction);
+
+    long countRelationshipsByFriends(@PathDirection Direction direction);
 }
