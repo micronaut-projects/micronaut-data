@@ -25,7 +25,8 @@ import java.util.Objects;
 
 /**
  * The options of a full-text match beyond its {@link MatchMode}: query-time boosts of the searched
- * properties and the maximum edit distance of a {@link MatchMode#FUZZY} match. A store that cannot
+ * properties, the maximum edit distance of a {@link MatchMode#FUZZY} match and the language the query is
+ * analysed with. A store that cannot
  * honour an option throws {@link UnsupportedSearchFeatureException} with the matching
  * {@link SearchCapability}.
  *
@@ -45,16 +46,18 @@ import java.util.Objects;
 public final class TextMatchOptions {
 
     /**
-     * No boosts and the default fuzziness.
+     * No boosts, the default fuzziness and the entity language.
      */
-    public static final TextMatchOptions NONE = new TextMatchOptions(Map.of(), 0);
+    public static final TextMatchOptions NONE = new TextMatchOptions(Map.of(), 0, null);
 
     private final Map<String, Double> boosts;
     private final int fuzziness;
+    private final @Nullable String language;
 
-    private TextMatchOptions(Map<String, Double> boosts, int fuzziness) {
+    private TextMatchOptions(Map<String, Double> boosts, int fuzziness, @Nullable String language) {
         this.boosts = Collections.unmodifiableMap(new LinkedHashMap<>(boosts));
         this.fuzziness = fuzziness;
+        this.language = language;
     }
 
     /**
@@ -65,13 +68,13 @@ public final class TextMatchOptions {
     }
 
     /**
-     * The boosts and the edit distance of a {@link SearchQuery}.
+     * The boosts, the edit distance and the language of a {@link SearchQuery}.
      *
      * @param searchQuery The query
      * @return The options
      */
     public static TextMatchOptions of(SearchQuery searchQuery) {
-        Builder builder = builder().fuzziness(searchQuery.getFuzziness());
+        Builder builder = builder().fuzziness(searchQuery.getFuzziness()).language(searchQuery.getLanguage());
         searchQuery.getBoosts().forEach(builder::boost);
         return builder.build();
     }
@@ -91,10 +94,17 @@ public final class TextMatchOptions {
     }
 
     /**
+     * @return The language to analyse the query with, or {@code null} for the entity language
+     */
+    public @Nullable String language() {
+        return language;
+    }
+
+    /**
      * @return Whether the options are the defaults
      */
     public boolean isDefault() {
-        return boosts.isEmpty() && fuzziness == 0;
+        return boosts.isEmpty() && fuzziness == 0 && language == null;
     }
 
     /**
@@ -108,17 +118,18 @@ public final class TextMatchOptions {
 
     @Override
     public boolean equals(Object o) {
-        return o instanceof TextMatchOptions that && fuzziness == that.fuzziness && boosts.equals(that.boosts);
+        return o instanceof TextMatchOptions that && fuzziness == that.fuzziness && boosts.equals(that.boosts)
+            && Objects.equals(language, that.language);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(boosts, fuzziness);
+        return Objects.hash(boosts, fuzziness, language);
     }
 
     @Override
     public String toString() {
-        return "TextMatchOptions{boosts=" + boosts + ", fuzziness=" + fuzziness + '}';
+        return "TextMatchOptions{boosts=" + boosts + ", fuzziness=" + fuzziness + ", language=" + language + '}';
     }
 
     /**
@@ -127,6 +138,7 @@ public final class TextMatchOptions {
     public static final class Builder {
         private final Map<String, Double> boosts = new LinkedHashMap<>();
         private int fuzziness;
+        private @Nullable String language;
 
         private Builder() {
         }
@@ -164,10 +176,21 @@ public final class TextMatchOptions {
         }
 
         /**
+         * Analyses the query with another language than the entity's {@code @Searchable(language)}.
+         *
+         * @param language The language, or {@code null} or blank for the entity language
+         * @return This builder
+         */
+        public Builder language(@Nullable String language) {
+            this.language = language == null || language.isBlank() ? null : language;
+            return this;
+        }
+
+        /**
          * @return The options
          */
         public TextMatchOptions build() {
-            return boosts.isEmpty() && fuzziness == 0 ? NONE : new TextMatchOptions(boosts, fuzziness);
+            return boosts.isEmpty() && fuzziness == 0 && language == null ? NONE : new TextMatchOptions(boosts, fuzziness, language);
         }
     }
 }
