@@ -18,7 +18,6 @@ package io.micronaut.data.model.query.builder.sql;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.search.SearchField;
 import io.micronaut.data.annotation.search.SearchWeight;
-import io.micronaut.data.annotation.search.Searchable;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.runtime.convert.OracleTextQueryConverter;
@@ -32,8 +31,10 @@ import jakarta.persistence.criteria.Expression;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -49,7 +50,7 @@ public interface TextSearchDialect {
     String CREATE_INDEX = "CREATE INDEX ";
 
     /**
-     * The default text search configuration when the entity declares no {@link Searchable#language()}.
+     * The default text search configuration when the entity declares no {@link io.micronaut.data.annotation.search.Searchable#language()}.
      */
     String DEFAULT_LANGUAGE = TextSearchSupport.DEFAULT_LANGUAGE;
 
@@ -57,6 +58,30 @@ public interface TextSearchDialect {
      * The alias of the unnested fuzzy terms.
      */
     String TERM_ALIAS = "mn_term.t";
+
+    /**
+     * The search features this dialect honours beyond term matching and score ordering, including
+     * vector and hybrid search, which the SQL stores serve through their vector support.
+     *
+     * @return The supported capabilities
+     * @since 5.3.0
+     */
+    default Set<SearchCapability> capabilities() {
+        return Set.of();
+    }
+
+    /**
+     * A query telling whether the database has what a capability of the dialect needs beyond the dialect
+     * itself, such as an extension: it returns one row whose first column is positive when it does.
+     *
+     * @param capability A capability of {@link #capabilities()}
+     * @return The query, or {@code null} when the capability needs nothing more
+     * @since 5.3.0
+     */
+    @Nullable
+    default String capabilityCheckQuery(SearchCapability capability) {
+        return null;
+    }
 
     /**
      * Appends the predicate {@code <fields> match <query>}.
@@ -577,6 +602,20 @@ public interface TextSearchDialect {
         private static final String PG_TRGM = "PostgreSQL pg_trgm";
 
         @Override
+        public Set<SearchCapability> capabilities() {
+            // pg_trgm gives fuzzy matching with a similarity threshold rather than an edit distance, and weights are fixed by the index
+            return EnumSet.of(SearchCapability.PHRASE, SearchCapability.PREFIX, SearchCapability.FUZZY, SearchCapability.FIELD_SCOPE,
+                SearchCapability.HIGHLIGHT, SearchCapability.LANGUAGE_OVERRIDE, SearchCapability.MIN_SCORE, SearchCapability.VECTOR, SearchCapability.HYBRID);
+        }
+
+        @Override
+        @Nullable
+        public String capabilityCheckQuery(SearchCapability capability) {
+            // a fuzzy match uses the operators of the pg_trgm extension, which the database may not have
+            return capability == SearchCapability.FUZZY ? "SELECT count(*) FROM pg_extension WHERE extname = 'pg_trgm'" : null;
+        }
+
+        @Override
         public void appendTextMatch(StringBuilder query,
                                     List<Expression<?>> fields,
                                     Expression<String> queryExpression,
@@ -889,6 +928,13 @@ public interface TextSearchDialect {
         private static final String DEFAULT_INDEX_PARAMETERS = "SYNC (ON COMMIT)";
 
         private static final String CONTAINS_SUFFIX = ") > 0";
+
+        @Override
+        public Set<SearchCapability> capabilities() {
+            // Oracle Text fixes the fuzzy similarity and the lexer per index
+            return EnumSet.of(SearchCapability.PHRASE, SearchCapability.PREFIX, SearchCapability.FUZZY, SearchCapability.FIELD_SCOPE,
+                SearchCapability.BOOST, SearchCapability.HIGHLIGHT, SearchCapability.MIN_SCORE, SearchCapability.VECTOR, SearchCapability.HYBRID);
+        }
 
         @Override
         public void appendTextMatch(StringBuilder query,

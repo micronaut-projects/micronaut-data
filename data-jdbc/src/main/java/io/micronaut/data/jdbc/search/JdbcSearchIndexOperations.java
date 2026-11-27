@@ -19,6 +19,7 @@ import io.micronaut.context.BeanLocator;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Experimental;
+import io.micronaut.data.annotation.search.Searchable;
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
@@ -26,7 +27,9 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.TextSearchDialect;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
+import io.micronaut.data.model.search.SearchCapability;
 import io.micronaut.data.runtime.config.DataSettings;
+import io.micronaut.data.runtime.search.SearchCapabilities;
 import io.micronaut.data.runtime.search.SearchIndexOperations;
 import io.micronaut.inject.qualifiers.Qualifiers;
 
@@ -35,22 +38,26 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import org.jspecify.annotations.Nullable;
 
 import javax.sql.DataSource;
 
 /**
  * {@link SearchIndexOperations} of a JDBC datasource: runs the full-text search index DDL the
- * {@link SqlQueryBuilder} renders for the datasource's dialect.
+ * {@link SqlQueryBuilder} renders for the datasource's dialect. As {@link SearchCapabilities} it reports the
+ * features of the dialect that the database can serve: on PostgreSQL, {@link SearchCapability#FUZZY} only once
+ * the {@code pg_trgm} extension is installed, which is checked on the database until it is found.
  *
  * @since 5.3.0
  */
 @Experimental
 @EachBean(DataJdbcConfiguration.class)
-public class JdbcSearchIndexOperations implements SearchIndexOperations {
+public class JdbcSearchIndexOperations implements SearchIndexOperations, SearchCapabilities {
 
     private final DataJdbcConfiguration configuration;
     private final BeanLocator beanLocator;
@@ -58,6 +65,8 @@ public class JdbcSearchIndexOperations implements SearchIndexOperations {
     private final SqlQueryBuilder queryBuilder;
     @Nullable
     private final TextSearchDialect textSearchDialect;
+    // the capabilities whose database requirement was found; one that is missing is checked again on the next call
+    private final Set<SearchCapability> verified = ConcurrentHashMap.newKeySet();
 
     /**
      * @param configuration The datasource configuration
@@ -72,6 +81,42 @@ public class JdbcSearchIndexOperations implements SearchIndexOperations {
         this.runtimeEntityRegistry = runtimeEntityRegistry;
         this.queryBuilder = new SqlQueryBuilder(configuration.getDialect());
         this.textSearchDialect = TextSearchDialect.forDialect(configuration.getDialect());
+    }
+
+    @Override
+    public Set<SearchCapability> getSearchCapabilities(Class<?> entityType) {
+        if (textSearchDialect == null || !runtimeEntityRegistry.getEntity(entityType).getAnnotationMetadata().hasAnnotation(Searchable.class)) {
+            return Set.of();
+        }
+        Set<SearchCapability> capabilities = textSearchDialect.capabilities();
+        Set<SearchCapability> available = null;
+        for (SearchCapability capability : capabilities) {
+            if (!availableInDatabase(textSearchDialect, capability)) {
+                if (available == null) {
+                    available = EnumSet.copyOf(capabilities);
+                }
+                available.remove(capability);
+            }
+        }
+        return available == null ? capabilities : available;
+    }
+
+    private boolean availableInDatabase(TextSearchDialect dialect, SearchCapability capability) {
+        String query = dialect.capabilityCheckQuery(capability);
+        if (query == null || verified.contains(capability)) {
+            return true;
+        }
+        try (Connection connection = dataSource().getConnection();
+             PreparedStatement ps = connection.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next() && rs.getLong(1) > 0) {
+                verified.add(capability);
+                return true;
+            }
+            return false;
+        } catch (SQLException e) {
+            throw new DataAccessException("Cannot check whether the database supports the search capability " + capability + ": " + e.getMessage(), e);
+        }
     }
 
     @Override
