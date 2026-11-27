@@ -8,6 +8,8 @@ dependencies {
 
     api projects.micronautDataSearchDocument
     api mnElasticsearch.micronaut.elasticsearch
+    // a runtime dependency of micronaut-elasticsearch, read for the status of a failed async request
+    compileOnly mnElasticsearch.elasticsearch.rest.client
 
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor projects.micronautDataDocumentProcessor

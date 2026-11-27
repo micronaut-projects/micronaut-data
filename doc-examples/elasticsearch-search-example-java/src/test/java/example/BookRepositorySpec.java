@@ -22,6 +22,9 @@ class BookRepositorySpec implements ElasticsearchTestPropertyProvider {
     @Inject
     BookService bookService;
 
+    @Inject
+    ReactiveBookRepository reactiveBookRepository;
+
     @BeforeEach
     void setup() {
         bookRepository.deleteAll();
@@ -40,6 +43,13 @@ class BookRepositorySpec implements ElasticsearchTestPropertyProvider {
         assertEquals(2, bookRepository.countHits("coffee"));
         assertEquals(List.of("Baking Bread"), bookService.titlesMatching("bread OR sourdough"));
         assertEquals(1, bookRepository.search("coffee -desserts").totalHits());
+    }
+
+    @Test
+    void reactiveSearch() {
+        assertEquals(2, reactiveBookRepository.searchBySearch("coffee").block().totalHits());
+        assertEquals(List.of("The Coffee Roaster"), reactiveBookRepository.findByTitleSearch("roaster").map(Book::title).collectList().block());
+        assertEquals(3, reactiveBookRepository.count().block());
     }
 
     @Test

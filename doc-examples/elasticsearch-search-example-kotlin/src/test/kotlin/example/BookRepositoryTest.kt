@@ -34,6 +34,9 @@ class BookRepositoryTest : TestPropertyProvider {
     @Inject
     lateinit var bookService: BookService
 
+    @Inject
+    lateinit var reactiveBookRepository: ReactiveBookRepository
+
     @BeforeEach
     fun setup() {
         bookRepository.deleteAll()
@@ -52,6 +55,13 @@ class BookRepositoryTest : TestPropertyProvider {
         assertEquals(2, bookRepository.countHits("coffee"))
         assertEquals(listOf("Baking Bread"), bookService.titlesMatching("bread OR sourdough"))
         assertEquals(1, bookRepository.search("coffee -desserts").totalHits())
+    }
+
+    @Test
+    fun reactiveSearch() {
+        assertEquals(2, reactiveBookRepository.searchBySearch("coffee").block()!!.totalHits())
+        assertEquals(listOf("The Coffee Roaster"), reactiveBookRepository.findByTitleSearch("roaster").map { it.title }.collectList().block())
+        assertEquals(3, reactiveBookRepository.count().block())
     }
 
     @Test

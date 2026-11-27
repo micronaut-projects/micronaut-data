@@ -31,8 +31,23 @@ A api:data.model.search.SearchQuery[] passed to `search(SearchQuery)` builds the
 
 `Pageable` and `Sort` parameters set `from`, `size` and `sort`; a `Page` is built with `track_total_hits` so its total is exact. Sorting on an analysed search field sorts on its `keyword` sub-field. Without a sort the store returns hits in `_score` order, so an unsorted `Pageable` or `Sort` of a `SearchResults` method keeps the relevance order, best match first, as on SQL and MongoDB; a `Pageable` or `Sort` with orders replaces it. Cursored pagination is not supported yet.
 
+== Reactive and async repositories
+
+Repositories may also extend api:data.repository.reactive.ReactorCrudRepository[] or the async and reactive-streams variants, and derived methods may return `Mono`, `Flux`, `Publisher` or `CompletableFuture`:
+
+snippet::example.ReactiveBookRepository[project-base="doc-examples/elasticsearch-search-example", source="main", tags="reactive"]
+
+<1> A reactive repository over the same entity and store.
+<2> A `search` method returning `Mono<SearchResults<Book>>` projects the score and orders by it, like its blocking counterpart.
+<3> Any derived finder can return a `Flux`.
+
+Elasticsearch and OpenSearch run reactive and async repositories on their async clients through api:data.search.document.runtime.AsyncSearchTransport[], so no thread blocks on a request. A store that provides only a blocking api:data.search.document.runtime.SearchTransport[] still gets reactive repositories, run on the IO executor. `search(SearchQuery)` of api:data.repository.SearchRepository[] stays blocking.
+
+The results of a reactive or async repository are emitted on the thread that completes the request, which for Elasticsearch and OpenSearch is an I/O thread of the HTTP client; there is no scheduler hop, as with the other non-blocking Micronaut Data stores. Operators applied to the result (`map`, `flatMap`, `thenApply`) run on that thread too, so code that blocks, such as a call to a blocking repository or `block()`, stalls the client: move it to another scheduler first with `publishOn(Schedulers.boundedElastic())` or `thenApplyAsync` with an executor.
+
+Saving an entity whose id is already used by a document fails with a `DataAccessException` saying that the document exists, on the blocking, reactive and async repositories alike.
+
 == Limitations
 
 - Joins, `@Where`, update queries (`updateBy...`) and subqueries are not supported; update entities with `update(...)`.
 - Highlighting, aggregations and the raw query DSL are not exposed yet.
-- Writes are synchronous; reactive and async repositories are not supported yet.
