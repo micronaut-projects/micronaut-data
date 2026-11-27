@@ -47,6 +47,7 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityFrom;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
+import io.micronaut.data.model.search.TextSearchSupport;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder;
@@ -89,6 +90,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     private static final String OPERATOR_AND = "And";
     private static final String[] OPERATORS = {OPERATOR_AND, OPERATOR_OR};
     private static final String NOT = "Not";
+    private static final String EQUALS = "Equals";
     private static final String IGNORE_CASE = "IgnoreCase";
     private static final String NEAR = "Near";
     private static final String WITHIN = "Within";
@@ -392,11 +394,20 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                                               PersistentEntityRoot<T> root,
                                               PersistentEntityCriteriaBuilder cb,
                                               Iterator<ParameterElement> parameters) {
+        if (isPropertyEndingInSearchKeyword(root.getPersistentEntity(), expression)) {
+            Restrictions.PropertyRestriction<Object> equals = Objects.requireNonNull(Restrictions.findPropertyRestriction(EQUALS));
+            return getPropertyRestriction(expression, root, cb, parameters, equals);
+        }
         Optional<String> optionalRestrictionName = PROPERTY_RESTRICTIONS.stream().filter(expression::endsWith).findFirst();
         if (optionalRestrictionName.isPresent()) {
             String restrictionName = optionalRestrictionName.get();
             String propertyName = extractPropertyName(expression, restrictionName);
             if (StringUtils.isEmpty(propertyName)) {
+                // A keyword without a property, such as `findBySearch(String)`, that is also a plain restriction
+                Restrictions.Restriction<Object> plainRestriction = Restrictions.findRestriction(restrictionName);
+                if (plainRestriction != null) {
+                    return getRestriction(root, cb, parameters, plainRestriction);
+                }
                 throw new MatchFailedException("Missing property name for restriction: " + restrictionName);
             }
             if (propertyName.endsWith(IGNORE_CASE)) {
@@ -421,7 +432,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         }
 
         String propertyName = expression;
-        String restrictionName = "Equals";
+        String restrictionName = EQUALS;
         if (propertyName.endsWith(IGNORE_CASE)) {
             restrictionName += IGNORE_CASE;
             propertyName = extractPropertyName(propertyName, IGNORE_CASE);
@@ -429,6 +440,40 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         Restrictions.PropertyRestriction<Object> restriction = Restrictions.findPropertyRestriction(restrictionName);
         Objects.requireNonNull(restriction, "Cannot find restriction for expression: " + expression);
         return getPropertyRestriction(propertyName, root, cb, parameters, restriction);
+    }
+
+    /**
+     * Whether a predicate part ending in a search keyword, such as {@code SavedSearch}, names an existing
+     * property instead. {@code Search} is a common property suffix, so the keyword only applies when the
+     * property before it exists, or, for a part that is only the keyword, when the entity declares
+     * {@code @SearchField} properties; otherwise a {@code savedSearch} property keeps its equality meaning.
+     *
+     * @param entity     The entity
+     * @param expression The predicate part
+     * @return True if the part is a plain property rather than a text search
+     */
+    protected static boolean isPropertyEndingInSearchKeyword(PersistentEntity entity, String expression) {
+        TextSearchSupport.SearchKeyword keyword = TextSearchSupport.parseKeyword(expression);
+        if (keyword == null || !hasProperty(entity, expression)) {
+            return false;
+        }
+        String searchedProperty = keyword.propertyName();
+        if (searchedProperty.isEmpty()) {
+            return TextSearchSupport.searchFields(entity).isEmpty();
+        }
+        if (hasProperty(entity, searchedProperty)) {
+            return false;
+        }
+        return !searchedProperty.endsWith(NOT) || !hasProperty(entity, searchedProperty.substring(0, searchedProperty.length() - NOT.length()));
+    }
+
+    private static boolean hasProperty(PersistentEntity entity, String name) {
+        String propertyName = NameUtils.decapitalize(name);
+        if (StringUtils.isEmpty(propertyName)) {
+            return false;
+        }
+        return entity.getPropertyByName(propertyName) != null
+            || PersistentEntityUtils.getPersistentPropertyPath(entity, propertyName).isPresent();
     }
 
     private static String extractPropertyName(String queryParameter, String clause) {

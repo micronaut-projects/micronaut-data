@@ -112,6 +112,11 @@ public interface DelegatePreparedQuery<E, R> extends PreparedQuery<E, R>, Delega
         return getPreparedQueryDelegate().isOptionalEmbeddedProjection();
     }
 
+    @Override
+    default boolean isScoreOrderedWhenUnsorted() {
+        return getPreparedQueryDelegate().isScoreOrderedWhenUnsorted();
+    }
+
     @NonNull
     @Override
     default String getQuery() {
