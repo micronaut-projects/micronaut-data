@@ -36,6 +36,11 @@ class OracleTextSearchSpec extends AbstractTextSearchSpec implements Oracle23Tes
     }
 
     @Override
+    String nativeProgrammingWithoutKotlinQuery() {
+        return "programming NOT kotlin"
+    }
+
+    @Override
     boolean allTermsAcrossFields() {
         // each search field has its own CONTEXT index, so SearchAll needs every term in one field
         return false

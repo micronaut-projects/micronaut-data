@@ -35,6 +35,8 @@ public interface BookSearchRepository extends CrudRepository<Book, UUID>, Search
 
     List<Book> findByTitleSearch(String query);
 
+    List<Book> findByTitleSearchNative(String query);
+
     SearchResults<Book> searchByTitleSearchAll(String query);
 
     List<Book> findBySearchAndAuthor(String query, String author);

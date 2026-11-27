@@ -25,4 +25,9 @@ class PostgresTextSearchSpec extends AbstractTextSearchSpec implements PostgresT
     List<String> packages() {
         return [getClass().package.name, "io.micronaut.data.search.tck.entities"]
     }
+
+    @Override
+    String nativeProgrammingWithoutKotlinQuery() {
+        return "programming & !kotlin"
+    }
 }

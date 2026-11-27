@@ -20,6 +20,8 @@ public interface MongoAtlasBookSearchRepository extends CrudRepository<AtlasBook
 
     List<AtlasBook> findByTitleSearch(String query);
 
+    List<AtlasBook> findByTitleSearchNative(String query);
+
     SearchResults<AtlasBook> searchByTitleSearchAll(String query);
 
     List<AtlasBook> findBySearchAndAuthor(String query, String author);

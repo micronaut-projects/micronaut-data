@@ -1091,6 +1091,12 @@ public final class Restrictions {
         }
     }
 
+    public static class PropertySearchNative extends PropertySearch {
+        public PropertySearchNative() {
+            super(MatchMode.NATIVE);
+        }
+    }
+
     /**
      * Full-text match of every {@code @SearchField} property of the root entity.
      */
@@ -1176,6 +1182,13 @@ public final class Restrictions {
         @Override
         protected MatchMode mode() {
             return MatchMode.FUZZY;
+        }
+    }
+
+    public static class SearchNative extends Search {
+        @Override
+        protected MatchMode mode() {
+            return MatchMode.NATIVE;
         }
     }
 }

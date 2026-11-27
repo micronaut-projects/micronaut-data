@@ -44,8 +44,30 @@ class OracleJsonTextSearchSpec extends AbstractTextSearchSpec implements Oracle2
     }
 
     @Override
+    String nativeProgrammingWithoutKotlinQuery() {
+        return "programming NOT kotlin"
+    }
+
+    @Override
     boolean allTermsAcrossFields() {
         // each property is searched with its own CONTAINS ... INPATH, so SearchAll needs every term in one property
         return false
+    }
+
+    void "a native query cannot leave the INPATH of its field with an unbalanced parenthesis"() {
+        when: "the query would close the bound '(' and search the author path"
+        bookSearchRepository.findByTitleSearchNative("x) INPATH (/author) OR (y")
+
+        then:
+        def e = thrown(Exception)
+        causes(e).any { it instanceof IllegalArgumentException && it.message.contains("must close every parenthesis") }
+    }
+
+    private static List<Throwable> causes(Throwable e) {
+        List<Throwable> chain = []
+        for (Throwable c = e; c != null && !chain.contains(c); c = c.cause) {
+            chain << c
+        }
+        return chain
     }
 }
