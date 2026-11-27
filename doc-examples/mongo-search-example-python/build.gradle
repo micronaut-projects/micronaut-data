@@ -1,0 +1,22 @@
+plugins {
+    id "io.micronaut.build.internal.data-python-example"
+    id "io.micronaut.test-resources"
+}
+
+micronaut {
+    testResources {
+        additionalModules.add("mongodb")
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
+}
+
+dependencies {
+    // The Python compiler takes the compile classpath as its annotation processor path
+    implementation projects.micronautDataDocumentProcessor
+    implementation projects.micronautDataMongodb
+    implementation mnMongo.mongo.driver
+    testImplementation(mnTestResources.micronaut.test.resources.extensions.junit.platform)
+
+    runtimeOnly mnLogging.logback.classic
+}

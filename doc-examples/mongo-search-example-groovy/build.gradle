@@ -1,0 +1,32 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
+plugins {
+    id "groovy"
+    id "io.micronaut.build.internal.data-example"
+    id "io.micronaut.test-resources"
+}
+
+application {
+    mainClass = "example.Application"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+    testRuntime "spock"
+    testResources {
+        inferClasspath = false
+        additionalModules.add(KnownModules.MONGODB)
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
+}
+
+dependencies {
+    compileOnly projects.micronautDataDocumentProcessor
+
+    implementation projects.micronautDataMongodb
+    implementation mnMongo.mongo.driver
+
+    runtimeOnly mnLogging.logback.classic
+}

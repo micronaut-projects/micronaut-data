@@ -17,8 +17,8 @@ package io.micronaut.data.r2dbc.postgres.search;
 
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
-import io.micronaut.data.search.tck.repositories.BookSearchRepository;
+import io.micronaut.data.search.tck.repositories.BookPrefixSearchRepository;
 
 @R2dbcRepository(dialect = Dialect.POSTGRES)
-public interface PostgresBookSearchRepository extends BookSearchRepository {
+public interface PostgresBookSearchRepository extends BookPrefixSearchRepository {
 }
