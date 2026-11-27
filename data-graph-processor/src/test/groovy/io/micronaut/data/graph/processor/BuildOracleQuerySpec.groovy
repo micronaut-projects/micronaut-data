@@ -10,6 +10,8 @@ class BuildOracleQuerySpec extends AbstractGraphDataSpec {
 
     static final String COLUMNS = 'n.title AS "n__ID_", n.title AS "n__title", \'Movie\' AS "n__LABEL_", n.tagline AS "n__tagline", n.released AS "n__released"'
 
+    static final String PERSON_COLUMNS = 'n.id AS "n__ID_", n.id AS "n__id", \'Person\' AS "n__LABEL_", n.name AS "n__name", n.born AS "n__born"'
+
     @Shared
     BeanDefinition<?> sql
 
@@ -45,6 +47,21 @@ interface SqlRepository extends GenericRepository<Movie, String> {
     List<String> findTitleByReleasedGreaterThan(int released);
     Integer findMaxReleased();
     List<MovieSummary> findByReleasedLessThan(Integer released);
+    List<Movie> findByTitleEndsWith(String suffix);
+    List<Movie> findByReleasedIn(List<Integer> years);
+    Movie findByTitleAndReleased(String title, Integer released);
+    List<Movie> findByReleasedBetween(int from, int to);
+    List<Movie> findByReleasedNotIn(List<Integer> years);
+    List<Movie> findByDescriptionIsNull();
+    List<Movie> findByTitleOrDescription(String title, String description);
+    List<Movie> findByRolesIsNotEmpty();
+    void updateReleased(@Id String title, Integer released);
+    void deleteByReleasedLessThan(Integer released);
+    List<Movie> findTop3OrderByReleasedDesc();
+    Page<Movie> findByReleasedGreaterThan(Integer released, Pageable pageable);
+    List<Movie> findAll();
+    long count();
+    void deleteById(String id);
     @Join(value = "directors", type = Join.Type.INNER)
     Page<Movie> findByReleasedGreaterThanEquals(Integer released, Pageable pageable);
     @Join(value = "directors", type = Join.Type.LEFT)
@@ -76,32 +93,83 @@ interface PathRepository extends GenericRepository<Person, String> {
     List<GraphRelationship<Person, Person>> findRelationshipsByMentor(String from, String to);
 }
 """)
+        sqlPeople = buildRepository('test.SqlPersonRepository', """
+$MOVIES
+
+@TestOracleRepository
+@PropertyGraph(value = "people")
+interface SqlPersonRepository extends GenericRepository<Person, String> {
+    List<Person> findByMentorName(String name);
+    List<Person> findByMentor(Person mentor);
+    Optional<Person> findByName(String name);
+    Optional<Person> findById(String id);
+}
+""")
     }
+
+    @Shared
+    BeanDefinition<?> sqlPeople
 
     @Unroll
     void "test SQL/PGQ for #method"() {
         expect:
-        getQuery(findMethod(sql, method)) == query
+        getQuery(findMethod(sql, method, arity)) == query
 
         where:
-        method                                     | query
-        'findById'                                 | "SELECT * FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.title = ?) COLUMNS ($COLUMNS))"
-        'findByReleasedGreaterThanOrderByReleased' | "SELECT * FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.released > ?) COLUMNS ($COLUMNS)) ORDER BY \"n__released\" ASC"
-        'findByTitleStartsWithIgnoreCase'          | "SELECT * FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (LOWER(n.title) LIKE LOWER(?) || '%') COLUMNS ($COLUMNS))"
-        'findByTitleContains'                      | "SELECT * FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.title LIKE '%' || ? || '%') COLUMNS ($COLUMNS))"
-        'countByReleasedLessThan'                  | 'SELECT COUNT(*) AS "result" FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.released < ?) COLUMNS (n.title AS "c0"))'
-        'existsByTitle'                            | 'SELECT TRUE AS "result" FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.title = ?) COLUMNS (n.title AS "c0")) FETCH NEXT 1 ROWS ONLY'
-        'findByDirectorsName'                      | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) WHERE (a0.name = ?) COLUMNS ($COLUMNS))"
-        'findByRolesRolesIsNotNull'                | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[ar0 IS ACTED_IN]- (a0 IS Person) WHERE (ar0.roles IS NOT NULL) COLUMNS ($COLUMNS))"
-        'findByRolesIsNotNull'                     | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[ar0 IS ACTED_IN]- (a0 IS Person) WHERE (ar0.id IS NOT NULL) COLUMNS ($COLUMNS))"
-        'findByRoles'                              | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[ar0 IS ACTED_IN]- (a0 IS Person) WHERE (ar0.id = ?) COLUMNS ($COLUMNS))"
-        'findByRolesPerson'                        | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[ar0 IS ACTED_IN]- (a0 IS Person) WHERE (a0.id = ?) COLUMNS ($COLUMNS))"
-        'findByTitle'                              | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) WHERE (n.title = ?) COLUMNS ($COLUMNS))"
-        'countByTitle'                             | 'SELECT COUNT(DISTINCT "c0") AS "result" FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) WHERE (n.title = ?) COLUMNS (n.title AS "c0"))'
-        'findTitleByReleased'                      | 'SELECT "c0" AS "title" FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) WHERE (n.released = ?) COLUMNS (n.title AS "c0"))'
-        'findTitleByReleasedGreaterThan'           | 'SELECT "c0" AS "title" FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.released > ?) COLUMNS (n.title AS "c0"))'
-        'findMaxReleased'                          | 'SELECT MAX("c0") AS "result" FROM GRAPH_TABLE (movies MATCH (n IS Movie) COLUMNS (n.released AS "c0"))'
-        'findByReleasedLessThan'                   | 'SELECT "c0" AS "title", "c1" AS "released" FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.released < ?) COLUMNS (n.title AS "c0", n.released AS "c1"))'
+        method                                     | arity | query
+        'findById'                                 | 1     | "SELECT * FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.title = ?) COLUMNS ($COLUMNS))"
+        'findAll'                                  | 0     | "SELECT * FROM GRAPH_TABLE (movies MATCH (n IS Movie) COLUMNS ($COLUMNS))"
+        'count'                                    | 0     | 'SELECT COUNT(*) AS "result" FROM GRAPH_TABLE (movies MATCH (n IS Movie) COLUMNS (n.title AS "c0"))'
+        'findByReleasedGreaterThanOrderByReleased' | 1     | "SELECT * FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.released > ?) COLUMNS ($COLUMNS)) ORDER BY \"n__released\" ASC"
+        'findByTitleAndReleased'                   | 2     | "SELECT * FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.title = ? AND n.released = ?) COLUMNS ($COLUMNS))"
+        'findByReleasedBetween'                    | 2     | "SELECT * FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE ((n.released >= ? AND n.released <= ?)) COLUMNS ($COLUMNS))"
+        'findByReleasedIn'                         | 1     | "SELECT * FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.released IN (?)) COLUMNS ($COLUMNS))"
+        'findByReleasedNotIn'                      | 1     | "SELECT * FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (NOT (n.released IN (?))) COLUMNS ($COLUMNS))"
+        'findByDescriptionIsNull'                  | 0     | "SELECT * FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.tagline IS NULL) COLUMNS ($COLUMNS))"
+        'findByTitleOrDescription'                 | 2     | "SELECT * FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.title = ? OR n.tagline = ?) COLUMNS ($COLUMNS))"
+        'findByTitleStartsWithIgnoreCase'          | 1     | "SELECT * FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (LOWER(n.title) LIKE LOWER(?) || '%') COLUMNS ($COLUMNS))"
+        'findByTitleContains'                      | 1     | "SELECT * FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.title LIKE '%' || ? || '%') COLUMNS ($COLUMNS))"
+        'findByTitleEndsWith'                      | 1     | "SELECT * FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.title LIKE '%' || ?) COLUMNS ($COLUMNS))"
+        'countByReleasedLessThan'                  | 1     | 'SELECT COUNT(*) AS "result" FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.released < ?) COLUMNS (n.title AS "c0"))'
+        'existsByTitle'                            | 1     | 'SELECT TRUE AS "result" FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.title = ?) COLUMNS (n.title AS "c0")) FETCH NEXT 1 ROWS ONLY'
+        'findByDirectorsName'                      | 1     | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) WHERE (a0.name = ?) COLUMNS ($COLUMNS))"
+        'findByRolesIsNotEmpty'                    | 0     | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[ar0 IS ACTED_IN]- (a0 IS Person) WHERE (ar0.id IS NOT NULL) COLUMNS ($COLUMNS))"
+        'findByRolesRolesIsNotNull'                | 0     | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[ar0 IS ACTED_IN]- (a0 IS Person) WHERE (ar0.roles IS NOT NULL) COLUMNS ($COLUMNS))"
+        'findByRolesIsNotNull'                     | 0     | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[ar0 IS ACTED_IN]- (a0 IS Person) WHERE (ar0.id IS NOT NULL) COLUMNS ($COLUMNS))"
+        'findByRoles'                              | 1     | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[ar0 IS ACTED_IN]- (a0 IS Person) WHERE (ar0.id = ?) COLUMNS ($COLUMNS))"
+        'findByRolesPerson'                        | 1     | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[ar0 IS ACTED_IN]- (a0 IS Person) WHERE (a0.id = ?) COLUMNS ($COLUMNS))"
+        'findByTitle'                              | 1     | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) WHERE (n.title = ?) COLUMNS ($COLUMNS))"
+        'countByTitle'                             | 1     | 'SELECT COUNT(DISTINCT "c0") AS "result" FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) WHERE (n.title = ?) COLUMNS (n.title AS "c0"))'
+        'findTitleByReleased'                      | 1     | 'SELECT "c0" AS "title" FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) WHERE (n.released = ?) COLUMNS (n.title AS "c0"))'
+        'findTitleByReleasedGreaterThan'           | 1     | 'SELECT "c0" AS "title" FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.released > ?) COLUMNS (n.title AS "c0"))'
+        'findMaxReleased'                          | 0     | 'SELECT MAX("c0") AS "result" FROM GRAPH_TABLE (movies MATCH (n IS Movie) COLUMNS (n.released AS "c0"))'
+        'findByReleasedLessThan'                   | 1     | 'SELECT "c0" AS "title", "c1" AS "released" FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.released < ?) COLUMNS (n.title AS "c0", n.released AS "c1"))'
+        'findTop3OrderByReleasedDesc'              | 0     | "SELECT * FROM GRAPH_TABLE (movies MATCH (n IS Movie) COLUMNS ($COLUMNS)) ORDER BY \"n__released\" DESC FETCH NEXT 3 ROWS ONLY"
+        'updateReleased'                           | 2     | 'UPDATE "MOVIE" SET "RELEASED"=? WHERE ("TITLE" = ?)'
+        'deleteByReleasedLessThan'                 | 1     | 'DELETE  FROM "MOVIE"  WHERE ("RELEASED" < ?)'
+        'deleteById'                               | 1     | 'DELETE  FROM "MOVIE"  WHERE ("TITLE" = ?)'
+    }
+
+    void "test the count query of a pageable finder"() {
+        given:
+        def sqlPage = findMethod(sql, 'findByReleasedGreaterThan', 2)
+
+        expect:
+        getQuery(sqlPage) == "SELECT * FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.released > ?) COLUMNS ($COLUMNS))"
+        sqlPage.annotationMetadata.stringValue(Query, 'countQuery').get() == 'SELECT COUNT(*) AS "result" FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.released > ?) COLUMNS (n.title AS "c0"))'
+    }
+
+    @Unroll
+    void "test SQL/PGQ person query for #method"() {
+        expect:
+        getQuery(findMethod(sqlPeople, method, 1)) == query
+
+        where:
+        method               | query
+        'findById'           | "SELECT * FROM GRAPH_TABLE (people MATCH (n IS Person) WHERE (n.id = ?) COLUMNS ($PERSON_COLUMNS))"
+        'findByName'         | "SELECT * FROM GRAPH_TABLE (people MATCH (n IS Person) WHERE (n.name = ?) COLUMNS ($PERSON_COLUMNS))"
+        'findByMentorName'   | "SELECT DISTINCT * FROM GRAPH_TABLE (people MATCH (n IS Person), (n) -[IS FOLLOWS]-> (a0 IS Person) WHERE (a0.name = ?) COLUMNS ($PERSON_COLUMNS))"
+        'findByMentor'       | "SELECT DISTINCT * FROM GRAPH_TABLE (people MATCH (n IS Person), (n) -[IS FOLLOWS]-> (a0 IS Person) WHERE (a0.id = ?) COLUMNS ($PERSON_COLUMNS))"
     }
 
     void "test writes are compiled to SQL for the vertex table"() {
@@ -477,6 +545,7 @@ interface UnsupportedRepository extends GenericRepository<Movie, String> {
         'shortest paths in SQL/PGQ' | '@PathLimit(3) Optional<GraphPath<Movie>> findShortestPath(String from, String to);' | 'Shortest paths are not supported by the SQL/PGQ dialect'
         'any-type paths in SQL/PGQ' | '@PathLimit(3) List<GraphPath<Movie>> findAllPaths(String from, String to);' | 'Paths over any relationship type are not supported by the SQL/PGQ dialect'
         'unbounded paths'      | 'Optional<GraphPath<Movie>> findShortestPath(String from, String to);' | 'need a maximum depth'
+        'array contains'       | 'List<Movie> findByRolesRolesArrayContains(String role);'          | 'ArrayContains is not supported'
     }
 
     void "test schemaless properties are read from a JSON column"() {
@@ -768,6 +837,12 @@ interface FilmRepository extends GenericRepository<Film, String> {
     private static ExecutableMethod<?, ?> findMethod(BeanDefinition<?> definition, String name) {
         def method = definition.executableMethods.find { it.methodName == name }
         assert method != null: "No method $name"
+        return method
+    }
+
+    private static ExecutableMethod<?, ?> findMethod(BeanDefinition<?> definition, String name, int arity) {
+        def method = definition.executableMethods.find { it.methodName == name && it.argumentTypes.length == arity }
+        assert method != null: "No method $name with $arity arguments"
         return method
     }
 }
