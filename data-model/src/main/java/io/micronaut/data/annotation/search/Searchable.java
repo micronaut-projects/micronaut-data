@@ -53,6 +53,8 @@ public @interface Searchable {
 
     /**
      * Optional logical name of the search index. If empty, a name is derived from the entity name.
+     * Elasticsearch and OpenSearch put it into request paths, so it must follow their index naming
+     * rules (lower case, none of {@code \ / * ? " < > | , #} or spaces), which is checked at runtime.
      *
      * @return The index name
      */

@@ -1,0 +1,27 @@
+plugins {
+    id "io.micronaut.build.internal.data-native-example"
+}
+
+application {
+    mainClass = "example.Application"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+    testRuntime "junit5"
+    testResources {
+        // the test starts its own Elasticsearch container with Testcontainers
+        enabled = false
+    }
+}
+
+dependencies {
+    annotationProcessor projects.micronautDataDocumentProcessor
+    annotationProcessor projects.micronautDataSearchDocument
+    implementation projects.micronautDataSearchElasticsearch
+    implementation mnSerde.micronaut.serde.jackson
+    runtimeOnly mnLogging.logback.classic
+    testImplementation(platform(mnTestResources.boms.testcontainers))
+    testImplementation libs.testcontainers.elasticsearch
+}
