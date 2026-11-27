@@ -1,0 +1,5 @@
+datasources:
+  default:
+    db-type: postgresql
+    dialect: POSTGRES
+    schema-generate: CREATE_DROP
