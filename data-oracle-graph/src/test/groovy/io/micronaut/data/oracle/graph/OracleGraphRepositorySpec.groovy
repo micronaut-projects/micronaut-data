@@ -1,6 +1,6 @@
 package io.micronaut.data.oracle.graph
 
-import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
+import io.micronaut.context.annotation.Property
 import io.micronaut.data.graph.tck.AbstractGraphRepositorySpec
 import io.micronaut.data.graph.tck.entities.Movie
 import io.micronaut.data.graph.tck.repositories.ColleagueRepository
@@ -11,17 +11,19 @@ import io.micronaut.data.oracle.graph.tck.OraclePersonRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.transaction.TransactionOperations
 import jakarta.inject.Inject
-import spock.lang.Shared
 
 import javax.sql.DataSource
 import java.sql.Connection
 
 /**
- * Runs the graph TCK on Oracle Database 23ai, over a property graph of the movie and person vertex tables. Oracle
+ * Runs the graph TCK on Oracle Database 23ai, over the tables and property graph that schema generation creates for
+ * the TCK entities. Oracle
  * repositories write node rows only, and query with SQL/PGQ, so the features that need relationship writes or Cypher
  * are skipped.
  */
 @MicronautTest(transactional = false)
+@Property(name = "datasources.default.schema-generate", value = "CREATE_DROP")
+@Property(name = "datasources.default.packages", value = "io.micronaut.data.graph.tck.entities")
 class OracleGraphRepositorySpec extends AbstractGraphRepositorySpec {
 
     @Inject
@@ -61,7 +63,7 @@ class OracleGraphRepositorySpec extends AbstractGraphRepositorySpec {
 
     /**
      * A save with the directors or roles set fails, as they would be lost, so the movie is saved with them cleared
-     * and restored. The TCK property graph has no edge tables, so the relationships are not written.
+     * and restored. The relationships are not written, so the edge tables stay empty.
      */
     @Override
     protected Movie saveMovie(Movie movie) {
@@ -77,30 +79,10 @@ class OracleGraphRepositorySpec extends AbstractGraphRepositorySpec {
         }
     }
 
-    @Shared
-    boolean created
-
     @Override
     void cleanupGraph() {
-        if (!created) {
-            sql("DROP PROPERTY GRAPH IF EXISTS tck",
-                "DROP TABLE IF EXISTS movie",
-                "DROP TABLE IF EXISTS person",
-                "CREATE TABLE movie (title VARCHAR2(255) PRIMARY KEY, tagline VARCHAR2(255), released NUMBER(10), votes NUMBER(19))",
-                "CREATE TABLE person (id VARCHAR2(36) PRIMARY KEY, name VARCHAR2(255), born NUMBER(10))",
-                """CREATE PROPERTY GRAPH tck
-                   VERTEX TABLES (movie KEY (title) LABEL Movie PROPERTIES (title, tagline, released, votes),
-                                  person KEY (id) LABEL Person PROPERTIES (id, name, born))""")
-            created = true
-        }
-        sql("DELETE FROM movie", "DELETE FROM person")
-    }
-
-    private void sql(String... statements) {
-        DelegatingDataSource.unwrapDataSource(dataSource).connection.withCloseable { connection ->
-            connection.createStatement().withCloseable { statement ->
-                statements.each { statement.execute(it) }
-            }
-        }
+        // Oracle repositories write node rows only, so the generated edge tables stay empty
+        movieRepository.deleteAll()
+        personRepository.deleteAll()
     }
 }

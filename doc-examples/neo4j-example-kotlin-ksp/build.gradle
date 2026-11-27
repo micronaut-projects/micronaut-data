@@ -1,0 +1,32 @@
+plugins {
+    id "io.micronaut.build.internal.data-kotlin-ksp-example"
+}
+
+application {
+    mainClass = "example.ApplicationKt"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+    testRuntime "junit5"
+}
+
+dependencies {
+    ksp projects.micronautDataGraphProcessor
+
+    implementation projects.micronautDataNeo4j
+    implementation mnKotlin.micronaut.kotlin.runtime
+    implementation(mnSql.jakarta.persistence.api)
+
+    runtimeOnly mnLogging.logback.classic
+
+    testImplementation(libs.neo4j.harness) {
+        exclude group: "org.slf4j"
+        exclude group: "ch.qos.logback"
+    }
+}
+
+tasks.withType(Test).configureEach {
+    jvmArgs "--add-opens=java.base/java.nio=ALL-UNNAMED", "--add-opens=java.base/java.lang=ALL-UNNAMED", "--enable-native-access=ALL-UNNAMED"
+}

@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.graph.annotation;
 
+import io.micronaut.data.annotation.TypeDef;
+import io.micronaut.data.model.DataType;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -31,11 +33,15 @@ import java.lang.annotation.Target;
  * strings, numbers, booleans, temporal values and lists of those. Setting a value to {@code null} removes the
  * property.</p>
  *
+ * <p>Oracle property graphs store the map in a JSON column of the vertex table, whose entries are read as properties of
+ * the node.</p>
+ *
  * @author graemerocher
  * @since 5.3.0
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER})
 @Documented
+@TypeDef(type = DataType.JSON)
 public @interface DynamicAttributes {
 }

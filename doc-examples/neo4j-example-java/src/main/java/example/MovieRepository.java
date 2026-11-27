@@ -37,6 +37,12 @@ public interface MovieRepository extends CrudRepository<Movie, String> { // <2>
     Optional<Movie> findByTitle(String title);
     // end::join[]
 
+    // tag::nestedJoin[]
+    @Join("directors")
+    @Join("directors.follows") // <1>
+    List<Movie> findByReleased(int year);
+    // end::nestedJoin[]
+
     // tag::projection[]
     List<String> findTitleByReleasedGreaterThanOrderByTitle(int year);
 

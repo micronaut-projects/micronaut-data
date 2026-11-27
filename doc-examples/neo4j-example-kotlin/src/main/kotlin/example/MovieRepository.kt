@@ -34,6 +34,12 @@ interface MovieRepository : CrudRepository<Movie, String> { // <2>
     fun findByTitle(title: String): Movie?
     // end::join[]
 
+    // tag::nestedJoin[]
+    @Join("directors")
+    @Join("directors.follows") // <1>
+    fun findByReleased(year: Int): List<Movie>
+    // end::nestedJoin[]
+
     // tag::projection[]
     fun findTitleByReleasedGreaterThanOrderByTitle(year: Int): List<String>
 

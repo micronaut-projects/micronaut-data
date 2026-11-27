@@ -131,9 +131,15 @@ class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProv
         userGroupMembershipRepository.save(userGroupMembership)
         def listByUserLogin = userGroupMembershipRepository.findAllByUserLogin(user.login)
         def listByUserLoginAndAreaId = userGroupMembershipRepository.findAllByUserLoginAndUserGroup_AreaId(user.login, area.id)
+        def listByAreaIdIn = userGroupMembershipRepository.findAllByUserGroup_AreaIdIn([area.id])
+        def listByLoginLike = userGroupMembershipRepository.findAllByUser_LoginLike(user.login)
+        def listByOtherLogin = userGroupMembershipRepository.findAllByUser_LoginLike(user.login + "-other")
         then:
         listByUserLogin
         listByUserLoginAndAreaId
+        listByAreaIdIn*.id == [userGroupMembership.id]
+        listByLoginLike*.id == [userGroupMembership.id]
+        !listByOtherLogin
         listByUserLogin == listByUserLoginAndAreaId
         listByUserLogin[0].userGroup.id == userGroup.id
         listByUserLogin[0].user.id == user.id
@@ -463,6 +469,10 @@ interface UserGroupMembershipRepository extends CrudRepository<UserGroupMembersh
 
     @Join(value = "userGroup.area", type = Join.Type.FETCH)
     List<UserGroupMembership> findAllByUserLoginAndUserGroup_AreaId(String login, Long uid)
+
+    List<UserGroupMembership> findAllByUserGroup_AreaIdIn(List<Long> areaIds)
+
+    List<UserGroupMembership> findAllByUser_LoginLike(String login)
 }
 
 @MappedEntity

@@ -273,7 +273,7 @@ class Cast {
 }
 
 @TestOracleRepository
-@PropertyGraph("movies")
+@PropertyGraph(value = "movies")
 interface CastRepository extends GenericRepository<Cast, String> {
     List<Cast> findByCameosIsNotNull();
 }
@@ -425,7 +425,7 @@ class Follower {
 }
 
 @TestOracleRepository
-@PropertyGraph("people")
+@PropertyGraph(value = "people")
 interface FollowerRepository extends GenericRepository<Follower, String> {
     List<GraphRelationship<Follower, Follower>> findRelationshipsByFollowers(String from, String to);
     List<GraphRelationship<Follower, Follower>> findRelationshipsByKnown(String from, String to);
@@ -466,7 +466,7 @@ interface UnsupportedRepository extends GenericRepository<Movie, String> {
 
         where:
         description            | method                                                              | message
-        'IsEmpty on a relationship' | 'List<Movie> findByDirectorsIsEmpty();'                             | 'Expected a string expression'
+        'IsEmpty on a relationship' | 'List<Movie> findByDirectorsIsEmpty();'                             | 'using @Query instead'
         'IsEmpty on a relationship identifier' | 'List<Movie> findByDirectorsIdIsEmpty();'                           | 'Testing that a relationship is absent is not supported for Oracle property graphs'
         'IsNull on a relationship' | 'List<Movie> findByDirectorsIsNull();'                              | 'Testing that a relationship is absent is not supported for Oracle property graphs'
         'IsNull on a relationship entity' | 'List<Movie> findByRolesIsNull();'                       | 'Testing that a relationship is absent is not supported for Oracle property graphs'
@@ -479,9 +479,9 @@ interface UnsupportedRepository extends GenericRepository<Movie, String> {
         'unbounded paths'      | 'Optional<GraphPath<Movie>> findShortestPath(String from, String to);' | 'need a maximum depth'
     }
 
-    void "test schemaless properties are rejected"() {
+    void "test schemaless properties are read from a JSON column"() {
         when:
-        buildRepository('test.PetRepository', """
+        def repository = buildRepository('test.PetRepository', """
 import io.micronaut.data.graph.annotation.DynamicAttributes;
 import java.util.Map;
 
@@ -499,15 +499,14 @@ class Pet {
 }
 
 @TestOracleRepository
-@PropertyGraph("pets")
+@PropertyGraph(value = "pets")
 interface PetRepository extends GenericRepository<Pet, String> {
     List<Pet> findByName(String name);
 }
 """)
 
         then:
-        def e = thrown(RuntimeException)
-        e.message.contains('Schemaless properties and dynamic labels are not supported by Oracle property graphs')
+        getQuery(findMethod(repository, 'findByName')) == '''SELECT * FROM GRAPH_TABLE (pets MATCH (n IS Pet) WHERE (n.name = ?) COLUMNS (n.name AS "n__ID_", n.name AS "n__name", 'Pet' AS "n__LABEL_", n.attributes AS "n__DYN_"))'''
     }
 
     void "test a relationship entity without an id is compared through its target node only"() {

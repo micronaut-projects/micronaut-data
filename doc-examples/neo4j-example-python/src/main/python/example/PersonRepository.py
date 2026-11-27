@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from java.util import UUID
-from micronaut.data.graph.annotation import PathLimit
+from micronaut.data.graph.annotation import Direction, PathDirection, PathLimit
 from micronaut.data.graph.model import GraphPath, GraphRelationship
 from micronaut.data.neo4j.annotation import Neo4jRepository
 from micronaut.data.repository import CrudRepository
@@ -24,6 +24,14 @@ class PersonRepository(CrudRepository[Person, UUID]):
 
     def existsPathByFollows(self, start: Person, end: Person) -> bool: ...  # <4>
     # end::paths[]
+
+    # tag::pathOptions[]
+    def findShortestPathByFollowsBetweenName(self, start: str, end: str, maxDepth: Annotated[int, PathLimit]) -> GraphPath[Person] | None: ...  # <1>
+
+    @PathLimit(4)
+    @PathDirection(Direction.UNDIRECTED)  # <2>
+    def existsPathByFollowsBetweenName(self, start: str, end: str) -> bool: ...
+    # end::pathOptions[]
 
     # tag::relationships[]
     def findRelationships(self, start: Person, end: Person) -> list[GraphRelationship[Person, Person]]: ...

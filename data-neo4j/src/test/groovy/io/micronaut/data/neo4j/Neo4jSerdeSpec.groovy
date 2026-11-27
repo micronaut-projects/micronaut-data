@@ -253,6 +253,19 @@ class Neo4jSerdeSpec extends Specification implements TestPropertyProvider {
         reviewerRepository.findByFullName("Pauline Kael").get() == new Reviewer("Pauline Kael", 12, [trainee])
     }
 
+    void "a nested join reads relationships under the name of a serde naming strategy"() {
+        given:
+        def last = new Reviewer("A. O. Scott", 1, [])
+        def middle = new Reviewer("Roger Ebert", 3, [last])
+        def first = new Reviewer("Pauline Kael", 12, [middle])
+
+        when:
+        reviewerRepository.save(first)
+
+        then:
+        reviewerRepository.findByFullNameAndReviewCount("Pauline Kael", 12).get() == first
+    }
+
     void "a node fetched through a relationship keeps its schemaless data"() {
         given:
         operations.executeQuery('CREATE (:Kennel {name: "North"})-[:HOUSES]->(:Pet:Rescued {name: "Rex", colour: "brown"})', [:])

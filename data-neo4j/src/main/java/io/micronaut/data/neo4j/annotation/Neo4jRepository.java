@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.neo4j.annotation;
 
+import io.micronaut.context.annotation.AliasFor;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.graph.annotation.GraphRepository;
@@ -29,6 +30,8 @@ import java.lang.annotation.Target;
 
 /**
  * Stereotype that configures a {@link Repository} as a Neo4j repository. Queries are compiled to Cypher at build time.
+ * The value names the driver: {@code default} for the driver of {@code micronaut-neo4j}, or a driver configured under
+ * {@code micronaut.data.neo4j.drivers.<name>}.
  *
  * @author graemerocher
  * @since 5.3.0
@@ -45,4 +48,10 @@ import java.lang.annotation.Target;
 @Repository
 @GraphRepository
 public @interface Neo4jRepository {
+
+    /**
+     * @return The name of the driver
+     */
+    @AliasFor(annotation = Repository.class, member = "value")
+    String value() default "default";
 }

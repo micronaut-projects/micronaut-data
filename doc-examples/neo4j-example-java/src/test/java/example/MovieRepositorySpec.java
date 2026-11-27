@@ -102,6 +102,23 @@ class MovieRepositorySpec extends AbstractNeo4jTest {
     }
 
     @Test
+    void testNestedJoin() {
+        Person lilly = new Person("Lilly Wachowski", 1967);
+        lilly.getFollows().add(new Person("Lana Wachowski", 1965));
+        personRepository.save(lilly);
+        Movie bound = new Movie("Bound", "In the end, it's all about the money", 1996);
+        bound.setDirectors(List.of(lilly));
+        movieRepository.save(bound);
+
+        // tag::nestedFetch[]
+        Movie fetched = movieRepository.findByReleased(1996).get(0);
+        Person followed = fetched.getDirectors().get(0).getFollows().get(0); // <1>
+        // end::nestedFetch[]
+
+        assertEquals("Lana Wachowski", followed.getName());
+    }
+
+    @Test
     void testProjections() {
         assertEquals(List.of("Speed", "The Matrix", "The Matrix Reloaded"), movieRepository.findTitleByReleasedGreaterThanOrderByTitle(1990));
         assertEquals(2, movieRepository.findByReleasedBetween(1990, 2000).size());

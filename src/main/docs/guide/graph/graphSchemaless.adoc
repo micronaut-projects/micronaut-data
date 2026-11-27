@@ -31,7 +31,9 @@ snippet::example.PetRepositorySpec[project-base="doc-examples/neo4j-example", ta
 |`pet.attributes["goesInPatch"] = True`
 |===
 
-Values must be types the database stores: strings, numbers, booleans, temporal values and lists of those. Setting a value to `null` removes the property when the entity is saved. As schemaless properties are not known at build time, finders cannot refer to them. Use an explicit query instead.
+Values must be types the database stores: strings, numbers, booleans, temporal values and lists of those. Setting a value to `null` removes the property when the entity is saved. Saving an entity with a schemaless property named like a declared property fails with a `DataAccessException`. As schemaless properties are not known at build time, finders cannot refer to them. Use an explicit query instead.
+
+Oracle property graphs store the map in a JSON column of the vertex table, named after the property, whose entries are read as properties of the node. An entry written to the column by other means under the name of a column is ignored when read, with a warning, as the column wins. Schema generation creates the column. Dynamic labels and dynamic relationships are not supported by Oracle.
 
 == Dynamic labels
 

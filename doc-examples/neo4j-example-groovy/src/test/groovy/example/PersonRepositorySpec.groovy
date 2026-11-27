@@ -68,4 +68,10 @@ class PersonRepositorySpec extends AbstractNeo4jSpec {
         then:
         labels == ["Actor"] as Set
     }
+
+    void "path options"() {
+        expect:
+        personRepository.findShortestPathByFollowsBetweenName("Fred", "Joe", 3).get().end().name == "Joe"
+        personRepository.existsPathByFollowsBetweenName("Joe", "Fred")
+    }
 }

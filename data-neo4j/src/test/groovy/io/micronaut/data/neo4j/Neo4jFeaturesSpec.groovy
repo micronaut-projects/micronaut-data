@@ -17,6 +17,8 @@ import io.micronaut.data.neo4j.features.Engineer
 import io.micronaut.data.neo4j.features.Ensemble
 import io.micronaut.data.neo4j.features.EnsembleRepository
 import io.micronaut.data.neo4j.features.EngineerRepository
+import io.micronaut.data.neo4j.features.Junction
+import io.micronaut.data.neo4j.features.JunctionRepository
 import io.micronaut.data.neo4j.features.Note
 import io.micronaut.data.neo4j.features.NoteRepository
 import io.micronaut.data.neo4j.features.Project
@@ -28,6 +30,8 @@ import io.micronaut.data.neo4j.features.Review
 import io.micronaut.data.neo4j.features.Seat
 import io.micronaut.data.neo4j.features.Shelf
 import io.micronaut.data.neo4j.features.ShelfRepository
+import io.micronaut.data.neo4j.features.Station
+import io.micronaut.data.neo4j.features.StationRepository
 import io.micronaut.data.neo4j.features.Tag
 import io.micronaut.data.neo4j.features.Member
 import io.micronaut.data.neo4j.features.MemberRepository
@@ -51,10 +55,16 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
     TagRepository tagRepository
 
     @Inject
+    JunctionRepository junctionRepository
+
+    @Inject
     TopicRepository topicRepository
 
     @Inject
     TeamRepository teamRepository
+
+    @Inject
+    StationRepository stationRepository
 
     @Inject
     MemberRepository memberRepository
@@ -114,6 +124,21 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
         tagRepository.count() == 0
     }
 
+    void "a nested join reads a relationship named node"() {
+        given:
+        junctionRepository.save(new Junction("a", [new Junction("b", null, [new Junction("c", null, null)])], null))
+
+        when:
+        def found = junctionRepository.findByName("a").get()
+
+        then:
+        found.links()*.name() == ["b"]
+        found.links()[0].node()*.name() == ["c"]
+
+        cleanup:
+        junctionRepository.deleteAll()
+    }
+
     void "database generated element identifiers on immutable records"() {
         when:
         def saved = topicRepository.save(new Topic(null, "Databases", [new Tag("graph"), new Tag("nosql")]))
@@ -167,6 +192,18 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
         saved.collectMany { it.players() }*.id().every { it != null }
         operations.executeQuery("MATCH (p:Player)-[:PLAYS_FOR]->(t:Team) RETURN count(t)", [:], Long) == [2L]
         teamRepository.count() == 2
+    }
+
+    void "path finders match endpoints by a database generated identifier"() {
+        given:
+        def saved = stationRepository.save(new Station(null, "A", [new Station(null, "B", [new Station(null, "C", [])])]))
+        def a = saved.id()
+        def c = saved.links()[0].links()[0].id()
+
+        expect:
+        stationRepository.existsPathByLinksBetweenId(a, c)
+        !stationRepository.existsPathByLinksBetweenId(c, a)
+        stationRepository.findShortestPathByLinksBetweenId(a, c).get().nodes()*.name() == ["A", "B", "C"]
     }
 
     void "reactive repositories"() {

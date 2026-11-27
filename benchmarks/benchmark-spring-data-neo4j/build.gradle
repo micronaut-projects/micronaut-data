@@ -1,0 +1,29 @@
+plugins {
+	id "io.micronaut.build.internal.data-spring-benchmark"
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-data-neo4j'
+	// An in-process Neo4j server, as in the Micronaut Data Neo4j benchmark
+	implementation(libs.neo4j.harness) {
+		exclude group: "org.slf4j"
+		exclude group: "ch.qos.logback"
+	}
+}
+
+tasks.withType(Test).configureEach {
+	maxHeapSize = "2g"
+	jvmArgs "--add-opens=java.base/java.nio=ALL-UNNAMED", "--add-opens=java.base/java.lang=ALL-UNNAMED", "--enable-native-access=ALL-UNNAMED"
+}
+
+jmh {
+	includes = ['SimpleQuery']
+	fork = 1
+	warmupIterations = 3
+	warmup = '1s'
+	iterations = 5
+	timeOnIteration = '1s'
+	benchmarkMode = ['thrpt']
+	timeUnit = 's'
+	jvmArgsAppend = ["--add-opens=java.base/java.nio=ALL-UNNAMED", "--add-opens=java.base/java.lang=ALL-UNNAMED", "--enable-native-access=ALL-UNNAMED"]
+}

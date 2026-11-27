@@ -23,9 +23,10 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.graph.runtime.GraphRepositoryEntities;
 import io.micronaut.data.neo4j.annotation.Neo4jRepository;
+import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.inject.Singleton;
 
-import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -43,17 +44,19 @@ final class Neo4jIndexCreator implements ApplicationEventListener<StartupEvent> 
     static final String CREATE_INDEXES = "micronaut.data.neo4j.create-indexes";
 
     private final BeanContext beanContext;
-    private final DefaultNeo4jRepositoryOperations operations;
 
-    Neo4jIndexCreator(BeanContext beanContext, DefaultNeo4jRepositoryOperations operations) {
+    Neo4jIndexCreator(BeanContext beanContext) {
         this.beanContext = beanContext;
-        this.operations = operations;
     }
 
     @Override
     public void onApplicationEvent(StartupEvent event) {
-        Set<Class<?>> entities = new LinkedHashSet<>();
-        GraphRepositoryEntities.byDataSource(beanContext, Neo4jRepository.class).values().forEach(entities::addAll);
-        operations.createIndexes(entities);
+        for (Map.Entry<String, Set<Class<?>>> entry : GraphRepositoryEntities.byDataSource(beanContext, Neo4jRepository.class).entrySet()) {
+            // Repositories of a driver that is not configured are skipped, as they cannot run either
+            beanContext.findBean(Neo4jRepositoryOperations.class, Qualifiers.byName(entry.getKey()))
+                .filter(DefaultNeo4jRepositoryOperations.class::isInstance)
+                .map(DefaultNeo4jRepositoryOperations.class::cast)
+                .ifPresent(operations -> operations.createIndexes(entry.getValue()));
+        }
     }
 }

@@ -68,4 +68,13 @@ public interface ExpressionType<E> {
      */
     Class<E> getJavaType();
 
+    /**
+     * @return true if the expression is a collection, an array or a map
+     * @since 5.3.0
+     */
+    default boolean isCollection() {
+        Class<E> type = getJavaType();
+        return type.isArray() || Iterable.class.isAssignableFrom(type) || java.util.Map.class.isAssignableFrom(type);
+    }
+
 }

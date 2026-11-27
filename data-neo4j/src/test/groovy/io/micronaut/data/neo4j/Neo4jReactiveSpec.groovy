@@ -9,6 +9,7 @@ import io.micronaut.data.exceptions.OptimisticLockException
 import io.micronaut.data.graph.tck.entities.Article
 import io.micronaut.data.graph.tck.entities.Collaboration
 import io.micronaut.data.graph.tck.entities.Colleague
+import io.micronaut.data.graph.tck.entities.Mentorship
 import io.micronaut.data.graph.tck.entities.Movie
 import io.micronaut.data.graph.tck.entities.Person
 import io.micronaut.data.graph.tck.entities.Role
@@ -18,12 +19,14 @@ import io.micronaut.data.model.Sort
 import io.micronaut.data.model.runtime.PagedQuery
 import io.micronaut.data.neo4j.features.Assignment
 import io.micronaut.data.neo4j.features.Audit
+import io.micronaut.data.neo4j.features.Draft
 import io.micronaut.data.neo4j.features.Engineer
 import io.micronaut.data.neo4j.features.Ensemble
 import io.micronaut.data.neo4j.features.Pet
 import io.micronaut.data.neo4j.features.Project
 import io.micronaut.data.neo4j.features.ReactiveArticleRepository
 import io.micronaut.data.neo4j.features.ReactiveColleagueRepository
+import io.micronaut.data.neo4j.features.ReactiveDraftRepository
 import io.micronaut.data.neo4j.features.ReactiveEngineerRepository
 import io.micronaut.data.neo4j.features.ReactiveEnsembleRepository
 import io.micronaut.data.neo4j.features.ReactiveMovieRepository
@@ -34,6 +37,7 @@ import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.neo4j.features.ReactivePetRepository
 import io.micronaut.data.neo4j.features.ReactiveShelfRepository
 import io.micronaut.data.neo4j.features.ReactiveStepRepository
+import io.micronaut.data.neo4j.features.ReactiveTagRepository
 import io.micronaut.data.neo4j.features.ReactiveTeamRepository
 import io.micronaut.data.neo4j.features.Review
 import io.micronaut.data.neo4j.features.Seat
@@ -68,6 +72,12 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
 
     @Inject
     ReactiveArticleRepository articleRepository
+
+    @Inject
+    ReactiveTagRepository tagRepository
+
+    @Inject
+    ReactiveDraftRepository draftRepository
 
     @Inject
     ReactiveMovieSpecificationRepository movieSpecificationRepository
@@ -471,18 +481,18 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
     void "replacing a single valued undirected relationship entity reactively leaves one relationship"() {
         given:
         def ada = new Colleague("Ada")
-        ada.mentor = new Collaboration("first", new Colleague("Grace"))
+        ada.mentor = new Mentorship("first", new Colleague("Grace"))
         ada = colleagueRepository.save(ada).block()
 
         when: "it is replaced by one that was not saved"
-        ada.mentor = new Collaboration("second", new Colleague("Grace"))
+        ada.mentor = new Mentorship("second", new Colleague("Grace"))
         ada = colleagueRepository.update(ada).block()
 
         then:
         mentorships() == ["second"]
 
         when: "it moves to another node"
-        ada.mentor = new Collaboration("third", new Colleague("Hopper"))
+        ada.mentor = new Mentorship("third", new Colleague("Hopper"))
         colleagueRepository.update(ada).block()
 
         then:
@@ -708,6 +718,91 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
         movieSpecificationRepository.count(after1995).block() == 1
         movieSpecificationRepository.exists(after1995).block()
         movieSpecificationRepository.findOne(after1995).block().title == "The Matrix"
+    }
+
+    void "reactive saveAll and updateAll write nodes in batches"() {
+        when:
+        def tags = tagRepository.saveAll([new Tag("graph"), new Tag("nosql"), new Tag("cypher")]).collectList().block()
+
+        then: "each instance gets the identifier of its own node"
+        tags*.id.unique().size() == 3
+        tags.collect { tagRepository.findById(it.id).block().name } == ["graph", "nosql", "cypher"]
+
+        when:
+        def articles = articleRepository.saveAll([new Article("a", "A"), new Article("b", "B")]).collectList().block()
+        def stale = articleRepository.findById("b").block()
+        articles.each { it.title = it.title.toLowerCase() }
+        def updated = articleRepository.updateAll(articles).collectList().block()
+
+        then:
+        updated*.version == [1L, 1L]
+
+        when:
+        def current = articleRepository.findById("a").block()
+        current.title = "changed"
+        articleRepository.updateAll([current, stale]).collectList().block()
+
+        then: "no node of the batch is updated"
+        thrown(OptimisticLockException)
+        with(articleRepository.findById("a").block()) {
+            title == "a"
+            version == 1L
+        }
+
+        when: "one node of a batch of new nodes has the identifier of an existing node"
+        articleRepository.saveAll([new Article("c", "C"), new Article("b", "Other")]).collectList().block()
+
+        then: "no node of the batch is inserted"
+        thrown(EntityExistsException)
+        !articleRepository.findById("c").blockOptional().present
+        articleRepository.findById("b").block().title == "b"
+
+        cleanup:
+        tagRepository.deleteAll().block()
+    }
+
+    void "reactive saveAll writes an instance passed twice once"() {
+        given:
+        def graph = new Tag("graph")
+
+        when:
+        def saved = tagRepository.saveAll([graph, new Tag("nosql"), graph]).collectList().block()
+
+        then:
+        saved.size() == 3
+        saved[0].id != null
+        saved[0].id == saved[2].id
+        tagRepository.count().block() == 2
+
+        cleanup:
+        tagRepository.deleteAll().block()
+    }
+
+    void "reactive saveAll and updateAll keep one result per input when a listener vetoes an entity"() {
+        when:
+        def saved = draftRepository.saveAll([new Draft("a"), new Draft("veto"), new Draft("b")]).collectList().block()
+
+        then: "the vetoed entity stays as it was and the others are mapped to their inputs"
+        saved*.name == ["a", "veto", "b"]
+        saved[0].id != null
+        saved[1].id == null
+        saved[2].id != null
+        draftRepository.count().block() == 2
+
+        when:
+        saved[0].name = "a2"
+        saved[2].name = "veto"
+        def updated = draftRepository.updateAll([saved[0], saved[2]]).collectList().block()
+
+        then:
+        updated*.name == ["a2", "veto"]
+        updated[0].id == saved[0].id
+        updated[1].id == saved[2].id
+        draftRepository.findById(saved[0].id).block().name == "a2"
+        draftRepository.findById(saved[2].id).block().name == "b"
+
+        cleanup:
+        draftRepository.deleteAll().block()
     }
 
     void "a reactive saveAll links records to the nodes of the batch"() {

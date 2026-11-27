@@ -15,16 +15,13 @@
  */
 package io.micronaut.data.neo4j.session;
 
-import io.micronaut.context.annotation.Requires;
-import io.micronaut.context.annotation.Value;
+import io.micronaut.context.annotation.Parameter;
+import io.micronaut.context.annotation.EachBean;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.support.AbstractConnectionOperations;
-import jakarta.inject.Singleton;
-import org.jspecify.annotations.Nullable;
 import org.neo4j.driver.Driver;
-import org.neo4j.driver.SessionConfig;
 
 /**
  * Opens a Neo4j session per connection.
@@ -32,27 +29,21 @@ import org.neo4j.driver.SessionConfig;
  * @author graemerocher
  * @since 5.3.0
  */
-@Singleton
-@Requires(beans = Driver.class)
+@EachBean(Neo4jDriverRegistration.class)
 @Internal
 final class DefaultNeo4jConnectionOperations extends AbstractConnectionOperations<Neo4jConnection> implements Neo4jConnectionOperations {
 
     private final Driver driver;
-    private final @Nullable String database;
+    private final Neo4jSessionConfigurer sessions;
 
-    DefaultNeo4jConnectionOperations(Driver driver,
-                                     @Value("${micronaut.data.neo4j.database:}") @Nullable String database) {
-        this.driver = driver;
-        this.database = database == null || database.isBlank() ? null : database;
+    DefaultNeo4jConnectionOperations(@Parameter Neo4jDriverRegistration registration, @Parameter Neo4jSessionConfigurer sessions) {
+        this.driver = registration.driver();
+        this.sessions = sessions;
     }
 
     @Override
     protected Neo4jConnection openConnection(ConnectionDefinition definition) {
-        SessionConfig.Builder builder = SessionConfig.builder();
-        if (database != null) {
-            builder.withDatabase(database);
-        }
-        return new Neo4jConnection(driver.session(builder.build()));
+        return new Neo4jConnection(driver.session(sessions.sessionConfig()));
     }
 
     @Override

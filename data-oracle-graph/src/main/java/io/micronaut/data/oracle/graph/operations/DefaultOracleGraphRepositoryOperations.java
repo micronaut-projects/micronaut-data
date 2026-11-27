@@ -184,7 +184,8 @@ final class DefaultOracleGraphRepositoryOperations extends AbstractGraphReposito
                 while (resultSet.next()) {
                     List<Object> row = new ArrayList<>(count);
                     for (int i = 1; i <= count; i++) {
-                        row.add(readValue(resultSet, i, types[i - 1]));
+                        // A JSON column needs a driver property to be read as an object, but reads as text
+                        row.add(OracleGraphRows.isJsonText(columns.get(i - 1)) ? resultSet.getString(i) : readValue(resultSet, i, types[i - 1]));
                     }
                     rows.add(row);
                 }
@@ -242,29 +243,34 @@ final class DefaultOracleGraphRepositoryOperations extends AbstractGraphReposito
         throw new UnsupportedOperationException(DECLARE_METHOD);
     }
 
-    // Writes run as SQL on the vertex tables through Micronaut Data JDBC, in the same connection and transaction
+    // Writes run as SQL on the vertex tables through Micronaut Data JDBC, in the same connection and transaction.
+    // Schemaless properties go to a JSON column, so a key that names a declared column is rejected up front
 
     @Override
     public <T> T persist(InsertOperation<T> operation) {
         OracleGraphQueryBuilder.checkVertexWrite(getEntity(operation.getRootEntity()), operation.getEntity());
+        checkDynamicAttributes(operation.getRootEntity(), List.of(operation.getEntity()));
         return jdbcOperations.persist(operation);
     }
 
     @Override
     public <T> Iterable<T> persistAll(InsertBatchOperation<T> operation) {
         checkVertexWrites(operation.getRootEntity(), operation);
+        checkDynamicAttributes(operation.getRootEntity(), operation);
         return jdbcOperations.persistAll(operation);
     }
 
     @Override
     public <T> T update(UpdateOperation<T> operation) {
         OracleGraphQueryBuilder.checkVertexWrite(getEntity(operation.getRootEntity()), operation.getEntity());
+        checkDynamicAttributes(operation.getRootEntity(), List.of(operation.getEntity()));
         return jdbcOperations.update(operation);
     }
 
     @Override
     public <T> Iterable<T> updateAll(UpdateBatchOperation<T> operation) {
         checkVertexWrites(operation.getRootEntity(), operation);
+        checkDynamicAttributes(operation.getRootEntity(), operation);
         return jdbcOperations.updateAll(operation);
     }
 

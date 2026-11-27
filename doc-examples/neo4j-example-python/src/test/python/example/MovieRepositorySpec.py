@@ -75,6 +75,18 @@ class MovieRepositorySpec:
         assert [d.name for d in matrix.directors] == ["Lana Wachowski"]
 
     @Test
+    def testNestedJoin(self):
+        lilly = self.personRepository.save(Person("Lilly Wachowski", 1967, [Person("Lana Wachowski", 1965)]))
+        self.movieRepository.save(Movie("Bound", "In the end, it's all about the money", 1996, [], [lilly]))
+
+        # tag::nestedFetch[]
+        fetched = self.movieRepository.findByReleased(1996)[0]
+        followed = fetched.directors[0].follows[0]  # <1>
+        # end::nestedFetch[]
+
+        assert followed.name == "Lana Wachowski"
+
+    @Test
     def testSpecifications(self):
         # tag::useSpecifications[]
         recent = self.movieSpecificationRepository.findAll(released_after(1995))  # <1>
