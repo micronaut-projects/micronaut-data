@@ -10,6 +10,7 @@ import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.intercept.annotation.DataMethodQueryParameter
 import io.micronaut.data.graph.processor.visitors.GraphIdentityVisitor
 import io.micronaut.data.graph.processor.visitors.GraphRelationshipVisitor
+import io.micronaut.data.graph.processor.visitors.OraclePropertyGraphVisitor
 import io.micronaut.data.processor.visitors.MappedEntityVisitor
 import io.micronaut.data.processor.visitors.RepositoryTypeElementVisitor
 import io.micronaut.inject.BeanDefinition
@@ -151,7 +152,7 @@ $source
     static class GraphTypeElementVisitorProcessor extends TypeElementVisitorProcessor {
         @Override
         protected Collection<TypeElementVisitor> findTypeElementVisitors() {
-            return [new IntrospectedTypeElementVisitor(), new RepositoryTypeElementVisitor(), new MappedEntityVisitor(), new GraphDtoVisitor(), new GraphIdentityVisitor(), new GraphRelationshipVisitor(), new GraphConverterSerdeVisitor()]
+            return [new IntrospectedTypeElementVisitor(), new RepositoryTypeElementVisitor(), new MappedEntityVisitor(), new GraphDtoVisitor(), new GraphIdentityVisitor(), new GraphRelationshipVisitor(), new OraclePropertyGraphVisitor(), new GraphConverterSerdeVisitor()]
         }
     }
 }

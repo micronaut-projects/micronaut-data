@@ -1,6 +1,5 @@
 package io.micronaut.data.graph.tck.repositories;
 
-import io.micronaut.data.annotation.Join;
 import io.micronaut.data.graph.tck.entities.Person;
 import io.micronaut.data.repository.CrudRepository;
 
@@ -13,7 +12,4 @@ public interface PersonRepository extends CrudRepository<Person, UUID> {
     Optional<Person> findByName(String name);
 
     List<Person> findByMentorName(String name);
-
-    @Join("mentor")
-    Optional<Person> queryByName(String name);
 }
