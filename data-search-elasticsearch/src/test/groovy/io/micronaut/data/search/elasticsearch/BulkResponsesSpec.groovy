@@ -141,6 +141,12 @@ class BulkResponsesSpec extends Specification {
 
         @Override
         void createIndex(String index, String body) { throw new UnsupportedOperationException() }
+
+        @Override
+        void deleteIndex(String index) { throw new UnsupportedOperationException() }
+
+        @Override
+        void refresh(String index) { throw new UnsupportedOperationException() }
     }
 
     /**

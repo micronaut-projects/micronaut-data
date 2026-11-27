@@ -22,8 +22,8 @@ class TextSearchDialectSpec extends Specification {
         def columns = [new TextSearchDialect.SearchColumn("title", null)]
 
         expect:
-        dialect.buildSearchIndex("idx_book_search", "book", columns, "english", "lang")[0]
-            .contains("to_tsvector(coalesce(lang,'english')::regconfig,")
+        dialect.buildSearchIndex("idx_book_search", "book", columns, "english", "lang").last()
+            .contains("to_tsvector(mn_regconfig(coalesce(lang,'english')),")
     }
 
     void "a target without a language column"() {

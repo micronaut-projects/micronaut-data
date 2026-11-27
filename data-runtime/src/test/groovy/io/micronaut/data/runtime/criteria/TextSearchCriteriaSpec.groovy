@@ -134,7 +134,7 @@ class TextSearchCriteriaSpec extends Specification {
         def entityLanguage = postgresQuery(SearchQuery.of("bakers"))
 
         then:
-        entityLanguage.contains("WHERE (to_tsvector(coalesce(search_language_article_.\"lang\",'english')::regconfig,search_language_article_.\"title\") @@ to_tsquery('english',?))")
+        entityLanguage.contains("WHERE (to_tsvector(mn_regconfig(coalesce(search_language_article_.\"lang\",'english')),search_language_article_.\"title\") @@ to_tsquery('english',?))")
 
         when: "an override analyses the rows with the configuration of the query terms"
         def overridden = postgresQuery(SearchQuery.builder("bakers").language("simple").build())

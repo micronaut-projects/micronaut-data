@@ -66,6 +66,8 @@ class OpenSearchTransportFailureSpec extends Specification {
         "delete by query" | { OpenSearchSearchTransport t -> t.deleteByQuery("books", BODY, NONE) }
         "index exists"    | { OpenSearchSearchTransport t -> t.indexExists("books") }
         "create index"    | { OpenSearchSearchTransport t -> t.createIndex("books", '{"mappings":{}}') }
+        "delete index"    | { OpenSearchSearchTransport t -> t.deleteIndex("books") }
+        "refresh"         | { OpenSearchSearchTransport t -> t.refresh("books") }
     }
 
     void "an I/O error of #operation is a DataAccessException"() {
@@ -90,6 +92,8 @@ class OpenSearchTransportFailureSpec extends Specification {
         "delete"  | { OpenSearchSearchTransport t -> t.delete("books", "1", 2L, NONE) }
         "bulk"    | { OpenSearchSearchTransport t -> t.bulkIndex("books", [new SearchTransport.BulkDocument("1", [title: "Kotlin"])], NONE) }
         "index"   | { OpenSearchSearchTransport t -> t.create("books", "1", [title: "Kotlin"], NONE) }
+        "delete index" | { OpenSearchSearchTransport t -> t.deleteIndex("books") }
+        "refresh" | { OpenSearchSearchTransport t -> t.refresh("books") }
     }
 
     void "a version conflict of a versioned #operation is an OptimisticLockException"() {
