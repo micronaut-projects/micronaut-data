@@ -169,7 +169,7 @@ jobs:
   ci-passed:
     name: "Java CI passed"
     needs: [build, native, python]
-    if: always()
+    if: always() && github.repository != 'micronaut-projects/micronaut-project-template'
     runs-on: ubuntu-latest
     steps:
       - name: Check the results of the Java CI jobs
