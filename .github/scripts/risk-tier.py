@@ -94,7 +94,7 @@ CLASSIFIER_PATHS = [GLOBAL_RULES, REPOSITORY_RULES, ".github/scripts/risk-tier.p
 # What CI, releases and the build run: a change here can reach secrets or published artifacts without touching main
 # sources. T2 in every repository too, including updates by bots such as Renovate.
 SUPPLY_CHAIN_PATHS = [".github/workflows/**", ".github/actions/**", ".github/scripts/**", ".github/CODEOWNERS",
-                      "/CODEOWNERS", "docs/CODEOWNERS",
+                      "/CODEOWNERS", "docs/CODEOWNERS", ".github/renovate-global.json",
                       "buildSrc/**", "gradle/wrapper/**", "gradlew", "gradlew.bat", "settings.gradle",
                       "settings.gradle.kts"]
 PROTECTED_PATHS = CLASSIFIER_PATHS + SUPPLY_CHAIN_PATHS
